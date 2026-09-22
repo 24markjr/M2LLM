@@ -1,0 +1,85 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jarvis-backend"
+version = "0.1.0"
+description = "JARVIS — adaptive evidence-driven AI orchestration engine (Member 1: intelligence & agent runtime)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+    "pgvector>=0.3.6",
+    "httpx>=0.28",
+    "structlog>=24.4",
+    "python-multipart>=0.0.12",
+    "pyyaml>=6.0",
+    "pypdf>=5.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "pytest-randomly>=3.16",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "types-pyyaml>=6.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["."]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",   # pycodestyle / pyflakes
+    "I",             # import sorting
+    "UP",            # pyupgrade
+    "B",             # bugbear
+    "BLE",           # blind except — must be deliberate and annotated
+    "ASYNC",         # async correctness
+    "S",             # bandit — invariant: no eval/exec, no unsafe subprocess
+    "T20",           # no stray print() outside scripts
+    "RUF",
+]
+ignore = [
+    "S101",  # assert is fine in tests and internal invariants
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "T20"]
+# Operator-facing scripts print to the terminal by design.
+"../scripts/**" = ["T20"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+plugins = ["pydantic.mypy"]
+# Engines are typed strictly; third-party stubs are not all available.
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+strict = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-q --strict-markers"
+markers = [
+    "integration: requires a live PostgreSQL instance",
+    "llm: requires a live LLM provider (skipped when LLM_PROVIDER=echo)",
+]

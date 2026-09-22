@@ -1,0 +1,42 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Node / frontend ---
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.local
+
+# --- Environment ---
+.env
+.env.*
+!.env.example
+
+# --- Agent artifacts ---
+# Committed traces are curated demo assets; local scratch traces are not.
+.agent/traces/*.local.json
+.agent/evals/reports/*.local.json
+
+# --- Editors / OS ---
+.idea/
+.vscode/*
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
+
+# --- Local data ---
+pgdata/
+ollama-data/
+*.log

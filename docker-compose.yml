@@ -1,0 +1,82 @@
+# JARVIS local stack.
+#
+# Default (day-to-day development):
+#     docker compose up -d postgres
+#   Backend and frontend run natively on the host for fast reload.
+#
+# Containerized backend:
+#     docker compose --profile backend up -d
+#
+# Containerized Ollama (Linux/WSL2 with GPU passthrough):
+#     docker compose --profile ollama up -d
+#   On Windows, prefer the native Ollama installer — it gets GPU acceleration
+#   that the Linux container under WSL2 generally will not. See ADR-003.
+#
+# The frontend service is added in Phase 21, when frontend/ exists.
+
+name: jarvis
+
+services:
+  postgres:
+    # pgvector ships on top of the official postgres image, so structured data
+    # and embeddings live in one database. See ADR-002 and ADR-005.
+    image: pgvector/pgvector:pg16
+    container_name: jarvis-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-jarvis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jarvis}
+      POSTGRES_DB: ${POSTGRES_DB:-jarvis}
+      # Deterministic collation so ORDER BY in tests matches across machines.
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/sql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jarvis} -d ${POSTGRES_DB:-jarvis}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  backend:
+    profiles: ["backend", "full"]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jarvis-backend
+    restart: unless-stopped
+    environment:
+      # Inside the compose network the database host is `postgres`.
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-jarvis}:${POSTGRES_PASSWORD:-jarvis}@postgres:5432/${POSTGRES_DB:-jarvis}
+      # host.docker.internal reaches a natively-installed Ollama on the host.
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+      - ./.agent:/agent:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  ollama:
+    profiles: ["ollama", "full"]
+    image: ollama/ollama:latest
+    container_name: jarvis-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
+volumes:
+  pgdata:
+  ollama-data:
