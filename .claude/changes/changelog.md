@@ -5,6 +5,46 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-09-23 - Phase 6: Intent engine
+
+### Added
+
+- `app/intelligence/intent/engine.py` - `IntentEngine`, the deterministic pre-pass
+  (`derive_operations`), operation mapping onto the closed vocabulary, and ambiguity
+  detection
+- `.agent/prompts/intent.md` - the first prompt asset (version 1)
+- `app/cli.py` - `python -m app.cli intent "..."` and `health`; prints the objective,
+  the pre-pass, the execution trace and the structured intent
+- `backend/tests/unit/test_intent.py` - 24 tests, all on `EchoProvider`
+- `docs/demo-script.md`
+
+### Design
+
+- **The model proposes operations as free text; the system maps them.** Constraining the
+  model to an enum produces a silent nearest-match; mapping afterwards makes an
+  out-of-vocabulary request visible as `UnsupportedOperation` instead of quietly dropped.
+- **A deterministic pre-pass runs before the model**, from keywords and file types, so the
+  model is never the only signal and the engine degrades to something usable if it fails.
+- **Ambiguity is a valid answer.** "Look at these files" yields `clarification_needed`,
+  not a confident plan.
+
+### Measured (qwen3:4b, warm)
+
+- Clear objective -> 14 operations, 0 repair attempts, ~3.2 s
+- First call after boot ~36 s (one-time VRAM load)
+
+### Changed
+
+- `pyproject.toml` - `app/cli.py` exempted from the `T20` print rule
+
+### Verified
+
+- `pytest -m "not llm"` - 196 passed
+- `mypy --strict` - clean, 36 files
+- `ruff check` + `format --check` - clean
+
+---
+
 ## 2026-09-23 — Phases 4 & 5: LLM abstraction and the event bus
 
 ### Added
