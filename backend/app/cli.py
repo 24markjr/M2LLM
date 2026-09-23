@@ -19,11 +19,13 @@ import sys
 
 from app.core.events import EventBus, MemoryEventSink, RunEventEmitter
 from app.core.logging import configure_logging
+from app.integrations.verification import build_verification_provider
 from app.intelligence.execution.engine import ExecutionEngine
 from app.intelligence.graph.task_graph import TaskGraph
 from app.intelligence.intent.engine import IntentEngine, derive_operations
 from app.intelligence.planner.engine import PlanInvalidError, Planner, execution_levels
 from app.intelligence.reasoning.engine import ReasoningEngine
+from app.intelligence.replanning.controller import ReplanningController
 from app.intelligence.router.engine import NoCapableToolError, ToolRouter
 from app.llm import get_provider
 from app.schemas.common import new_run_id
@@ -31,7 +33,7 @@ from app.schemas.event import EventType
 from app.schemas.execution import Observation
 from app.schemas.objective import AttachedDocument, DocumentKind, Objective, ObjectiveScope
 from app.schemas.plan import Plan
-from app.tools.base import ToolContext, build_default_registry
+from app.tools.base import ToolContext, ToolRegistry, build_default_registry
 
 RULE = "-" * 78
 
@@ -199,8 +201,8 @@ async def run_investigate(text: str, docs: list[str]) -> int:
 
     await _print_routing(plan, emitter)
 
-    observations = await _execute(plan, docs, emitter, sink)
-    await _reason(objective, observations, emitter)
+    observations, graph, registry = await _execute(plan, docs, emitter, sink)
+    await _investigate(objective, observations, graph, registry, docs, emitter)
 
     validation = plan.validation
     if validation:
@@ -251,13 +253,17 @@ async def _print_routing(plan: Plan, emitter: RunEventEmitter) -> None:
 
 async def _execute(
     plan: Plan, docs: list[str], emitter: RunEventEmitter, sink: MemoryEventSink
-) -> list[Observation]:
-    """Run the plan. This is where JARVIS stops planning and starts doing."""
+) -> tuple[list[Observation], TaskGraph | None, ToolRegistry | None]:
+    """Run the plan. This is where JARVIS stops planning and starts doing.
+
+    Returns the graph and registry as well as the observations: the replanning loop
+    edits the *same* graph, which is what makes an inserted task part of this run
+    rather than a separate one."""
     documents = _load_documents(docs)
     if not documents:
         print()
         print("(no fixture documents matched - skipping execution)")
-        return []
+        return [], None, None
 
     registry = build_default_registry()
     graph = TaskGraph.from_plan(plan)
@@ -293,47 +299,95 @@ async def _execute(
         print(f"  ... and {len(sources) - 8} more")
 
     print()
-    return observations
+    return observations, graph, registry
 
 
-async def _reason(
-    objective: Objective, observations: list[Observation], emitter: RunEventEmitter
+async def _investigate(
+    objective: Objective,
+    observations: list[Observation],
+    graph: TaskGraph | None,
+    registry: ToolRegistry | None,
+    docs: list[str],
+    emitter: RunEventEmitter,
 ) -> None:
-    """Turn observations into findings, each bound to evidence that actually exists."""
-    if not observations:
+    """Reason, verify, detect gaps, and replan until resolved or bounded out.
+
+    This is the closed loop: everything before it is a pipeline. When verification
+    rejects a finding and a gap names what is missing, a task is inserted into the graph
+    that already ran and execution continues.
+    """
+    if not observations or graph is None or registry is None:
         return
+
+    provider = get_provider()
+    documents = _load_documents(docs)
 
     print()
     print(RULE)
-    print("REASONING")
+    print("REASONING, VERIFICATION AND ADAPTIVE REPLANNING")
     print(RULE)
     print(f"deriving findings from {len(observations)} observation(s) ...")
 
-    findings = await ReasoningEngine(get_provider()).derive_findings(
-        objective, observations, emit=emitter
+    controller = ReplanningController(
+        graph=graph,
+        registry=registry,
+        router=ToolRouter(registry, provider),
+        reasoner=ReasoningEngine(provider),
+        verifier=build_verification_provider(provider),
+        emit=emitter,
     )
+    ctx = ToolContext(run_id=emitter.run_id, document_ids=list(documents), documents=documents)
+    result = await controller.run(objective, observations, ctx)
 
-    if not findings:
+    if not result.findings:
         print()
         print("no findings could be supported by the evidence gathered")
         print("(an honest empty result - the system does not invent one to fill the gap)")
+        print(f"terminated       : {result.termination_reason.value}")
         return
 
-    for finding in findings:
+    scores = {s.gap_id: s for s in result.scores}
+
+    for finding in result.findings:
         print()
         print(f"  {finding.finding_id}  [{finding.classification.value}] {finding.claim}")
-        print(f"        confidence : {finding.confidence.explain()}")
+        print(f"        confidence   : {finding.confidence.explain()}")
+
+        if finding.verification is not None:
+            issues = ", ".join(i.issue_type.value for i in finding.verification.issues)
+            detail = f" - {issues}" if issues else ""
+            degraded = "  (degraded to baseline)" if finding.verification.degraded else ""
+            print(f"        verification : {finding.verification.status.value}{detail}{degraded}")
+
         for ref in finding.evidence:
             mark = "resolved  " if ref.is_resolved else "UNRESOLVED"
             note = "" if ref.is_resolved else f"  <- {ref.resolution_note}"
             print(f"        {mark} {ref.as_ref()}{note}")
 
-    supported = sum(1 for f in findings if f.has_resolved_evidence)
+        for gap in finding.gaps:
+            print(f"        GAP          : {gap.missing}")
+            print(f"                       ({gap.gap_type.value}, severity {gap.severity:.2f})")
+            score = scores.get(gap.gap_id)
+            if gap.resolved_by_task_id:
+                scored = f"  score {score.explain()}" if score else ""
+                state = "resolved" if gap.resolved else "pending"
+                print(f"        ACTION       : {gap.resolved_by_task_id} [{state}]{scored}")
+
+    verified = len(result.verified)
+    resolved_gaps = sum(1 for g in result.gaps if g.resolved)
+
     print()
-    print(f"findings        : {len(findings)}")
-    print(f"with evidence   : {supported}/{len(findings)}")
-    print()
-    print("(verification and evidence-gap detection are Phases 15 and 14)")
+    print(f"findings          : {len(result.findings)}  ({verified} verified)")
+    print(f"gaps detected     : {len(result.gaps)}  ({resolved_gaps} closed)")
+    print(f"replan iterations : {result.iterations}")
+    print(f"tasks added       : {sum(len(r.added_task_ids) for r in result.revisions)}")
+    print(f"mean confidence   : {result.mean_confidence:.2f}")
+    print(f"terminated        : {result.termination_reason.value}")
+
+    if result.termination_reason.value == "DIMINISHING_RETURNS":
+        print("  (the loop recognised another iteration was not worth the cost)")
+    elif result.termination_reason.value == "MAX_ITERATIONS":
+        print("  (the iteration ceiling was reached; unresolved gaps are reported as such)")
 
 
 def _print_llm_stats(sink: MemoryEventSink) -> None:

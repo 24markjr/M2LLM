@@ -42,15 +42,19 @@ roles:
     max_tokens: 512
 
   # Derives candidate findings from observations, with explicit source citations.
+  # Generation time scales with tokens produced, and on a 4B local model a 4096-token
+  # budget made a single reasoning call slower than a whole investigation. Findings are
+  # short structured claims, not prose, so this is ample - and a smaller budget also
+  # discourages the model from padding the list with weakly-supported claims.
   reasoning:
     <<: *default
-    max_tokens: 4096
+    max_tokens: 1200
 
   # Independent check of a claim against its evidence. Deliberately sees no
   # reasoning trail — see agent.yaml:verification.independent_context.
   verification:
     <<: *default
-    max_tokens: 1536
+    max_tokens: 600
 
   # Writes prose only inside sections whose facts are already fixed. Numbers,
   # confidences and evidence refs are injected programmatically.

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from pydantic import Field
 
+from app.core.agent_config import get_models_config
 from app.core.logging import get_logger
 from app.llm.errors import StructuredOutputError
 from app.llm.prompts import get_prompt_library
@@ -186,9 +187,18 @@ class ReasoningEngine:
         if not observations:
             return []
 
-        await self._event(emit, EventType.REASONING_STARTED, {"observations": len(observations)})
+        # Bound the prompt. Compaction preserves every source locator, so a compacted
+        # observation still supports a citable claim - the binder resolves against
+        # `sources`, which compaction never touches. Without this the prompt grows with the
+        # corpus and a local model stalls before producing anything.
+        from app.intelligence.context.manager import compact
 
-        candidates = await self._ask_model(objective, observations, emit)
+        budget = get_models_config().params_for("reasoning").max_tokens
+        bounded = compact(observations, token_budget=budget)
+
+        await self._event(emit, EventType.REASONING_STARTED, {"observations": len(bounded)})
+
+        candidates = await self._ask_model(objective, bounded, emit)
         binder = EvidenceBinder(observations)
         findings: list[Finding] = []
 
