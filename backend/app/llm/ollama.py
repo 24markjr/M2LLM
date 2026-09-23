@@ -6,6 +6,7 @@ through `LLMProvider` (invariant #1).
 
 from __future__ import annotations
 
+import json
 import time
 from typing import Any
 
@@ -53,16 +54,25 @@ class OllamaProvider:
         if request.stop:
             options["stop"] = request.stop
 
-        prompt = request.prompt
+        # Constrained decoding where the provider supports it. Ollama accepts a JSON Schema
+        # as `format` and restricts generation to it, which is strictly better than pasting
+        # the schema into the prompt and hoping: the model then cannot echo the schema back,
+        # cannot invent a field, and does not spend its token budget reproducing definitions
+        # instead of answering.
+        #
+        # Pasting it was costing whole responses. qwen3:4b returned the schema *and* the
+        # data, and with a long observation set that exceeded the token budget, so the JSON
+        # arrived truncated and unparseable - which read downstream as "no findings".
+        schema: dict[str, Any] | None = None
         if request.schema_hint:
-            # The schema is injected rather than described in prose: the prompt states
-            # intent, the schema states shape.
-            prompt = (
-                f"{prompt}\n\n"
-                "Respond with JSON matching this schema exactly. "
-                "Output only the JSON object, with no commentary and no code fences.\n\n"
-                f"{request.schema_hint}"
-            )
+            try:
+                schema = json.loads(request.schema_hint)
+            except json.JSONDecodeError:
+                schema = None
+
+        prompt = request.prompt
+        if schema is None and request.schema_hint:
+            prompt = f"{prompt}\n\nRespond with JSON only, no commentary and no code fences."
 
         body: dict[str, Any] = {
             "model": self._model,
@@ -77,7 +87,9 @@ class OllamaProvider:
         }
         if request.system:
             body["system"] = request.system
-        if request.json_mode:
+        if schema is not None:
+            body["format"] = schema
+        elif request.json_mode:
             body["format"] = "json"
 
         started = time.perf_counter()
