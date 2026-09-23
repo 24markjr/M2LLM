@@ -17,6 +17,11 @@ default: &default
   top_p: 0.9
   max_tokens: 2048
   format: json         # provider-level JSON constraint where supported
+  # qwen3 is a reasoning model: it runs a deliberation pass before answering.
+  # Disabled by default. It consumes the token budget (Ollama returns an empty
+  # response with done_reason=length), roughly doubles latency on every evaluation
+  # run, and is exactly the content invariant #3 keeps out of the record.
+  think: false
 
 roles:
   # Interprets the user's objective into a validated Intent.

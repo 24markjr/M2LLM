@@ -5,6 +5,66 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-09-23 — Phases 4 & 5: LLM abstraction and the event bus
+
+### Added
+
+- `backend/app/llm/` — the only door to a language model (invariant #1)
+  - `provider.py` — `LLMProvider` protocol, `CompletionRequest/Response`, `EmbeddingResponse`
+  - `ollama.py` — local inference; the only module in the project that speaks HTTP to a model
+  - `echo.py` — deterministic fixture provider, plus opt-in JSON-Schema synthesis
+  - `structured.py` — `generate_structured()` with the validation-error repair loop
+  - `prompts.py` — `PromptLibrary` loading versioned assets from `.agent/prompts/`
+  - `telemetry.py` — repair counts, latency and tokens; emits `LLM_CALL_COMPLETED`
+  - `errors.py` — typed failures carrying a `FailureClass`
+- `backend/app/core/events.py` — `EventBus`, `RunClock`, `RunEventEmitter`, and the
+  `Memory`/`Stream`/`TraceFile` sinks
+- `backend/app/core/agent_config.py` — the `.agent/config/*.yaml` loader with ceiling clamping
+- `backend/app/core/logging.py` — structlog setup, ASCII-only renderer
+- Tests: `test_llm.py`, `test_llm_isolation.py`, `test_events.py`, `test_agent_config.py`,
+  and `tests/integration/test_ollama_live.py` (marked `llm`, skipped without a model)
+- `.claude/architecture/agent-architecture.md`
+
+### Changed
+
+- `models.yaml` gains `think: false`. qwen3 is a reasoning model; see below.
+
+### Findings
+
+- **qwen3:4b is a reasoning model.** Ollama returns its deliberation in a separate
+  `thinking` field, and with a modest token budget the deliberation consumes all of it —
+  `response` comes back empty with `done_reason=length`. The provider now sends
+  `think: false` and reads only `response`, never `thinking`. That field is by definition
+  model deliberation, so this is the first line of defence for invariant #3, with event-bus
+  redaction as the second.
+- **Measured on `qwen3:4b`:** repair rate 0.00 over 3 structured calls, mean latency ~1.6 s.
+  A small sample, recorded as a measurement rather than a result. Experiment 001 (Phase 20)
+  turns it into a comparison.
+
+### Fixed
+
+- `extract_json` checked `{` before `[`, so a JSON array response silently returned only its
+  leading object. Now starts from whichever delimiter appears first.
+- `ModelsConfig` rejected the `default: &default` YAML anchor key. Anchors are a
+  serialization feature, so the key survives parsing; now accepted and ignored.
+- `clamp` and `generate_structured` use PEP 695 type parameters instead of `TypeVar`.
+
+### Verified
+
+- `pytest` — 176 passed, including live-model integration tests against `qwen3:4b`
+- `mypy --strict` — clean, 34 source files
+- `ruff check` + `format --check` — clean, 44 files
+- Isolation tests: no HTTP client outside `app/llm/` and `app/integrations/`; no `os.environ`
+  outside `config.py`; no `eval`/`exec`/`compile`/`__import__` anywhere
+
+### Known Issues
+
+- `DatabaseEventSink` is deferred to Phase 3 — a run's timeline currently lives in memory
+  and, when `TRACE_TO_FILE=1`, in a trace file.
+- Postgres is still the one outstanding Phase 0 criterion, blocked on the WSL2 reboot.
+
+---
+
 ## 2026-09-23 — Phase 2: Domain schemas (the typed spine)
 
 ### Added

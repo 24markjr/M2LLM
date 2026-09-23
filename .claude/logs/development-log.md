@@ -8,6 +8,117 @@ and what is still broken.
 
 ## 2026-09-23
 
+### 10:45 IST — Phases 4 & 5: LLM abstraction and the event bus
+
+**Order note.** Built Phase 5 before Phase 4, against the plan's numbering. Phase 4's
+telemetry emits `LLM_CALL_COMPLETED` through the bus, so building the bus first avoided an
+indirection that existed only to preserve a build order. Recorded rather than quietly done.
+
+**Implemented**
+
+- `app/llm/` — provider protocol, Ollama and Echo providers, structured output with repair,
+  prompt library, telemetry, typed errors
+- `app/core/events.py` — bus, clock, emitter, three sinks
+- `app/core/agent_config.py` — YAML loader with ceiling clamping
+- `app/core/logging.py`
+- 85 new tests across four unit files plus a live-model integration file
+
+**The finding that mattered: qwen3 is a reasoning model**
+
+The live-model acceptance tests failed on first run. Inspecting the raw Ollama response
+explained it:
+
+```
+response    = ''
+thinking    = 'Hmm, the user just asked me to reply with the single word "ready"...'
+done_reason = 'length'
+```
+
+Ollama puts a reasoning model's deliberation in a separate `thinking` field, and with
+`num_predict=64` the deliberation consumed the entire budget before any answer existed.
+
+Two consequences, and the second is the more interesting one:
+
+1. *Practical.* `think: false` now goes on every request, configurable per role in
+   `models.yaml`. Without it every evaluation run pays for deliberation tokens it discards,
+   roughly doubling latency.
+2. *Architectural.* `thinking` is, definitionally, model deliberation — the exact content
+   invariant #3 exists to keep out. The provider reads only `response` and never touches
+   the field. This is the first line of defence; event-bus redaction is the second. Added
+   `test_reasoning_deliberation_never_enters_the_response` to hold it.
+
+This is the kind of thing ADR-003's "build against the harder case" reasoning predicted:
+a local model's quirks surface as real engineering rather than being smoothed over by a
+forgiving API.
+
+**Measurement on qwen3:4b**
+
+```
+repair_rate=0.00  calls=3  mean_latency_ms=1607
+```
+
+With `think: false` and JSON mode, the model produced valid structured output first time on
+all three calls. Small sample, and deliberately not asserted as a threshold anywhere — the
+test prints it rather than checking it, because asserting a number from n=3 would be
+inventing a result. Experiment 001 turns this into a real comparison.
+
+**Design decisions**
+
+- **`generate_structured` never guesses.** After exhausting repairs it raises, carrying the
+  raw text and the validation errors. A layer that substituted a default would make every
+  downstream finding untrustworthy in a way nothing could detect.
+- **The repair prompt carries the validation errors verbatim.** Telling the model
+  `count: Input should be greater than or equal to 0` fixes far more than asking it to retry,
+  and a test asserts the error text actually reaches the second prompt.
+- **`EchoProvider` raises by default when no fixture exists.** Synthesis is opt-in. A
+  silently synthesized response would let a test pass while proving nothing about the prompt
+  it was meant to exercise.
+- **Engines take a `RunEventEmitter`, not a bus plus run id plus clock.** Threading three
+  things through ten components is how a transition eventually goes unrecorded.
+- **`RunClock` uses `perf_counter`.** A wall-clock adjustment mid-run would produce negative
+  offsets and an unorderable trace.
+- **A lagging SSE subscriber drops events rather than stalling the run.** The client recovers
+  its gap by replaying from `Last-Event-ID`; a stalled investigation does not recover.
+
+**Two bugs found by tests**
+
+1. `extract_json` checked `{` before `[`, so a JSON array response silently returned only
+   its leading object — a fragment that would have validated as the wrong thing. Now starts
+   from whichever delimiter appears first.
+2. `ModelsConfig` rejected the `default: &default` anchor key. YAML anchors are a
+   serialization feature, so the key survives parsing into the document. Accepted and
+   ignored, with a comment explaining why it is there.
+
+**Files**
+
+```
+backend/app/llm/{__init__,provider,ollama,echo,structured,prompts,telemetry,errors}.py
+backend/app/core/{events,agent_config,logging}.py
+backend/tests/unit/{test_llm,test_llm_isolation,test_events,test_agent_config}.py
+backend/tests/integration/test_ollama_live.py
+.claude/architecture/agent-architecture.md
+.agent/config/models.yaml  (think: false)
+```
+
+**Tests**
+
+- `pytest` -> 176 passed, including live calls to `qwen3:4b`
+- `mypy --strict` -> clean, 34 source files
+- `ruff check` + `format --check` -> clean, 44 files
+- Isolation suite now enforces: no HTTP client outside `app/llm/` and `app/integrations/`;
+  no `os.environ` outside `config.py`; no `eval`/`exec`/`compile`/`__import__` anywhere;
+  `app/schemas` imports nothing from the application; `app/llm` never imports engines
+
+**Known issues**
+
+1. `DatabaseEventSink` deferred to Phase 3. Timelines live in memory and optionally in a
+   trace file until then.
+2. Postgres still blocked on the WSL2 reboot.
+3. No prompt assets exist yet — the library is tested against temporary files. Real prompts
+   ship with their engines from Phase 6.
+
+---
+
 ### 10:15 IST — Phase 2: Domain schemas (the typed spine)
 
 **Implemented**
