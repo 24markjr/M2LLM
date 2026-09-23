@@ -2,7 +2,7 @@
 
 **For:** external evaluator review
 **Status at this demo:** Phases 0-2, 4-7 complete. Phase 3 (persistence) blocked on a
-pending WSL2 reboot. Phases 7+ not started.
+pending WSL2 reboot. Phases 8+ not started.
 
 Be straight about what this is: **the foundation and the first agent component**, built to a
 standard, not a finished product. What follows is what actually runs today.
@@ -163,11 +163,11 @@ acceptance criteria per phase.
 **"Isn't this just a wrapper around an LLM?"**
 The model proposes free-text operations; the system maps them onto a closed vocabulary and
 surfaces anything out-of-vocabulary as explicitly unsupported. That pattern repeats
-throughout: the planner will propose a decomposition and the system will validate it into a
+throughout: the planner proposes a decomposition and the system validates it into a
 legal DAG. The model's output is an input to the system, not the system's output.
 
 **"How do you know it works?"**
-196 tests today, plus `.agent/` — scenarios that assert against the *execution trace*, not
+223 tests today, plus `.agent/` — scenarios that assert against the *execution trace*, not
 the prose. An agent can produce a plausible report while skipping every step that made it
 trustworthy; asserting on the trace catches that, asserting on the output does not. The
 evaluation harness in Phase 20 computes ten metrics, none hard-coded.
