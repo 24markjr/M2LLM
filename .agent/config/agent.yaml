@@ -1,0 +1,116 @@
+# JARVIS agent behaviour policy.
+#
+# This file tunes HOW the agent behaves. It cannot loosen a safety bound:
+# every ceiling here is clamped at load time to the corresponding value in
+# app.core.config.Settings (from .env). See .agent/README.md.
+#
+# Consumed by: Phase 16 (replanning controller), Phase 11 (execution engine).
+
+version: 1
+
+# --- The adaptive loop ---------------------------------------------------------
+replanning:
+  # Requested ceiling. Clamped to Settings.max_replan_iterations.
+  max_iterations: 3
+
+  # What causes the agent to revise its plan mid-run.
+  triggers:
+    unsupported_finding: true      # verification failed and a gap is actionable
+    permanent_task_failure: true   # a task died and an alternative path exists
+    invalidated_assumption: true   # new information contradicts the plan's premise
+    source_conflict: true          # two sources disagree; a tiebreak source is needed
+
+  # Every stop is recorded with its reason. An agent that stops silently is
+  # indistinguishable from an agent that gave up.
+  termination:
+    on_all_resolved: true
+    on_max_iterations: true
+    on_no_actionable_gap: true
+    on_budget_exhausted: true
+    # Stop when an entire iteration buys less than this much confidence.
+    # Burning the iteration ceiling for +0.02 confidence is worse than stopping
+    # and saying why.
+    diminishing_returns_epsilon: 0.05
+
+  # Re-derive only the findings touched by new evidence, not the whole set.
+  scoped_reasoning: true
+
+# --- Execution -----------------------------------------------------------------
+execution:
+  max_parallel_tasks: 4            # clamped to Settings.max_parallel_tasks
+  task_timeout_s: 120
+  retry:
+    max_attempts: 2                # clamped to Settings.max_task_retries
+    backoff_base_s: 1.0
+    backoff_multiplier: 2.0
+    # Only transient failures retry. A schema violation will fail identically
+    # on every attempt; retrying it just burns budget.
+    retryable:
+      - TIMEOUT
+      - CONNECTION_ERROR
+      - PROVIDER_UNAVAILABLE
+    non_retryable:
+      - SCHEMA_VIOLATION
+      - MISSING_INPUT
+      - UNSAFE_EXPRESSION
+      - NO_CAPABLE_TOOL
+  # On permanent tool failure, walk the fallback chain from tools.yaml before
+  # degrading the task to SKIPPED with a recorded evidence gap.
+  use_fallback_chain: true
+
+# --- Planning ------------------------------------------------------------------
+planning:
+  max_tasks: 20                    # clamped to Settings.max_plan_tasks
+  min_tasks: 2
+  # Attempts to re-prompt the model after plan validation fails, before the run
+  # fails cleanly with PLAN_INVALID. Executing an invalid plan is never an option.
+  max_validation_reprompts: 2
+  # Deterministic repairs applied before spending a re-prompt.
+  auto_repair:
+    drop_duplicate_edges: true
+    break_self_loops: true
+    reorder_task_ids: true
+  # Every required_operation from the intent must be covered by >= 1 task.
+  require_full_intent_coverage: true
+
+# --- Reasoning and evidence ----------------------------------------------------
+reasoning:
+  # Confidence is computed from resolved evidence, never taken from the model's
+  # self-report. See .claude/architecture/reasoning-engine.md.
+  confidence_source: computed
+  classification_floors:
+    # A claim cannot be classified FACT unless every element resolves.
+    fact_requires_full_resolution: true
+    # Confidence ceiling applied to claims with any unresolved citation.
+    unresolved_citation_confidence_cap: 0.4
+  evidence:
+    min_refs_per_finding: 1
+    # Unresolvable citations are recorded as UNRESOLVED, never silently dropped.
+    # They feed gap detection and the hallucination metric.
+    keep_unresolved_citations: true
+
+# --- Verification --------------------------------------------------------------
+verification:
+  # The baseline verifier sees only the claim and its evidence — never the
+  # reasoning trail that produced it. Independence is the point.
+  independent_context: true
+  # If the remote verifier times out, degrade to baseline and record it.
+  # Verification is never silently skipped.
+  degrade_to_baseline: true
+  statuses:
+    - SUPPORTED
+    - PARTIALLY_SUPPORTED
+    - UNSUPPORTED
+    - CONTRADICTED
+
+# --- Budget --------------------------------------------------------------------
+budget:
+  max_tool_calls_per_run: 40       # clamped to Settings.max_tool_calls_per_run
+  wallclock_limit_s: 600           # clamped to Settings.run_wallclock_limit_s
+
+# --- Transparency --------------------------------------------------------------
+transparency:
+  # Operational transparency only: what was chosen, executed, found, verified.
+  # Raw model deliberation is stripped before events are persisted (invariant #3).
+  emit_operational_events: true
+  redact_model_deliberation: true

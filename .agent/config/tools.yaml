@@ -1,0 +1,107 @@
+# Tool registry policy: which capabilities exist, what they cost, and what to
+# fall back to when one fails.
+#
+# Tools register themselves in code (app/tools/registry.py). This file controls
+# enablement, ordering and cost — not existence.
+#
+# Consumed by: Phase 9 (registry), Phase 10 (router), Phase 11 (fallback),
+#              Phase 17 (cost-aware selection).
+
+version: 1
+
+# Capability classes. The router filters deterministically on these BEFORE any
+# model is consulted, which is what makes tool-selection accuracy measurable and
+# largely model-independent.
+capabilities:
+  - DOCUMENT_SEARCH       # find relevant passages across documents
+  - DOCUMENT_EXTRACT      # pull structured content out of a document
+  - TABULAR_ANALYSIS      # operate on CSV / structured records
+  - COMPUTATION           # arithmetic and comparison over extracted values
+  - EVIDENCE_RETRIEVAL    # locate the passage supporting a specific claim
+  - CONTEXT_RETRIEVAL     # recall from accumulated run context
+  - KNOWLEDGE_SEARCH      # query the external knowledge service
+  - VERIFICATION          # independently check a claim against evidence
+
+tools:
+  document_search:
+    enabled: true
+    capabilities: [DOCUMENT_SEARCH]
+    cost_hint: low          # low | medium | high — feeds the Phase 17 score
+    timeout_s: 30
+
+  document_extract:
+    enabled: true
+    capabilities: [DOCUMENT_EXTRACT]
+    cost_hint: medium       # PDF parsing dominates; scales with page count
+    timeout_s: 60
+
+  csv_analysis:
+    enabled: true
+    capabilities: [TABULAR_ANALYSIS, COMPUTATION]
+    cost_hint: low
+    timeout_s: 30
+
+  calculator:
+    enabled: true
+    capabilities: [COMPUTATION]
+    cost_hint: low
+    timeout_s: 10
+    # AST whitelist only. No eval(), no exec(), no imports — the spec's
+    # "no arbitrary code execution" rule is enforced in the parser, not by
+    # filtering input strings.
+    safe_mode: strict
+
+  evidence_retrieval:
+    enabled: true
+    capabilities: [EVIDENCE_RETRIEVAL]
+    cost_hint: low
+    timeout_s: 30
+
+  context_retrieval:
+    enabled: true
+    capabilities: [CONTEXT_RETRIEVAL]
+    cost_hint: low
+    timeout_s: 30
+    provider: local         # local | m2context — see Settings.context_provider
+
+  knowledge_search:
+    enabled: true
+    capabilities: [KNOWLEDGE_SEARCH]
+    cost_hint: medium
+    timeout_s: 30
+    provider: local         # falls back to the local document index
+
+  verification_tool:
+    enabled: true
+    capabilities: [VERIFICATION]
+    cost_hint: medium
+    timeout_s: 60
+    provider: baseline      # baseline | remote — see Settings.verification_provider
+
+# --- Fallback chains -----------------------------------------------------------
+# Walked in order when a tool fails permanently. When the chain is exhausted the
+# task is SKIPPED with a recorded EvidenceGap — never silently dropped, because a
+# silently dropped task produces a finding with invisibly missing support.
+fallbacks:
+  document_search:
+    - context_retrieval
+    - knowledge_search
+  evidence_retrieval:
+    - document_search
+    - context_retrieval
+  knowledge_search:
+    - document_search
+  csv_analysis:
+    - calculator
+  verification_tool: []     # no fallback: an unverified finding must stay unverified
+
+# --- Cost model ----------------------------------------------------------------
+# Heuristic and transparent. Phase 17 scores candidate actions as:
+#     (expected_information_gain * gap_severity) / (estimated_cost + epsilon)
+# These are the cost_hint multipliers. Deliberately coarse — precision here would
+# be false precision.
+cost_weights:
+  low: 1.0
+  medium: 3.0
+  high: 10.0
+  epsilon: 0.1

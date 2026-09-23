@@ -1,0 +1,132 @@
+# Agent evaluation configuration: what is measured, what counts as passing, and
+# what counts as a regression.
+#
+# Every number in a generated report is COMPUTED by a scorer from a real run.
+# No metric is ever hard-coded (invariant #5). Thresholds below are targets to
+# measure against, not values to display.
+#
+# Consumed by: Phase 20 (evaluation harness).
+
+version: 1
+
+# Runs are only comparable when the model and prompts are pinned. Every report
+# stamps these, and a report produced with different values is flagged rather
+# than silently compared.
+pinning:
+  require_model_stamp: true
+  require_prompt_version_stamp: true
+  require_config_hash: true
+  # Determinism knobs. Local models are not perfectly deterministic even at
+  # temperature 0, so scenario-level variance is reported, not hidden.
+  temperature: 0.0
+  seed: 42
+  repeats_per_scenario: 1      # raise to 3 when measuring variance
+
+metrics:
+  intent_accuracy:
+    description: Operation-set F1 against the expected intent
+    target: 0.90
+    regression_tolerance: 0.05
+
+  plan_validity:
+    description: Share of plans passing the validator with zero repairs
+    target: 0.95
+    regression_tolerance: 0.05
+
+  dependency_correctness:
+    description: Edge-level precision/recall against the expected DAG
+    target: 0.85
+    regression_tolerance: 0.05
+
+  tool_selection_accuracy:
+    description: Share of tasks routed to the expected tool
+    target: 0.90
+    regression_tolerance: 0.05
+    # Routing to the right capability class but the wrong tool within it is a
+    # different (lesser) failure, and is scored separately.
+    capability_class_target: 1.0
+
+  evidence_coverage:
+    description: Share of findings with at least one RESOLVED evidence reference
+    target: 0.90
+    regression_tolerance: 0.03
+
+  verification_success:
+    description: Share of candidate findings surviving independent verification
+    target: 0.85
+    regression_tolerance: 0.05
+
+  replanning_success:
+    description: Share of detected evidence gaps closed within the iteration ceiling
+    target: 0.80
+    regression_tolerance: 0.08
+
+  unsupported_claim_rate:
+    description: Share of report claims with no resolved evidence (hallucination proxy)
+    target: 0.05
+    direction: lower_is_better
+    regression_tolerance: 0.02
+    # The metric that matters most. A system that claims to be evidence-driven
+    # and emits unsupported claims has failed at the thing it exists to do.
+    fail_build_above: 0.15
+
+  task_efficiency:
+    description: Executed tasks divided by the minimal sufficient task count
+    target: 1.30
+    direction: lower_is_better
+    regression_tolerance: 0.20
+
+  latency_s:
+    description: Wall-clock per run, and per phase
+    target: 60.0
+    direction: lower_is_better
+    regression_tolerance: 0.50
+    # Local-inference latency on development hardware. Never compared against
+    # hosted-model numbers.
+
+suites:
+  smoke:
+    description: Fast confidence check on every change
+    scenarios: [basic_investigation]
+
+  core:
+    description: The six demo behaviours
+    scenarios:
+      - basic_investigation
+      - contradiction_detection
+      - evidence_gap
+      - failed_tool
+      - replanning
+      - complex_investigation
+
+  negative:
+    description: >
+      Cases where the correct answer is "there is nothing here". An agent that
+      always finds something is not investigating, it is confabulating.
+    scenarios:
+      - consistent_documents_no_contradiction
+      - insufficient_evidence_unresolvable
+    # These invert: finding something is the failure.
+    expect_zero_findings: true
+
+  all:
+    description: Everything, for release and experiment runs
+    scenarios: ["*"]
+
+regression:
+  # Compare against the last committed report for the same suite.
+  baseline: last_committed
+  # Fail if any metric degrades beyond its tolerance.
+  fail_on_regression: true
+  # A metric moving beyond tolerance in the GOOD direction is reported too —
+  # an unexplained improvement usually means the measurement broke.
+  report_unexplained_improvement: true
+
+reporting:
+  output_dir: .agent/evals/reports
+  formats: [json, markdown]
+  # Per-scenario breakdown, not just aggregates. An aggregate hides which
+  # scenario collapsed.
+  include_per_scenario: true
+  include_failed_findings: true
+  include_trace_refs: true

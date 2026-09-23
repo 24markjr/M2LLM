@@ -1,0 +1,86 @@
+# Model assignment per agent role.
+#
+# The model is NEVER a literal in engine code (ADR-003). Engines ask for a role;
+# this file maps roles to models and generation parameters.
+#
+# Consumed by: Phase 4 (LLM abstraction).
+
+version: 1
+
+# Resolved against the active provider (Settings.llm_provider). With
+# LLM_PROVIDER=echo every role is served by the deterministic fixture provider
+# and these settings are ignored.
+default: &default
+  model: qwen3:4b
+  temperature: 0.0     # planning and extraction are not creative tasks
+  seed: 42             # reproducibility: the same input yields the same plan
+  top_p: 0.9
+  max_tokens: 2048
+  format: json         # provider-level JSON constraint where supported
+
+roles:
+  # Interprets the user's objective into a validated Intent.
+  intent:
+    <<: *default
+    max_tokens: 1024
+
+  # Proposes a task decomposition. The application validates it into a legal DAG;
+  # the model is never trusted to produce one.
+  planner:
+    <<: *default
+    max_tokens: 3072
+
+  # Only invoked when >= 2 tools survive deterministic filtering. Most routing
+  # decisions never reach the model at all.
+  router:
+    <<: *default
+    max_tokens: 512
+
+  # Derives candidate findings from observations, with explicit source citations.
+  reasoning:
+    <<: *default
+    max_tokens: 4096
+
+  # Independent check of a claim against its evidence. Deliberately sees no
+  # reasoning trail — see agent.yaml:verification.independent_context.
+  verification:
+    <<: *default
+    max_tokens: 1536
+
+  # Writes prose only inside sections whose facts are already fixed. Numbers,
+  # confidences and evidence refs are injected programmatically.
+  synthesis:
+    <<: *default
+    temperature: 0.2   # the only role where some fluency is wanted
+    max_tokens: 4096
+
+  # Phrases retrieval queries for detected gaps. It does NOT decide whether a
+  # gap exists — that is deterministic, from element resolution.
+  evidence_gap:
+    <<: *default
+    max_tokens: 512
+
+embeddings:
+  model: nomic-embed-text
+  dimensions: 768      # must match the vector(768) column — see ADR-005
+  batch_size: 32
+
+# --- Structured output reliability --------------------------------------------
+# The largest practical risk in the project (risk register, Phase 4). Small local
+# models emit malformed JSON often enough that this must be a real component.
+structured_output:
+  max_repairs: 2       # re-prompt with the validation errors appended
+  # After exhausting repairs, raise StructuredOutputError carrying the raw text.
+  # The caller decides whether to degrade or fail the task; it never guesses.
+  on_exhausted: raise
+  # Repair counts are telemetry and become an evaluation metric. A model needing
+  # two repairs per call is a different proposition from one needing none.
+  record_repair_telemetry: true
+
+# --- Experiment 001 ------------------------------------------------------------
+# Phase 20 compares these on identical scenarios. Listed here so the comparison
+# set is explicit rather than improvised at experiment time.
+comparison_candidates:
+  - qwen3:4b
+  - qwen3:8b
+  - llama3.1:8b

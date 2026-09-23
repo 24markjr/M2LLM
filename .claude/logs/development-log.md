@@ -8,6 +8,73 @@ and what is still broken.
 
 ## 2026-09-23
 
+### 09:30 IST — Phase 1: Repository skeleton, `.agent` and `.claude`
+
+**Implemented**
+
+- Full `.agent/` structure with a README per directory documenting that directory's contract
+- Four `.agent/config/*.yaml` behaviour-policy files (agent, models, tools, evaluation)
+- Full `.claude/` structure: README + ADR index, four context documents, four section READMEs
+- `ADR-001` (modular monolith) and `ADR-004` (custom orchestration) — both Accepted
+- `ADR-006` (mutable task DAG) — Proposed, with three open questions for Phase 8
+
+**Design decision recorded this session: two configuration surfaces**
+
+`.env` / `Settings` and `.agent/config/*.yaml` could easily have drifted into duplicating
+each other. The split, documented in `.agent/README.md`:
+
+- `.env` -> `Settings`: **where things are, and hard safety ceilings** — database URL,
+  provider selection, `MAX_REPLAN_ITERATIONS`, `MAX_PARALLEL_TASKS`. Operator-owned,
+  per machine.
+- `.agent/config/*.yaml`: **how the agent behaves** — model roles, fallback chains, scoring
+  weights, evaluation thresholds. Engineer-owned, committed and reviewed.
+
+**The rule that makes the split safe:** YAML can never exceed an `.env` ceiling. Settings
+values are hard caps enforced at load time. If `agent.yaml` requests 8 replan iterations and
+`MAX_REPLAN_ITERATIONS=3`, the loader clamps to 3 and logs it. Behaviour policy is tunable
+from inside the repo; safety bounds are not. The clamping loader is a Phase 4 deliverable —
+until it exists, these YAML files are documented but not yet consumed, and that is stated
+in each file's header.
+
+**Also recorded:** `.agent/README.md` now carries a phase-to-file map, so it is explicit
+which files are deliberately absent rather than accidentally missing.
+
+**Files**
+
+```
+.agent/README.md
+.agent/config/{agent,models,tools,evaluation}.yaml
+.agent/{prompts,scenarios,tests,evals,traces,fixtures}/README.md
+.claude/README.md
+.claude/context/{project-overview,member-1-scope,architecture,terminology}.md
+.claude/{architecture,integrations,api,testing}/README.md
+.claude/decisions/{ADR-001-modular-monolith,ADR-004-custom-orchestration,ADR-006-task-graph}.md
+```
+
+**Tests / acceptance**
+
+- All four config YAML files parse -> OK
+- Six ADRs present -> OK
+- 11/11 core terms defined in `terminology.md` -> OK
+- No empty directories under `.agent/` or `.claude/` -> OK
+- `pytest` 10 passed, `ruff` clean, `mypy --strict` clean (unchanged — Phase 1 adds no code)
+
+**Environment progress since the last entry**
+
+- Ollama models pulled: `qwen3:4b` (2.5 GB) and `nomic-embed-text` (0.27 GB), both
+  registered. The healthcheck's two LLM rows are green.
+- WSL2 2.7.14 installed via an elevated `wsl --install`. Both optional features enabled;
+  DISM reports changes take effect after reboot.
+
+**Known issues**
+
+1. **Reboot pending.** The Docker engine cannot start until Windows restarts. Postgres is
+   the only outstanding Phase 0 acceptance criterion.
+2. The first `dev-up` after the reboot will start Postgres on **5433** (set in the local
+   `.env`) to avoid the pre-existing native PostgreSQL 17 on 5432.
+
+---
+
 ### 00:20 IST — Phase 0: Environment & bootstrap
 
 **Implemented**
