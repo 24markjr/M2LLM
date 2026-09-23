@@ -91,6 +91,54 @@ def extract_json(text: str) -> str:
     return stripped
 
 
+# Keys a model emits when it echoes the schema it was shown back into its answer.
+_SCHEMA_ARTIFACTS = frozenset(
+    {
+        "$defs",
+        "$schema",
+        "definitions",
+        "title",
+        "type",
+        "properties",
+        "required",
+        "additionalProperties",
+        "description",
+    }
+)
+
+
+def strip_schema_echo(payload: object, schema: type[BaseModel]) -> object:
+    """Drop schema definitions a model pasted alongside its answer.
+
+    Small models frequently return the schema *and* the data:
+
+        {"$defs": {...}, "findings": [...]}
+
+    Under `extra="forbid"` that is rejected, so a perfectly good answer is discarded
+    because of the wrapper it arrived in. This removes only top-level keys that are
+    JSON-Schema artifacts **and** are not declared fields of the target model - so a schema
+    whose own field happens to be called `type` or `description` is untouched.
+
+    This is the same category of accommodation as tolerating code fences: it corrects for
+    how these models actually behave, without relaxing what counts as valid data.
+    """
+    if not isinstance(payload, dict):
+        return payload
+
+    declared = set(schema.model_fields)
+    cleaned = {k: v for k, v in payload.items() if k in declared or k not in _SCHEMA_ARTIFACTS}
+
+    if cleaned != payload and cleaned:
+        log.info(
+            "schema_echo_stripped",
+            schema=schema.__name__,
+            removed=sorted(set(payload) - set(cleaned)),
+        )
+    # If stripping left nothing, the response was schema and no answer; return the original
+    # so validation reports the real problem rather than an empty object.
+    return cleaned or payload
+
+
 def _format_errors(exc: ValidationError) -> str:
     """Render validation errors as instructions the model can act on."""
     lines: list[str] = []
@@ -142,7 +190,7 @@ async def generate_structured[T: BaseModel](
         last_text = response.text
 
         try:
-            payload = json.loads(extract_json(response.text))
+            payload = strip_schema_echo(json.loads(extract_json(response.text)), schema)
             result = schema.model_validate(payload)
         except (json.JSONDecodeError, ValidationError) as exc:
             last_errors = (

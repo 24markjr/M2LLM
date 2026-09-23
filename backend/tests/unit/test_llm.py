@@ -349,3 +349,78 @@ def test_versions_reports_only_loaded_prompts(tmp_path: Path) -> None:
     assert library.versions() == {}
     library.get("a")
     assert library.versions() == {"a": 2}
+
+
+# --- schema echo ---------------------------------------------------------------
+
+
+def test_a_model_echoing_the_schema_still_yields_its_answer() -> None:
+    """Observed with qwen3:4b: the model returns the schema *and* the data.
+
+    Under extra="forbid" that rejected a perfectly good answer because of the wrapper it
+    arrived in.
+    """
+    from app.llm.structured import strip_schema_echo
+
+    payload = {
+        "$defs": {"Simple": {"type": "object"}},
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Simple",
+        "name": "recovered",
+        "count": 3,
+    }
+    cleaned = strip_schema_echo(payload, Simple)
+
+    assert cleaned == {"name": "recovered", "count": 3}
+    assert Simple.model_validate(cleaned)
+
+
+def test_stripping_never_removes_a_declared_field() -> None:
+    """A schema whose own field is called `type` or `description` must be untouched."""
+    from app.llm.structured import strip_schema_echo
+
+    class Shaped(JarvisModel):
+        type: str
+        description: str
+
+    payload = {"type": "report", "description": "a real value", "$defs": {}}
+    assert strip_schema_echo(payload, Shaped) == {"type": "report", "description": "a real value"}
+
+
+def test_a_clean_payload_is_returned_unchanged() -> None:
+    from app.llm.structured import strip_schema_echo
+
+    payload = {"name": "a", "count": 1}
+    assert strip_schema_echo(payload, Simple) == payload
+
+
+def test_a_response_of_pure_schema_is_left_for_validation_to_reject() -> None:
+    """Stripping everything would hide the real problem behind an empty object."""
+    from app.llm.structured import strip_schema_echo
+
+    payload = {"$defs": {}, "title": "Simple"}
+    assert strip_schema_echo(payload, Simple) == payload
+
+
+def test_a_list_payload_passes_through() -> None:
+    from app.llm.structured import strip_schema_echo
+
+    assert strip_schema_echo([1, 2, 3], Simple) == [1, 2, 3]
+
+
+async def test_the_repair_loop_recovers_a_schema_wrapped_answer() -> None:
+    """End to end: no repair attempt is spent on a wrapper."""
+    collector = get_collector()
+    collector.clear()
+    provider = EchoProvider(
+        responses={
+            "intent": [
+                '{"$defs": {"x": {}}, "title": "Simple", "name": "ok", "count": 2}',
+            ]
+        }
+    )
+
+    result = await generate_structured(provider, Simple, "prompt", role="intent")
+
+    assert result.name == "ok"
+    assert collector.records[-1].repair_attempt == 0, "recovered without spending a repair"
