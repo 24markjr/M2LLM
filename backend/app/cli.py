@@ -23,10 +23,12 @@ from app.intelligence.execution.engine import ExecutionEngine
 from app.intelligence.graph.task_graph import TaskGraph
 from app.intelligence.intent.engine import IntentEngine, derive_operations
 from app.intelligence.planner.engine import PlanInvalidError, Planner, execution_levels
+from app.intelligence.reasoning.engine import ReasoningEngine
 from app.intelligence.router.engine import NoCapableToolError, ToolRouter
 from app.llm import get_provider
 from app.schemas.common import new_run_id
 from app.schemas.event import EventType
+from app.schemas.execution import Observation
 from app.schemas.objective import AttachedDocument, DocumentKind, Objective, ObjectiveScope
 from app.schemas.plan import Plan
 from app.tools.base import ToolContext, build_default_registry
@@ -197,7 +199,8 @@ async def run_investigate(text: str, docs: list[str]) -> int:
 
     await _print_routing(plan, emitter)
 
-    await _execute(plan, docs, emitter, sink)
+    observations = await _execute(plan, docs, emitter, sink)
+    await _reason(objective, observations, emitter)
 
     validation = plan.validation
     if validation:
@@ -248,13 +251,13 @@ async def _print_routing(plan: Plan, emitter: RunEventEmitter) -> None:
 
 async def _execute(
     plan: Plan, docs: list[str], emitter: RunEventEmitter, sink: MemoryEventSink
-) -> None:
+) -> list[Observation]:
     """Run the plan. This is where JARVIS stops planning and starts doing."""
     documents = _load_documents(docs)
     if not documents:
         print()
         print("(no fixture documents matched - skipping execution)")
-        return
+        return []
 
     registry = build_default_registry()
     graph = TaskGraph.from_plan(plan)
@@ -290,7 +293,47 @@ async def _execute(
         print(f"  ... and {len(sources) - 8} more")
 
     print()
-    print("(reasoning over these observations is Phase 13 - not yet built)")
+    return observations
+
+
+async def _reason(
+    objective: Objective, observations: list[Observation], emitter: RunEventEmitter
+) -> None:
+    """Turn observations into findings, each bound to evidence that actually exists."""
+    if not observations:
+        return
+
+    print()
+    print(RULE)
+    print("REASONING")
+    print(RULE)
+    print(f"deriving findings from {len(observations)} observation(s) ...")
+
+    findings = await ReasoningEngine(get_provider()).derive_findings(
+        objective, observations, emit=emitter
+    )
+
+    if not findings:
+        print()
+        print("no findings could be supported by the evidence gathered")
+        print("(an honest empty result - the system does not invent one to fill the gap)")
+        return
+
+    for finding in findings:
+        print()
+        print(f"  {finding.finding_id}  [{finding.classification.value}] {finding.claim}")
+        print(f"        confidence : {finding.confidence.explain()}")
+        for ref in finding.evidence:
+            mark = "resolved  " if ref.is_resolved else "UNRESOLVED"
+            note = "" if ref.is_resolved else f"  <- {ref.resolution_note}"
+            print(f"        {mark} {ref.as_ref()}{note}")
+
+    supported = sum(1 for f in findings if f.has_resolved_evidence)
+    print()
+    print(f"findings        : {len(findings)}")
+    print(f"with evidence   : {supported}/{len(findings)}")
+    print()
+    print("(verification and evidence-gap detection are Phases 15 and 14)")
 
 
 def _print_llm_stats(sink: MemoryEventSink) -> None:
