@@ -19,6 +19,8 @@ import sys
 
 from app.core.events import EventBus, MemoryEventSink, RunEventEmitter
 from app.core.logging import configure_logging
+from app.intelligence.execution.engine import ExecutionEngine
+from app.intelligence.graph.task_graph import TaskGraph
 from app.intelligence.intent.engine import IntentEngine, derive_operations
 from app.intelligence.planner.engine import PlanInvalidError, Planner, execution_levels
 from app.intelligence.router.engine import NoCapableToolError, ToolRouter
@@ -27,7 +29,7 @@ from app.schemas.common import new_run_id
 from app.schemas.event import EventType
 from app.schemas.objective import AttachedDocument, DocumentKind, Objective, ObjectiveScope
 from app.schemas.plan import Plan
-from app.tools.base import build_default_registry
+from app.tools.base import ToolContext, build_default_registry
 
 RULE = "-" * 78
 
@@ -50,6 +52,24 @@ def _build_objective(text: str, docs: list[str]) -> Objective:
         for name in docs
     ]
     return Objective(text=text, scope=ObjectiveScope(documents=attached))
+
+
+def _load_documents(names: list[str]) -> dict[str, str]:
+    """Read fixture documents from .agent/fixtures/.
+
+    Real files with planted contradictions - the execution engine needs something genuine to
+    work on, and fabricated in-memory content would make the demo meaningless.
+    """
+    from app.core.config import get_settings
+
+    root = get_settings().agent_dir / "fixtures"
+    contents: dict[str, str] = {}
+    for name in names:
+        for candidate in (root / "documents" / name, root / "csv" / name):
+            if candidate.exists():
+                contents[name] = candidate.read_text(encoding="utf-8")
+                break
+    return contents
 
 
 def _print_header(title: str, run_id: str, model: str, text: str, docs: list[str]) -> None:
@@ -177,6 +197,8 @@ async def run_investigate(text: str, docs: list[str]) -> int:
 
     await _print_routing(plan, emitter)
 
+    await _execute(plan, docs, emitter, sink)
+
     validation = plan.validation
     if validation:
         print()
@@ -222,6 +244,53 @@ async def _print_routing(plan: Plan, emitter: RunEventEmitter) -> None:
 
     summary = ", ".join(f"{count} {mode.lower()}" for mode, count in sorted(modes.items()))
     print(f"\nselection modes : {summary}")
+
+
+async def _execute(
+    plan: Plan, docs: list[str], emitter: RunEventEmitter, sink: MemoryEventSink
+) -> None:
+    """Run the plan. This is where JARVIS stops planning and starts doing."""
+    documents = _load_documents(docs)
+    if not documents:
+        print()
+        print("(no fixture documents matched - skipping execution)")
+        return
+
+    registry = build_default_registry()
+    graph = TaskGraph.from_plan(plan)
+    engine = ExecutionEngine(graph, registry, ToolRouter(registry), emit=emitter)
+    ctx = ToolContext(run_id=emitter.run_id, document_ids=list(documents), documents=documents)
+
+    print()
+    print(RULE)
+    print(f"EXECUTION  ({len(documents)} document(s) loaded)")
+    print(RULE)
+
+    observations = await engine.run(ctx)
+
+    for task in graph.tasks:
+        tool = task.selection.tool_name if task.selection else "-"
+        note = ""
+        if task.result and task.result.ok:
+            note = next((o.content for o in observations if o.task_id == task.task_id), "")
+        elif task.result:
+            note = task.result.error_message[:60]
+        print(f"  {task.task_id}  {task.status.value:<10} {tool:<20} {note}")
+
+    done, total = graph.progress()
+    sources = sorted({s for o in observations for s in o.sources})
+    print()
+    print(f"tasks completed : {done}/{total}")
+    print(f"observations    : {len(observations)}")
+    print(f"tool calls      : {engine.budget.tool_calls_used}/{engine.budget.tool_calls_limit}")
+    print(f"evidence found  : {len(sources)} located passage(s)")
+    for source in sources[:8]:
+        print(f"  - {source}")
+    if len(sources) > 8:
+        print(f"  ... and {len(sources) - 8} more")
+
+    print()
+    print("(reasoning over these observations is Phase 13 - not yet built)")
 
 
 def _print_llm_stats(sink: MemoryEventSink) -> None:

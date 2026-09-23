@@ -1,0 +1,19 @@
+PROJECT HELIX - STATUS REPORT
+Reporting period: Q1 2026
+Prepared by: Programme Office
+
+1. SCOPE
+The Helix migration moves the claims platform onto the new core.
+
+2. SCHEDULE
+Project start date was 2026-01-12.
+The target completion date is 2026-04-30.
+The final milestone M4 is scheduled to close on 2026-04-28.
+All milestones remain on track as of this report.
+
+3. BUDGET
+The approved budget for the migration phase is 380,000.
+Spend to date is reported by Finance separately.
+
+4. RISKS
+Vendor availability in March remains the principal schedule risk.

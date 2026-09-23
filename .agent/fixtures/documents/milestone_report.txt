@@ -1,0 +1,10 @@
+PROJECT HELIX - MILESTONE REPORT
+Prepared by: Delivery
+
+M1 requirements sign-off closed 2026-02-03.
+M2 build complete closed 2026-03-19.
+M3 user acceptance closed 2026-04-22.
+M4 go-live closed 2026-05-14.
+
+Milestone M4 closed later than the date given in the programme report.
+The approved baseline schedule is held by the PMO and is not attached here.
