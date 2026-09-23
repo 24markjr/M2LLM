@@ -21,10 +21,13 @@ from app.core.events import EventBus, MemoryEventSink, RunEventEmitter
 from app.core.logging import configure_logging
 from app.intelligence.intent.engine import IntentEngine, derive_operations
 from app.intelligence.planner.engine import PlanInvalidError, Planner, execution_levels
+from app.intelligence.router.engine import NoCapableToolError, ToolRouter
 from app.llm import get_provider
 from app.schemas.common import new_run_id
 from app.schemas.event import EventType
 from app.schemas.objective import AttachedDocument, DocumentKind, Objective, ObjectiveScope
+from app.schemas.plan import Plan
+from app.tools.base import build_default_registry
 
 RULE = "-" * 78
 
@@ -172,6 +175,8 @@ async def run_investigate(text: str, docs: list[str]) -> int:
         parallel = "   <- these run in parallel" if len(level) > 1 else ""
         print(f"  wave {index}: {', '.join(level)}{parallel}")
 
+    await _print_routing(plan, emitter)
+
     validation = plan.validation
     if validation:
         print()
@@ -187,6 +192,36 @@ async def run_investigate(text: str, docs: list[str]) -> int:
     print(RULE)
     print()
     return 0
+
+
+async def _print_routing(plan: Plan, emitter: RunEventEmitter) -> None:
+    """Show which tool serves each task, and how that was decided.
+
+    The mode column is the point: DETERMINISTIC means the capability filter left exactly one
+    candidate and no model was consulted. That is what makes tool-selection accuracy a
+    property of the system rather than of the model.
+    """
+    registry = build_default_registry()
+    router = ToolRouter(registry, get_provider())
+
+    print()
+    print(RULE)
+    print(f"TOOL ROUTING  ({registry.count} tools registered)")
+    print(RULE)
+
+    modes: dict[str, int] = {}
+    for task in plan.tasks:
+        try:
+            selection = await router.route(task, emit=emitter)
+        except NoCapableToolError:
+            print(f"  {task.task_id}  {'(no capable tool)':<22} SKIPPED - recorded, not dropped")
+            modes["SKIPPED"] = modes.get("SKIPPED", 0) + 1
+            continue
+        modes[selection.mode.value] = modes.get(selection.mode.value, 0) + 1
+        print(f"  {task.task_id}  {selection.tool_name:<22} {selection.mode.value}")
+
+    summary = ", ".join(f"{count} {mode.lower()}" for mode, count in sorted(modes.items()))
+    print(f"\nselection modes : {summary}")
 
 
 def _print_llm_stats(sink: MemoryEventSink) -> None:

@@ -1,8 +1,8 @@
 # JARVIS — Demo Script
 
 **For:** external evaluator review
-**Status at this demo:** Phases 0-2, 4-7 complete. Phase 3 (persistence) blocked on a
-pending WSL2 reboot. Phases 8+ not started.
+**Status at this demo:** Phases 0-2, 4-7, 9-10 complete. Phase 3 (persistence) blocked on a
+pending WSL2 reboot. Phases 8, 11+ not started.
 
 Be straight about what this is: **the foundation and the first agent component**, built to a
 standard, not a finished product. What follows is what actually runs today.
@@ -81,6 +81,30 @@ clean           : True  (no repairs, no re-prompts)
 
 ---
 
+
+**The tool routing table.** This is the fourth pillar of the role - selecting tools:
+
+```
+TOOL ROUTING  (5 tools registered)
+  task_001  document_extract       DETERMINISTIC
+  task_004  calculator             FALLBACK
+  task_005  calculator             LLM_TIEBREAK
+  ...
+selection modes : 6 deterministic, 1 fallback, 1 llm_tiebreak
+```
+
+> Routing runs in three stages. First a capability filter - the task type declares what it
+> needs, and only tools serving that capability survive. Then schema compatibility: can the
+> task's inputs actually satisfy the tool's required fields? Only if two or more candidates
+> still remain does the model break the tie.
+>
+> Six of these eight never consulted the model at all. That is deliberate: it makes tool
+> selection accuracy measurable and largely model-independent. If the model chose every
+> time, the metric would be measuring the model rather than the system, and it would move
+> for reasons nobody could attribute.
+
+---
+
 ## 3. Live: the agent refuses to guess (1 min)
 
 ```bash
@@ -121,8 +145,8 @@ If the model cannot produce a legal plan in three attempts, the run fails with
 ## 5. The engineering standard (2 min)
 
 ```bash
-python -m pytest tests -q -m "not llm"     # 223 passed
-mypy app                                    # clean, strict mode, 39 files
+python -m pytest tests -q -m "not llm"     # 255 passed
+mypy app                                    # clean, strict mode, 43 files
 ```
 
 **Show `tests/unit/test_llm_isolation.py`.** It's the most unusual thing in the repo. It
@@ -147,9 +171,10 @@ Confidence.compute(refs=..., classification=...)   # the only way
 
 | Phase | Status |
 |---|---|
-| 0-2, 4-7 | Complete: environment, schemas, LLM layer, event bus, intent engine, planner |
+| 0-2, 4-7, 9-10 | Complete: environment, schemas, LLM layer, event bus, intent, planner, tools, router |
 | 3 | Blocked on a pending WSL2 install for Docker/Postgres |
-| 8-9 | Task graph engine and tool system - the first executing vertical slice |
+| 8, 11 | Task graph engine and execution engine - makes the plan actually run |
+| 13 | Reasoning engine - findings with bound evidence |
 | 14, 16 | Evidence gap detection and adaptive replanning - the headline features |
 | 20 | Evaluation harness - the measured metrics |
 
@@ -167,7 +192,7 @@ throughout: the planner proposes a decomposition and the system validates it int
 legal DAG. The model's output is an input to the system, not the system's output.
 
 **"How do you know it works?"**
-223 tests today, plus `.agent/` — scenarios that assert against the *execution trace*, not
+255 tests today, plus `.agent/` — scenarios that assert against the *execution trace*, not
 the prose. An agent can produce a plausible report while skipping every step that made it
 trustworthy; asserting on the trace catches that, asserting on the output does not. The
 evaluation harness in Phase 20 computes ten metrics, none hard-coded.
