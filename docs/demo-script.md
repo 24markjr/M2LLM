@@ -1,7 +1,7 @@
 # JARVIS — Demo Script
 
 **For:** external evaluator review
-**Status at this demo:** Phases 0–2, 4–6 complete. Phase 3 (persistence) blocked on a
+**Status at this demo:** Phases 0-2, 4-7 complete. Phase 3 (persistence) blocked on a
 pending WSL2 reboot. Phases 7+ not started.
 
 Be straight about what this is: **the foundation and the first agent component**, built to a
@@ -18,7 +18,8 @@ python -m app.cli health          # run from backend/
 ```
 
 **Warm the model first.** The first call loads qwen3:4b into VRAM and takes ~36 s; every
-call after that is ~3 s. Run any command once before the demo starts.
+call after that is ~3 s for intent, ~60 s for a full investigate (two calls, the planner
+emits a lot of tokens). Run any command once before the demo starts.
 
 ```bash
 cd backend
@@ -35,62 +36,93 @@ python -m app.cli intent "warm up"
 
 ---
 
-## 2. Live: the agent interprets an objective (2 min)
+## 2. Live: objective to a validated task graph (3 min)
+
+**This is the main demo.** One command, end to end.
 
 ```bash
 cd backend
-python -m app.cli intent "Investigate these project reports and determine whether the timeline and budget information is consistent." --docs project_report.pdf financial_report.pdf budget.csv
+python -m app.cli investigate "Investigate these project reports and determine whether the timeline and budget information is consistent." --docs project_report.pdf financial_report.pdf budget.csv
 ```
 
-**Point at three things in the output:**
+Takes ~60 s warm (two model calls). Talk while it runs.
 
-**The pre-pass.** Four operations are derived *before the model is called at all*, from
-keywords and file types. The model is never the only signal — and if it fails, the system
-still produces a usable intent rather than nothing.
+**Point at four things in the output:**
 
-**The execution trace.** Every state transition is recorded with a millisecond offset from
-the run start. This is not logging: the whole run is reconstructable from this timeline, and
-it's what the UI and the evaluation harness will both read.
+**The trace.** Every state transition with a millisecond offset. The run is reconstructable
+from this alone - it is what the UI and the evaluation harness will both read.
+
+**The task graph.** 13 tasks with real dependencies. Nobody wrote these steps; the agent
+decomposed the objective itself.
+
+**The execution waves.** This is the bit worth pausing on:
 
 ```
-00:00.000 RUN_STARTED
-00:03.256 LLM_CALL_COMPLETED
-00:03.257 INTENT_CREATED
-00:03.257 RUN_COMPLETED
+  wave 1: task_002, task_003   <- these run in parallel
+  wave 2: task_004, task_005   <- these run in parallel
 ```
 
-**The structured intent.** Natural language in; a validated object out, with operations drawn
-from a closed vocabulary of 18. Note `repair attempts: 0` — that number is measured, not
-assumed.
+> Extracting the timeline from one document and the budget from another are independent, so
+> the graph says so and they can run concurrently. Comparing them depends on both. That is a
+> DAG doing work, not a list of steps.
+
+**The validation line.**
+
+```
+validation      : PASSED
+clean           : True  (no repairs, no re-prompts)
+```
+
+> `clean` is the important word. The model proposed this decomposition; the *system* checked
+> it for cycles, dangling dependencies, orphan tasks and whether it actually covers every
+> operation the intent required. `clean` means it passed first time with no repairs. A plan
+> that needed three repairs is valid but rescued, and we count those separately - otherwise
+> a planner could silently degrade and the metric would never notice.
 
 ---
 
 ## 3. Live: the agent refuses to guess (1 min)
 
 ```bash
-python -m app.cli intent "Look at these files." --docs report.pdf
+python -m app.cli investigate "Look at these files." --docs report.pdf
 ```
 
-Output ends with:
+Stops before planning:
 
 ```
 CLARIFICATION NEEDED
   What specifically should be investigated in these documents - for example a
   consistency check, a comparison, or a summary?
-  (an ambiguous objective must not produce a confident plan)
+  (planning stops here - an ambiguous objective must not produce a plan)
 ```
 
-> This is the behaviour I care most about at this stage. A system that produces a confident
-> plan from a vague request wastes the entire run and produces findings nobody asked for.
-> Ambiguity is a valid answer.
+> A system that plans confidently from a vague request wastes the whole run and produces
+> findings nobody asked for. Ambiguity is a valid answer.
 
 ---
 
-## 4. The engineering standard (2 min)
+## 4. If asked: what stops a bad plan executing (1 min)
+
+Show `app/intelligence/planner/validator.py`. Ten violation codes, each with a test that
+feeds the validator a deliberately malformed plan:
+
+| Violation | Why it matters |
+|---|---|
+| `CYCLE` | Would hang the scheduler. The path is reported, not just the fact |
+| `UNCOVERED_OPERATION` | The plan silently dropped part of the request |
+| `ORPHAN_TASK` | Output produced and discarded - wasted budget |
+| `NO_TERMINAL_TASK` | Nothing consumes the analysis, so no report |
+
+If the model cannot produce a legal plan in three attempts, the run fails with
+`PLAN_INVALID` rather than executing something malformed.
+
+---
+
+## 5. The engineering standard (2 min)
 
 ```bash
-python -m pytest tests -q -m "not llm"     # 196 passed
-mypy app                                    # clean, strict mode, 36 files
+python -m pytest tests -q -m "not llm"     # 223 passed
+mypy app                                    # clean, strict mode, 39 files
 ```
 
 **Show `tests/unit/test_llm_isolation.py`.** It's the most unusual thing in the repo. It
@@ -111,13 +143,13 @@ Confidence.compute(refs=..., classification=...)   # the only way
 
 ---
 
-## 5. What's next, honestly (1 min)
+## 6. What's next, honestly (1 min)
 
 | Phase | Status |
 |---|---|
-| 0-2, 4-6 | Complete: environment, schemas, LLM layer, event bus, intent engine |
+| 0-2, 4-7 | Complete: environment, schemas, LLM layer, event bus, intent engine, planner |
 | 3 | Blocked on a pending WSL2 install for Docker/Postgres |
-| 7-9 | Planner, task graph, tool system - the first end-to-end vertical slice |
+| 8-9 | Task graph engine and tool system - the first executing vertical slice |
 | 14, 16 | Evidence gap detection and adaptive replanning - the headline features |
 | 20 | Evaluation harness - the measured metrics |
 
