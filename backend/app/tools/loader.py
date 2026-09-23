@@ -47,6 +47,9 @@ class LoadedDocument(JarvisModel):
     page_count: int = 0
     line_count: int = 0
     size_bytes: int = 0
+    # Line number at which each page begins, in order. Empty for non-paginated documents.
+    # This is what lets a tool report `report.pdf:p12` instead of `report.pdf:r847`.
+    page_starts: list[int] = Field(default_factory=list)
 
     @property
     def summary(self) -> str:
@@ -78,10 +81,16 @@ def load_pdf(path: Path, *, max_pages: int = MAX_PDF_PAGES) -> LoadedDocument:
         total = len(reader.pages)
         pages = reader.pages[:max_pages]
         chunks: list[str] = []
+        page_starts: list[int] = []
+        line_number = 1
         for number, page in enumerate(pages, start=1):
             extracted = (page.extract_text() or "").strip()
-            chunks.append(f"--- page {number} ---")
-            chunks.append(extracted or "(no extractable text on this page)")
+            body = extracted or "(no extractable text on this page)"
+            page_starts.append(line_number)
+            marker = f"--- page {number} ---"
+            chunks.append(marker)
+            chunks.append(body)
+            line_number += 1 + body.count("\n") + 1
         text = "\n".join(chunks)
     except DocumentLoadError:
         raise
@@ -98,6 +107,7 @@ def load_pdf(path: Path, *, max_pages: int = MAX_PDF_PAGES) -> LoadedDocument:
         page_count=min(total, max_pages),
         line_count=text.count("\n") + 1,
         size_bytes=path.stat().st_size,
+        page_starts=page_starts,
     )
 
 
@@ -179,3 +189,32 @@ class ResultCap(JarvisModel):
 def cap[T](items: list[T], limit: int) -> tuple[list[T], ResultCap]:
     """Take the first `limit` items and report how many there were."""
     return items[:limit], ResultCap(found=len(items), returned=min(len(items), limit))
+
+
+def page_for_line(page_starts: list[int], line: int) -> int | None:
+    """Which page a line falls on, given where each page begins.
+
+    Returns None for a document with no pages, so a caller can fall back to a line
+    locator rather than inventing a page number.
+    """
+    if not page_starts:
+        return None
+    page = 0
+    for index, start in enumerate(page_starts, start=1):
+        if line >= start:
+            page = index
+        else:
+            break
+    return page or 1
+
+
+def source_ref(document_id: str, line: int, page_starts: dict[str, list[int]]) -> str:
+    """The citation a tool emits for a location.
+
+    Paginated documents cite a page, because that is what a human can turn to. Everything
+    else cites a line. Both resolve; only one is checkable by a reader holding the PDF.
+    """
+    page = page_for_line(page_starts.get(document_id, []), line)
+    if page is not None:
+        return f"{document_id}:p{page}"
+    return f"{document_id}:r{line}"

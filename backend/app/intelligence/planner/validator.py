@@ -122,10 +122,37 @@ def repair(
 
         fixed.append(task.model_copy(update={"depends_on": deps}))
 
+    fixed = fixed[:max_tasks]
+
+    # An orphan is wasteful, not unexecutable: its output is produced and then discarded.
+    # Rejecting the whole plan over one would throw away good work, and small models emit
+    # them persistently enough that re-prompting does not reliably fix it. Connecting the
+    # orphan to the terminal task preserves the work instead of discarding it, and is a
+    # deterministic fix requiring no judgement.
+    terminal = next((t for t in reversed(fixed) if t.task_type in TERMINAL_TYPES), None)
+    if terminal is not None:
+        depended_on = {d for t in fixed for d in t.depends_on}
+        orphans = [
+            t.task_id
+            for t in fixed
+            if t.task_id not in depended_on
+            and t.task_type not in TERMINAL_TYPES
+            and t.task_id != terminal.task_id
+        ]
+        if orphans:
+            terminal.depends_on = list(dict.fromkeys([*terminal.depends_on, *orphans]))
+            repairs.append(
+                PlanRepair(
+                    action=RepairAction.CONNECTED_ORPHAN,
+                    detail=f"{terminal.task_id} now consumes {orphans}",
+                    task_ids=orphans,
+                )
+            )
+
     dependencies = [
         TaskDependency(task_id=t.task_id, depends_on_task_id=d) for t in fixed for d in t.depends_on
     ]
-    return fixed[:max_tasks], dependencies, repairs
+    return fixed, dependencies, repairs
 
 
 def validate(

@@ -390,3 +390,51 @@ def test_candidate_plan_accepts_an_empty_task_list() -> None:
     """A model failure degrades to an empty candidate, which the validator then rejects."""
     assert CandidatePlan().tasks == []
     assert CandidateTask().type == ""
+
+
+def test_an_orphan_is_connected_to_the_terminal_task_rather_than_rejecting_the_plan() -> None:
+    """An orphan is wasteful, not unexecutable.
+
+    Rejecting a whole plan over one would throw away good work, and small models emit them
+    persistently enough that re-prompting does not reliably fix it. Connecting the orphan to
+    the terminal task preserves the work instead of discarding it.
+    """
+    tasks = [
+        _task(1, TaskType.EXTRACT_TIMELINE),
+        _task(2, TaskType.EXTRACT_BUDGET),  # nothing consumes this
+        _task(3, TaskType.SYNTHESIZE, ["task_001"]),
+    ]
+    repaired, dependencies, repairs = repair(tasks, MAX)
+
+    assert RepairAction.CONNECTED_ORPHAN in {r.action for r in repairs}
+    terminal = next(t for t in repaired if t.task_type is TaskType.SYNTHESIZE)
+    assert "task_002" in terminal.depends_on
+    assert ("task_002", "task_003") in {(d.depends_on_task_id, d.task_id) for d in dependencies}
+
+
+def test_a_repaired_orphan_plan_then_validates() -> None:
+    """The repair must actually clear the violation it exists for."""
+    tasks = [
+        _task(1, TaskType.EXTRACT_TIMELINE),
+        _task(2, TaskType.COMPARE_SOURCES),
+        _task(3, TaskType.SYNTHESIZE, ["task_001"]),
+    ]
+    repaired, _, _ = repair(tasks, MAX)
+    result = validate(repaired, _intent(Operation.COMPARE_SOURCES), max_tasks=MAX)
+
+    assert ViolationCode.ORPHAN_TASK not in {v.code for v in result.violations}
+
+
+def test_repairing_orphans_keeps_the_graph_acyclic() -> None:
+    tasks = [
+        _task(1, TaskType.EXTRACT_TIMELINE),
+        _task(2, TaskType.EXTRACT_BUDGET),
+        _task(3, TaskType.SYNTHESIZE, ["task_001"]),
+    ]
+    repaired, _, _ = repair(tasks, MAX)
+    assert find_cycle(repaired) == []
+
+
+def test_a_clean_plan_gains_no_orphan_repair() -> None:
+    _, _, repairs = repair(_valid_tasks(), MAX)
+    assert RepairAction.CONNECTED_ORPHAN not in {r.action for r in repairs}

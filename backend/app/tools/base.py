@@ -32,6 +32,10 @@ class ToolContext(JarvisModel):
     document_ids: list[str] = Field(default_factory=list)
     # Text content keyed by document id, supplied by the execution engine.
     documents: dict[str, str] = Field(default_factory=dict)
+    # Where each page begins, per paginated document. Lets tools cite a page rather than
+    # a line, which is the difference between a citation a reader can check and one they
+    # cannot.
+    page_starts: dict[str, list[int]] = Field(default_factory=dict)
 
 
 class Tool(ABC):

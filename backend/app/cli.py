@@ -74,14 +74,11 @@ def _resolve(name: str) -> Path:
     return direct
 
 
-def _load_documents(names: list[str]) -> dict[str, str]:
-    """Load the run's documents, reporting anything that was too large to read whole."""
+def _load_documents(names: list[str]) -> tuple[dict[str, str], dict[str, list[int]]]:
+    """Load the run's documents, with the page map that makes PDF citations checkable."""
     documents, loaded = load_documents([_resolve(n) for n in names])
-
-    for document in loaded:
-        if document.truncated:
-            print(f"  ! {document.document_id}: {document.omitted_note}")
-    return documents
+    page_starts = {d.document_id: d.page_starts for d in loaded if d.page_starts}
+    return documents, page_starts
 
 
 def _print_documents(names: list[str]) -> list[str]:
@@ -284,7 +281,7 @@ async def _execute(
     Returns the graph and registry as well as the observations: the replanning loop
     edits the *same* graph, which is what makes an inserted task part of this run
     rather than a separate one."""
-    documents = _load_documents(docs)
+    documents, page_starts = _load_documents(docs)
     if not documents:
         print()
         print("(no fixture documents matched - skipping execution)")
@@ -293,7 +290,12 @@ async def _execute(
     registry = build_default_registry()
     graph = TaskGraph.from_plan(plan)
     engine = ExecutionEngine(graph, registry, ToolRouter(registry), emit=emitter)
-    ctx = ToolContext(run_id=emitter.run_id, document_ids=list(documents), documents=documents)
+    ctx = ToolContext(
+        run_id=emitter.run_id,
+        document_ids=list(documents),
+        documents=documents,
+        page_starts=page_starts,
+    )
 
     print()
     print(RULE)
@@ -345,7 +347,7 @@ async def _investigate(
         return
 
     provider = get_provider()
-    documents = _load_documents(docs)
+    documents, page_starts = _load_documents(docs)
 
     print()
     print(RULE)
@@ -361,7 +363,12 @@ async def _investigate(
         verifier=build_verification_provider(provider),
         emit=emitter,
     )
-    ctx = ToolContext(run_id=emitter.run_id, document_ids=list(documents), documents=documents)
+    ctx = ToolContext(
+        run_id=emitter.run_id,
+        document_ids=list(documents),
+        documents=documents,
+        page_starts=page_starts,
+    )
     result = await controller.run(objective, observations, ctx)
 
     if not result.findings:

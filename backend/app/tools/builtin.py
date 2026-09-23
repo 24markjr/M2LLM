@@ -21,7 +21,7 @@ from pydantic import Field
 from app.schemas.common import CostHint, FailureClass, JarvisModel
 from app.schemas.tool import ToolCall, ToolCapability, ToolResult
 from app.tools.base import Tool, ToolContext
-from app.tools.loader import MAX_CSV_ROWS, ResultCap, cap
+from app.tools.loader import MAX_CSV_ROWS, ResultCap, cap, source_ref
 
 
 class UnsafeExpressionError(ValueError):
@@ -223,7 +223,7 @@ class DocumentSearchTool(Tool):
         return self.success(
             call,
             SearchOutput(passages=top, cap=result_cap, note=result_cap.note()).model_dump(),
-            sources=[f"{p.document_id}:r{p.line}" for p in top],
+            sources=[source_ref(p.document_id, p.line, ctx.page_starts) for p in top],
             execution_time_ms=int((time.perf_counter() - started) * 1000),
         )
 
@@ -310,7 +310,7 @@ class DocumentExtractTool(Tool):
             ExtractOutput(
                 extractions=returned, cap=result_cap, note=result_cap.note()
             ).model_dump(),
-            sources=sorted({f"{e.document_id}:r{e.line}" for e in returned}),
+            sources=sorted({source_ref(e.document_id, e.line, ctx.page_starts) for e in returned}),
             execution_time_ms=int((time.perf_counter() - started) * 1000),
         )
 
@@ -395,7 +395,7 @@ class CsvAnalysisTool(Tool):
                 minimum=minimum,
                 maximum=maximum,
             ).model_dump(),
-            sources=[f"{payload.document_id}:r0"],
+            sources=[source_ref(payload.document_id, 1, ctx.page_starts)],
             execution_time_ms=int((time.perf_counter() - started) * 1000),
         )
 
