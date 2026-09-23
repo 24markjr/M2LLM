@@ -16,7 +16,9 @@ from __future__ import annotations
 import argparse
 import asyncio
 import sys
+from pathlib import Path
 
+from app.core.config import get_settings
 from app.core.events import EventBus, MemoryEventSink, RunEventEmitter
 from app.core.logging import configure_logging
 from app.integrations.verification import build_verification_provider
@@ -34,6 +36,7 @@ from app.schemas.execution import Observation
 from app.schemas.objective import AttachedDocument, DocumentKind, Objective, ObjectiveScope
 from app.schemas.plan import Plan
 from app.tools.base import ToolContext, ToolRegistry, build_default_registry
+from app.tools.loader import load_documents
 
 RULE = "-" * 78
 
@@ -58,22 +61,42 @@ def _build_objective(text: str, docs: list[str]) -> Objective:
     return Objective(text=text, scope=ObjectiveScope(documents=attached))
 
 
-def _load_documents(names: list[str]) -> dict[str, str]:
-    """Read fixture documents from .agent/fixtures/.
-
-    Real files with planted contradictions - the execution engine needs something genuine to
-    work on, and fabricated in-memory content would make the demo meaningless.
-    """
-    from app.core.config import get_settings
+def _resolve(name: str) -> Path:
+    """Find a document by path, or by name inside .agent/fixtures/."""
+    direct = Path(name)
+    if direct.exists():
+        return direct
 
     root = get_settings().agent_dir / "fixtures"
-    contents: dict[str, str] = {}
-    for name in names:
-        for candidate in (root / "documents" / name, root / "csv" / name):
-            if candidate.exists():
-                contents[name] = candidate.read_text(encoding="utf-8")
-                break
-    return contents
+    for candidate in (root / "documents" / name, root / "csv" / name, root / name):
+        if candidate.exists():
+            return candidate
+    return direct
+
+
+def _load_documents(names: list[str]) -> dict[str, str]:
+    """Load the run's documents, reporting anything that was too large to read whole."""
+    documents, loaded = load_documents([_resolve(n) for n in names])
+
+    for document in loaded:
+        if document.truncated:
+            print(f"  ! {document.document_id}: {document.omitted_note}")
+    return documents
+
+
+def _print_documents(names: list[str]) -> list[str]:
+    """Show what was actually loaded, so a partial read is never mistaken for a full one."""
+    _, loaded = load_documents([_resolve(n) for n in names])
+    missing = set(names) - {d.document_id for d in loaded}
+
+    print()
+    print(f"documents loaded ({len(loaded)}):")
+    for document in loaded:
+        flag = "  [PARTIAL]" if document.truncated else ""
+        print(f"  - {document.document_id}  {document.kind}, {document.summary}{flag}")
+    for name in sorted(missing):
+        print(f"  - {name}  COULD NOT BE READ - excluded from this investigation")
+    return [d.document_id for d in loaded]
 
 
 def _print_header(title: str, run_id: str, model: str, text: str, docs: list[str]) -> None:
@@ -155,6 +178,8 @@ async def run_investigate(text: str, docs: list[str]) -> int:
     objective = _build_objective(text, docs)
 
     _print_header("JARVIS - INVESTIGATION PLANNING", emitter.run_id, provider.model_id, text, docs)
+
+    _print_documents(docs)
 
     await emitter.emit(EventType.RUN_STARTED, payload={"objective": text})
 

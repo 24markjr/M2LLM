@@ -21,6 +21,7 @@ from pydantic import Field
 from app.schemas.common import CostHint, FailureClass, JarvisModel
 from app.schemas.tool import ToolCall, ToolCapability, ToolResult
 from app.tools.base import Tool, ToolContext
+from app.tools.loader import MAX_CSV_ROWS, ResultCap, cap
 
 
 class UnsafeExpressionError(ValueError):
@@ -164,6 +165,8 @@ class Passage(JarvisModel):
 
 class SearchOutput(JarvisModel):
     passages: list[Passage] = Field(default_factory=list)
+    cap: ResultCap = Field(default_factory=ResultCap)
+    note: str = ""
 
 
 class DocumentSearchTool(Tool):
@@ -216,10 +219,10 @@ class DocumentSearchTool(Tool):
                     )
 
         passages.sort(key=lambda p: p.score, reverse=True)
-        top = passages[: payload.k]
+        top, result_cap = cap(passages, payload.k)
         return self.success(
             call,
-            SearchOutput(passages=top).model_dump(),
+            SearchOutput(passages=top, cap=result_cap, note=result_cap.note()).model_dump(),
             sources=[f"{p.document_id}:r{p.line}" for p in top],
             execution_time_ms=int((time.perf_counter() - started) * 1000),
         )
@@ -242,7 +245,13 @@ class Extraction(JarvisModel):
 
 class ExtractOutput(JarvisModel):
     extractions: list[Extraction] = Field(default_factory=list)
+    # How many were found versus returned. A capped result must never look complete.
+    cap: ResultCap = Field(default_factory=ResultCap)
+    note: str = ""
 
+
+# Ceiling on extractions returned from one document set.
+MAX_EXTRACTIONS = 60
 
 _DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}\s+\w+\s+\d{4}\b")
 _AMOUNT = re.compile(r"[$£€]\s?[\d,]+(?:\.\d{2})?|\b\d[\d,]{2,}(?:\.\d{2})?\b")
@@ -292,10 +301,16 @@ class DocumentExtractTool(Tool):
                         for m in _AMOUNT.findall(line)
                     ]
 
+        # A hundred-page PDF yields thousands of matches. Returning them all would
+        # overflow the reasoning prompt; returning some silently would let the agent
+        # conclude "nothing found" from evidence it never saw. So: cap, and report it.
+        returned, result_cap = cap(found, MAX_EXTRACTIONS)
         return self.success(
             call,
-            ExtractOutput(extractions=found).model_dump(),
-            sources=sorted({f"{e.document_id}:r{e.line}" for e in found}),
+            ExtractOutput(
+                extractions=returned, cap=result_cap, note=result_cap.note()
+            ).model_dump(),
+            sources=sorted({f"{e.document_id}:r{e.line}" for e in returned}),
             execution_time_ms=int((time.perf_counter() - started) * 1000),
         )
 
@@ -312,7 +327,13 @@ class CsvOutput(JarvisModel):
     rows: int
     columns: list[str] = Field(default_factory=list)
     total: float | None = None
+    # A sample, not the column. A thousand-row CSV is analysed by aggregate; reciting it
+    # into a prompt would crowd out everything else the agent learned.
     values: list[str] = Field(default_factory=list)
+    cap: ResultCap = Field(default_factory=ResultCap)
+    note: str = ""
+    minimum: float | None = None
+    maximum: float | None = None
 
 
 class CsvAnalysisTool(Tool):
@@ -344,6 +365,8 @@ class CsvAnalysisTool(Tool):
         columns = list(reader.fieldnames or [])
 
         total: float | None = None
+        minimum: float | None = None
+        maximum: float | None = None
         values: list[str] = []
         if payload.column and payload.column in columns:
             values = [str(r.get(payload.column, "")) for r in rows]
@@ -356,10 +379,22 @@ class CsvAnalysisTool(Tool):
                     except ValueError:
                         continue
             total = sum(numbers) if numbers else None
+            minimum = min(numbers) if numbers else None
+            maximum = max(numbers) if numbers else None
 
+        sample, result_cap = cap(values, MAX_CSV_ROWS)
         return self.success(
             call,
-            CsvOutput(rows=len(rows), columns=columns, total=total, values=values).model_dump(),
+            CsvOutput(
+                rows=len(rows),
+                columns=columns,
+                total=total,
+                values=sample,
+                cap=result_cap,
+                note=result_cap.note(),
+                minimum=minimum,
+                maximum=maximum,
+            ).model_dump(),
             sources=[f"{payload.document_id}:r0"],
             execution_time_ms=int((time.perf_counter() - started) * 1000),
         )
