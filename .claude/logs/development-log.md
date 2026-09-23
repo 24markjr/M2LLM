@@ -8,6 +8,85 @@ and what is still broken.
 
 ## 2026-09-23
 
+### 10:15 IST — Phase 2: Domain schemas (the typed spine)
+
+**Implemented**
+
+- 12 schema modules under `backend/app/schemas/`, 97 exported types
+- 81 tests in `backend/tests/unit/test_schemas.py`
+- `.claude/api/schemas.md` and `.claude/api/events.md`
+
+**The decision that shaped the phase: making invariants unrepresentable**
+
+The instruction was "confidence is computed, never asked for". The weak version of that is a
+convention plus a code review habit. The version built instead: `Confidence` has no
+constructor taking a bare value. `Confidence.compute(refs=..., classification=...)` is the
+only way to produce one, and the inputs are stored alongside the result.
+
+That turned out to be the right pattern for several rules, so it was applied consistently:
+
+| Rule | How it is now enforced |
+|---|---|
+| Confidence is computed | No bare-number constructor exists |
+| A FACT needs resolved evidence | Model validator rejects it |
+| A hypothesis cannot look near-certain | Confidence ceiling per classification, validated |
+| Verification must be independent | `VerificationRequest` has no reasoning field; a test asserts the field names never appear |
+| A rejection must be explainable | `VerificationResult` requires >= 1 issue for any failing status |
+| Degradation is never silent | `degraded=True` requires `degraded_reason` |
+| A task cannot complete without running | `LEGAL_TRANSITIONS` + `IllegalTransitionError` |
+| Reports cannot present unsupported claims as verified | `FinalReport` validator |
+
+The general principle: prefer making an invalid state unconstructable over documenting that
+it should not be constructed.
+
+**Bug found by the round-trip test (worth recording)**
+
+`Finding.resolved_evidence_count` and `has_resolved_evidence` were `@computed_field`. A
+computed field is serialized into the model's JSON — and with `extra="forbid"`, the model
+then **rejected its own output** on re-validation. That would have broken persistence
+(Phase 3), trace replay (Phase 22) and the evaluation harness's reconstruction of stored
+runs (Phase 20).
+
+Fixed by making them plain properties. The general rule, now documented in the module:
+derived values belong in API response models, not in the wire contract of a stored object.
+This is exactly what the round-trip test was written to catch, and it caught it on first run.
+
+**Design notes**
+
+- `EvidenceRef` and `Evidence` are deliberately separate types. A ref is what a claim
+  *cites*; evidence is what was actually *found*. An unresolvable citation becomes an
+  `UNRESOLVED` ref rather than being dropped, which is what feeds gap detection and the
+  hallucination metric.
+- `CONTRADICTED` vs `UNSUPPORTED` matters more than it first appears: `actionable` is False
+  for the former, so the replanning loop will not burn iterations trying to rescue a claim
+  the sources refute.
+- `TASK_CAPABILITY` and `TASK_SATISFIES` are the bridges between vocabularies. Two tests
+  assert the mappings are total, so planning can never emit work that routing cannot serve.
+
+**Files**
+
+```
+backend/app/schemas/{__init__,common,objective,intent,tool,evidence,verification,
+                     finding,task,plan,event,execution,result}.py
+backend/tests/unit/test_schemas.py
+.claude/api/{schemas,events}.md
+```
+
+**Tests**
+
+- `pytest` -> 91 passed (10 config + 81 schema)
+- `mypy --strict app scripts/healthcheck.py` -> clean, 24 source files
+- `ruff check` + `ruff format --check` -> clean, 29 files
+- Isolation: `import app.schemas` pulls in no engine, provider or database module
+
+**Known issues**
+
+1. Postgres still blocked on the WSL2 reboot. Phase 3 (persistence) needs it; Phases 4-5
+   (LLM abstraction, event bus) do not, so the build order can continue either way.
+2. `Money` is defined but unused until the CSV/financial tools land in Phase 9.
+
+---
+
 ### 09:30 IST — Phase 1: Repository skeleton, `.agent` and `.claude`
 
 **Implemented**

@@ -5,6 +5,65 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-09-23 — Phase 2: Domain schemas (the typed spine)
+
+### Added
+
+- `backend/app/schemas/` — 12 modules, 97 exported types. Every object crossing a component
+  boundary is now a validated Pydantic v2 model (invariant #2).
+  - `common.py` — `JarvisModel`/`FrozenModel` bases, `SourceLocator`, `FailureClass` with
+    transient/permanent split, typed id helpers, `Money` (exact decimal strings)
+  - `objective.py`, `intent.py` — what was asked vs. what was understood, kept separate
+  - `tool.py` — `ToolDefinition`, `ToolCall`, `ToolResult`, `ToolSelection`, `SelectionMode`
+  - `evidence.py` — `EvidenceRef` vs `Evidence`, `ResolutionStatus`, `EvidenceGap`,
+    `ClaimElement`, six `GapType` values
+  - `verification.py` — request/result/issue; the request deliberately carries no reasoning trail
+  - `finding.py` — `Finding`, `FindingClassification`, and `Confidence`
+  - `task.py` — `Task`, 8-state `TaskStatus`, `LEGAL_TRANSITIONS`, `TASK_CAPABILITY`,
+    `TASK_SATISFIES`
+  - `plan.py` — `Plan`, `PlanValidationResult`, `PlanRevision`, `ViolationCode`, `RepairAction`
+  - `event.py` — 38 `EventType` values, `ExecutionEvent`, `ExecutionTrace`, `EventFilter`
+  - `execution.py` — `ExecutionState`, `RunStatus`, `RunPhase`, `Observation`, `Budget`,
+    `TerminationReason`
+  - `result.py` — `FinalReport` with all 11 specified sections, `AgentResult`, `Limitation`
+- `backend/tests/unit/test_schemas.py` — 81 tests
+- `.claude/api/schemas.md`, `.claude/api/events.md`
+
+### Design decisions
+
+- **`Confidence` has no bare-number constructor.** `Confidence.compute(...)` is the only way
+  to make one, and the components travel with the value. "Computed, never asked for" is now
+  enforced by the type system rather than by convention.
+- **Classification is derived, not declared.** `Finding.classify()` recomputes from evidence;
+  validators reject a `FACT` with no resolved evidence and any confidence above its
+  classification ceiling.
+- **`CONTRADICTED` is distinct from `UNSUPPORTED`.** A contradicted claim is rejected, not
+  investigated further — more evidence cannot rescue a claim the sources refute.
+- **Closed vocabularies with guards.** Tests assert every `Operation` is satisfiable by some
+  `TaskType`, and every `TaskType` maps to a capability.
+- **`extra="forbid"` everywhere.** These models parse LLM output; an invented field must fail
+  loudly into the repair loop rather than be silently dropped.
+
+### Fixed
+
+- Derived `Finding` values changed from `@computed_field` to plain properties. A computed
+  field is serialized into the model's JSON, and with `extra="forbid"` the model then rejected
+  its own output on re-validation — which would have broken persistence, trace replay and the
+  evaluation harness's reconstruction of stored runs. Caught by the round-trip test.
+
+### Verified
+
+- `pytest` — 91 passed (10 config + 81 schema)
+- `mypy --strict` — clean, 24 source files
+- `ruff check` + `ruff format --check` — clean, 29 files
+- `import app.schemas` pulls in zero engine, provider or database modules (asserted by test)
+
+### Known Issues
+
+- Postgres remains the one outstanding Phase 0 criterion, still blocked on the WSL2 reboot.
+
+---
+
 ## 2026-09-23 — Phase 1: Repository skeleton, `.agent` and `.claude`
 
 ### Added
