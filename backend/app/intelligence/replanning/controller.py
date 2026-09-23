@@ -28,11 +28,13 @@ from __future__ import annotations
 from pydantic import Field
 
 from app.core.agent_config import get_agent_bounds
+from app.core.config import PlanningPolicyName, get_settings
 from app.core.logging import get_logger
 from app.integrations.verification import VerificationProvider, verify_finding
 from app.intelligence.evidence_gap.detector import EvidenceGapDetector, emit_gaps, propose_task
 from app.intelligence.execution.engine import ExecutionEngine
 from app.intelligence.graph.task_graph import TaskGraph
+from app.intelligence.planning_policy.scoring import ActionScore, score_action, select_actions
 from app.intelligence.reasoning.engine import ReasoningEngine
 from app.intelligence.router.engine import ToolRouter
 from app.schemas.common import JarvisModel, SourceLocator
@@ -42,6 +44,7 @@ from app.schemas.execution import Observation, TerminationReason
 from app.schemas.finding import Finding
 from app.schemas.objective import Objective
 from app.schemas.plan import PlanRevision, RevisionTrigger
+from app.schemas.task import Task
 from app.tools.base import ToolContext, ToolRegistry
 
 log = get_logger(__name__)
@@ -53,6 +56,7 @@ class ReplanResult(JarvisModel):
     findings: list[Finding] = Field(default_factory=list)
     gaps: list[EvidenceGap] = Field(default_factory=list)
     revisions: list[PlanRevision] = Field(default_factory=list)
+    scores: list[ActionScore] = Field(default_factory=list)
     observations: list[Observation] = Field(default_factory=list)
     iterations: int = 0
     termination_reason: TerminationReason = TerminationReason.ALL_RESOLVED
@@ -126,7 +130,9 @@ class ReplanningController:
         bounds = get_agent_bounds()
         self._max_iterations = bounds.max_replan_iterations
         self._epsilon = bounds.diminishing_returns_epsilon
+        self._max_tool_calls = bounds.max_tool_calls_per_run
         self._detector = EvidenceGapDetector()
+        self._policy = get_settings().planning_policy
 
     async def run(
         self, objective: Objective, observations: list[Observation], ctx: ToolContext
@@ -239,16 +245,11 @@ class ReplanningController:
             {"iteration": iteration, "gaps": len(gaps), "trigger": "EVIDENCE_GAP"},
         )
 
-        # Highest severity first: if the budget runs out, it should run out on the gaps
-        # that mattered least.
-        ordered = sorted(gaps, key=lambda g: g.severity, reverse=True)
-        inserted: list[str] = []
-        next_index = len(self._graph.tasks) + 1
+        ordered, scores = self._prioritise(gaps, result)
+        result.scores.extend(scores)
 
-        for gap in ordered:
-            if not gap.suggested_query.strip():
-                continue
-            task = propose_task(gap, index=next_index)
+        inserted: list[str] = []
+        for gap, task in ordered:
             try:
                 self._graph.insert_task(task)
             except ValueError as exc:
@@ -257,7 +258,6 @@ class ReplanningController:
 
             inserted.append(task.task_id)
             gap.resolved_by_task_id = task.task_id
-            next_index += 1
             await self._event(
                 EventType.TASK_CREATED,
                 {"gap_id": gap.gap_id, "missing": gap.missing, "query": gap.suggested_query},
@@ -270,7 +270,7 @@ class ReplanningController:
                     revision=iteration,
                     trigger=RevisionTrigger.EVIDENCE_GAP,
                     reason=f"{len(inserted)} task(s) added to close detected evidence gaps",
-                    triggered_by_id=ordered[0].gap_id,
+                    triggered_by_id=ordered[0][0].gap_id,
                     added_task_ids=inserted,
                 )
             )
@@ -280,6 +280,42 @@ class ReplanningController:
             )
 
         return inserted
+
+    def _prioritise(
+        self, gaps: list[EvidenceGap], result: ReplanResult
+    ) -> tuple[list[tuple[EvidenceGap, Task]], list[ActionScore]]:
+        """Decide which gaps are worth acting on, and in what order.
+
+        Under the heuristic policy each candidate is scored by expected information gain
+        against estimated cost, and only the best fit inside the remaining budget. Under
+        `naive` every gap is acted on in severity order, which is the baseline Experiment
+        002 measures the policy against.
+        """
+        next_index = len(self._graph.tasks) + 1
+        candidates: list[tuple[EvidenceGap, Task]] = []
+        for gap in gaps:
+            if not gap.suggested_query.strip():
+                continue
+            candidates.append((gap, propose_task(gap, index=next_index)))
+            next_index += 1
+
+        if self._policy is PlanningPolicyName.NAIVE:
+            ordered = sorted(candidates, key=lambda pair: pair[0].severity, reverse=True)
+            return ordered, []
+
+        documents = len({o.task_id for o in result.observations}) or 1
+        scores = [
+            score_action(gap, task, self._registry, document_count=documents)
+            for gap, task in candidates
+        ]
+        # Leave room for the tasks already in the graph rather than spending the whole
+        # budget on one replan iteration.
+        remaining = max(1, self._max_tool_calls - len(self._graph.tasks))
+        selected = select_actions(scores, limit=min(remaining, len(candidates)))
+
+        by_task = {task.task_id: (gap, task) for gap, task in candidates}
+        ordered = [by_task[s.task_id] for s in selected if s.task_id in by_task]
+        return ordered, scores
 
     async def _execute(self, ctx: ToolContext) -> list[Observation]:
         engine = ExecutionEngine(self._graph, self._registry, self._router, emit=self._emit)

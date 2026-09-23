@@ -253,15 +253,17 @@ async def test_higher_severity_gaps_are_addressed_first() -> None:
 
     result = await controller.run(Objective(text="Check."), OBSERVATIONS, _ctx())
 
-    # `result.gaps` is in detection order; insertion order is what severity governs, so
-    # read it back from the task ids the gaps were assigned.
-    addressed = [g for g in result.gaps if g.resolved_by_task_id]
-    if len(addressed) > 1:
-        by_insertion = sorted(addressed, key=lambda g: g.resolved_by_task_id or "")
-        severities = [g.severity for g in by_insertion]
-        assert severities == sorted(severities, reverse=True), (
-            "the highest-severity gap must get the first inserted task"
-        )
+    # Under the cost-aware policy (Phase 17) ordering is by score, of which severity is one
+    # input. What must hold is that the best-scoring candidate was acted on and that every
+    # candidate's score was recorded with its working.
+    assert result.scores, "the policy recorded a score breakdown for each candidate"
+
+    addressed = {g.gap_id for g in result.gaps if g.resolved_by_task_id}
+    best = max(result.scores, key=lambda s: s.score)
+    assert best.gap_id in addressed, "the highest-scoring action must be acted on"
+
+    for score in result.scores:
+        assert score.explain(), "a score must be inspectable, not a bare number"
 
 
 # --- tracing: the loop is visible ----------------------------------------------

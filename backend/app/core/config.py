@@ -30,6 +30,18 @@ class ProviderMode(StrEnum):
     REMOTE = "remote"
 
 
+class PlanningPolicyName(StrEnum):
+    """Which action-selection policy the replanning loop uses.
+
+    `naive` exists so Phase 20's Experiment 002 can measure whether the heuristic policy
+    actually reduces work without reducing coverage. A policy that cannot be switched off
+    cannot be evaluated.
+    """
+
+    HEURISTIC = "heuristic"
+    NAIVE = "naive"
+
+
 class VerificationProviderName(StrEnum):
     BASELINE = "baseline"
     REMOTE = "remote"
@@ -81,6 +93,7 @@ class Settings(BaseSettings):
     context_provider: ProviderMode = ProviderMode.LOCAL
     knowledge_provider: ProviderMode = ProviderMode.LOCAL
     verification_provider: VerificationProviderName = VerificationProviderName.BASELINE
+    planning_policy: PlanningPolicyName = PlanningPolicyName.HEURISTIC
     m2context_base_url: str = ""
     knowledge_base_url: str = ""
     verification_base_url: str = ""
