@@ -1,0 +1,24 @@
+PROJECT AURORA — EXECUTIVE PROJECT REPORT
+Document ID: AUR-PR-2026-04
+Version: 1.2
+Date: 20 April 2026
+
+1. PROJECT OVERVIEW
+Project Aurora is a customer analytics platform scheduled for production readiness in Q2 2026.
+
+2. TIMELINE
+The approved baseline completion date is 30 April 2026.
+Major milestones:
+- M1 Requirements complete: 15 January 2026
+- M2 Architecture complete: 31 January 2026
+- M3 Development complete: 31 March 2026
+- M4 Production readiness: 30 April 2026
+
+3. APPROVED BUDGET
+The approved project budget is INR 380,000.
+
+4. STATUS
+The project team reports that all major development activities are progressing against the approved baseline.
+
+5. GOVERNANCE NOTE
+Any material change to the approved baseline should be documented through a formal change request and reflected in the financial records.

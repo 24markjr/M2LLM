@@ -1,0 +1,16 @@
+PROJECT AURORA — MILESTONE UPDATE
+Document ID: AUR-MIL-2026-05
+Date: 14 May 2026
+
+MILESTONE M4
+M4 — Production readiness — status: CLOSED
+Recorded closure date: 14 May 2026.
+
+BASELINE
+The original baseline completion date is not reproduced in this document.
+
+CHANGE CONTROL
+A formal baseline-change request number is not recorded in this milestone update.
+
+COMMENT
+This document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.
