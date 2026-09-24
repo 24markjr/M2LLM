@@ -60,6 +60,11 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     api_host: str = "0.0.0.0"  # noqa: S104 — bound inside a container/dev host by design
     api_port: int = 8000
+    # Origins the browser UI is served from. A list rather than "*" because the API is
+    # credentialed, and a wildcard with credentials is rejected by every browser anyway.
+    cors_origins: list[str] = Field(
+        default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"]
+    )
 
     # --- Database ---
     database_url: PostgresDsn = PostgresDsn(
@@ -85,6 +90,10 @@ class Settings(BaseSettings):
     max_tool_calls_per_run: int = Field(default=40, ge=1)
     max_plan_tasks: int = Field(default=20, ge=2)
     run_wallclock_limit_s: float = Field(default=600.0, gt=0)
+    # How many missions the API will run at once. A local model serves one request at a
+    # time, so admitting more runs than this does not make them finish sooner - it makes
+    # all of them slower and the queue invisible.
+    max_concurrent_runs: int = Field(default=2, ge=1, le=32)
 
     # --- Tracing ---
     trace_to_file: bool = False

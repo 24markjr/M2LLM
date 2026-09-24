@@ -1,0 +1,1955 @@
+{
+  "components": {
+    "schemas": {
+      "Body_upload_documents_api_v1_documents_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "contentMediaType": "application/octet-stream",
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          }
+        },
+        "required": [
+          "files"
+        ],
+        "title": "Body_upload_documents_api_v1_documents_post",
+        "type": "object"
+      },
+      "CancelResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "cancelling": {
+            "title": "Cancelling",
+            "type": "boolean"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MissionStatus"
+          }
+        },
+        "required": [
+          "run_id",
+          "cancelling",
+          "status"
+        ],
+        "title": "CancelResponse",
+        "type": "object"
+      },
+      "ClaimElement": {
+        "additionalProperties": false,
+        "description": "One verifiable part of a claim.\n\nDecomposition is what makes gaps specific. \"The project slipped two weeks against the\napproved baseline\" contains a duration, a baseline and a comparison; checking support\nper element is how the system can say *which* part is unsupported rather than shrugging\nat the whole claim.",
+        "properties": {
+          "kind": {
+            "default": "assertion",
+            "description": "entity | quantity | date | relation",
+            "title": "Kind",
+            "type": "string"
+          },
+          "supported": {
+            "default": false,
+            "title": "Supported",
+            "type": "boolean"
+          },
+          "supporting_refs": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Supporting Refs",
+            "type": "array"
+          },
+          "text": {
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "ClaimElement",
+        "type": "object"
+      },
+      "Confidence": {
+        "additionalProperties": false,
+        "description": "A computed confidence, inseparable from the inputs that produced it.\n\nConstructed only via `Confidence.compute(...)`. The components travel with the value, so\nany report, UI or evaluation can show *why* a number is what it is \u2014 and so a value that\nlooks wrong can be traced rather than argued about.",
+        "properties": {
+          "classification_ceiling": {
+            "default": 1.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Classification Ceiling",
+            "type": "number"
+          },
+          "evidence_strength": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Evidence Strength",
+            "type": "number"
+          },
+          "resolution_rate": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Resolution Rate",
+            "type": "number"
+          },
+          "source_agreement": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Source Agreement",
+            "type": "number"
+          },
+          "value": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "resolution_rate",
+          "evidence_strength",
+          "source_agreement"
+        ],
+        "title": "Confidence",
+        "type": "object"
+      },
+      "CreateMissionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "documents": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Documents",
+            "type": "array"
+          },
+          "objective": {
+            "maxLength": 2000,
+            "minLength": 8,
+            "title": "Objective",
+            "type": "string"
+          }
+        },
+        "required": [
+          "objective"
+        ],
+        "title": "CreateMissionRequest",
+        "type": "object"
+      },
+      "EventPage": {
+        "additionalProperties": false,
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/EventRecord"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "limit": {
+            "default": 0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "default": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "total": {
+            "default": 0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "EventPage",
+        "type": "object"
+      },
+      "EventRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "finding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finding Id"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "t_offset_ms": {
+            "title": "T Offset Ms",
+            "type": "integer"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_type",
+          "t_offset_ms"
+        ],
+        "title": "EventRecord",
+        "type": "object"
+      },
+      "EvidenceGap": {
+        "additionalProperties": false,
+        "description": "A specific missing piece of support, and what would close it.\n\n`missing` is written for a human to read: it appears in the UI and in the report's\nLimitations section. A gap that says \"more evidence needed\" has failed at its job.",
+        "properties": {
+          "element": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClaimElement"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finding_id": {
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "gap_id": {
+            "pattern": "^G-\\d{3,}$",
+            "title": "Gap Id",
+            "type": "string"
+          },
+          "gap_type": {
+            "$ref": "#/components/schemas/GapType"
+          },
+          "missing": {
+            "description": "The specific absent element, e.g. 'approved baseline completion date'",
+            "minLength": 1,
+            "title": "Missing",
+            "type": "string"
+          },
+          "resolved": {
+            "default": false,
+            "title": "Resolved",
+            "type": "boolean"
+          },
+          "resolved_by_task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved By Task Id"
+          },
+          "severity": {
+            "default": 0.5,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Severity",
+            "type": "number"
+          },
+          "suggested_query": {
+            "default": "",
+            "title": "Suggested Query",
+            "type": "string"
+          },
+          "suggested_scope": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggested Scope",
+            "type": "array"
+          }
+        },
+        "required": [
+          "gap_id",
+          "finding_id",
+          "gap_type",
+          "missing"
+        ],
+        "title": "EvidenceGap",
+        "type": "object"
+      },
+      "EvidenceRef": {
+        "additionalProperties": false,
+        "description": "A pointer from a claim to a source location.\n\nProduced when a claim is made. Resolution happens afterwards, in the binder (Phase 13) \u2014\nwhich is precisely why `resolution` defaults to `UNRESOLVED`: nothing counts as resolved\nuntil something has checked it.",
+        "properties": {
+          "evidence_id": {
+            "anyOf": [
+              {
+                "pattern": "^E-\\d{3,}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Id"
+          },
+          "locator": {
+            "$ref": "#/components/schemas/SourceLocator"
+          },
+          "resolution": {
+            "$ref": "#/components/schemas/ResolutionStatus",
+            "default": "UNRESOLVED"
+          },
+          "resolution_note": {
+            "default": "",
+            "title": "Resolution Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "locator"
+        ],
+        "title": "EvidenceRef",
+        "type": "object"
+      },
+      "ExecutionSummary": {
+        "additionalProperties": false,
+        "description": "What the run actually did. Every field is counted, never estimated.",
+        "properties": {
+          "documents_processed": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Documents Processed",
+            "type": "integer"
+          },
+          "duration_ms": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "gaps_detected": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Gaps Detected",
+            "type": "integer"
+          },
+          "gaps_resolved": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Gaps Resolved",
+            "type": "integer"
+          },
+          "replan_iterations": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Replan Iterations",
+            "type": "integer"
+          },
+          "tasks_completed": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Tasks Completed",
+            "type": "integer"
+          },
+          "tasks_failed": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Tasks Failed",
+            "type": "integer"
+          },
+          "tasks_planned": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Tasks Planned",
+            "type": "integer"
+          },
+          "tasks_skipped": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Tasks Skipped",
+            "type": "integer"
+          },
+          "tool_calls": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Tool Calls",
+            "type": "integer"
+          }
+        },
+        "title": "ExecutionSummary",
+        "type": "object"
+      },
+      "FinalReport": {
+        "additionalProperties": false,
+        "description": "The structured investigation report.",
+        "properties": {
+          "execution": {
+            "$ref": "#/components/schemas/ExecutionSummary"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "$ref": "#/components/schemas/Limitation"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "objective": {
+            "minLength": 1,
+            "title": "Objective",
+            "type": "string"
+          },
+          "overall_confidence": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Overall Confidence",
+            "type": "number"
+          },
+          "rejected_findings": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "title": "Rejected Findings",
+            "type": "array"
+          },
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{12}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/ReportSection"
+            },
+            "title": "Sections",
+            "type": "array"
+          },
+          "uncertain_findings": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "title": "Uncertain Findings",
+            "type": "array"
+          },
+          "unresolved_gaps": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceGap"
+            },
+            "title": "Unresolved Gaps",
+            "type": "array"
+          },
+          "verified_findings": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "title": "Verified Findings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "objective"
+        ],
+        "title": "FinalReport",
+        "type": "object"
+      },
+      "Finding": {
+        "additionalProperties": false,
+        "description": "A structured claim, with everything needed to judge whether to believe it.",
+        "properties": {
+          "claim": {
+            "minLength": 1,
+            "title": "Claim",
+            "type": "string"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/FindingClassification",
+            "default": "UNKNOWN"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "derived_from_task_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Derived From Task Ids",
+            "type": "array"
+          },
+          "elements": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimElement"
+            },
+            "title": "Elements",
+            "type": "array"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "finding_id": {
+            "pattern": "^F-\\d{3,}$",
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceGap"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "revision": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "verification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerificationResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "finding_id",
+          "claim"
+        ],
+        "title": "Finding",
+        "type": "object"
+      },
+      "FindingClassification": {
+        "description": "How much epistemic weight a claim is entitled to.",
+        "enum": [
+          "FACT",
+          "INFERENCE",
+          "HYPOTHESIS",
+          "UNKNOWN"
+        ],
+        "title": "FindingClassification",
+        "type": "string"
+      },
+      "FindingsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "FindingsResponse",
+        "type": "object"
+      },
+      "GapRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "finding_id": {
+            "default": "",
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "gap_id": {
+            "title": "Gap Id",
+            "type": "string"
+          },
+          "gap_type": {
+            "title": "Gap Type",
+            "type": "string"
+          },
+          "resolved": {
+            "title": "Resolved",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "gap_id",
+          "gap_type",
+          "description",
+          "resolved"
+        ],
+        "title": "GapRecord",
+        "type": "object"
+      },
+      "GapType": {
+        "description": "Why a claim element is unsupported. The type determines how to go and fix it.",
+        "enum": [
+          "MISSING_SOURCE",
+          "MISSING_BASELINE",
+          "UNRESOLVED_CITATION",
+          "CONFLICTING_SOURCES",
+          "INSUFFICIENT_GRANULARITY",
+          "STALE_SOURCE"
+        ],
+        "title": "GapType",
+        "type": "string"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "provider_healthy": {
+            "title": "Provider Healthy",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "default": "1",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "model",
+          "provider_healthy"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "IssueType": {
+        "enum": [
+          "NO_EVIDENCE",
+          "UNRESOLVED_CITATION",
+          "EVIDENCE_MISMATCH",
+          "OVERSTATED_CLAIM",
+          "SOURCE_CONFLICT",
+          "UNIT_MISMATCH",
+          "DATE_AMBIGUITY",
+          "ARITHMETIC_ERROR"
+        ],
+        "title": "IssueType",
+        "type": "string"
+      },
+      "Limitation": {
+        "additionalProperties": false,
+        "description": "Something that constrains how much the report can be trusted.\n\nGenerated from run facts \u2014 skipped tasks, unresolved gaps, degraded verification,\nexhausted budget \u2014 not from the model's sense of modesty.",
+        "properties": {
+          "cause": {
+            "default": "",
+            "title": "Cause",
+            "type": "string"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "title": "Limitation",
+        "type": "object"
+      },
+      "MissionDetail": {
+        "additionalProperties": false,
+        "description": "A mission's current state, without the full event log.",
+        "properties": {
+          "clarification_question": {
+            "default": "",
+            "title": "Clarification Question",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "documents": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "error_code": {
+            "default": "",
+            "title": "Error Code",
+            "type": "string"
+          },
+          "error_message": {
+            "default": "",
+            "title": "Error Message",
+            "type": "string"
+          },
+          "finding_count": {
+            "default": 0,
+            "title": "Finding Count",
+            "type": "integer"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "goal": {
+            "default": "",
+            "title": "Goal",
+            "type": "string"
+          },
+          "has_report": {
+            "default": false,
+            "title": "Has Report",
+            "type": "boolean"
+          },
+          "objective": {
+            "title": "Objective",
+            "type": "string"
+          },
+          "replan_iterations": {
+            "default": 0,
+            "title": "Replan Iterations",
+            "type": "integer"
+          },
+          "required_operations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Required Operations",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/Stage"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MissionStatus"
+          },
+          "task_count": {
+            "default": 0,
+            "title": "Task Count",
+            "type": "integer"
+          },
+          "termination_reason": {
+            "default": "",
+            "title": "Termination Reason",
+            "type": "string"
+          },
+          "unresolved_gap_count": {
+            "default": 0,
+            "title": "Unresolved Gap Count",
+            "type": "integer"
+          },
+          "verified_count": {
+            "default": 0,
+            "title": "Verified Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run_id",
+          "objective",
+          "status",
+          "stage",
+          "created_at"
+        ],
+        "title": "MissionDetail",
+        "type": "object"
+      },
+      "MissionStatus": {
+        "enum": [
+          "PENDING",
+          "RUNNING",
+          "COMPLETED",
+          "CLARIFICATION_NEEDED",
+          "FAILED",
+          "CANCELLED"
+        ],
+        "title": "MissionStatus",
+        "type": "string"
+      },
+      "MissionSummary": {
+        "additionalProperties": false,
+        "description": "One row in the mission list.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "documents": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "finding_count": {
+            "default": 0,
+            "title": "Finding Count",
+            "type": "integer"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "objective": {
+            "title": "Objective",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/Stage"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MissionStatus"
+          },
+          "unresolved_gap_count": {
+            "default": 0,
+            "title": "Unresolved Gap Count",
+            "type": "integer"
+          },
+          "verified_count": {
+            "default": 0,
+            "title": "Verified Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run_id",
+          "objective",
+          "status",
+          "stage",
+          "created_at"
+        ],
+        "title": "MissionSummary",
+        "type": "object"
+      },
+      "ReportSection": {
+        "additionalProperties": false,
+        "description": "One section. `narrative` is model-written; everything else is injected.",
+        "properties": {
+          "finding_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Finding Ids",
+            "type": "array"
+          },
+          "heading": {
+            "minLength": 1,
+            "title": "Heading",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/SectionKind"
+          },
+          "narrative": {
+            "default": "",
+            "title": "Narrative",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "heading"
+        ],
+        "title": "ReportSection",
+        "type": "object"
+      },
+      "ResolutionStatus": {
+        "description": "Whether a citation was matched against content the system actually retrieved.",
+        "enum": [
+          "RESOLVED",
+          "UNRESOLVED",
+          "MISMATCHED"
+        ],
+        "title": "ResolutionStatus",
+        "type": "string"
+      },
+      "SectionKind": {
+        "description": "The report's fixed structure. Order here is presentation order.",
+        "enum": [
+          "EXECUTIVE_SUMMARY",
+          "INVESTIGATION_SCOPE",
+          "EXECUTION_SUMMARY",
+          "VERIFIED_FINDINGS",
+          "EVIDENCE",
+          "UNCERTAIN_FINDINGS",
+          "REJECTED_FINDINGS",
+          "REASONING",
+          "ACTIONS_PERFORMED",
+          "CONFIDENCE",
+          "LIMITATIONS"
+        ],
+        "title": "SectionKind",
+        "type": "string"
+      },
+      "Severity": {
+        "enum": [
+          "INFO",
+          "LOW",
+          "MEDIUM",
+          "HIGH",
+          "CRITICAL"
+        ],
+        "title": "Severity",
+        "type": "string"
+      },
+      "SourceLocator": {
+        "additionalProperties": false,
+        "description": "Exactly where a piece of content came from.\n\nThis is what makes evidence checkable rather than decorative. \"doc_A says the project\nslipped\" is an assertion; \"project_report.pdf page 12, chars 400-520\" is something a\nreader can go and verify, and something the evidence binder can resolve against the\nchunks actually retrieved.",
+        "properties": {
+          "char_end": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Char End"
+          },
+          "char_start": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Char Start"
+          },
+          "document_id": {
+            "minLength": 1,
+            "title": "Document Id",
+            "type": "string"
+          },
+          "document_name": {
+            "default": "",
+            "title": "Document Name",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "row": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row"
+          }
+        },
+        "required": [
+          "document_id"
+        ],
+        "title": "SourceLocator",
+        "type": "object"
+      },
+      "Stage": {
+        "description": "The phases a caller can show a progress indicator for.\n\nDeliberately coarser than `EventType`: a user watching a run wants seven phases, not\nthirty-nine event kinds. The event log remains the complete record.",
+        "enum": [
+          "UNDERSTANDING",
+          "PLANNING",
+          "EXECUTING",
+          "REASONING",
+          "VERIFYING",
+          "REPLANNING",
+          "SYNTHESIZING",
+          "DONE"
+        ],
+        "title": "Stage",
+        "type": "string"
+      },
+      "TaskGraphResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "edges": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/TaskNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "waves": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Waves",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "TaskGraphResponse",
+        "type": "object"
+      },
+      "TaskNode": {
+        "additionalProperties": false,
+        "properties": {
+          "depends_on": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Depends On",
+            "type": "array"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "inserted_by_replan": {
+            "default": false,
+            "title": "Inserted By Replan",
+            "type": "boolean"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "task_id": {
+            "title": "Task Id",
+            "type": "string"
+          },
+          "task_type": {
+            "$ref": "#/components/schemas/TaskType"
+          },
+          "tool_id": {
+            "default": "",
+            "title": "Tool Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id",
+          "task_type",
+          "status"
+        ],
+        "title": "TaskNode",
+        "type": "object"
+      },
+      "TaskStatus": {
+        "enum": [
+          "PENDING",
+          "READY",
+          "RUNNING",
+          "COMPLETED",
+          "FAILED",
+          "RETRYING",
+          "BLOCKED",
+          "SKIPPED"
+        ],
+        "title": "TaskStatus",
+        "type": "string"
+      },
+      "TaskType": {
+        "description": "The closed vocabulary of task types.\n\nA plan referencing a type outside this set fails validation (Phase 7). This is the\nsecond half of the intent-vocabulary defence: operations the agent claims to need must\nmap to task types it can actually execute.",
+        "enum": [
+          "process_documents",
+          "extract_timeline",
+          "extract_budget",
+          "extract_milestones",
+          "extract_entities",
+          "extract_claims",
+          "normalize_dates",
+          "normalize_values",
+          "compare_sources",
+          "detect_inconsistencies",
+          "calculate_difference",
+          "assess_impact",
+          "retrieve_evidence",
+          "verify_findings",
+          "summarize",
+          "synthesize"
+        ],
+        "title": "TaskType",
+        "type": "string"
+      },
+      "UploadedDocument": {
+        "additionalProperties": false,
+        "properties": {
+          "bytes": {
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "document_id": {
+            "title": "Document Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "summary": {
+            "default": "",
+            "title": "Summary",
+            "type": "string"
+          },
+          "truncated": {
+            "default": false,
+            "title": "Truncated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "document_id",
+          "name",
+          "kind",
+          "bytes"
+        ],
+        "title": "UploadedDocument",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "VerificationIssue": {
+        "additionalProperties": false,
+        "description": "One specific problem found with a claim.\n\nIssues are the verifier's actual output. A bare status tells the replanning loop nothing\nit can act on; `element` plus `issue_type` tells it exactly what to go and fix.",
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "element": {
+            "default": "",
+            "title": "Element",
+            "type": "string"
+          },
+          "issue_type": {
+            "$ref": "#/components/schemas/IssueType"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity",
+            "default": "MEDIUM"
+          }
+        },
+        "required": [
+          "issue_type",
+          "description"
+        ],
+        "title": "VerificationIssue",
+        "type": "object"
+      },
+      "VerificationResult": {
+        "additionalProperties": false,
+        "description": "The verifier's verdict.",
+        "properties": {
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "degraded": {
+            "default": false,
+            "title": "Degraded",
+            "type": "boolean"
+          },
+          "degraded_reason": {
+            "default": "",
+            "title": "Degraded Reason",
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationIssue"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/VerificationStatus"
+          },
+          "verified_at": {
+            "format": "date-time",
+            "title": "Verified At",
+            "type": "string"
+          },
+          "verifier": {
+            "default": "baseline",
+            "title": "Verifier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "confidence"
+        ],
+        "title": "VerificationResult",
+        "type": "object"
+      },
+      "VerificationStatus": {
+        "enum": [
+          "SUPPORTED",
+          "PARTIALLY_SUPPORTED",
+          "UNSUPPORTED",
+          "CONTRADICTED",
+          "INCONCLUSIVE"
+        ],
+        "title": "VerificationStatus",
+        "type": "string"
+      }
+    }
+  },
+  "info": {
+    "description": "An adaptive, evidence-driven investigation engine.\n\nMissions run in the background: `POST /api/v1/missions` returns a run id immediately and\n`GET /api/v1/missions/{id}/stream` streams the run as it happens. Every finding carries the\nsource locators it rests on, and every claim the evidence does not support is reported as\nunsupported rather than dropped.",
+    "title": "JARVIS",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/documents": {
+      "post": {
+        "description": "Store uploads and report what each one parsed as.\n\nThe response is the parse result, not an acknowledgement. A client that only learns a\nfile was accepted still does not know whether it will contribute anything to a run -\na 12-page scanned PDF with no text layer uploads perfectly and yields nothing.",
+        "operationId": "upload_documents_api_v1_documents_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_documents_api_v1_documents_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UploadedDocument"
+                  },
+                  "title": "Response Upload Documents Api V1 Documents Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Documents",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/missions": {
+      "get": {
+        "operationId": "list_missions_api_v1_missions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MissionSummary"
+                  },
+                  "title": "Response List Missions Api V1 Missions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Missions",
+        "tags": [
+          "missions"
+        ]
+      },
+      "post": {
+        "description": "Start a mission. 202, not 201: the work is accepted, not finished.",
+        "operationId": "create_mission_api_v1_missions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMissionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Mission",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}": {
+      "get": {
+        "operationId": "get_mission_api_v1_missions__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Mission",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/cancel": {
+      "post": {
+        "description": "Ask a mission to stop. 202: cancellation is cooperative, so it is requested, not done.\n\nThe run stops at its next await point - a tool call or model call boundary - and keeps\nwhatever it had already established.",
+        "operationId": "cancel_mission_api_v1_missions__run_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Mission",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/events": {
+      "get": {
+        "description": "The full event log, paginated. This is the run's reconstructable record.",
+        "operationId": "get_events_api_v1_missions__run_id__events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Events",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/findings": {
+      "get": {
+        "operationId": "get_findings_api_v1_missions__run_id__findings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Findings",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/gaps": {
+      "get": {
+        "operationId": "get_gaps_api_v1_missions__run_id__gaps_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GapRecord"
+                  },
+                  "title": "Response Get Gaps Api V1 Missions  Run Id  Gaps Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Gaps",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/report": {
+      "get": {
+        "operationId": "get_report_api_v1_missions__run_id__report_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinalReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Report",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/report.md": {
+      "get": {
+        "description": "The same report a human reads, as Markdown.",
+        "operationId": "get_report_markdown_api_v1_missions__run_id__report_md_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Report Markdown",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/stream": {
+      "get": {
+        "description": "Server-sent events for a running mission. See ADR-008.",
+        "operationId": "stream_api_v1_missions__run_id__stream_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Stream",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/tasks": {
+      "get": {
+        "description": "The task graph with live statuses, plus the waves that can run concurrently.",
+        "operationId": "get_tasks_api_v1_missions__run_id__tasks_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskGraphResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Tasks",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "Whether the engine can actually run. Reports the model, not just a 200.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "system"
+        ]
+      }
+    }
+  }
+}

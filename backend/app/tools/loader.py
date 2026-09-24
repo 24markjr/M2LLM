@@ -20,6 +20,7 @@ from pathlib import Path
 
 from pydantic import Field
 
+from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.schemas.common import JarvisModel
 
@@ -218,3 +219,26 @@ def source_ref(document_id: str, line: int, page_starts: dict[str, list[int]]) -
     if page is not None:
         return f"{document_id}:p{page}"
     return f"{document_id}:r{line}"
+
+
+def resolve_document(name: str) -> Path:
+    """Find a document by path, or by name inside `.agent/fixtures/`.
+
+    Shared rather than duplicated: the CLI and the API both accept a bare filename, and two
+    copies of the search order would drift into one client finding a fixture the other
+    cannot.
+    """
+    direct = Path(name)
+    if direct.exists():
+        return direct
+
+    root = get_settings().agent_dir / "fixtures"
+    for candidate in (root / "documents" / name, root / "csv" / name, root / name):
+        if candidate.exists():
+            return candidate
+    return direct
+
+
+def load_by_name(names: list[str]) -> tuple[dict[str, str], list[LoadedDocument]]:
+    """Load documents given names or paths, resolving each one first."""
+    return load_documents([resolve_document(n) for n in names])
