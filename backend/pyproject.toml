@@ -64,6 +64,13 @@ ignore = [
 "../scripts/**" = ["T20"]
 # The CLI is an operator-facing command; printing is its job.
 "app/cli.py" = ["T20"]
+# Smart quotes and dashes are this file's test data: it checks that model prose containing
+# them renders printably on a cp1252 console (BUG-001). Flagging them as ambiguous is
+# correct in general and wrong here.
+"tests/unit/test_synthesis.py" = ["RUF001"]
+# The substitution table is a map FROM the ambiguous characters, so it must contain
+# them literally. Flagging them here is the rule catching the fix for itself.
+"app/intelligence/synthesis/renderers.py" = ["RUF001"]
 
 [tool.mypy]
 python_version = "3.12"

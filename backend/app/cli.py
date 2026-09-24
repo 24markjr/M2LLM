@@ -27,14 +27,17 @@ from app.intelligence.graph.task_graph import TaskGraph
 from app.intelligence.intent.engine import IntentEngine, derive_operations
 from app.intelligence.planner.engine import PlanInvalidError, Planner, execution_levels
 from app.intelligence.reasoning.engine import ReasoningEngine
-from app.intelligence.replanning.controller import ReplanningController
+from app.intelligence.replanning.controller import ReplanningController, ReplanResult
 from app.intelligence.router.engine import NoCapableToolError, ToolRouter
+from app.intelligence.synthesis.engine import SynthesisEngine
+from app.intelligence.synthesis.renderers import to_markdown, to_text
 from app.llm import get_provider
 from app.schemas.common import new_run_id
 from app.schemas.event import EventType
 from app.schemas.execution import Observation
 from app.schemas.objective import AttachedDocument, DocumentKind, Objective, ObjectiveScope
 from app.schemas.plan import Plan
+from app.schemas.result import ExecutionSummary
 from app.tools.base import ToolContext, ToolRegistry, build_default_registry
 from app.tools.loader import load_documents
 
@@ -167,7 +170,7 @@ async def run_intent(text: str, docs: list[str]) -> int:
     return 0
 
 
-async def run_investigate(text: str, docs: list[str]) -> int:
+async def run_investigate(text: str, docs: list[str], report_path: str = "") -> int:
     """Objective -> intent -> validated task graph. The end-to-end demo."""
     provider = get_provider()
     sink = MemoryEventSink()
@@ -224,7 +227,7 @@ async def run_investigate(text: str, docs: list[str]) -> int:
     await _print_routing(plan, emitter)
 
     observations, graph, registry = await _execute(plan, docs, emitter, sink)
-    await _investigate(objective, observations, graph, registry, docs, emitter)
+    await _investigate(objective, observations, graph, registry, docs, emitter, report_path)
 
     validation = plan.validation
     if validation:
@@ -336,6 +339,7 @@ async def _investigate(
     registry: ToolRegistry | None,
     docs: list[str],
     emitter: RunEventEmitter,
+    report_path: str = "",
 ) -> None:
     """Reason, verify, detect gaps, and replan until resolved or bounded out.
 
@@ -421,6 +425,62 @@ async def _investigate(
     elif result.termination_reason.value == "MAX_ITERATIONS":
         print("  (the iteration ceiling was reached; unresolved gaps are reported as such)")
 
+    await _report(objective, result, graph, documents, emitter, report_path)
+
+
+async def _report(
+    objective: Objective,
+    result: ReplanResult,
+    graph: TaskGraph,
+    documents: dict[str, str],
+    emitter: RunEventEmitter,
+    report_path: str,
+) -> None:
+    """Assemble and show the final report.
+
+    Every figure here is counted from the run rather than described by a model - the
+    narrative is the only generated text in the document.
+    """
+    from app.schemas.task import TaskStatus
+
+    _, total = graph.progress()
+    execution = ExecutionSummary(
+        tasks_planned=total,
+        tasks_completed=len(graph.with_status(TaskStatus.COMPLETED)),
+        tasks_failed=len(graph.with_status(TaskStatus.FAILED)),
+        tasks_skipped=len(graph.with_status(TaskStatus.SKIPPED)),
+        tool_calls=sum(1 for t in graph.tasks if t.result is not None),
+        documents_processed=len(documents),
+        replan_iterations=result.iterations,
+        gaps_detected=len(result.gaps),
+        gaps_resolved=sum(1 for g in result.gaps if g.resolved),
+    )
+
+    report = await SynthesisEngine(get_provider()).synthesize(
+        run_id=emitter.run_id,
+        objective=objective,
+        findings=result.findings,
+        gaps=result.gaps,
+        observations=result.observations,
+        execution=execution,
+        termination=result.termination_reason,
+        emit=emitter,
+    )
+
+    print()
+    print(to_text(report))
+
+    if report_path:
+        print()
+        print(f"report written to {_write_report(report_path, to_markdown(report))}")
+
+
+def _write_report(report_path: str, markdown: str) -> Path:
+    """Write the report. Synchronous on purpose: the run is over, nothing is waiting."""
+    path = Path(report_path)
+    path.write_text(markdown, encoding="utf-8")
+    return path.resolve()
+
 
 def _print_llm_stats(sink: MemoryEventSink) -> None:
     calls = sink.of_type(EventType.LLM_CALL_COMPLETED)
@@ -455,6 +515,9 @@ def main(argv: list[str] | None = None) -> int:
     plan_cmd = sub.add_parser("investigate", help="objective -> intent -> task graph")
     plan_cmd.add_argument("objective", help="what to investigate, in plain language")
     plan_cmd.add_argument("--docs", nargs="*", default=[], help="document filenames")
+    plan_cmd.add_argument(
+        "--report", default="", help="write the final report to this Markdown file"
+    )
 
     sub.add_parser("health", help="check the configured provider")
 
@@ -463,7 +526,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "intent":
         return asyncio.run(run_intent(args.objective, args.docs))
     if args.command == "investigate":
-        return asyncio.run(run_investigate(args.objective, args.docs))
+        return asyncio.run(run_investigate(args.objective, args.docs, args.report))
     return asyncio.run(run_health())
 
 
