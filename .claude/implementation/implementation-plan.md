@@ -29,6 +29,50 @@ Each phase specifies:
 
 ---
 
+## Progress
+
+*Last updated 2026-09-24 at commit `2aacaaf`. Kept here rather than per section so there is one
+place to read the state of the build.*
+
+| # | Phase | Status | Notes |
+|---|---|---|---|
+| 0 | Foundations & tooling | `DONE` | Docker/Postgres blocked on WSL2 at the time; resolved |
+| 1 | Configuration surfaces | `DONE` | `.env` ceilings vs `agent.yaml` policy, `clamp()` logs every clamp |
+| 2 | Typed schemas | `DONE` | 12 modules, 97 types |
+| 3 | Database persistence | `DONE` | 11 tables; **API runs are not yet persisted** |
+| 4 | LLM provider layer | `DONE` | Invariant 1 boundary; Ollama constrained decoding |
+| 5 | Prompt library | `DONE` | Strict `{{placeholder}}` rendering, versioned prompts |
+| 6 | Intent analysis | `DONE` | Prompt v2; `SUPPORTING_OPERATIONS` (BUG-010) |
+| 7 | Task planning | `DONE` | Prompt v2; terminal-task repair; type synonyms (BUG-009) |
+| 8 | Event log | `DONE` | Append-only, `t_offset_ms` relative to `RUN_STARTED` |
+| 9 | Tool registry | `DONE` | |
+| 10 | Tool routing | `DONE` | Deterministic-first; LLM tiebreak only on ties |
+| 11 | Execution engine | `DONE` | Concurrent by wave |
+| 12 | Context management | `DONE` | `compact()` preserves every locator |
+| 13 | Reasoning & evidence binding | `DONE` | Relevance gate added (BUG-005); see `architecture/reasoning-engine.md` |
+| 14 | Evidence gap detection | `DONE` | Gap decision is deterministic |
+| 15 | Verification | `DONE` | Degradation declared, never hidden; `architecture/verification.md` |
+| 16 | Adaptive replanning | `DONE` | Bounded; every stop records a distinct reason |
+| 17 | Planning policy | `DONE` | Insertion capped at 3 per iteration |
+| 18 | Report synthesis | `DONE` | Every figure counted, not described |
+| 19 | FastAPI + SSE | `DONE` | Built before 21 out of order — see `phase-09-api.md` |
+| 20 | Evaluation harness | `DONE` | **Not re-run since the Phase 6/7/13 fixes; baseline is stale.** 3 scenarios, not 20 |
+| 21 | Frontend: Mission Control | `DONE` | React only; Tailwind/Query/Zustand/Recharts/Framer omitted — `frontend/README.md` |
+| 22 | Live execution visualization | `TODO` | |
+| 23 | CI | `TODO` | `export_openapi.py --check` is already CI-shaped |
+| 24 | Docs & demo | `IN PROGRESS` | `docs/demo-script.md` exists; this table and the Phase 19/20 docs added |
+
+**Carried debt**
+
+1. The evaluation suite must be re-run and a new baseline committed. Highest value, lowest cost.
+2. `app/cli.py` still holds its own copy of the pipeline; it should collapse onto
+   `app/orchestration/mission.py`.
+3. The API does not persist runs — `DatabaseEventSink` exists but is not wired into the registry.
+4. Phases 1–18 and 20 have no development-log entries; their reasoning is in commit messages and
+   `bug-log.md`.
+
+---
+
 ## 1. Invariants — rules that apply to every phase
 
 These are non-negotiable and are checked at every phase gate.

@@ -342,3 +342,96 @@ scripts/sql/init/001-extensions.sql
    starts, either stop that service or set `POSTGRES_PORT=5433` in `.env`. Decide at the
    first successful `dev-up` run.
 3. Healthcheck rendering crashed on the Windows cp1252 console — fixed, see `bug-log.md`.
+
+---
+
+# 2026-09-24 — Phases 19 and 21, and the zero-findings chain
+
+**Commits:** `a59779a`, `cc7a23c`, `8464eed`, `401d0d7`, `2aacaaf`
+
+> **Log coverage note.** This file jumps from Phase 0 to here. Phases 1–18 and 20 were built
+> without daily entries; their reasoning lives in the commit messages, the architecture docs and
+> `bug-log.md`. That is a real gap in the record and is not backfilled.
+
+## What was built
+
+**Acted on what Phase 20 measured** (`a59779a`). The evaluation harness's first run found three
+defects nobody predicted, and fixing them was the point of having built it. The serious one was
+confabulation on the negative scenario — see BUG-005. Also capped replan task insertion at 3 per
+iteration (one iteration had inserted 24), and planner prompt v2.
+
+Two harness defects surfaced on the way: BUG-011, and reports recording a finding *count* for a
+failed negative case rather than the claims — a count says the agent confabulated, not what it
+confabulated. Also added the missing mirror check: positive scenarios had **no threshold at all**,
+so the relevance gate briefly suppressed every finding on `aurora_contradiction` and the suite
+still printed `THRESHOLDS: passed`.
+
+**Phase 19 — FastAPI + SSE** (`cc7a23c`). Built out of order because Phase 21 had no API to call.
+Details in `implementation/phase-09-api.md`; the SSE reasoning is ADR-008. The pipeline was
+extracted headless into `app/orchestration/mission.py` first, so the CLI, API and UI are renderers
+of one run rather than three copies of the sequence.
+
+**Traced the zero-findings chain to its root** (`8464eed`). The Phase 19 smoke run found *no*
+findings on the reference scenario with two planted contradictions. Four defects in a chain, each
+hiding the next: BUG-006 (token budgets), the terminal-task repair, BUG-009 (one synonym),
+BUG-010 (17 required operations).
+
+Measured on the same objective and model:
+
+| | before | after |
+|---|---|---|
+| tasks planned | 16 | 7 |
+| findings | 0 | 4 (3 verified) |
+| intent operations | 17 | 7 |
+
+And the behaviour the project exists to demonstrate became visible: a cross-document `INFERENCE`
+— *"the budget exceeds the approved amount by INR 70,000"* — citing both reports and surviving
+verification. The same run previously returned restatements of a single document.
+
+**Phase 21 — Mission Control** (`401d0d7`). React + TypeScript + Vite, `EventSource` against the
+SSE stream so the phase tracker and trace move while the run happens. Uncertainty is shown, not
+smoothed, and nothing relies on colour alone. `frontend/README.md` has the detail.
+
+## Verification
+
+- `pytest tests -m "not llm"` -> **529 passed**, 12 skipped (Postgres not running)
+- `mypy --strict app` -> clean, **81 source files**
+- `ruff check` / `ruff format` -> clean
+- `tsc --noEmit` -> clean under `strict` + `noUncheckedIndexedAccess` +
+  `exactOptionalPropertyTypes`
+- `npm run build` -> 243 kB (76 kB gzipped)
+- Live Aurora run over **real uvicorn**, not only the ASGI test transport: 82 events streamed,
+  reconnect from event 3 delivered exactly the 79 that followed
+
+## Decisions taken
+
+**Phase 19 before Phase 21.** Phase 21's acceptance criterion is that the UI starts a real run.
+A frontend against a non-existent API is a mock, and a mock is what fails in front of an
+evaluator who clicks something.
+
+**Plan cap left at 20, then lowered to 10 once the blocker was fixed.** Lowering it alone made
+things worse — the model dropped its terminal task and every plan failed validation, so the run
+produced nothing instead of a smaller plan. The deterministic terminal-task repair had to come
+first. Recorded in `agent.yaml` at the setting, including the failed attempt.
+
+**Frontend dependencies are React and nothing else.** The plan named Tailwind, React Query,
+Zustand, Recharts and Framer Motion. Hand-written CSS, `fetch`, `useState` and `EventSource`
+cover what this console does, and each library omitted is a toolchain that cannot break during a
+demo. Deviation and what to add first are recorded in `frontend/README.md`.
+
+## Known issues
+
+1. **The evaluation suite has not been re-run** since the intent, plan-cap and observation-budget
+   fixes. The committed baseline predates them, so its numbers are stale and the regression check
+   will correctly refuse to compare (prompt versions changed). **This is the cheapest next
+   action.**
+2. **The CLI still holds its own copy of the pipeline.** The orchestrator exists and the API uses
+   it; collapsing `run_investigate` onto it was deferred to avoid destabilising the demo path.
+   Duplication that will drift.
+3. **API runs are not persisted.** `DatabaseEventSink` exists but the registry wires only
+   in-memory sinks, so a restart loses history.
+4. **The timeline contradiction surfaces less reliably than the budget one**, and the model
+   attaches a currency (`INR`) the documents do not state.
+5. **One restatement still leaks** on the negative case intermittently. The suite fails the build
+   on it rather than tolerating it.
+6. **Three evaluation scenarios, not the twenty the plan calls for.**
