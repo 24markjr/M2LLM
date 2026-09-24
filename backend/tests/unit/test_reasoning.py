@@ -298,3 +298,21 @@ def test_prose_containing_no_locator_is_still_rejected() -> None:
     """Accepting the reference the model meant must not mean accepting one it never made."""
     assert parse_locator("see the project report, somewhere near the top") is None
     assert parse_locator("the completion date is 2026-04-30") is None
+
+
+def test_the_observation_budget_is_not_the_generation_budget() -> None:
+    """Reasoning once compacted observations to `max_tokens`, the limit on what the model may
+    *write*. They are different budgets and the confusion was expensive: a 16-task plan
+    produced many observations, summarising squeezed them into 1200 tokens, and summarising
+    is exactly what removes the dates and figures a contradiction rests on. The run then
+    reported no findings on a scenario with two planted contradictions.
+    """
+    from app.core.agent_config import get_agent_bounds, get_models_config
+
+    observation_budget = get_agent_bounds().observation_budget_tokens
+    generation_budget = get_models_config().params_for("reasoning").max_tokens
+
+    assert observation_budget > generation_budget, (
+        "the prompt must be allowed to carry more than the model is allowed to write back"
+    )
+    assert observation_budget >= 6000, "6000 is compact()'s own default; do not go under it"

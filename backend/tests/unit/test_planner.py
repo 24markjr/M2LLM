@@ -438,3 +438,86 @@ def test_repairing_orphans_keeps_the_graph_acyclic() -> None:
 def test_a_clean_plan_gains_no_orphan_repair() -> None:
     _, _, repairs = repair(_valid_tasks(), MAX)
     assert RepairAction.CONNECTED_ORPHAN not in {r.action for r in repairs}
+
+
+def test_a_plan_with_no_terminal_task_gets_one_appended() -> None:
+    """Measured: asked for a smaller plan, the model stopped emitting a terminal task and
+    every plan failed validation, so the run produced nothing at all. The smaller plan is
+    the one we want - a large plan is mostly single-document extractions and reasoning
+    reports restatements instead of contradictions - so the blocker is repaired rather than
+    re-prompted for.
+    """
+    from app.intelligence.planner.validator import repair
+    from app.schemas.plan import RepairAction
+    from app.schemas.task import Task, TaskType
+
+    tasks = [
+        Task(task_id="task_001", task_type=TaskType.EXTRACT_TIMELINE, description="dates"),
+        Task(task_id="task_002", task_type=TaskType.EXTRACT_BUDGET, description="figures"),
+    ]
+
+    fixed, _dependencies, repairs = repair(tasks, max_tasks=10)
+
+    assert fixed[-1].task_type is TaskType.SYNTHESIZE
+    assert set(fixed[-1].depends_on) == {"task_001", "task_002"}, "it consumes every leaf"
+    assert any(r.action is RepairAction.APPENDED_TERMINAL_TASK for r in repairs)
+
+
+def test_appending_a_terminal_task_is_recorded_as_a_repair() -> None:
+    """A repaired plan must never count as clean: `plan_validity` exists to measure how often
+    the planner needs help, and a silent fix would report a planner that never fails."""
+    from app.intelligence.planner.validator import repair
+    from app.schemas.task import Task, TaskType
+
+    tasks = [Task(task_id="task_001", task_type=TaskType.EXTRACT_TIMELINE, description="x")]
+
+    _fixed, _dependencies, repairs = repair(tasks, max_tasks=10)
+
+    assert repairs, "the repair is on the record"
+    assert "no terminal task" in repairs[0].detail
+
+
+def test_a_plan_that_fills_every_slot_still_gets_a_terminal_task() -> None:
+    """The cap counts the investigating work; the report is not optional.
+
+    This model emits exactly as many tasks as it is allowed, so a plan at the cap left no
+    room for the repair and the run failed rather than shrinking. One slot is reserved, and
+    the dropped task is the tail - deterministic, and recorded as a repair so `plan_validity`
+    still reports that the planner needed help.
+    """
+    from app.intelligence.planner.validator import repair
+    from app.schemas.plan import RepairAction
+    from app.schemas.task import Task, TaskType
+
+    tasks = [
+        Task(task_id=f"task_{n:03d}", task_type=TaskType.EXTRACT_TIMELINE, description="x")
+        for n in range(1, 4)
+    ]
+
+    fixed, _dependencies, repairs = repair(tasks, max_tasks=3)
+
+    assert len(fixed) == 3, "the plan still respects the cap"
+    assert fixed[-1].task_type is TaskType.SYNTHESIZE
+    assert [t.task_id for t in fixed[:2]] == ["task_001", "task_002"]
+    assert any(r.action is RepairAction.APPENDED_TERMINAL_TASK for r in repairs)
+
+
+def test_an_existing_terminal_task_is_left_alone() -> None:
+    from app.intelligence.planner.validator import repair
+    from app.schemas.plan import RepairAction
+    from app.schemas.task import Task, TaskType
+
+    tasks = [
+        Task(task_id="task_001", task_type=TaskType.EXTRACT_TIMELINE, description="dates"),
+        Task(
+            task_id="task_002",
+            task_type=TaskType.SYNTHESIZE,
+            description="report",
+            depends_on=["task_001"],
+        ),
+    ]
+
+    fixed, _dependencies, repairs = repair(tasks, max_tasks=10)
+
+    assert len(fixed) == 2
+    assert not any(r.action is RepairAction.APPENDED_TERMINAL_TASK for r in repairs)

@@ -32,6 +32,7 @@ from app.llm.structured import generate_structured
 from app.schemas.common import JarvisModel
 from app.schemas.event import EventType
 from app.schemas.intent import (
+    SUPPORTING_OPERATIONS,
     Constraints,
     Intent,
     Operation,
@@ -270,7 +271,12 @@ class IntentEngine:
         return Intent(
             goal=candidate.goal.strip() or self._fallback_goal(mapped),
             objective=candidate.objective.strip() or objective.text[:200],
-            required_operations=[RequiredOperation(operation=op) for op in mapped],
+            required_operations=[
+                # Supporting operations are recorded but not made mandatory: the objective
+                # did ask for them, and the pipeline does them - just not as planned tasks.
+                RequiredOperation(operation=op, optional=op in SUPPORTING_OPERATIONS)
+                for op in mapped
+            ],
             unsupported_operations=unsupported,
             constraints=Constraints(evidence_required=candidate.evidence_required),
             output_format=self._map_format(candidate.output_format),

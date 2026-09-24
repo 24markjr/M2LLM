@@ -52,6 +52,36 @@ class Operation(StrEnum):
     GENERATE_REPORT = "generate_report"
 
 
+# Operations the pipeline performs as a stage of its own, or that happen inside another
+# operation. They are still recorded on the intent - the objective did ask for them - but they
+# are marked optional, so the planner is not required to schedule a dedicated task for each.
+#
+# Requiring one made plans larger without making them better, and at a tight plan cap made
+# coverage arithmetically impossible: 14 required operations cannot be covered by 10 tasks.
+# A larger plan is not a neutral cost either - it is mostly single-document extraction, so
+# reasoning sees isolated facts and reports restatements instead of the contradictions that
+# pairing those facts would reveal.
+SUPPORTING_OPERATIONS: frozenset[Operation] = frozenset(
+    {
+        # Every extraction task reads its documents; a separate task to "process documents"
+        # reads them again and produces nothing new.
+        Operation.PROCESS_DOCUMENTS,
+        # Normalisation happens inside extraction - the tools return structured values.
+        Operation.NORMALIZE_DATES,
+        Operation.NORMALIZE_VALUES,
+        # Comparing two figures computes the difference. Splitting them is one step, twice.
+        Operation.CALCULATE_DIFFERENCE,
+        # Verification is an independent stage that runs on every finding, deliberately
+        # outside the plan - see .claude/architecture/verification.md. A planned task cannot
+        # perform it and the plan should not claim to.
+        Operation.VERIFY_FINDINGS,
+        # Synthesis writes the report, and assessing impact is part of writing it.
+        Operation.SUMMARIZE,
+        Operation.ASSESS_IMPACT,
+    }
+)
+
+
 class OutputFormat(StrEnum):
     INVESTIGATION_REPORT = "investigation_report"
     COMPARISON_TABLE = "comparison_table"

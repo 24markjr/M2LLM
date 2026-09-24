@@ -57,6 +57,39 @@ class CandidatePlan(JarvisModel):
     tasks: list[CandidateTask] = Field(default_factory=list)
 
 
+# Task-type phrasings that map onto the closed vocabulary, mirroring `_SYNONYMS` in the intent
+# engine and for the same reason: small and explicit, never fuzzy. A fuzzy matcher would
+# reintroduce the silent nearest-match problem the closed vocabulary exists to prevent.
+#
+# Measured: this model proposes `detect_contradictions` persistently. The task was dropped,
+# which left `detect_inconsistencies` uncovered, which failed the plan - so an objective about
+# finding contradictions could not be planned at all because of one word.
+_TASK_TYPE_SYNONYMS: dict[str, TaskType] = {
+    "detect_contradictions": TaskType.DETECT_INCONSISTENCIES,
+    "find_contradictions": TaskType.DETECT_INCONSISTENCIES,
+    "identify_contradictions": TaskType.DETECT_INCONSISTENCIES,
+    "detect_conflicts": TaskType.DETECT_INCONSISTENCIES,
+    "compare_documents": TaskType.COMPARE_SOURCES,
+    "cross_reference": TaskType.COMPARE_SOURCES,
+    "extract_dates": TaskType.EXTRACT_TIMELINE,
+    "extract_financials": TaskType.EXTRACT_BUDGET,
+    "extract_costs": TaskType.EXTRACT_BUDGET,
+    "gather_evidence": TaskType.RETRIEVE_EVIDENCE,
+    "write_report": TaskType.SYNTHESIZE,
+    "generate_report": TaskType.SYNTHESIZE,
+    "summarise": TaskType.SUMMARIZE,
+}
+
+
+def coerce_task_type(proposed: str) -> TaskType | None:
+    """Map a proposed task type onto the vocabulary, or return None if it is not in it."""
+    normalised = proposed.strip().lower().replace(" ", "_").replace("-", "_")
+    try:
+        return TaskType(normalised)
+    except ValueError:
+        return _TASK_TYPE_SYNONYMS.get(normalised)
+
+
 class Planner:
     """Produces a validated `Plan`, or fails cleanly."""
 
@@ -157,9 +190,8 @@ class Planner:
         renumber: dict[str, str] = {}
 
         for index, proposed in enumerate(candidate.tasks, start=1):
-            try:
-                task_type = TaskType(proposed.type.strip().lower().replace(" ", "_"))
-            except ValueError:
+            task_type = coerce_task_type(proposed.type)
+            if task_type is None:
                 log.warning("planner_invented_task_type", proposed=proposed.type)
                 continue
             new_id = f"task_{index:03d}"

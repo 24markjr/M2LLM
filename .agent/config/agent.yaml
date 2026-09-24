@@ -60,7 +60,19 @@ execution:
 
 # --- Planning ------------------------------------------------------------------
 planning:
-  max_tasks: 20                    # clamped to Settings.max_plan_tasks
+  # Requested plan size, clamped to Settings.max_plan_tasks. Deliberately well under that
+  # ceiling.
+  #
+  # Measured: asked for up to 20 tasks this model produces about 16 - roughly 3x the
+  # minimum, which `task_efficiency` in the evaluation reports says plainly. The cost is not
+  # only time. A 16-task plan is mostly single-document extractions, so reasoning sees a
+  # flood of isolated facts and reports restatements instead of the contradictions that
+  # pairing those facts would reveal. Plan size drives finding quality, not just latency.
+  #
+  # Asking for 10 alone made it worse: the model dropped its terminal task and every plan
+  # failed validation. That is now repaired deterministically, so the smaller plan is safe
+  # to ask for.
+  max_tasks: 10
   min_tasks: 2
   # Attempts to re-prompt the model after plan validation fails, before the run
   # fails cleanly with PLAN_INVALID. Executing an invalid plan is never an option.
@@ -83,6 +95,12 @@ reasoning:
     fact_requires_full_resolution: true
     # Confidence ceiling applied to claims with any unresolved citation.
     unresolved_citation_confidence_cap: 0.4
+  # How many tokens of observations may enter the reasoning prompt. This is an INPUT
+  # budget and has nothing to do with `models.yaml:roles.reasoning.max_tokens`, which caps
+  # what the model may generate. Conflating the two squeezed the observations to 1200
+  # tokens, and summarising is precisely what removes the dates and figures a contradiction
+  # rests on - so a run with two planted contradictions reported nothing.
+  observation_budget_tokens: 6000
   evidence:
     min_refs_per_finding: 1
     # Unresolvable citations are recorded as UNRESOLVED, never silently dropped.

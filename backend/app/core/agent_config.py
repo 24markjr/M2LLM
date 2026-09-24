@@ -184,6 +184,9 @@ class AgentBounds(JarvisModel):
     max_tool_calls_per_run: int = Field(ge=1)
     wallclock_limit_s: float = Field(gt=0)
     diminishing_returns_epsilon: float = Field(ge=0.0, le=1.0)
+    # Tokens of observations allowed into the reasoning prompt. An input budget, not a
+    # generation limit - see agent.yaml for why the distinction is load-bearing.
+    observation_budget_tokens: int = Field(default=6000, ge=500)
 
 
 @lru_cache
@@ -196,9 +199,11 @@ def get_agent_bounds() -> AgentBounds:
     planning = raw.get("planning", {})
     budget = raw.get("budget", {})
     termination = replanning.get("termination", {})
+    reasoning = raw.get("reasoning", {})
     retry = execution.get("retry", {})
 
     return AgentBounds(
+        observation_budget_tokens=int(reasoning.get("observation_budget_tokens", 6000)),
         max_replan_iterations=clamp(
             int(replanning.get("max_iterations", settings.max_replan_iterations)),
             settings.max_replan_iterations,

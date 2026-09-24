@@ -16,6 +16,7 @@ being guessed at here.
 
 from __future__ import annotations
 
+from app.core.logging import get_logger
 from app.schemas.intent import Intent, Operation
 from app.schemas.plan import (
     PlanRepair,
@@ -25,6 +26,8 @@ from app.schemas.plan import (
     ViolationCode,
 )
 from app.schemas.task import TASK_SATISFIES, Task, TaskDependency, TaskType
+
+log = get_logger(__name__)
 
 # Task types that legitimately terminate a plan - nothing needs to consume their output.
 TERMINAL_TYPES: frozenset[TaskType] = frozenset(
@@ -122,7 +125,49 @@ def repair(
 
         fixed.append(task.model_copy(update={"depends_on": deps}))
 
+    # Truncate at the cap, but reserve a slot when the plan has no terminal task. The cap
+    # counts the investigating work; the report is not optional, and a plan that fills every
+    # slot with extraction and produces nothing has spent the whole budget for no output.
+    # Without this reservation the model - which emits exactly as many tasks as it is
+    # allowed - leaves no room for the repair below, and the run fails instead of shrinking.
     fixed = fixed[:max_tasks]
+    if max_tasks > 1 and not any(t.task_type in TERMINAL_TYPES for t in fixed):
+        fixed = fixed[: max_tasks - 1]
+
+    # A plan with no terminal task produces no report, and the model omits one often enough
+    # that re-prompting does not reliably fix it - measured: lowering the requested plan size
+    # made it omit the terminal task on every attempt, so the run failed outright rather than
+    # producing a smaller plan.
+    #
+    # Appending one requires no judgement. The type is fixed and what it consumes is every
+    # leaf the plan already has, which is the same rule the orphan repair uses. It runs before
+    # that repair so newly orphaned tasks are connected to the task just added.
+    if fixed and not any(t.task_type in TERMINAL_TYPES for t in fixed):
+        if len(fixed) < max_tasks:
+            depended_on = {d for t in fixed for d in t.depends_on}
+            leaves = [t.task_id for t in fixed if t.task_id not in depended_on]
+            appended = Task(
+                task_id=f"task_{len(fixed) + 1:03d}",
+                task_type=TaskType.SYNTHESIZE,
+                description="Synthesize the findings into the final report",
+                depends_on=leaves,
+            )
+            fixed.append(appended)
+            repairs.append(
+                PlanRepair(
+                    action=RepairAction.APPENDED_TERMINAL_TASK,
+                    detail=(
+                        f"the plan had no terminal task; {appended.task_id} was added, "
+                        f"consuming {leaves}"
+                    ),
+                    task_ids=[appended.task_id],
+                )
+            )
+        else:
+            # At the cap with no terminal task, appending would mean dropping one of the
+            # planner's tasks to make room - a judgement call, so it goes back to the model
+            # as a violation instead of being guessed at here.
+            log.warning("no_terminal_task_and_no_room_to_append", tasks=len(fixed))
 
     # An orphan is wasteful, not unexecutable: its output is produced and then discarded.
     # Rejecting the whole plan over one would throw away good work, and small models emit

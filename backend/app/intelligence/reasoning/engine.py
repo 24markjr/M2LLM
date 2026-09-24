@@ -20,7 +20,7 @@ import re
 
 from pydantic import Field
 
-from app.core.agent_config import get_models_config
+from app.core.agent_config import get_agent_bounds
 from app.core.logging import get_logger
 from app.llm.errors import LLMError, StructuredOutputError
 from app.llm.prompts import get_prompt_library
@@ -206,7 +206,9 @@ class ReasoningEngine:
         # corpus and a local model stalls before producing anything.
         from app.intelligence.context.manager import compact
 
-        budget = get_models_config().params_for("reasoning").max_tokens
+        # The observation budget, not the generation budget. `max_tokens` caps what the
+        # model may write; this caps what it gets to read, and they are not the same number.
+        budget = get_agent_bounds().observation_budget_tokens
         bounded = compact(observations, token_budget=budget)
 
         await self._event(emit, EventType.REASONING_STARTED, {"observations": len(bounded)})
