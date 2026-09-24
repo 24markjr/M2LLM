@@ -1,6 +1,6 @@
 ---
 role: planner
-version: 1
+version: 2
 output_schema: app.intelligence.planner.engine.CandidatePlan
 phase: 7
 ---
@@ -28,7 +28,14 @@ Rules:
    depend on nothing. Comparison tasks depend on the extractions they compare.
 4. Cover every required operation with at least one task.
 5. End with a `synthesize` task that depends on the analysis tasks.
-6. Between 2 and {{max_tasks}} tasks. Prefer fewer: every task costs time and tool calls.
+6. Between 2 and {{max_tasks}} tasks. **Prefer the smallest plan that covers the
+   objective.** Every task costs time and a tool call, and a plan with twice the necessary
+   steps is not twice as thorough - it is the same investigation, slower.
+7. **Every task must feed another.** A task whose output nothing consumes is wasted work:
+   it is produced and then discarded. Either give it a consumer, or do not plan it. The
+   only exception is the terminal task.
+8. **Do not plan a task per document.** One extraction task can read several documents.
+   Plan by the *kind* of work, not by how many files there are.
 
 ### Think about what can run at the same time
 

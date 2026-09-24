@@ -1,0 +1,93 @@
+{
+  "suite": "all",
+  "generated_at": "2026-09-24T07:17:31.971817Z",
+  "model": "qwen3:4b",
+  "prompt_versions": {
+    "intent": 1,
+    "planner": 2,
+    "reasoning": 2,
+    "relevance": 1,
+    "verification": 1
+  },
+  "config_hash": "sha256:69b516212335b48e",
+  "scenarios": [
+    {
+      "scenario_id": "aurora_contradiction",
+      "metrics": {
+        "intent_accuracy": 0.6,
+        "plan_validity": 1.0,
+        "dependency_correctness": 0.0,
+        "tool_selection_accuracy": 1.0,
+        "evidence_coverage": 1.0,
+        "verification_success": 1.0,
+        "replanning_success": 0.25,
+        "unsupported_claim_rate": 0.0,
+        "task_efficiency": 1.625,
+        "latency_s": 118.4595890999999
+      },
+      "findings": 0,
+      "gaps": 12,
+      "gaps_closed": 3,
+      "error": "",
+      "is_negative_case": false,
+      "negative_case_passed": true,
+      "confabulated_claims": []
+    },
+    {
+      "scenario_id": "aurora_no_contradiction",
+      "metrics": {
+        "intent_accuracy": 0.1111111111111111,
+        "plan_validity": 0.0,
+        "dependency_correctness": 1.0,
+        "tool_selection_accuracy": 1.0,
+        "evidence_coverage": 1.0,
+        "verification_success": 1.0,
+        "replanning_success": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "task_efficiency": 4.333333333333333,
+        "latency_s": 53.12100939999982
+      },
+      "findings": 0,
+      "gaps": 0,
+      "gaps_closed": 0,
+      "error": "",
+      "is_negative_case": true,
+      "negative_case_passed": true,
+      "confabulated_claims": []
+    },
+    {
+      "scenario_id": "aurora_timeline_only",
+      "metrics": {
+        "intent_accuracy": 0.6666666666666666,
+        "plan_validity": 1.0,
+        "dependency_correctness": 1.0,
+        "tool_selection_accuracy": 1.0,
+        "evidence_coverage": 1.0,
+        "verification_success": 0.0,
+        "replanning_success": 0.375,
+        "unsupported_claim_rate": 0.0,
+        "task_efficiency": 2.3333333333333335,
+        "latency_s": 52.15444590000061
+      },
+      "findings": 1,
+      "gaps": 8,
+      "gaps_closed": 3,
+      "error": "",
+      "is_negative_case": false,
+      "negative_case_passed": true,
+      "confabulated_claims": []
+    }
+  ],
+  "aggregate": {
+    "intent_accuracy": 0.45925925925925926,
+    "plan_validity": 0.6666666666666666,
+    "dependency_correctness": 0.6666666666666666,
+    "tool_selection_accuracy": 1.0,
+    "evidence_coverage": 1.0,
+    "verification_success": 0.6666666666666666,
+    "replanning_success": 0.5416666666666666,
+    "unsupported_claim_rate": 0.0,
+    "task_efficiency": 2.763888888888889,
+    "latency_s": 74.57834813333345
+  }
+}

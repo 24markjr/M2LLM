@@ -70,6 +70,10 @@ class EventType(StrEnum):
     REASONING_STARTED = "REASONING_STARTED"
     FINDING_CREATED = "FINDING_CREATED"
     REASONING_REVISED = "REASONING_REVISED"
+    # A claim that was supported by evidence but did not answer the objective.
+    # Distinct from FINDING_REJECTED, which means verification found it unsupported:
+    # this one may be perfectly true and still not belong in the answer.
+    FINDING_DISCARDED = "FINDING_DISCARDED"
 
     # Verification
     VERIFICATION_STARTED = "VERIFICATION_STARTED"

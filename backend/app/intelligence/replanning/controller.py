@@ -49,6 +49,11 @@ from app.tools.base import ToolContext, ToolRegistry
 
 log = get_logger(__name__)
 
+# How many gap-closing tasks one replan iteration may insert. The policy ranks candidates,
+# so a low cap means the best-scoring gaps are addressed and the rest wait for the next
+# iteration - or are honestly reported as unresolved.
+MAX_ACTIONS_PER_ITERATION = 3
+
 
 class ReplanResult(JarvisModel):
     """The outcome of the adaptive loop."""
@@ -308,10 +313,14 @@ class ReplanningController:
             score_action(gap, task, self._registry, document_count=documents)
             for gap, task in candidates
         ]
-        # Leave room for the tasks already in the graph rather than spending the whole
-        # budget on one replan iteration.
+        # Cap the work one iteration may add. Measured at 24 tasks inserted in a single
+        # replan, which drove task efficiency to 3.6x the minimum: the loop was answering
+        # every gap at once rather than the ones worth answering. A small cap also keeps
+        # each iteration's confidence gain attributable, which is what the
+        # diminishing-returns stop depends on.
         remaining = max(1, self._max_tool_calls - len(self._graph.tasks))
-        selected = select_actions(scores, limit=min(remaining, len(candidates)))
+        limit = min(MAX_ACTIONS_PER_ITERATION, remaining, len(candidates))
+        selected = select_actions(scores, limit=limit)
 
         by_task = {task.task_id: (gap, task) for gap, task in candidates}
         ordered = [by_task[s.task_id] for s in selected if s.task_id in by_task]

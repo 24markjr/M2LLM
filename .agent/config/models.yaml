@@ -50,6 +50,13 @@ roles:
     <<: *default
     max_tokens: 1200
 
+  # Judges whether a candidate claim answers the objective - not whether it is true,
+  # which is verification's job. Emits one short verdict per claim, so the budget is
+  # small: a large one here buys nothing but latency.
+  relevance:
+    <<: *default
+    max_tokens: 400
+
   # Independent check of a claim against its evidence. Deliberately sees no
   # reasoning trail — see agent.yaml:verification.independent_context.
   verification:

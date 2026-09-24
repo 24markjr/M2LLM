@@ -25,6 +25,7 @@ from app.evaluation.metrics import (
     ScenarioExpectation,
     ScenarioOutcome,
     aggregate,
+    claims_found,
     negative_case_score,
     score_scenario,
 )
@@ -229,6 +230,11 @@ async def run_suite(suite: str = "all") -> EvalReport:
                 error=outcome.error,
                 is_negative_case=expectation.expect_zero_findings,
                 negative_case_passed=negative_case_score(expectation, outcome) == 1.0,
+                confabulated_claims=(
+                    [f.claim for f in outcome.findings] if expectation.expect_zero_findings else []
+                ),
+                is_positive_case=bool(expectation.expected_claims),
+                expected_claims_found=claims_found(expectation, outcome),
             )
         )
 

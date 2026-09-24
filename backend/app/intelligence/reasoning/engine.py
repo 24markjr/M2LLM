@@ -22,7 +22,7 @@ from pydantic import Field
 
 from app.core.agent_config import get_models_config
 from app.core.logging import get_logger
-from app.llm.errors import StructuredOutputError
+from app.llm.errors import LLMError, StructuredOutputError
 from app.llm.prompts import get_prompt_library
 from app.llm.provider import LLMProvider
 from app.llm.structured import generate_structured
@@ -66,6 +66,18 @@ class CandidateFinding(JarvisModel):
 
 class CandidateFindings(JarvisModel):
     findings: list[CandidateFinding] = Field(default_factory=list)
+
+
+class RelevanceVerdict(JarvisModel):
+    """Whether one candidate claim answers the objective."""
+
+    index: int
+    keep: bool
+    reason: str = ""
+
+
+class RelevanceVerdicts(JarvisModel):
+    verdicts: list[RelevanceVerdict] = Field(default_factory=list)
 
 
 # A locator, optionally followed by whatever else the model appended. Models routinely
@@ -200,6 +212,7 @@ class ReasoningEngine:
         await self._event(emit, EventType.REASONING_STARTED, {"observations": len(bounded)})
 
         candidates = await self._ask_model(objective, bounded, emit)
+        candidates = await self._filter_irrelevant(objective, candidates, emit)
         binder = EvidenceBinder(observations)
         findings: list[Finding] = []
 
@@ -245,6 +258,63 @@ class ReasoningEngine:
             log.warning("unresolved_citations", count=unresolved)
 
         return findings
+
+    async def _filter_irrelevant(
+        self, objective: Objective, candidates: CandidateFindings, emit: object | None
+    ) -> CandidateFindings:
+        """Drop claims that are supported but do not answer the objective.
+
+        Verification asks whether the evidence supports a claim. Nothing asked whether the
+        claim answers the question, so a faithful restatement of a source passed every
+        check and still made the run wrong. Measured on the negative scenario: the agent
+        reported "the approved completion date is 30 April 2026" when asked whether the
+        report contradicts itself. True, cited, and not an answer.
+
+        One call for all candidates, not one per claim: relevance is judged against the
+        same objective every time, and a per-claim call would multiply latency for no
+        additional signal.
+        """
+        if not candidates.findings:
+            return candidates
+
+        claims = "\n".join(
+            f"{index}. {candidate.claim.strip()}"
+            for index, candidate in enumerate(candidates.findings, start=1)
+        )
+        prompt = self._prompts.get("relevance").render(objective=objective.text, claims=claims)
+
+        try:
+            verdicts = await generate_structured(
+                self._provider, RelevanceVerdicts, prompt, role="relevance", emit=emit
+            )
+        except LLMError:
+            # The gate is a filter, not a gatekeeper, so it fails open on any provider
+            # error - not just a malformed response. If it cannot run, findings pass
+            # through and verification still judges them on evidence. Dropping everything
+            # because a check broke would produce the same output as an honest empty
+            # result and be indistinguishable from one.
+            log.warning("relevance_gate_failed_open")
+            return candidates
+
+        dropped = {v.index for v in verdicts.verdicts if not v.keep}
+        reasons = {v.index: v.reason for v in verdicts.verdicts}
+        kept: list[CandidateFinding] = []
+
+        for index, candidate in enumerate(candidates.findings, start=1):
+            if index in dropped:
+                await self._event(
+                    emit,
+                    EventType.FINDING_DISCARDED,
+                    {
+                        "claim": candidate.claim.strip()[:160],
+                        "reason": reasons.get(index, "")[:200],
+                    },
+                )
+                log.info("finding_discarded", claim=candidate.claim.strip()[:80])
+                continue
+            kept.append(candidate)
+
+        return CandidateFindings(findings=kept)
 
     async def _ask_model(
         self, objective: Objective, observations: list[Observation], emit: object | None

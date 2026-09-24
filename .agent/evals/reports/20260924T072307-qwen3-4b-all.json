@@ -1,0 +1,101 @@
+{
+  "suite": "all",
+  "generated_at": "2026-09-24T07:23:07.651011Z",
+  "model": "qwen3:4b",
+  "prompt_versions": {
+    "intent": 1,
+    "planner": 2,
+    "reasoning": 2,
+    "relevance": 2,
+    "verification": 1
+  },
+  "config_hash": "sha256:69b516212335b48e",
+  "scenarios": [
+    {
+      "scenario_id": "aurora_contradiction",
+      "metrics": {
+        "intent_accuracy": 0.6,
+        "plan_validity": 1.0,
+        "dependency_correctness": 0.0,
+        "tool_selection_accuracy": 1.0,
+        "evidence_coverage": 1.0,
+        "verification_success": 0.0,
+        "replanning_success": 0.19230769230769232,
+        "unsupported_claim_rate": 0.0,
+        "task_efficiency": 1.875,
+        "latency_s": 146.44387440000082
+      },
+      "findings": 1,
+      "gaps": 26,
+      "gaps_closed": 5,
+      "error": "",
+      "is_negative_case": false,
+      "negative_case_passed": true,
+      "confabulated_claims": [],
+      "is_positive_case": true,
+      "expected_claims_found": 1.0
+    },
+    {
+      "scenario_id": "aurora_no_contradiction",
+      "metrics": {
+        "intent_accuracy": 0.1111111111111111,
+        "plan_validity": 0.0,
+        "dependency_correctness": 1.0,
+        "tool_selection_accuracy": 1.0,
+        "evidence_coverage": 1.0,
+        "verification_success": 0.0,
+        "replanning_success": 0.6666666666666666,
+        "unsupported_claim_rate": 0.0,
+        "task_efficiency": 5.0,
+        "latency_s": 74.89662979999957
+      },
+      "findings": 1,
+      "gaps": 3,
+      "gaps_closed": 2,
+      "error": "",
+      "is_negative_case": true,
+      "negative_case_passed": false,
+      "confabulated_claims": [
+        "The approved completion date is 30 April 2026"
+      ],
+      "is_positive_case": false,
+      "expected_claims_found": 1.0
+    },
+    {
+      "scenario_id": "aurora_timeline_only",
+      "metrics": {
+        "intent_accuracy": 0.6666666666666666,
+        "plan_validity": 1.0,
+        "dependency_correctness": 1.0,
+        "tool_selection_accuracy": 1.0,
+        "evidence_coverage": 1.0,
+        "verification_success": 0.0,
+        "replanning_success": 0.375,
+        "unsupported_claim_rate": 0.0,
+        "task_efficiency": 2.3333333333333335,
+        "latency_s": 54.054525399999875
+      },
+      "findings": 1,
+      "gaps": 8,
+      "gaps_closed": 3,
+      "error": "",
+      "is_negative_case": false,
+      "negative_case_passed": true,
+      "confabulated_claims": [],
+      "is_positive_case": true,
+      "expected_claims_found": 1.0
+    }
+  ],
+  "aggregate": {
+    "intent_accuracy": 0.45925925925925926,
+    "plan_validity": 0.6666666666666666,
+    "dependency_correctness": 0.6666666666666666,
+    "tool_selection_accuracy": 1.0,
+    "evidence_coverage": 1.0,
+    "verification_success": 0.0,
+    "replanning_success": 0.41132478632478636,
+    "unsupported_claim_rate": 0.0,
+    "task_efficiency": 3.0694444444444446,
+    "latency_s": 91.79834320000009
+  }
+}

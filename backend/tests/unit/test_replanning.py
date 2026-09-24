@@ -325,3 +325,35 @@ async def test_the_detected_gap_names_what_is_missing_in_the_trace() -> None:
     gap_events = memory.of_type(EventType.EVIDENCE_GAP_DETECTED)
     assert gap_events
     assert any("baseline" in str(e.payload.get("missing", "")) for e in gap_events)
+
+
+async def test_one_iteration_cannot_flood_the_graph_with_tasks() -> None:
+    """Measured at 24 tasks inserted in a single replan, which drove task efficiency to
+    3.6x the minimum. The loop was answering every gap at once rather than the ones worth
+    answering."""
+    from app.intelligence.replanning.controller import MAX_ACTIONS_PER_ITERATION
+
+    controller, graph = _controller(
+        reasoning=[
+            _findings(
+                (
+                    "The Aurora project slipped against the approved baseline by 2026-09-09 "
+                    "costing 450000 across Development and Infrastructure.",
+                    ["report.txt:r1"],
+                )
+            )
+        ],
+        verification=[_verdict("UNSUPPORTED")],
+    )
+    before = len(graph.tasks)
+
+    await controller.run(Objective(text="Check."), OBSERVATIONS, _ctx())
+
+    added = len(graph.tasks) - before
+    assert added <= MAX_ACTIONS_PER_ITERATION * get_bounds().max_replan_iterations
+
+
+def get_bounds():
+    from app.core.agent_config import get_agent_bounds
+
+    return get_agent_bounds()

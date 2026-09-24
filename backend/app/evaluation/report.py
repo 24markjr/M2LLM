@@ -43,6 +43,18 @@ class ScenarioReport(JarvisModel):
     is_negative_case: bool = False
     negative_case_passed: bool = True
 
+    # The claims themselves, kept only when a negative case failed. A count records that
+    # the agent confabulated; it does not record what it confabulated, and the difference
+    # is the difference between a number that moves and a defect anyone can act on.
+    confabulated_claims: list[str] = Field(default_factory=list)
+
+    # Positive cases: something was planted and the agent is expected to find it. The
+    # mirror of the negative case, and just as invisible to the ten metrics - an agent
+    # that reports nothing scores 1.0 on coverage, 1.0 on verification and 0.0 on
+    # unsupported claims, which is a perfect score for having done nothing.
+    is_positive_case: bool = False
+    expected_claims_found: float = 1.0
+
     @property
     def ok(self) -> bool:
         return not self.error
@@ -50,6 +62,11 @@ class ScenarioReport(JarvisModel):
     @property
     def confabulated(self) -> bool:
         return self.is_negative_case and not self.negative_case_passed
+
+    @property
+    def found_nothing(self) -> bool:
+        """A positive case that produced no findings at all."""
+        return self.is_positive_case and self.findings == 0
 
 
 class EvalReport(JarvisModel):
@@ -81,13 +98,24 @@ class EvalReport(JarvisModel):
         """Negative cases where the agent found something that is not there."""
         return [s for s in self.scenarios if s.confabulated]
 
+    @property
+    def blind_spots(self) -> list[ScenarioReport]:
+        """Positive cases where the agent found nothing that is there."""
+        return [s for s in self.scenarios if s.found_nothing]
+
     def build_failures(self) -> list[str]:
         """Thresholds that fail the build outright, not merely regress."""
         failures: list[str] = []
         for scenario in self.confabulations:
+            invented = "".join(f"\n      * {claim}" for claim in scenario.confabulated_claims)
             failures.append(
                 f"{scenario.scenario_id} is a negative case but produced "
-                f"{scenario.findings} finding(s); the correct answer is none"
+                f"{scenario.findings} finding(s); the correct answer is none" + invented
+            )
+        for scenario in self.blind_spots:
+            failures.append(
+                f"{scenario.scenario_id} has planted findings but the agent produced none; "
+                f"an investigation that reports nothing is not a passing run"
             )
         for metric, ceiling in FAIL_BUILD_ABOVE.items():
             value = float(getattr(self.aggregate, metric))
@@ -233,6 +261,7 @@ def to_markdown(report: EvalReport) -> str:
         )
         lines += [
             f"- {s.scenario_id}: {s.findings} finding(s) where none should exist"
+            + "".join(f"\n    * {claim}" for claim in s.confabulated_claims)
             for s in report.confabulations
         ]
 

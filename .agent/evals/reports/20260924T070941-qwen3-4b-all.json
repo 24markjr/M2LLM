@@ -1,0 +1,95 @@
+{
+  "suite": "all",
+  "generated_at": "2026-09-24T07:09:41.832185Z",
+  "model": "qwen3:4b",
+  "prompt_versions": {
+    "intent": 1,
+    "planner": 2,
+    "reasoning": 2,
+    "verification": 1
+  },
+  "config_hash": "sha256:69b516212335b48e",
+  "scenarios": [
+    {
+      "scenario_id": "aurora_contradiction",
+      "metrics": {
+        "intent_accuracy": 0.6,
+        "plan_validity": 1.0,
+        "dependency_correctness": 0.0,
+        "tool_selection_accuracy": 1.0,
+        "evidence_coverage": 1.0,
+        "verification_success": 0.0,
+        "replanning_success": 0.2,
+        "unsupported_claim_rate": 0.0,
+        "task_efficiency": 1.625,
+        "latency_s": 86.89957370000047
+      },
+      "findings": 1,
+      "gaps": 15,
+      "gaps_closed": 3,
+      "error": "",
+      "is_negative_case": false,
+      "negative_case_passed": true,
+      "confabulated_claims": []
+    },
+    {
+      "scenario_id": "aurora_no_contradiction",
+      "metrics": {
+        "intent_accuracy": 0.1111111111111111,
+        "plan_validity": 0.0,
+        "dependency_correctness": 1.0,
+        "tool_selection_accuracy": 1.0,
+        "evidence_coverage": 1.0,
+        "verification_success": 0.5,
+        "replanning_success": 0.6666666666666666,
+        "unsupported_claim_rate": 0.0,
+        "task_efficiency": 5.0,
+        "latency_s": 66.74076299999979
+      },
+      "findings": 2,
+      "gaps": 3,
+      "gaps_closed": 2,
+      "error": "",
+      "is_negative_case": true,
+      "negative_case_passed": false,
+      "confabulated_claims": [
+        "The approved completion date is 30 April 2026",
+        "The project is scheduled for production readiness in Q2 2026"
+      ]
+    },
+    {
+      "scenario_id": "aurora_timeline_only",
+      "metrics": {
+        "intent_accuracy": 0.6666666666666666,
+        "plan_validity": 1.0,
+        "dependency_correctness": 1.0,
+        "tool_selection_accuracy": 1.0,
+        "evidence_coverage": 1.0,
+        "verification_success": 1.0,
+        "replanning_success": 0.375,
+        "unsupported_claim_rate": 0.0,
+        "task_efficiency": 2.3333333333333335,
+        "latency_s": 43.59737250000035
+      },
+      "findings": 1,
+      "gaps": 8,
+      "gaps_closed": 3,
+      "error": "",
+      "is_negative_case": false,
+      "negative_case_passed": true,
+      "confabulated_claims": []
+    }
+  ],
+  "aggregate": {
+    "intent_accuracy": 0.45925925925925926,
+    "plan_validity": 0.6666666666666666,
+    "dependency_correctness": 0.6666666666666666,
+    "tool_selection_accuracy": 1.0,
+    "evidence_coverage": 1.0,
+    "verification_success": 0.5,
+    "replanning_success": 0.4138888888888889,
+    "unsupported_claim_rate": 0.0,
+    "task_efficiency": 2.986111111111111,
+    "latency_s": 65.74590306666687
+  }
+}

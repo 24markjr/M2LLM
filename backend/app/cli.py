@@ -496,6 +496,24 @@ def _print_llm_stats(sink: MemoryEventSink) -> None:
     print(f"total latency   : {latency} ms")
 
 
+# How far a metric may move from the last report before the run is called a regression.
+# Each one is wider than this suite's run-to-run noise: a local model is not
+# deterministic, so a tolerance tighter than the jitter reports a regression every run
+# and teaches everyone to ignore the check.
+_TOLERANCES = {
+    "intent_accuracy": 0.05,
+    "plan_validity": 0.05,
+    "dependency_correctness": 0.05,
+    "tool_selection_accuracy": 0.05,
+    "evidence_coverage": 0.03,
+    "verification_success": 0.05,
+    "replanning_success": 0.08,
+    "unsupported_claim_rate": 0.02,
+    "task_efficiency": 0.20,
+    "latency_s": 30.0,
+}
+
+
 async def run_eval(suite: str, *, write: bool = True) -> int:
     """Run the evaluation suite and report measured metrics.
 
@@ -621,16 +639,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
-_TOLERANCES = {
-    "intent_accuracy": 0.05,
-    "plan_validity": 0.05,
-    "dependency_correctness": 0.05,
-    "tool_selection_accuracy": 0.05,
-    "evidence_coverage": 0.03,
-    "verification_success": 0.05,
-    "replanning_success": 0.08,
-    "unsupported_claim_rate": 0.02,
-    "task_efficiency": 0.20,
-    "latency_s": 30.0,
-}
