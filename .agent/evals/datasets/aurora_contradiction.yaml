@@ -1,0 +1,34 @@
+# The reference case: two documents disagree about the completion date, and spend
+# exceeds the approved budget. Both contradictions are planted and documented.
+id: aurora_contradiction
+suites: [core, all]
+objective: >
+  Investigate the Aurora project reports and identify any contradictions between the
+  timeline and the financial information.
+documents:
+  - aurora_project_report.txt
+  - aurora_financial_report.txt
+  - aurora_budget.csv
+
+expected_operations:
+  - extract_timeline
+  - extract_budget
+  - compare_sources
+  - detect_inconsistencies
+  - retrieve_evidence
+  - generate_report
+
+min_tasks: 6
+minimal_tasks: 8
+
+expected_edges:
+  - [extract_timeline, compare_sources]
+  - [extract_budget, compare_sources]
+
+expected_tools:
+  extract_timeline: document_extract
+  extract_budget: document_extract
+
+# Substring match: two correct phrasings of the same contradiction are both correct.
+expected_claims:
+  - "2026"

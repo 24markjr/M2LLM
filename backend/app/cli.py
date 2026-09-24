@@ -21,6 +21,8 @@ from pathlib import Path
 from app.core.config import get_settings
 from app.core.events import EventBus, MemoryEventSink, RunEventEmitter
 from app.core.logging import configure_logging
+from app.evaluation.report import LOWER_IS_BETTER, compare, load_latest, write_report
+from app.evaluation.runner import reports_dir, run_suite
 from app.integrations.verification import build_verification_provider
 from app.intelligence.execution.engine import ExecutionEngine
 from app.intelligence.graph.task_graph import TaskGraph
@@ -494,6 +496,87 @@ def _print_llm_stats(sink: MemoryEventSink) -> None:
     print(f"total latency   : {latency} ms")
 
 
+async def run_eval(suite: str, *, write: bool = True) -> int:
+    """Run the evaluation suite and report measured metrics.
+
+    Every number printed here is computed by a scorer from a real run. None is hard-coded,
+    which is the whole point of the harness.
+    """
+    print()
+    print(RULE)
+    print(f"JARVIS AGENT EVALUATION  (suite: {suite})")
+    print(RULE)
+
+    report = await run_suite(suite)
+
+    if not report.scenarios:
+        print("no scenarios matched this suite")
+        return 1
+
+    print()
+    print(f"model        : {report.model}")
+    print(f"config       : {report.config_hash}")
+    print(f"prompts      : {report.prompt_versions or '(none loaded)'}")
+    print(f"scenarios    : {len(report.scenarios)}")
+
+    print()
+    print("PER SCENARIO")
+    print("-" * 78)
+    for scenario in report.scenarios:
+        state = "ok" if scenario.ok else f"FAILED - {scenario.error[:40]}"
+        print(
+            f"  {scenario.scenario_id:<28} findings={scenario.findings:<3} "
+            f"gaps={scenario.gaps_closed}/{scenario.gaps:<3} {state}"
+        )
+
+    print()
+    print("AGGREGATE")
+    print("-" * 78)
+    for name, value in report.aggregate.as_dict().items():
+        marker = "  (lower is better)" if name in LOWER_IS_BETTER else ""
+        print(f"  {name:<28} {value:7.3f}{marker}")
+
+    failures = report.build_failures()
+    print()
+    if failures:
+        print("THRESHOLDS: FAILED")
+        for failure in failures:
+            print(f"  - {failure}")
+    else:
+        print("THRESHOLDS: passed")
+
+    baseline = load_latest(reports_dir(), suite)
+    if baseline is not None:
+        result = compare(baseline, report, _TOLERANCES)
+        print()
+        if not result.comparable:
+            print(f"REGRESSION CHECK: skipped - {result.reason}")
+        elif result.regressions:
+            print("REGRESSION CHECK: FAILED")
+            for delta in result.regressions:
+                print(
+                    f"  - {delta.metric}: {delta.baseline:.3f} -> {delta.current:.3f} "
+                    f"(tolerance {delta.tolerance:.2f})"
+                )
+        else:
+            print("REGRESSION CHECK: passed")
+            for delta in result.unexplained_improvements:
+                print(
+                    f"  ! {delta.metric} improved beyond tolerance "
+                    f"({delta.baseline:.3f} -> {delta.current:.3f}); "
+                    "check the measurement before celebrating"
+                )
+
+    if write:
+        _, md_path = write_report(report, reports_dir())
+        print()
+        print(f"report written to {md_path}")
+
+    print(RULE)
+    print()
+    return 1 if failures else 0
+
+
 async def run_health() -> int:
     provider = get_provider()
     ok = await provider.health()
@@ -519,12 +602,18 @@ def main(argv: list[str] | None = None) -> int:
         "--report", default="", help="write the final report to this Markdown file"
     )
 
+    eval_cmd = sub.add_parser("eval", help="run the agent evaluation suite")
+    eval_cmd.add_argument("--suite", default="all", help="core | negative | all")
+    eval_cmd.add_argument("--no-write", action="store_true", help="do not write a report file")
+
     sub.add_parser("health", help="check the configured provider")
 
     args = parser.parse_args(argv)
 
     if args.command == "intent":
         return asyncio.run(run_intent(args.objective, args.docs))
+    if args.command == "eval":
+        return asyncio.run(run_eval(args.suite, write=not args.no_write))
     if args.command == "investigate":
         return asyncio.run(run_investigate(args.objective, args.docs, args.report))
     return asyncio.run(run_health())
@@ -532,3 +621,16 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+_TOLERANCES = {
+    "intent_accuracy": 0.05,
+    "plan_validity": 0.05,
+    "dependency_correctness": 0.05,
+    "tool_selection_accuracy": 0.05,
+    "evidence_coverage": 0.03,
+    "verification_success": 0.05,
+    "replanning_success": 0.08,
+    "unsupported_claim_rate": 0.02,
+    "task_efficiency": 0.20,
+    "latency_s": 30.0,
+}

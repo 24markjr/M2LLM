@@ -1,0 +1,21 @@
+# A NEGATIVE case. One document, internally consistent, and the correct answer is that
+# there is no contradiction to report.
+#
+# An agent that always finds something is not investigating, it is confabulating - and no
+# positive scenario can detect that. This is the only kind of case that can.
+id: aurora_no_contradiction
+suites: [negative, all]
+objective: >
+  Determine whether the Aurora project report contradicts itself on the approved
+  completion date.
+documents:
+  - aurora_project_report.txt
+
+expected_operations:
+  - detect_inconsistencies
+
+min_tasks: 2
+minimal_tasks: 3
+
+# Finding something here is the failure.
+expect_zero_findings: true

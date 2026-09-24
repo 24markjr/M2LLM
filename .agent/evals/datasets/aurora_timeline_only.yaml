@@ -1,0 +1,20 @@
+# A narrower objective over a single document. Checks the planner scales its plan down
+# rather than producing the same large graph regardless of what was asked.
+id: aurora_timeline_only
+suites: [core, all]
+objective: Extract the project timeline and milestone dates from the Aurora project report.
+documents:
+  - aurora_project_report.txt
+
+expected_operations:
+  - extract_timeline
+  - extract_milestones
+
+min_tasks: 2
+minimal_tasks: 3
+
+expected_tools:
+  extract_timeline: document_extract
+
+expected_claims:
+  - "2026"

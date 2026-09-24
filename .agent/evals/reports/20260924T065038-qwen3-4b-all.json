@@ -1,0 +1,83 @@
+{
+  "suite": "all",
+  "generated_at": "2026-09-24T06:50:38.266871Z",
+  "model": "qwen3:4b",
+  "prompt_versions": {
+    "intent": 1,
+    "planner": 1,
+    "reasoning": 1,
+    "verification": 1
+  },
+  "config_hash": "sha256:69b516212335b48e",
+  "scenarios": [
+    {
+      "scenario_id": "aurora_contradiction",
+      "metrics": {
+        "intent_accuracy": 0.6,
+        "plan_validity": 0.0,
+        "dependency_correctness": 0.0,
+        "tool_selection_accuracy": 1.0,
+        "evidence_coverage": 1.0,
+        "verification_success": 1.0,
+        "replanning_success": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "task_efficiency": 1.25,
+        "latency_s": 123.49194190000071
+      },
+      "findings": 0,
+      "gaps": 0,
+      "gaps_closed": 0,
+      "error": ""
+    },
+    {
+      "scenario_id": "aurora_no_contradiction",
+      "metrics": {
+        "intent_accuracy": 0.1111111111111111,
+        "plan_validity": 0.0,
+        "dependency_correctness": 1.0,
+        "tool_selection_accuracy": 1.0,
+        "evidence_coverage": 1.0,
+        "verification_success": 0.25,
+        "replanning_success": 0.6666666666666666,
+        "unsupported_claim_rate": 0.0,
+        "task_efficiency": 5.0,
+        "latency_s": 95.61099889999969
+      },
+      "findings": 8,
+      "gaps": 3,
+      "gaps_closed": 2,
+      "error": ""
+    },
+    {
+      "scenario_id": "aurora_timeline_only",
+      "metrics": {
+        "intent_accuracy": 0.6666666666666666,
+        "plan_validity": 1.0,
+        "dependency_correctness": 1.0,
+        "tool_selection_accuracy": 1.0,
+        "evidence_coverage": 1.0,
+        "verification_success": 0.25,
+        "replanning_success": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "task_efficiency": 4.666666666666667,
+        "latency_s": 147.55971169999975
+      },
+      "findings": 8,
+      "gaps": 10,
+      "gaps_closed": 10,
+      "error": ""
+    }
+  ],
+  "aggregate": {
+    "intent_accuracy": 0.45925925925925926,
+    "plan_validity": 0.3333333333333333,
+    "dependency_correctness": 0.6666666666666666,
+    "tool_selection_accuracy": 1.0,
+    "evidence_coverage": 1.0,
+    "verification_success": 0.5,
+    "replanning_success": 0.8888888888888888,
+    "unsupported_claim_rate": 0.0,
+    "task_efficiency": 3.6388888888888893,
+    "latency_s": 122.22088416666672
+  }
+}
