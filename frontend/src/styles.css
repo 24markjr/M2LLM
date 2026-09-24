@@ -1,0 +1,694 @@
+/*
+ * JARVIS Mission Control.
+ *
+ * An operations console, not a chat window. Dense, monospaced where numbers matter, and
+ * built so the state of a run is readable at a glance.
+ *
+ * The one rule that is not cosmetic: **confidence and verification never rely on colour
+ * alone.** Every state also carries a label and a shape - a border style, a marker glyph, a
+ * filled bar. Someone who cannot distinguish the hues must still be able to tell a verified
+ * finding from a rejected one, and "it looked fine to me" is not a test.
+ */
+
+:root {
+  --bg: #0b0e14;
+  --panel: #12161f;
+  --panel-raised: #171c28;
+  --line: #242b3a;
+  --line-bright: #333d52;
+
+  --text: #e3e8f0;
+  --text-dim: #8b95a8;
+  --text-faint: #5c6578;
+
+  --accent: #4da3ff;
+  --accent-dim: #1e3a5f;
+
+  /* Verification states. Each is paired with a glyph and a border style in the markup. */
+  --ok: #3ecf8e;
+  --warn: #e8b34a;
+  --bad: #f0616d;
+  --unknown: #7c86a0;
+
+  --mono: "SF Mono", "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 5px;
+  border: 1px solid var(--line-bright);
+  background: var(--panel-raised);
+  color: var(--text);
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+button.primary {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+button.danger:hover:not(:disabled) {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+input,
+textarea {
+  font-family: inherit;
+  font-size: 14px;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--line-bright);
+  border-radius: 5px;
+  color: var(--text);
+  resize: vertical;
+}
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* --- shell ------------------------------------------------------------------ */
+
+.shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px 64px;
+}
+
+header.top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 28px;
+}
+
+.brand {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text);
+}
+.brand span {
+  color: var(--accent);
+}
+
+.tagline {
+  color: var(--text-faint);
+  font-size: 12px;
+  flex: 1;
+}
+
+.engine {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--unknown);
+}
+.dot.up {
+  background: var(--ok);
+}
+.dot.down {
+  background: var(--bad);
+}
+
+/* --- panels ----------------------------------------------------------------- */
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.panel > h2 {
+  margin: 0;
+  padding: 13px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.panel > h2 .count {
+  font-family: var(--mono);
+  color: var(--text-faint);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.panel-body {
+  padding: 18px;
+}
+
+.empty {
+  color: var(--text-faint);
+  font-style: italic;
+  padding: 18px;
+}
+
+/* --- phase tracker ---------------------------------------------------------- */
+
+.phases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 16px 18px;
+}
+
+.phase {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--text-faint);
+  background: var(--bg);
+}
+.phase .marker {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+/* Done, active and pending differ by glyph and weight, not only by colour. */
+.phase.done {
+  color: var(--ok);
+  border-color: rgba(62, 207, 142, 0.35);
+}
+.phase.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  font-weight: 600;
+}
+.phase.active .marker {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* --- mission list ----------------------------------------------------------- */
+
+.mission-row {
+  display: block;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--line);
+  color: inherit;
+}
+.mission-row:last-child {
+  border-bottom: none;
+}
+.mission-row:hover {
+  background: var(--panel-raised);
+  text-decoration: none;
+}
+
+.mission-row .line1 {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 5px;
+}
+.mission-row .objective {
+  flex: 1;
+  font-weight: 500;
+}
+.mission-row .meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.status {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  border: 1px solid var(--line-bright);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.status.running {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.status.completed {
+  color: var(--ok);
+  border-color: rgba(62, 207, 142, 0.4);
+}
+.status.failed,
+.status.cancelled {
+  color: var(--bad);
+  border-color: rgba(240, 97, 109, 0.4);
+}
+.status.clarification_needed {
+  color: var(--warn);
+  border-color: rgba(232, 179, 74, 0.4);
+}
+
+/* --- task graph ------------------------------------------------------------- */
+
+.waves {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 18px;
+}
+
+.wave {
+  min-width: 170px;
+  flex-shrink: 0;
+}
+.wave-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.task {
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-radius: 5px;
+  padding: 9px 11px;
+  margin-bottom: 8px;
+}
+.task .tid {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-faint);
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.task .ttype {
+  font-size: 12px;
+  margin-top: 3px;
+  word-break: break-word;
+}
+.task .tool {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--accent);
+  margin-top: 4px;
+}
+.task.completed {
+  border-left-color: var(--ok);
+}
+.task.running {
+  border-left-color: var(--accent);
+}
+.task.failed {
+  border-left-color: var(--bad);
+}
+.task.skipped,
+.task.blocked {
+  border-left-color: var(--warn);
+  opacity: 0.7;
+}
+.task.pending,
+.task.ready {
+  border-left-color: var(--line-bright);
+}
+/* An inserted task is drawn differently, not merely tinted: the adaptive behaviour is the
+   point of the project and must be unmistakable. */
+.task.inserted {
+  border-style: dashed;
+  border-left-style: solid;
+}
+.task .inserted-tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--warn);
+  margin-top: 4px;
+}
+
+/* --- findings --------------------------------------------------------------- */
+
+.finding {
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-radius: 6px;
+  background: var(--panel-raised);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.finding.supported {
+  border-left-color: var(--ok);
+}
+.finding.partially_supported,
+.finding.inconclusive {
+  border-left-color: var(--warn);
+  border-style: dashed;
+  border-left-style: solid;
+}
+.finding.unsupported,
+.finding.contradicted {
+  border-left-color: var(--bad);
+  border-style: dashed;
+  border-left-style: solid;
+}
+.finding.unverified {
+  border-left-color: var(--unknown);
+  border-style: dotted;
+  border-left-style: solid;
+}
+
+.finding .claim {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid var(--line-bright);
+  color: var(--text-dim);
+}
+.badge.v-supported {
+  color: var(--ok);
+  border-color: rgba(62, 207, 142, 0.4);
+}
+.badge.v-partially_supported,
+.badge.v-inconclusive {
+  color: var(--warn);
+  border-color: rgba(232, 179, 74, 0.4);
+}
+.badge.v-unsupported,
+.badge.v-contradicted {
+  color: var(--bad);
+  border-color: rgba(240, 97, 109, 0.4);
+}
+.badge.degraded {
+  color: var(--warn);
+  border-color: rgba(232, 179, 74, 0.4);
+}
+
+/* Confidence: a number, a label and a filled bar. Three encodings, one value. */
+.confidence {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.bar {
+  width: 68px;
+  height: 5px;
+  background: var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.bar i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.bar i.high {
+  background: var(--ok);
+}
+.bar i.medium {
+  background: var(--warn);
+}
+.bar i.low {
+  background: var(--bad);
+}
+
+.evidence-toggle {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: none;
+  border: none;
+  color: var(--accent);
+  padding: 0;
+  cursor: pointer;
+}
+
+.evidence {
+  margin-top: 11px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+}
+.evidence-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 0;
+}
+.evidence-row .loc {
+  color: var(--text);
+}
+.evidence-row .res {
+  font-size: 10px;
+}
+.res.resolved {
+  color: var(--ok);
+}
+.res.partial {
+  color: var(--warn);
+}
+.res.unresolved {
+  color: var(--bad);
+}
+.evidence-row .note {
+  color: var(--text-faint);
+  font-family: var(--sans);
+}
+
+.issues {
+  margin-top: 9px;
+  padding-left: 14px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.issues li {
+  margin-bottom: 3px;
+}
+.issues code {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--bad);
+}
+
+/* --- event timeline --------------------------------------------------------- */
+
+.timeline {
+  max-height: 440px;
+  overflow-y: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.event {
+  display: flex;
+  gap: 12px;
+  padding: 4px 18px;
+  border-bottom: 1px solid rgba(36, 43, 58, 0.5);
+  align-items: baseline;
+}
+.event:hover {
+  background: var(--panel-raised);
+}
+.event .t {
+  color: var(--text-faint);
+  min-width: 62px;
+  text-align: right;
+}
+.event .kind {
+  min-width: 190px;
+  color: var(--text);
+}
+.event .detail {
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.event.phase-boundary .kind {
+  color: var(--accent);
+  font-weight: 600;
+}
+.event.bad .kind {
+  color: var(--bad);
+}
+
+/* --- report ----------------------------------------------------------------- */
+
+.report-section {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.report-section:last-child {
+  border-bottom: none;
+}
+.report-section h3 {
+  margin: 0 0 9px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.report-section p {
+  margin: 0 0 9px;
+}
+.report-section ul {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text-dim);
+}
+
+/* --- stats ------------------------------------------------------------------ */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 1px;
+  background: var(--line);
+}
+.stat {
+  background: var(--panel);
+  padding: 13px 15px;
+}
+.stat .v {
+  font-family: var(--mono);
+  font-size: 20px;
+  color: var(--text);
+}
+.stat .k {
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-top: 3px;
+}
+
+.notice {
+  padding: 13px 18px;
+  border-radius: 6px;
+  border: 1px solid var(--line-bright);
+  background: var(--panel-raised);
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+.notice.error {
+  border-color: rgba(240, 97, 109, 0.45);
+  color: var(--bad);
+}
+.notice.warn {
+  border-color: rgba(232, 179, 74, 0.45);
+  color: var(--warn);
+}
+.notice code {
+  font-family: var(--mono);
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.spacer {
+  flex: 1;
+}
+.dim {
+  color: var(--text-dim);
+}
+.mono {
+  font-family: var(--mono);
+}
+.field {
+  margin-bottom: 16px;
+}
+.field label {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.hint {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-top: 6px;
+}
