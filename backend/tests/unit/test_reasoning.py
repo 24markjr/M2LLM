@@ -275,3 +275,26 @@ async def test_findings_are_recorded_on_the_timeline() -> None:
     assert len(created) == 1
     assert created[0].payload["classification"]
     assert created[0].payload["resolved_evidence"] == 1
+
+
+def test_a_citation_with_the_quoted_line_appended_still_parses() -> None:
+    """Observed on a real run: models quote the cited text after the reference.
+
+    Splitting on the last colon read the prose as the position and rejected the whole
+    citation, so every finding came back UNKNOWN at zero confidence.
+    """
+    locator = parse_locator("aurora_project_report.txt:r7: Project Aurora is a platform")
+    assert locator is not None
+    assert locator.document_id == "aurora_project_report.txt"
+    assert locator.row == 7
+
+
+def test_a_page_citation_with_trailing_text_parses() -> None:
+    locator = parse_locator("report.pdf:p12 — the approved baseline")
+    assert locator is not None and locator.page == 12
+
+
+def test_prose_containing_no_locator_is_still_rejected() -> None:
+    """Accepting the reference the model meant must not mean accepting one it never made."""
+    assert parse_locator("see the project report, somewhere near the top") is None
+    assert parse_locator("the completion date is 2026-04-30") is None

@@ -16,6 +16,8 @@ nowhere in the type system to put one.
 
 from __future__ import annotations
 
+import re
+
 from pydantic import Field
 
 from app.core.agent_config import get_models_config
@@ -66,28 +68,27 @@ class CandidateFindings(JarvisModel):
     findings: list[CandidateFinding] = Field(default_factory=list)
 
 
+# A locator, optionally followed by whatever else the model appended. Models routinely
+# quote the cited line after the reference - "report.txt:r7: Project Aurora is a..." - and
+# splitting on the last colon would read the prose as the position and reject the whole
+# citation. Anchoring at the start and ignoring the remainder accepts the reference the
+# model actually meant, without accepting a reference it did not make.
+_LOCATOR = re.compile(r"^\s*(?P<document>[^\s:]+?)\s*:\s*(?P<kind>[rpc]?)(?P<number>\d+)\b")
+
+
 def parse_locator(raw: str) -> SourceLocator | None:
     """Turn `project_report.txt:r10` into a structured locator.
 
-    Returns None for anything that is not a well-formed locator, which is itself a signal:
-    a model inventing a citation usually invents the format too.
+    Returns None for anything with no locator in it at all, which is itself a signal: a
+    model inventing a citation usually invents the format too.
     """
-    text = raw.strip()
-    if ":" not in text:
+    match = _LOCATOR.match(raw.strip())
+    if match is None:
         return None
 
-    document, _, position = text.rpartition(":")
-    document = document.strip()
-    position = position.strip()
-    if not document or not position:
-        return None
-
-    digits = position[1:] if position[:1] in {"r", "p", "c"} else position
-    if not digits.isdigit():
-        return None
-
-    value = int(digits)
-    if position.startswith("p"):
+    document = match.group("document")
+    value = int(match.group("number"))
+    if match.group("kind") == "p":
         return SourceLocator(document_id=document, document_name=document, page=value)
     return SourceLocator(document_id=document, document_name=document, row=value)
 
