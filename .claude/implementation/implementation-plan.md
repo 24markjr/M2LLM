@@ -39,7 +39,7 @@ place to read the state of the build.*
 | 0 | Foundations & tooling | `DONE` | Docker/Postgres blocked on WSL2 at the time; resolved |
 | 1 | Configuration surfaces | `DONE` | `.env` ceilings vs `agent.yaml` policy, `clamp()` logs every clamp |
 | 2 | Typed schemas | `DONE` | 12 modules, 97 types |
-| 3 | Database persistence | `DONE` | 11 tables; **API runs are not yet persisted** |
+| 3 | Database persistence | `DONE` | 11 tables; API runs persisted, and optional - the demo runs with no database |
 | 4 | LLM provider layer | `DONE` | Invariant 1 boundary; Ollama constrained decoding |
 | 5 | Prompt library | `DONE` | Strict `{{placeholder}}` rendering, versioned prompts |
 | 6 | Intent analysis | `DONE` | Prompt v2; `SUPPORTING_OPERATIONS` (BUG-010) |
@@ -69,16 +69,17 @@ place to read the state of the build.*
    used to fail it is fixed - both negative cases now produce zero findings, with
    `unsupported_claim_rate` 0.000. What remains is recall, and the ceiling is `qwen3:4b` not
    reliably producing a claim that pairs two documents. See BUG-005 and BUG-012.
-2. **The API does not persist runs** - `DatabaseEventSink` exists and is tested, but the mission
-   registry wires only in-memory sinks, so a restart loses history.
-3. **Eight evaluation scenarios**, where the plan calls for twenty.
-4. **No frontend test runner**, so `reconstruct()` in `useReplay.ts` has no unit test.
-5. **CI is red**, correctly: six of seven jobs pass and `eval-regression` fails on the
+2. **Eight evaluation scenarios**, where the plan calls for twenty. Still too few to separate
+   run-to-run variance from a real regression, which is the ambiguity that cost the most time.
+3. **No frontend test runner**, so `reconstruct()` in `useReplay.ts` has no unit test.
+4. **CI is red**, correctly: six of seven jobs pass and `eval-regression` fails on the
    positive-case blind spot. The first run also exposed a non-hermetic config test, now fixed.
-6. Phases 1-18 and 20 have no development-log entries; their reasoning is in commit messages and
+5. Phases 1-18 and 20 have no development-log entries; their reasoning is in commit messages and
    `bug-log.md`.
 
-**Closed:** the pipeline duplication. `ReplanningController` is now constructed in exactly one
+**Closed:** API run persistence - the registry now attaches `DatabaseEventSink` and writes the run,
+its tasks and its findings, when a database is reachable, and is a silent no-op when one is not. And
+the pipeline duplication. `ReplanningController` is now constructed in exactly one
 place (`app/orchestration/mission.py`); the CLI and the evaluation runner render a `MissionResult`
 rather than assembling their own. That duplication had already cost two wasted evaluation runs and
 hidden a real defect for three phases.

@@ -67,7 +67,7 @@ bug in this file.
 | Python | 3.12 | everything |
 | [Ollama](https://ollama.com) | any recent | the model |
 | Node | 20+ | the web console only |
-| Docker | any recent | Postgres only — **not needed for the demo** |
+| Docker | any recent | Postgres only — **not needed for the demo**; runs are simply not stored without it |
 
 ### 1. The model
 

@@ -73,7 +73,7 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
         # investigating a subset would let a partial read pass for a full one.
         log.warning("documents_excluded", missing=missing)
 
-    record = registry.create(
+    record = await registry.create(
         objective=_objective(body),
         documents=sorted(documents),
         loaded=documents,

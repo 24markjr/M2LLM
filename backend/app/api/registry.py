@@ -19,6 +19,7 @@ import asyncio
 import itertools
 from datetime import datetime
 
+from app.api.persistence import persistence_enabled, record_finished, record_started
 from app.api.recording import write_recording
 from app.core.config import get_settings
 from app.core.events import (
@@ -28,6 +29,7 @@ from app.core.events import (
     StreamEventSink,
 )
 from app.core.logging import get_logger
+from app.database.event_sink import DatabaseEventSink
 from app.orchestration.mission import MissionResult, MissionStatus, Stage, run_mission
 from app.schemas.common import RunId, new_run_id, utcnow
 from app.schemas.event import ExecutionEvent
@@ -97,6 +99,9 @@ class MissionRegistry:
         self._stream = StreamEventSink()
         self._max_concurrent = get_settings().max_concurrent_runs
         self._running = 0
+        # Created lazily in `create`, because availability is an async question and a registry is
+        # constructed synchronously.
+        self._database: DatabaseEventSink | None = None
 
     # --- reading -----------------------------------------------------------
 
@@ -117,7 +122,7 @@ class MissionRegistry:
 
     # --- writing -----------------------------------------------------------
 
-    def create(
+    async def create(
         self,
         *,
         objective: Objective,
@@ -126,13 +131,28 @@ class MissionRegistry:
         page_starts: dict[str, list[int]],
         provider: object,
     ) -> MissionRecord:
-        """Register a mission and start it. Returns as soon as the task is scheduled."""
+        """Register a mission and start it. Returns as soon as the task is scheduled.
+
+        Async only to probe the database once: attaching a sink that cannot write would log a
+        failed connection on every flush, and a log full of expected errors is a log nobody reads.
+        """
         record = MissionRecord(new_run_id(), objective, documents)
         self._missions[record.run_id] = record
 
         history = _HistorySink(record)
         memory = MemoryEventSink()
-        emitter = RunEventEmitter(EventBus([history, memory, self._stream]), record.run_id)
+        sinks: list[object] = [history, memory, self._stream]
+
+        # The durable timeline, when a database is reachable. One more sink rather than a
+        # replacement: the in-memory history is what serves SSE replay without a round trip to
+        # Postgres per event, and the two answer different questions.
+        #
+        if await persistence_enabled():
+            if self._database is None:
+                self._database = DatabaseEventSink()
+            sinks.append(self._database)
+
+        emitter = RunEventEmitter(EventBus(sinks), record.run_id)  # type: ignore[arg-type]
 
         record.task = asyncio.create_task(
             self._run(record, emitter, loaded, page_starts, provider),
@@ -162,6 +182,9 @@ class MissionRegistry:
         record.started_at = utcnow()
         self._running += 1
 
+        # The run row has to exist before any event references it.
+        await record_started(record)
+
         async def on_stage(stage: Stage, result: MissionResult) -> None:
             # Keeps the mission's phase queryable while the run is still going, so a client
             # that polls instead of streaming still sees where it is.
@@ -189,6 +212,11 @@ class MissionRegistry:
             # too. A recording of only the successful runs would make the demo look better
             # than the system is.
             write_recording(record)
+            if self._database is not None:
+                # Flush before the final write, so the stored timeline is complete when the run
+                # row is marked finished.
+                await self._database.flush()
+            await record_finished(record)
 
 
 class _HistorySink:
