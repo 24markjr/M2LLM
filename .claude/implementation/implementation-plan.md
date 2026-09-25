@@ -59,7 +59,7 @@ place to read the state of the build.*
 | 20 | Evaluation harness | `DONE` | Baseline re-run 2026-09-25 (`20260925T104354`) and current. 3 scenarios, not the 20 the plan calls for |
 | 21 | Frontend: Mission Control | `DONE` | React only; Tailwind/Query/Zustand/Recharts/Framer omitted — `frontend/README.md` |
 | 22 | Live execution visualization | `DONE` | Replay (demo insurance), evaluation dashboard, animated replan insertion |
-| 23 | Test hardening & CI | `DONE`, gate red | 581 tests, invariant + adversarial suites, GitHub Actions. `eval-regression` correctly fails on the baseline's confabulation - see testing-strategy.md |
+| 23 | Test hardening & CI | `DONE`, gate red (verified) | 581 tests, invariant + adversarial suites, GitHub Actions. `eval-regression` correctly fails on the baseline's confabulation - see testing-strategy.md |
 | 24 | Documentation & demo package | `DONE`, 2 caveats | README rewritten, six-demo script, contribution statement, changelog current. 4 of 6 demos have a recorded fallback; a clean clone has not been tested from scratch |
 
 **Carried debt**
@@ -73,7 +73,8 @@ place to read the state of the build.*
    registry wires only in-memory sinks, so a restart loses history.
 3. **Eight evaluation scenarios**, where the plan calls for twenty.
 4. **No frontend test runner**, so `reconstruct()` in `useReplay.ts` has no unit test.
-5. **CI has never run** - only been written.
+5. **CI is red**, correctly: six of seven jobs pass and `eval-regression` fails on the
+   positive-case blind spot. The first run also exposed a non-hermetic config test, now fixed.
 6. Phases 1-18 and 20 have no development-log entries; their reasoning is in commit messages and
    `bug-log.md`.
 

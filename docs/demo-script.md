@@ -264,8 +264,10 @@ swapping model is one environment variable — and a report produced with a diff
 *refused* as incomparable rather than quietly compared.
 
 **"What would you do next?"**
-Fix the confabulation. It is one restatement filter away, and it is the only thing keeping the
-build red. After that, more evaluation scenarios — there are three where the plan calls for twenty.
+The confabulation is fixed, across two independent negative scenarios. What is left is *recall* -
+two positive scenarios find nothing where claims are planted, and the ceiling is the model rather
+than the logic. So: a larger model behind the same `Protocol`, and more scenarios. Eight exist
+where the plan calls for twenty, and eight is still too few to separate variance from regression.
 
 ---
 
@@ -293,4 +295,6 @@ Worth knowing before someone asks:
   only in-memory sinks, so a restart loses history.
 - **Three evaluation scenarios, not twenty.**
 - **No frontend test runner**, so the replay reconstruction has no unit test.
-- **CI has never run**, only been written.
+- **CI is red.** Six of seven jobs pass, including the integration suite against a real
+  Postgres. `eval-regression` fails on the evaluation baseline's positive-case blind spot -
+  which is that job working, not broken.

@@ -161,7 +161,8 @@ The model complied *and added something*, which is the common case, not the edge
 
 **Found:** 2026-09-24, Phase 20 (first evaluation run)
 **Severity:** High — the failure mode the whole project exists to avoid
-**Status:** Fixed, with residual variance
+**Status:** Fixed. Both negative scenarios now produce zero findings — see the continuation entry
+below for how, and for what it revealed.
 
 **Symptom**
 
@@ -192,8 +193,8 @@ Measured: 8 -> 1 confabulated claim.
 
 **Residual**
 
-One restatement still leaks intermittently at `qwen3:4b`. The evaluation suite fails the build on
-it rather than tolerating it.
+None. The prompt changes alone left 1-3 restatements leaking; what closed it was the structural rule
+in the continuation entry below, verified across two independent negative scenarios.
 
 **Pattern**
 

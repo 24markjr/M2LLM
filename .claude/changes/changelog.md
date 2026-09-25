@@ -354,5 +354,6 @@ Baseline `20260925T104354-qwen3-4b-all`, against the previous one:
 - **`app/cli.py` holds a second copy of the pipeline** that should collapse onto the orchestrator
 - **Three evaluation scenarios**, where the plan calls for twenty
 - **No frontend test runner**, so the replay reconstruction has no unit test
-- **CI has never run** - only been written
+- **CI is red**, correctly: six of seven jobs pass, and `eval-regression` fails on the
+  evaluation baseline's positive-case blind spot
 - Phase 0's Docker/WSL2 and port-5432 issues are resolved

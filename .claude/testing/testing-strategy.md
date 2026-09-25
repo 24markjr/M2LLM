@@ -150,7 +150,24 @@ starts deleting tests to satisfy it.
 
 ## Current state, stated plainly
 
-**CI is red on `main`, and the gate is right.**
+**CI runs on every push to `main` and on every pull request.** As of 2026-09-25 it has run six
+times. Six of the seven jobs pass - lint, types, frontend build, OpenAPI freshness, and the
+integration suite against a real Postgres service, all green on their first attempt. The build is
+red because `eval-regression` fails on the evaluation baseline's positive-case blind spot, which is
+that job doing its job.
+
+**The first run failed for a reason no local check could have caught, and it was the workflow's
+fault.** The workflow sets `LLM_PROVIDER=echo` for every job, so nothing can reach a real model by
+accident. `test_defaults_are_usable_without_an_env_file` asserts the default provider is `ollama`,
+and `Settings(_env_file=None)` disables the `.env` *file* but still reads the real environment - so
+the job's own variable overrode the default the test existed to check.
+
+The test was not hermetic, and any developer with `LLM_PROVIDER` exported in their shell would have
+hit the same thing. It now clears every variable `Settings` reads, derived from the model's own
+fields so a setting added later cannot be forgotten. The workflow keeps the variable: preventing an
+accidental model call in CI is worth more than the one test it exposed.
+
+**The remaining failure is the gate working.**
 
 The evaluation baseline (`20260925T104354`) records the negative scenario producing **3 findings
 where the correct answer is none**. `eval-regression` fails on it, which is precisely what that
@@ -185,5 +202,4 @@ number says so.
 - **Three evaluation scenarios, not the twenty** the plan calls for.
 - **Fault injection is manual.** "A deliberately broken planner drops `plan_validity`" is verified
   by hand, not by a scenario.
-- **CI has never run.** The workflow is committed but this repository has had no push to a
-  branch that triggers it, so the first run may surface environment problems no local check can.
+- **Three evaluation scenarios became eight**, where the plan calls for twenty.

@@ -18,7 +18,23 @@ from app.core.config import (
 )
 
 
-def test_defaults_are_usable_without_an_env_file() -> None:
+@pytest.fixture
+def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Remove every variable `Settings` reads from the ambient environment.
+
+    `Settings(_env_file=None)` disables the *file*, not the environment - so a variable exported in
+    a developer's shell, or set for a CI job, silently overrides the default a test is checking.
+    That is not hypothetical: the CI workflow sets `LLM_PROVIDER=echo` for every job so nothing can
+    reach a real model by accident, and it turned this file red on the first run.
+
+    Derived from the model's own fields rather than a hand-kept list, so a setting added later
+    cannot be forgotten here.
+    """
+    for name in Settings.model_fields:
+        monkeypatch.delenv(name.upper(), raising=False)
+
+
+def test_defaults_are_usable_without_an_env_file(clean_env: None) -> None:
     s = Settings(_env_file=None)  # type: ignore[call-arg]
 
     assert s.llm_provider is LLMProviderName.OLLAMA
@@ -27,7 +43,7 @@ def test_defaults_are_usable_without_an_env_file() -> None:
     assert s.embedding_dim == 768
 
 
-def test_every_loop_has_a_ceiling() -> None:
+def test_every_loop_has_a_ceiling(clean_env: None) -> None:
     """Invariant #7: no unbounded adaptive loop anywhere in the runtime."""
     s = Settings(_env_file=None)  # type: ignore[call-arg]
 
@@ -62,7 +78,7 @@ def test_model_identity_is_configuration_not_a_literal() -> None:
     assert s.ollama_model == "llama3.2"
 
 
-def test_sync_url_strips_the_async_driver_for_alembic() -> None:
+def test_sync_url_strips_the_async_driver_for_alembic(clean_env: None) -> None:
     s = Settings(_env_file=None)  # type: ignore[call-arg]
     assert "+asyncpg" not in s.sync_database_url
     assert s.sync_database_url.startswith("postgresql://")
@@ -77,6 +93,6 @@ def test_get_settings_is_cached() -> None:
     assert get_settings() is get_settings()
 
 
-def test_agent_dir_points_at_the_repo_agent_folder() -> None:
+def test_agent_dir_points_at_the_repo_agent_folder(clean_env: None) -> None:
     s = Settings(_env_file=None)  # type: ignore[call-arg]
     assert s.agent_dir.name == ".agent"
