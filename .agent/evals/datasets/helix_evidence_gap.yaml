@@ -1,0 +1,22 @@
+# The milestone report states that the approved baseline schedule "is held by the PMO and is
+# not attached here". So the objective cannot be answered from what was supplied, and the
+# agent must say what is missing rather than guess.
+#
+# No `expected_claims`: what is being scored here is gap detection and the replanning loop,
+# not recall. Asserting a claim would make this a recall test wearing a gap test's name.
+id: helix_evidence_gap
+suites: [gaps, all]
+objective: >
+  Determine whether the Helix milestones closed on or before the dates in the approved
+  baseline schedule.
+documents:
+  - milestone_report.txt
+
+expected_operations:
+  - extract_milestones
+  - compare_sources
+  - retrieve_evidence
+  - generate_report
+
+min_tasks: 3
+minimal_tasks: 4

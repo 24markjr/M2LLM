@@ -159,57 +159,67 @@ cd backend
 python -m app.cli eval --suite all
 ```
 
-Ten metrics, computed from real runs over datasets in
+Ten metrics, over **eight scenarios** - two of them negative cases, across two document families and three file formats - computed from real runs over datasets in
 [`.agent/evals/datasets/`](.agent/evals/datasets/). Reports are written to
 [`.agent/evals/reports/`](.agent/evals/reports/) and committed. **No number anywhere in this
 repository is hand-written** — a report carries the model, prompt versions and a config hash, and
 two reports produced with different stamps are refused as incomparable rather than quietly
 compared.
 
-The current baseline is `20260925T112350-qwen3-4b-all`. Its headline numbers:
+The current baseline is `20260925T115350-qwen3-4b-all`. Its headline numbers:
 
 | Metric | Value | |
 |---|---|---|
 | `evidence_coverage` | 1.000 | every finding has resolved evidence |
 | `unsupported_claim_rate` | 0.000 | the hallucination proxy |
 | `tool_selection_accuracy` | 1.000 | |
-| `dependency_correctness` | 0.833 | |
-| `replanning_success` | 0.625 | gaps closed within the iteration ceiling |
-| `intent_accuracy` | 0.574 | |
-| `task_efficiency` | 2.306 | tasks ÷ minimal sufficient tasks — lower is better |
-| `plan_validity` | 0.333 | plans passing with **zero** repairs |
+| `dependency_correctness` | 0.848 | |
+| `replanning_success` | 0.787 | gaps closed within the iteration ceiling |
+| `intent_accuracy` | 0.628 | |
+| `task_efficiency` | 1.756 | tasks ÷ minimal sufficient tasks — lower is better |
+| `plan_validity` | 0.625 | plans passing with **zero** repairs |
 
 Two of those deserve their explanation rather than a chart.
 
-**`plan_validity` at 0.333** means two plans in three need a deterministic repair before they can
-execute. That is the planner needing help, and the metric says so instead of hiding it. The
-repairs are recorded on the plan, so a repaired plan never counts as clean.
+**`plan_validity` at 0.625** means three plans in eight still need a deterministic repair before
+they can execute. That is the planner needing help, and the metric says so instead of hiding it.
+The repairs are recorded on the plan, so a repaired plan never counts as clean.
 
-**`verification_success` is 0.250, and a high number here would be a worry.** A verifier that
-approved everything would score 1.000 and be worthless.
+**`verification_success` is 0.750, and 1.000 would be a worry rather than a win.** A verifier that
+approved everything would score perfectly and be worthless.
 
 ### The open defect, stated plainly
 
-**Fixed:** the negative scenario — one consistent document, asked whether it contradicts itself —
-produced 3 findings where the correct answer is none. It now produces **none**, and
-`unsupported_claim_rate` is 0.000 with `evidence_coverage` 1.000. The rule that fixed it is
-structural: *a claim of conflict must cite both sides*, so a claim fully supported by a single
-locator cannot answer a comparative objective. See BUG-012.
+**Fixed: the agent no longer invents findings.** Both negative scenarios — one asking whether a
+consistent report contradicts itself, one asking the same of a budget CSV — produce **zero
+findings**, which is the correct answer. `unsupported_claim_rate` is 0.000 and
+`evidence_coverage` is 1.000.
 
-**What replaced it:** the contradiction scenario now produces **0–1 findings where 2 are planted.**
-The build still fails, on the opposite criterion.
+Two changes did it, and neither was asking the model more firmly:
 
-That trade is worth understanding rather than glossing. Before the fix that scenario reported four
-findings — but three of them were restatements, counted as successes by every metric. Removing them
-did not lower the agent's real recall; it revealed it. The true figure was always about one
-contradiction per run, and the ceiling is the model: `qwen3:4b` does not reliably produce a claim
-that pairs two documents, and a claim that does not pair them is correctly rejected.
+- A structural rule: **a claim of conflict must cite both sides.** When the intent requires a
+  comparative operation, a claim fully supported by a single locator restates a source rather than
+  answering the question. It reads the intent, not the claim — "extract the timeline" is answered
+  by a single-source fact, and "do these conflict?" is not. (BUG-005.)
+- **A claim that asserts an absence is not a finding.** "There is no contradiction" is true and
+  uncitable: a finding is bound to the locators it rests on, and no locator says something is *not*
+  there. A negative conclusion belongs in the report narrative, written from the fact that nothing
+  was established. This was a contradiction between two of my own prompts, and the second negative
+  scenario is what exposed it.
 
-Both states fail CI. This one is the better failure: an investigation that reports nothing is
-honest, and one that invents three findings is not. Tracked as BUG-005 and BUG-012 in
+**What remains:** two positive scenarios produce **no findings where claims are planted**
+(`aurora_contradiction`, `aurora_pdf_timeline`). The build fails on that, and the threshold has not
+been moved.
+
+That trade is worth understanding rather than glossing. Before these fixes the contradiction
+scenario reported four findings — three of them restatements, counted as successes by every metric.
+Removing them did not lower the agent's recall; it revealed it. The real figure was always about one
+genuine contradiction per run, and the ceiling is the model: `qwen3:4b` does not reliably produce a
+claim that pairs two documents.
+
+Of the two possible failures this is the better one. An investigation that reports nothing is
+honest; one that invents three findings is not. Tracked as BUG-005 and BUG-012 in
 [`.claude/logs/bug-log.md`](.claude/logs/bug-log.md), and visible on the `#/evaluation` page.
-
----
 
 ## Architecture
 

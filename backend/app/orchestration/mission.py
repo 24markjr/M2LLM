@@ -215,6 +215,17 @@ async def run_mission(
         result.replan_iterations = replan.iterations
         result.termination_reason = replan.termination_reason
 
+        # Carry the *executed* graph, not the planned one. The replanning loop inserts tasks into
+        # the graph while it runs, and those tasks are not in the plan the planner produced - so a
+        # caller reading `result.plan.tasks` would see the plan as it was written rather than as it
+        # ran.
+        #
+        # Measured: a run that inserted task_008, task_009 and task_010 reported 7 tasks and 0
+        # inserted. Mission Control's INSERTED BY REPLAN badge had therefore never fired, and the
+        # adaptive behaviour this project exists to demonstrate was invisible in the one view built
+        # to show it.
+        result.plan = result.plan.model_copy(update={"tasks": graph.tasks})
+
         if synthesize:
             await _advance(result, Stage.SYNTHESIZING, on_stage)
             result.report = await SynthesisEngine(provider).synthesize(

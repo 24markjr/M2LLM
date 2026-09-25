@@ -1,0 +1,34 @@
+# Two documents disagree about when M4 actually closed. The programme report says it is on
+# track to close 2026-04-28; the milestone report says it closed 2026-05-14.
+#
+# A second document family to the Aurora set, so a fix tuned to one corpus does not look like
+# a general improvement.
+id: helix_schedule_contradiction
+suites: [core, all]
+objective: >
+  Compare the Helix programme report against the milestone report and identify any
+  contradictions in the milestone closure dates.
+documents:
+  - project_report.txt
+  - milestone_report.txt
+
+expected_operations:
+  - extract_timeline
+  - extract_milestones
+  - compare_sources
+  - detect_inconsistencies
+  - generate_report
+
+min_tasks: 4
+minimal_tasks: 5
+
+expected_edges:
+  - [extract_milestones, compare_sources]
+
+expected_tools:
+  extract_milestones: document_extract
+
+# The conflict is about a date in 2026. Substring rather than exact wording: two correct
+# phrasings of the same contradiction are both correct.
+expected_claims:
+  - "2026"

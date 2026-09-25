@@ -357,3 +357,28 @@ def get_bounds():
     from app.core.agent_config import get_agent_bounds
 
     return get_agent_bounds()
+
+
+async def test_an_inserted_task_is_stamped_with_the_revision_that_created_it() -> None:
+    """`Task.created_by_revision` was read by the API and the UI and set by nothing.
+
+    So the INSERTED BY REPLAN marker never fired: a run that inserted three tasks reported zero
+    inserted, and the adaptive behaviour this project exists to demonstrate was invisible in the one
+    view built to show it. The same shape of defect as BUG-010 - a field defined, consumed, and
+    never written.
+    """
+    controller, graph = _controller(
+        reasoning=[
+            _findings(("The project slipped against the approved baseline.", ["report.txt:r1"]))
+        ],
+        verification=[_verdict("UNSUPPORTED")],
+    )
+    before = {t.task_id for t in graph.tasks}
+
+    await controller.run(Objective(text="Check."), OBSERVATIONS, _ctx())
+
+    inserted = [t for t in graph.tasks if t.task_id not in before]
+    assert inserted, "the loop inserted nothing, so there is nothing to stamp"
+    for task in inserted:
+        assert task.created_by_revision > 0, f"{task.task_id} is not marked as inserted"
+        assert task.created_for_gap_id, f"{task.task_id} does not name the gap it was created for"

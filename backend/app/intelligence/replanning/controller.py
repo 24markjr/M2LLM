@@ -263,6 +263,11 @@ class ReplanningController:
 
         inserted: list[str] = []
         for gap, task in ordered:
+            # Stamp the revision that created it. `Task.created_by_revision` existed and was read
+            # by the API and the UI, but nothing ever set it - so the INSERTED BY REPLAN marker
+            # never fired, and the adaptive behaviour this project exists to demonstrate was
+            # invisible in the one view built to show it. The same shape of defect as BUG-010.
+            task = task.model_copy(update={"created_by_revision": iteration})
             try:
                 self._graph.insert_task(task)
             except ValueError as exc:

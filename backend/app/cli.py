@@ -23,25 +23,18 @@ from app.core.events import EventBus, MemoryEventSink, RunEventEmitter
 from app.core.logging import configure_logging
 from app.evaluation.report import LOWER_IS_BETTER, compare, load_latest, write_report
 from app.evaluation.runner import reports_dir, run_suite
-from app.integrations.verification import build_verification_provider
-from app.intelligence.execution.engine import ExecutionEngine
-from app.intelligence.graph.task_graph import TaskGraph
 from app.intelligence.intent.engine import IntentEngine, derive_operations
-from app.intelligence.planner.engine import PlanInvalidError, Planner, execution_levels
-from app.intelligence.reasoning.engine import ReasoningEngine
-from app.intelligence.replanning.controller import ReplanningController, ReplanResult
+from app.intelligence.planner.engine import execution_levels
 from app.intelligence.router.engine import NoCapableToolError, ToolRouter
-from app.intelligence.synthesis.engine import SynthesisEngine
 from app.intelligence.synthesis.renderers import to_markdown, to_text
 from app.llm import get_provider
+from app.orchestration.mission import MissionResult, MissionStatus, Stage, run_mission
 from app.schemas.common import new_run_id
 from app.schemas.event import EventType
-from app.schemas.execution import Observation
-from app.schemas.intent import Intent
 from app.schemas.objective import AttachedDocument, DocumentKind, Objective, ObjectiveScope
 from app.schemas.plan import Plan
-from app.schemas.result import ExecutionSummary
-from app.tools.base import ToolContext, ToolRegistry, build_default_registry
+from app.schemas.task import TaskStatus
+from app.tools.base import build_default_registry
 from app.tools.loader import load_documents
 
 RULE = "-" * 78
@@ -174,45 +167,105 @@ async def run_intent(text: str, docs: list[str]) -> int:
 
 
 async def run_investigate(text: str, docs: list[str], report_path: str = "") -> int:
-    """Objective -> intent -> validated task graph. The end-to-end demo."""
+    """The end-to-end demo: objective in, evidence-backed report out.
+
+    This function renders a run. It does not assemble one - `app/orchestration/mission.py` owns the
+    pipeline, and the API and the web console render the same `MissionResult`. Three copies of that
+    sequence used to exist, and a fix applied to one silently did not apply to the others.
+    """
     provider = get_provider()
     sink = MemoryEventSink()
     emitter = RunEventEmitter(EventBus([sink]), new_run_id())
     objective = _build_objective(text, docs)
 
-    _print_header("JARVIS - INVESTIGATION PLANNING", emitter.run_id, provider.model_id, text, docs)
-
+    _print_header("JARVIS - INVESTIGATION", emitter.run_id, provider.model_id, text, docs)
     _print_documents(docs)
 
-    await emitter.emit(EventType.RUN_STARTED, payload={"objective": text})
+    documents, page_starts = _load_documents(docs)
+    printed: set[Stage] = set()
 
-    print("\n[1/2] understanding the objective ...")
-    intent = await IntentEngine(provider).analyze(objective, emit=emitter)
-    print(f"      goal: {intent.goal}")
-    print(f"      {len(intent.required_operations)} operation(s) required")
+    async def on_stage(stage: Stage, result: MissionResult) -> None:
+        """Print each stage as the run reaches it.
 
-    if intent.clarification_needed:
+        Fires when a stage *begins*, so what is available is what the previous stage produced -
+        which is why intent is printed at PLANNING and the plan at EXECUTING.
+        """
+        if stage in printed:
+            return
+        printed.add(stage)
+
+        if stage is Stage.PLANNING and result.intent is not None:
+            print("\n[1/4] understanding the objective ...")
+            print(f"      goal: {result.intent.goal}")
+            print(f"      {len(result.intent.required_operations)} operation(s) required")
+            print("\n[2/4] planning ...")
+
+        elif stage is Stage.EXECUTING and result.plan is not None:
+            _print_plan(result.plan)
+            await _print_routing(result.plan, emitter)
+            print()
+            print(RULE)
+            print(f"[3/4] EXECUTING  ({len(documents)} document(s) loaded)")
+            print(RULE)
+
+        elif stage is Stage.REASONING:
+            print(f"\n[4/4] reasoning over {len(result.observations)} observation(s) ...")
+
+    result = await run_mission(
+        objective=objective,
+        documents=documents,
+        provider=provider,
+        emitter=emitter,
+        page_starts=page_starts,
+        on_stage=on_stage,
+    )
+
+    if result.status is MissionStatus.CLARIFICATION_NEEDED:
         print("\nCLARIFICATION NEEDED")
-        print(f"  {intent.clarification_question}")
+        print(f"  {result.error_message}")
         print("  (planning stops here - an ambiguous objective must not produce a plan)")
-        await emitter.emit(EventType.RUN_COMPLETED)
         _print_trace(sink, emitter.run_id)
         return 0
 
-    print("\n[2/2] planning ...")
-    try:
-        plan = await Planner(provider).create_plan(intent, objective, emit=emitter)
-    except PlanInvalidError as exc:
+    if result.error_code == "PLAN_INVALID":
         print("\nPLAN_INVALID - the run fails cleanly rather than executing a bad plan")
-        for violation in exc.result.violations:
-            print(f"  - [{violation.code.value}] {violation.message}")
-        await emitter.emit(EventType.RUN_FAILED)
+        print(f"  {result.error_message}")
         _print_trace(sink, emitter.run_id)
         return 1
 
-    await emitter.emit(EventType.RUN_COMPLETED)
-    _print_trace(sink, emitter.run_id)
+    if result.status is MissionStatus.FAILED:
+        print(f"\nRUN FAILED - {result.error_code}")
+        print(f"  {result.error_message}")
+        _print_trace(sink, emitter.run_id)
+        return 1
 
+    # After the run, not during it: the replanning loop executes its inserted tasks *inside* the
+    # loop, so a table printed when reasoning began would show the planned graph and miss exactly
+    # the tasks worth pointing at.
+    _print_execution(result)
+    _print_findings(result)
+    _print_gaps(result)
+
+    if result.report is not None:
+        print()
+        print(to_text(result.report))
+        if report_path:
+            print()
+            print(f"report written to {_write_report(report_path, to_markdown(result.report))}")
+
+    _print_validation(result)
+    _print_llm_stats(sink)
+    print(RULE)
+    print()
+    return 0
+
+
+def _print_plan(plan: Plan) -> None:
+    """The task graph, and which tasks can run at the same time.
+
+    The waves are the point: two tasks with no dependency between them have no edge, and that
+    absence is what makes them concurrent. The parallelism is a property of the plan.
+    """
     print()
     print(RULE)
     print("TASK GRAPH")
@@ -227,28 +280,97 @@ async def run_investigate(text: str, docs: list[str], report_path: str = "") -> 
         parallel = "   <- these run in parallel" if len(level) > 1 else ""
         print(f"  wave {index}: {', '.join(level)}{parallel}")
 
-    await _print_routing(plan, emitter)
 
-    observations, graph, registry = await _execute(plan, docs, emitter, sink)
-    await _investigate(
-        objective, observations, graph, registry, docs, emitter, report_path, intent=intent
-    )
+def _print_execution(result: MissionResult) -> None:
+    """What every task did, and what evidence came back - the run's final state.
 
-    validation = plan.validation
-    if validation:
-        print()
-        print(f"validation      : {'PASSED' if validation.valid else 'FAILED'}")
-        print(f"clean           : {validation.clean}  (no repairs, no re-prompts)")
-        print(f"re-prompts      : {validation.reprompt_count}")
-        if validation.repairs:
-            print("repairs applied :")
-            for applied in validation.repairs:
-                print(f"  - {applied.action.value}: {applied.detail}")
+    A task inserted by the replanning loop is marked. `result.plan` carries the executed graph, so
+    inserted tasks appear here - they did not when the plan was the planner's original output, and
+    the adaptive behaviour was invisible as a result.
+    """
+    if result.plan is None:
+        return
 
-    _print_llm_stats(sink)
-    print(RULE)
     print()
-    return 0
+    print(RULE)
+    print(f"EXECUTION  ({len(result.plan.tasks)} task(s))")
+    print(RULE)
+
+    for task in result.plan.tasks:
+        tool = task.selection.tool_name if task.selection else "-"
+        inserted = "  [INSERTED BY REPLAN]" if task.created_by_revision > 0 else ""
+        note = ""
+        if task.result and task.result.ok:
+            note = next((o.content for o in result.observations if o.task_id == task.task_id), "")
+        elif task.result:
+            note = task.result.error_message[:60]
+        print(f"  {task.task_id}  {task.status.value:<10} {tool:<20} {note}{inserted}")
+
+    sources = sorted({s for o in result.observations for s in o.sources})
+    completed = sum(1 for t in result.plan.tasks if t.status is TaskStatus.COMPLETED)
+    print()
+    print(f"tasks completed : {completed}/{len(result.plan.tasks)}")
+    print(f"observations    : {len(result.observations)}")
+    print(f"evidence found  : {len(sources)} located passage(s)")
+    for source in sources[:8]:
+        print(f"  - {source}")
+    if len(sources) > 8:
+        print(f"  ... and {len(sources) - 8} more")
+
+
+def _print_findings(result: MissionResult) -> None:
+    """Findings with their evidence and verification state.
+
+    An unsupported claim is printed, not hidden, and an unresolvable citation is shown as such -
+    dropping either would leave a report that looks better than the run was.
+    """
+    print()
+    print(RULE)
+    print(f"FINDINGS  ({len(result.findings)})")
+    print(RULE)
+
+    if not result.findings:
+        print("  none - on an objective with nothing to find, this is the correct answer")
+        return
+
+    for finding in result.findings:
+        status = finding.verification.status.value if finding.verification else "UNVERIFIED"
+        degraded = ""
+        if finding.verification and finding.verification.degraded:
+            degraded = " (degraded check)"
+        print()
+        print(f"  [{finding.classification.value:<10}] {status}{degraded}")
+        print(f"  confidence {finding.confidence.value:.2f}  {finding.claim}")
+        for ref in finding.evidence:
+            print(f"    - {ref.locator.as_ref():<32} {ref.resolution.value}")
+
+
+def _print_gaps(result: MissionResult) -> None:
+    if not result.gaps:
+        return
+    closed = sum(1 for g in result.gaps if g.resolved)
+    print()
+    print(f"evidence gaps   : {len(result.gaps)} detected, {closed} closed")
+    for gap in result.gaps[:6]:
+        mark = "closed" if gap.resolved else "open"
+        print(f"  - [{mark:<6}] {gap.gap_type.value}: {gap.missing}")
+    reason = result.termination_reason.value if result.termination_reason else "-"
+    print(f"termination     : {reason}")
+    print(f"replan rounds   : {result.replan_iterations}")
+
+
+def _print_validation(result: MissionResult) -> None:
+    validation = result.plan.validation if result.plan else None
+    if validation is None:
+        return
+    print()
+    print(f"validation      : {'PASSED' if validation.valid else 'FAILED'}")
+    print(f"clean           : {validation.clean}  (no repairs, no re-prompts)")
+    print(f"re-prompts      : {validation.reprompt_count}")
+    if validation.repairs:
+        print("repairs applied :")
+        for applied in validation.repairs:
+            print(f"  - {applied.action.value}: {applied.detail}")
 
 
 async def _print_routing(plan: Plan, emitter: RunEventEmitter) -> None:
@@ -279,207 +401,6 @@ async def _print_routing(plan: Plan, emitter: RunEventEmitter) -> None:
 
     summary = ", ".join(f"{count} {mode.lower()}" for mode, count in sorted(modes.items()))
     print(f"\nselection modes : {summary}")
-
-
-async def _execute(
-    plan: Plan, docs: list[str], emitter: RunEventEmitter, sink: MemoryEventSink
-) -> tuple[list[Observation], TaskGraph | None, ToolRegistry | None]:
-    """Run the plan. This is where JARVIS stops planning and starts doing.
-
-    Returns the graph and registry as well as the observations: the replanning loop
-    edits the *same* graph, which is what makes an inserted task part of this run
-    rather than a separate one."""
-    documents, page_starts = _load_documents(docs)
-    if not documents:
-        print()
-        print("(no fixture documents matched - skipping execution)")
-        return [], None, None
-
-    registry = build_default_registry()
-    graph = TaskGraph.from_plan(plan)
-    engine = ExecutionEngine(graph, registry, ToolRouter(registry), emit=emitter)
-    ctx = ToolContext(
-        run_id=emitter.run_id,
-        document_ids=list(documents),
-        documents=documents,
-        page_starts=page_starts,
-    )
-
-    print()
-    print(RULE)
-    print(f"EXECUTION  ({len(documents)} document(s) loaded)")
-    print(RULE)
-
-    observations = await engine.run(ctx)
-
-    for task in graph.tasks:
-        tool = task.selection.tool_name if task.selection else "-"
-        note = ""
-        if task.result and task.result.ok:
-            note = next((o.content for o in observations if o.task_id == task.task_id), "")
-        elif task.result:
-            note = task.result.error_message[:60]
-        print(f"  {task.task_id}  {task.status.value:<10} {tool:<20} {note}")
-
-    done, total = graph.progress()
-    sources = sorted({s for o in observations for s in o.sources})
-    print()
-    print(f"tasks completed : {done}/{total}")
-    print(f"observations    : {len(observations)}")
-    print(f"tool calls      : {engine.budget.tool_calls_used}/{engine.budget.tool_calls_limit}")
-    print(f"evidence found  : {len(sources)} located passage(s)")
-    for source in sources[:8]:
-        print(f"  - {source}")
-    if len(sources) > 8:
-        print(f"  ... and {len(sources) - 8} more")
-
-    print()
-    return observations, graph, registry
-
-
-async def _investigate(
-    objective: Objective,
-    observations: list[Observation],
-    graph: TaskGraph | None,
-    registry: ToolRegistry | None,
-    docs: list[str],
-    emitter: RunEventEmitter,
-    report_path: str = "",
-    intent: Intent | None = None,
-) -> None:
-    """Reason, verify, detect gaps, and replan until resolved or bounded out.
-
-    This is the closed loop: everything before it is a pipeline. When verification
-    rejects a finding and a gap names what is missing, a task is inserted into the graph
-    that already ran and execution continues.
-    """
-    if not observations or graph is None or registry is None:
-        return
-
-    provider = get_provider()
-    documents, page_starts = _load_documents(docs)
-
-    print()
-    print(RULE)
-    print("REASONING, VERIFICATION AND ADAPTIVE REPLANNING")
-    print(RULE)
-    print(f"deriving findings from {len(observations)} observation(s) ...")
-
-    controller = ReplanningController(
-        graph=graph,
-        registry=registry,
-        router=ToolRouter(registry, provider),
-        reasoner=ReasoningEngine(provider),
-        verifier=build_verification_provider(provider),
-        emit=emitter,
-        intent=intent,
-    )
-    ctx = ToolContext(
-        run_id=emitter.run_id,
-        document_ids=list(documents),
-        documents=documents,
-        page_starts=page_starts,
-    )
-    result = await controller.run(objective, observations, ctx)
-
-    if not result.findings:
-        print()
-        print("no findings could be supported by the evidence gathered")
-        print("(an honest empty result - the system does not invent one to fill the gap)")
-        print(f"terminated       : {result.termination_reason.value}")
-        return
-
-    scores = {s.gap_id: s for s in result.scores}
-
-    for finding in result.findings:
-        print()
-        print(f"  {finding.finding_id}  [{finding.classification.value}] {finding.claim}")
-        print(f"        confidence   : {finding.confidence.explain()}")
-
-        if finding.verification is not None:
-            issues = ", ".join(i.issue_type.value for i in finding.verification.issues)
-            detail = f" - {issues}" if issues else ""
-            degraded = "  (degraded to baseline)" if finding.verification.degraded else ""
-            print(f"        verification : {finding.verification.status.value}{detail}{degraded}")
-
-        for ref in finding.evidence:
-            mark = "resolved  " if ref.is_resolved else "UNRESOLVED"
-            note = "" if ref.is_resolved else f"  <- {ref.resolution_note}"
-            print(f"        {mark} {ref.as_ref()}{note}")
-
-        for gap in finding.gaps:
-            print(f"        GAP          : {gap.missing}")
-            print(f"                       ({gap.gap_type.value}, severity {gap.severity:.2f})")
-            score = scores.get(gap.gap_id)
-            if gap.resolved_by_task_id:
-                scored = f"  score {score.explain()}" if score else ""
-                state = "resolved" if gap.resolved else "pending"
-                print(f"        ACTION       : {gap.resolved_by_task_id} [{state}]{scored}")
-
-    verified = len(result.verified)
-    resolved_gaps = sum(1 for g in result.gaps if g.resolved)
-
-    print()
-    print(f"findings          : {len(result.findings)}  ({verified} verified)")
-    print(f"gaps detected     : {len(result.gaps)}  ({resolved_gaps} closed)")
-    print(f"replan iterations : {result.iterations}")
-    print(f"tasks added       : {sum(len(r.added_task_ids) for r in result.revisions)}")
-    print(f"mean confidence   : {result.mean_confidence:.2f}")
-    print(f"terminated        : {result.termination_reason.value}")
-
-    if result.termination_reason.value == "DIMINISHING_RETURNS":
-        print("  (the loop recognised another iteration was not worth the cost)")
-    elif result.termination_reason.value == "MAX_ITERATIONS":
-        print("  (the iteration ceiling was reached; unresolved gaps are reported as such)")
-
-    await _report(objective, result, graph, documents, emitter, report_path)
-
-
-async def _report(
-    objective: Objective,
-    result: ReplanResult,
-    graph: TaskGraph,
-    documents: dict[str, str],
-    emitter: RunEventEmitter,
-    report_path: str,
-) -> None:
-    """Assemble and show the final report.
-
-    Every figure here is counted from the run rather than described by a model - the
-    narrative is the only generated text in the document.
-    """
-    from app.schemas.task import TaskStatus
-
-    _, total = graph.progress()
-    execution = ExecutionSummary(
-        tasks_planned=total,
-        tasks_completed=len(graph.with_status(TaskStatus.COMPLETED)),
-        tasks_failed=len(graph.with_status(TaskStatus.FAILED)),
-        tasks_skipped=len(graph.with_status(TaskStatus.SKIPPED)),
-        tool_calls=sum(1 for t in graph.tasks if t.result is not None),
-        documents_processed=len(documents),
-        replan_iterations=result.iterations,
-        gaps_detected=len(result.gaps),
-        gaps_resolved=sum(1 for g in result.gaps if g.resolved),
-    )
-
-    report = await SynthesisEngine(get_provider()).synthesize(
-        run_id=emitter.run_id,
-        objective=objective,
-        findings=result.findings,
-        gaps=result.gaps,
-        observations=result.observations,
-        execution=execution,
-        termination=result.termination_reason,
-        emit=emitter,
-    )
-
-    print()
-    print(to_text(report))
-
-    if report_path:
-        print()
-        print(f"report written to {_write_report(report_path, to_markdown(report))}")
 
 
 def _write_report(report_path: str, markdown: str) -> Path:

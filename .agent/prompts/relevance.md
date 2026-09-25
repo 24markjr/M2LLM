@@ -1,6 +1,6 @@
 ---
 role: relevance
-version: 2
+version: 3
 output_schema: app.intelligence.reasoning.engine.RelevanceVerdicts
 phase: 13
 ---
@@ -31,7 +31,14 @@ particular, **keep every claim that reports a conflict, a mismatch, an overrun o
 discrepancy** when the objective asked about one. That is the answer, and dropping it
 makes the whole investigation report nothing.
 
-Keep a negative answer too: "the two figures agree" answers "do these conflict?".
+**A claim that asserts an absence is not a finding.** "There is no contradiction", "the figures
+agree", "nothing indicates a delay" - drop all of these. Not because they are wrong, but because
+nothing can support them: a finding is bound to the source locators it rests on, and no locator
+says that something is not there. A negative conclusion belongs in the report's narrative, which
+is written from the fact that no findings were established.
+
+So if the honest answer to the objective is "nothing", the honest output is an **empty list** -
+not one claim saying so.
 
 **When in doubt, keep.** A borderline claim is still checked against its evidence
 afterwards, so keeping one costs little. Dropping the only real finding costs the entire

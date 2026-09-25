@@ -1,0 +1,22 @@
+# A SECOND negative case, over a different document type. The budget file is internally
+# consistent - every row is a distinct line item - so there is no contradiction within it.
+#
+# One negative scenario is a single point of failure for the most important check in the
+# suite: an agent could pass `aurora_no_contradiction` by accident. Two, over different corpora
+# and different formats, is harder to pass by luck.
+id: helix_budget_consistent
+suites: [negative, all]
+objective: >
+  Determine whether the Helix budget file contradicts itself on any line item amount.
+documents:
+  - budget.csv
+
+expected_operations:
+  - extract_budget
+  - detect_inconsistencies
+
+min_tasks: 2
+minimal_tasks: 2
+
+# Finding something here is the failure.
+expect_zero_findings: true

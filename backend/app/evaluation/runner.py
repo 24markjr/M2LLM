@@ -30,21 +30,13 @@ from app.evaluation.metrics import (
     score_scenario,
 )
 from app.evaluation.report import EvalReport, ScenarioReport, config_hash
-from app.integrations.verification import build_verification_provider
-from app.intelligence.execution.engine import ExecutionEngine
-from app.intelligence.graph.task_graph import TaskGraph
-from app.intelligence.intent.engine import IntentEngine
-from app.intelligence.planner.engine import PlanInvalidError, Planner
-from app.intelligence.reasoning.engine import ReasoningEngine
-from app.intelligence.replanning.controller import ReplanningController
-from app.intelligence.router.engine import ToolRouter
 from app.llm import get_provider
 from app.llm.prompts import get_prompt_library
+from app.orchestration.mission import MissionStatus, run_mission
 from app.schemas.common import new_run_id
 from app.schemas.event import EventType
 from app.schemas.intent import Operation
 from app.schemas.objective import AttachedDocument, Objective, ObjectiveScope
-from app.tools.base import ToolContext, build_default_registry
 from app.tools.loader import load_documents
 
 log = get_logger(__name__)
@@ -146,50 +138,34 @@ async def run_scenario(expectation: ScenarioExpectation) -> ScenarioOutcome:
 
     outcome = ScenarioOutcome(scenario_id=expectation.scenario_id)
 
-    try:
-        outcome.intent = await IntentEngine(provider).analyze(objective, emit=emitter)
+    # One pipeline, shared with the CLI and the API. This runner used to assemble its own, and it
+    # cost two wasted evaluation runs and one real defect - a fix landed in one copy and silently
+    # did not apply to the others. Scoring what a mission returned is the runner's whole job.
+    #
+    # `synthesize=False`: the report is prose over findings that are already settled, and no metric
+    # reads it. Generating one would add a model call per scenario and measure nothing.
+    result = await run_mission(
+        objective=objective,
+        documents=documents,
+        provider=provider,
+        emitter=emitter,
+        page_starts=page_starts,
+        synthesize=False,
+    )
 
-        plan = await Planner(provider).create_plan(outcome.intent, objective, emit=emitter)
-        outcome.plan = plan
+    outcome.intent = result.intent
+    # `result.plan` carries the *executed* graph, including tasks the replanning loop inserted, so
+    # routing and status are scored against what ran rather than what was planned.
+    outcome.plan = result.plan
+    outcome.findings = result.findings
+    outcome.gaps = result.gaps
+    outcome.replan_iterations = result.replan_iterations
 
-        registry = build_default_registry()
-        router = ToolRouter(registry, provider)
-        graph = TaskGraph.from_plan(plan)
-        ctx = ToolContext(
-            run_id=emitter.run_id,
-            document_ids=list(documents),
-            documents=documents,
-            page_starts=page_starts,
-        )
-
-        observations = await ExecutionEngine(graph, registry, router, emit=emitter).run(ctx)
-
-        result = await ReplanningController(
-            graph=graph,
-            registry=registry,
-            router=router,
-            reasoner=ReasoningEngine(provider),
-            verifier=build_verification_provider(provider),
-            emit=emitter,
-            # Without this the comparative rule cannot fire, and the negative scenario this
-            # harness exists to police would pass restatements straight through. Three places
-            # construct this pipeline - here, the CLI and the orchestrator - and that is the
-            # duplication biting: a fix applied to one silently did not apply to the others.
-            intent=outcome.intent,
-        ).run(objective, observations, ctx)
-
-        outcome.findings = result.findings
-        outcome.gaps = result.gaps
-        outcome.replan_iterations = result.iterations
-        # The plan carries the executed graph's state, so routing and status are scored
-        # against what actually ran rather than what was planned.
-        outcome.plan = plan.model_copy(update={"tasks": graph.tasks})
-
-    except PlanInvalidError as exc:
-        outcome.error = f"PLAN_INVALID: {exc}"
-    except Exception as exc:  # noqa: BLE001 - one bad scenario must not end the suite
-        log.error("scenario_failed", scenario=expectation.scenario_id, error=str(exc))
-        outcome.error = f"{type(exc).__name__}: {exc}"
+    if result.status is MissionStatus.FAILED:
+        # A failed scenario is scored, not skipped: a run that could not plan still says something
+        # about the planner, and dropping it would quietly improve the aggregate.
+        outcome.error = f"{result.error_code}: {result.error_message}"
+        log.error("scenario_failed", scenario=expectation.scenario_id, error=outcome.error)
 
     calls = sink.of_type(EventType.LLM_CALL_COMPLETED)
     outcome.llm_calls = len(calls)

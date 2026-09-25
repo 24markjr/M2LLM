@@ -31,7 +31,7 @@ Each phase specifies:
 
 ## Progress
 
-*Last updated 2026-09-25 at commit `24ba600`. Kept here rather than per section so there is one
+*Last updated 2026-09-25 at commit `c197aab`+. Kept here rather than per section so there is one
 place to read the state of the build.*
 
 | # | Phase | Status | Notes |
@@ -64,18 +64,23 @@ place to read the state of the build.*
 
 **Carried debt**
 
-1. **The confabulation is fixed** (BUG-005): the negative scenario now produces 0 findings,
-   `unsupported_claim_rate` 0.000, `evidence_coverage` 1.000. **What replaced it:** the
-   contradiction scenario yields 0-1 findings where 2 are planted, so the build is still red on
-   the opposite criterion. Removing three restatements from that scenario did not lower recall, it
-   exposed it - the ceiling is `qwen3:4b` not reliably pairing two documents in one claim.
-2. **Three places construct the replanning pipeline** - `app/cli.py`, the orchestrator and
-   `app/evaluation/runner.py`. This already cost two wasted evaluation runs: the BUG-005 fix was
-   wired into one copy and silently did not apply to the others. They should collapse onto
-   `app/orchestration/mission.py`.
-3. The API does not persist runs — `DatabaseEventSink` exists but is not wired into the registry.
-4. Phases 1–18 and 20 have no development-log entries; their reasoning is in commit messages and
+1. **Two positive scenarios produce no findings** where claims are planted
+   (`aurora_contradiction`, `aurora_pdf_timeline`), so the build is red. The confabulation that
+   used to fail it is fixed - both negative cases now produce zero findings, with
+   `unsupported_claim_rate` 0.000. What remains is recall, and the ceiling is `qwen3:4b` not
+   reliably producing a claim that pairs two documents. See BUG-005 and BUG-012.
+2. **The API does not persist runs** - `DatabaseEventSink` exists and is tested, but the mission
+   registry wires only in-memory sinks, so a restart loses history.
+3. **Eight evaluation scenarios**, where the plan calls for twenty.
+4. **No frontend test runner**, so `reconstruct()` in `useReplay.ts` has no unit test.
+5. **CI has never run** - only been written.
+6. Phases 1-18 and 20 have no development-log entries; their reasoning is in commit messages and
    `bug-log.md`.
+
+**Closed:** the pipeline duplication. `ReplanningController` is now constructed in exactly one
+place (`app/orchestration/mission.py`); the CLI and the evaluation runner render a `MissionResult`
+rather than assembling their own. That duplication had already cost two wasted evaluation runs and
+hidden a real defect for three phases.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 role: reasoning
-version: 3
+version: 4
 output_schema: app.intelligence.reasoning.engine.CandidateFindings
 phase: 13
 ---
@@ -23,6 +23,11 @@ example when another document gives a different date.
 that addresses the objective, return an empty list. An investigation that finds nothing
 because there is nothing to find has succeeded. Inventing a finding to avoid an empty
 result is the single worst thing you can do here.
+
+**Do not write a finding that asserts an absence.** "There is no contradiction", "the figures
+agree", "no delay is indicated" - none of these is a finding, however true. A finding is bound to
+the locators it rests on, and no locator says that something is *not* there. When the answer is
+"nothing", return an empty list rather than one claim announcing it.
 
 For every claim you make you must cite the exact source locators it rests on, copied
 verbatim from the observations. A locator looks like `project_report.txt:r10`.

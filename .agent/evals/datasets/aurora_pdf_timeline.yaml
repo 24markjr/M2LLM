@@ -1,0 +1,24 @@
+# The same report as `aurora_timeline_only`, but as a PDF.
+#
+# The point is the locator: a PDF citation resolves to a page (`:p3`) rather than a row, and
+# that mapping comes from the page-start table the loader builds. Nothing else in the suite
+# exercises it, so a regression in PDF page mapping would otherwise be invisible until a
+# citation silently stopped resolving.
+id: aurora_pdf_timeline
+suites: [core, all]
+objective: Extract the project timeline and milestone dates from the Aurora project report.
+documents:
+  - aurora_project_report.pdf
+
+expected_operations:
+  - extract_timeline
+  - extract_milestones
+
+min_tasks: 2
+minimal_tasks: 3
+
+expected_tools:
+  extract_timeline: document_extract
+
+expected_claims:
+  - "2026"

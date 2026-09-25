@@ -1,0 +1,29 @@
+# The financial report records 450,000 of spend. The budget file records that the migration
+# line item of 450,000 was never approved. Both facts are individually unremarkable; together
+# they are the finding.
+#
+# Deliberately crosses a text document and a CSV, so evidence binding has to resolve a row
+# locator and a line locator in the same claim.
+id: helix_budget_unapproved
+suites: [core, all]
+objective: >
+  Determine whether the Helix spend recorded in the financial report was approved in the
+  budget.
+documents:
+  - financial_report.txt
+  - budget.csv
+
+expected_operations:
+  - extract_budget
+  - compare_sources
+  - detect_inconsistencies
+  - generate_report
+
+min_tasks: 3
+minimal_tasks: 4
+
+expected_tools:
+  extract_budget: document_extract
+
+expected_claims:
+  - "450"

@@ -506,3 +506,92 @@ is a real limit, not a fixed problem.
 A metric can be satisfied by the wrong thing. Four findings looked like better recall than one;
 three of them were noise, and no metric in the suite could tell. The negative case was the only
 test that could, which is the whole argument for having one.
+
+---
+
+## BUG-013 — Tasks inserted by replanning were invisible everywhere
+
+**Found:** 2026-09-25, Phases 19/22 (found while collapsing the pipeline duplication)
+**Severity:** High — the headline demo silently did not work
+**Status:** Fixed
+
+**Symptom**
+
+A run whose event log contained `TASK_CREATED` for `task_008`, `task_009` and `task_010` reported
+**7 tasks and 0 inserted** through the API. Mission Control's `INSERTED BY REPLAN` badge had
+therefore never once fired, and neither had the animation built for it in Phase 22 — whose whole
+purpose is that a viewer can point at the moment the plan changed.
+
+I had seen this and misread it. The Phase 22 smoke test printed `inserted by replan: (none)` and I
+recorded it as "this run inserted nothing". It had inserted three.
+
+**Cause**
+
+Two independent halves, which is why it survived a phase that was specifically about showing it.
+
+1. **`run_mission` never carried the executed graph.** `result.plan` stayed as the planner wrote
+   it. The replanning loop inserts tasks into the `TaskGraph`, not into the `Plan`, so anything
+   reading `result.plan.tasks` saw the plan as written rather than as run. The evaluation runner
+   had its own fix for this (`plan.model_copy(update={"tasks": graph.tasks})`); the orchestrator
+   did not — and the API and UI read the orchestrator's result.
+2. **`Task.created_by_revision` was never set.** The field existed, the API shaper read it, the UI
+   keyed its badge off it, and `propose_task()` set `created_for_gap_id` and nothing else. So even
+   once the tasks appeared, none was marked.
+
+**Fix**
+
+`run_mission` now carries the executed graph, and `_insert_tasks` stamps each task with the
+revision that created it. A test asserts every inserted task carries both the revision and the gap
+it was created for.
+
+**Pattern**
+
+The second half is the third occurrence of one shape: **a field defined, consumed, and never
+written.** `RequiredOperation.optional` (BUG-010) and `_TOLERANCES` below the `__main__` guard
+(BUG-011) were the others. None was visible from reading the code — each looked like working
+plumbing, and each was only visible in output that was quietly wrong.
+
+The first half is the pipeline duplication, which is now closed: one place constructs the
+replanning pipeline, and the CLI and evaluation runner render its result.
+
+---
+
+## BUG-014 — Two of my own prompts disagreed about what a finding is
+
+**Found:** 2026-09-25, Phase 13 (exposed by a newly added negative scenario)
+**Severity:** Medium — a negative case failed on correct model behaviour
+**Status:** Fixed
+
+**Symptom**
+
+`helix_budget_consistent` — a new negative case over a budget CSV, whose correct answer is no
+findings — produced one:
+
+```
+The Helix budget file does not contradict itself on any line item amount
+```
+
+That is true, on-objective, and exactly what the relevance prompt asked for.
+
+**Cause**
+
+The prompts contradicted each other. `reasoning.md` said returning no findings is a correct answer;
+`relevance.md` said *"keep a negative answer too: 'the two figures agree' answers 'do these
+conflict?'"*. The model followed the second.
+
+The tiebreak is evidence. **Absence cannot be cited.** A finding is bound to the locators it rests
+on, and no locator says that something is not there — so a claim asserting absence can never be
+evidence-bound, which makes it the one kind of claim this system has no way to support.
+
+**Fix**
+
+Both prompts now say it: a claim asserting an absence is not a finding, and when the answer is
+"nothing" the output is an empty list rather than one claim announcing it. A negative conclusion
+belongs in the report narrative, which is written from the fact that nothing was established.
+Reasoning v4, relevance v3.
+
+**Pattern**
+
+Two prompts, each sensible alone, describing incompatible behaviour. Nothing in the type system or
+the test suite could catch that — only a scenario could, and only a *second* negative scenario did.
+One negative case was a single point of failure for the most important check in the suite.
