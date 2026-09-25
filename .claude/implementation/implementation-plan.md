@@ -31,7 +31,7 @@ Each phase specifies:
 
 ## Progress
 
-*Last updated 2026-09-25 at commit `491de69`+. Kept here rather than per section so there is one
+*Last updated 2026-09-25 at commit `24ba600`. Kept here rather than per section so there is one
 place to read the state of the build.*
 
 | # | Phase | Status | Notes |
@@ -56,7 +56,7 @@ place to read the state of the build.*
 | 17 | Planning policy | `DONE` | Insertion capped at 3 per iteration |
 | 18 | Report synthesis | `DONE` | Every figure counted, not described |
 | 19 | FastAPI + SSE | `DONE` | Built before 21 out of order — see `phase-09-api.md` |
-| 20 | Evaluation harness | `DONE` | **Not re-run since the Phase 6/7/13 fixes; baseline is stale.** 3 scenarios, not 20 |
+| 20 | Evaluation harness | `DONE` | Baseline re-run 2026-09-25 (`20260925T104354`) and current. 3 scenarios, not the 20 the plan calls for |
 | 21 | Frontend: Mission Control | `DONE` | React only; Tailwind/Query/Zustand/Recharts/Framer omitted — `frontend/README.md` |
 | 22 | Live execution visualization | `DONE` | Replay (demo insurance), evaluation dashboard, animated replan insertion |
 | 23 | Test hardening & CI | `DONE`, gate red | 581 tests, invariant + adversarial suites, GitHub Actions. `eval-regression` correctly fails on the baseline's confabulation - see testing-strategy.md |
