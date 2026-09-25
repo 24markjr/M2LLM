@@ -60,7 +60,10 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S", "T20"]
-# Operator-facing scripts print to the terminal by design.
+# Operator-facing scripts print to the terminal by design. Both locations: `scripts/` beside
+# the package (openapi export, eval report check) and `../scripts/` at the repo root
+# (healthcheck). Only the second was listed, so a lint run over `backend` failed on the first.
+"scripts/**" = ["T20"]
 "../scripts/**" = ["T20"]
 # The CLI is an operator-facing command; printing is its job.
 "app/cli.py" = ["T20"]

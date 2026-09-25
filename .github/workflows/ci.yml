@@ -1,0 +1,196 @@
+name: CI
+
+# The gate has an order, and the order is deliberate: the cheapest check that can fail runs
+# first. A type error should not wait behind a Postgres container, and a lint error should not
+# wait behind anything.
+#
+# One job that cannot run here is the evaluation suite. It needs a local model, and a GitHub
+# runner has none. Rather than pretend otherwise, `eval-regression` verifies the committed
+# reports are well-formed and internally consistent, and says plainly that the metrics
+# themselves are produced locally. A green CI must not imply the agent was measured.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  # Never reach a real model in CI. The echo provider is deterministic, and a test that
+  # silently fell back to Ollama would hang rather than fail.
+  LLM_PROVIDER: echo
+
+jobs:
+  lint:
+    name: lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -e "backend[dev]"
+      - name: ruff check
+        run: ruff check backend
+      - name: ruff format --check
+        run: ruff format --check backend
+
+  types:
+    name: types (mypy --strict)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -e "backend[dev]"
+      - name: mypy --strict
+        working-directory: backend
+        run: mypy app
+
+  unit:
+    name: unit + invariants + adversarial
+    runs-on: ubuntu-latest
+    needs: [lint, types]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -e "backend[dev]"
+
+      # pytest-randomly reorders every run. A suite that only passes in one order has tests
+      # leaking state into each other, and the seed is printed so a failure is reproducible.
+      - name: pytest
+        working-directory: backend
+        run: pytest tests/unit -m "not llm" --cov=app --cov-report=term --cov-report=xml
+
+      # The floor, not the target. It is set below the current figure on purpose: a threshold
+      # equal to today's coverage turns every unrelated change into a coverage failure, and a
+      # team that fights the gate starts deleting tests to satisfy it.
+      - name: coverage floor
+        working-directory: backend
+        run: |
+          coverage report --fail-under=75 \
+            --include="app/intelligence/*,app/schemas/*"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: backend/coverage.xml
+
+  integration:
+    name: integration (real Postgres)
+    runs-on: ubuntu-latest
+    needs: [lint, types]
+    services:
+      postgres:
+        # pgvector on top of the official image, matching docker-compose. The embedding column
+        # is `vector(768)` (ADR-005), so plain postgres would fail at migration.
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: jarvis
+          POSTGRES_PASSWORD: jarvis
+          POSTGRES_DB: jarvis
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://jarvis:jarvis@localhost:5432/jarvis
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -e "backend[dev]"
+
+      - name: alembic upgrade head
+        working-directory: backend
+        run: alembic upgrade head
+
+      # These skip themselves when no database is reachable, which is right locally and wrong
+      # here: a silently-skipped integration suite is a green tick over nothing. `-p no:randomly`
+      # keeps schema-dependent ordering stable.
+      - name: pytest (integration)
+        working-directory: backend
+        run: pytest tests/integration -m "not llm" -p no:randomly -v
+
+      - name: fail if the database tests skipped
+        working-directory: backend
+        run: |
+          pytest tests/integration -m "not llm" -p no:randomly -q 2>&1 | tee result.txt
+          if grep -qi "no database reachable" result.txt; then
+            echo "::error::integration tests skipped - the Postgres service did not come up"
+            exit 1
+          fi
+
+  contract:
+    name: openapi is current
+    runs-on: ubuntu-latest
+    needs: [lint, types]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -e "backend[dev]"
+
+      # The frontend's types come from this file, so a stale one means the UI is built against
+      # a contract the API no longer serves.
+      - name: check docs/openapi.json
+        working-directory: backend
+        run: python scripts/export_openapi.py --check
+
+  frontend:
+    name: frontend (tsc + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: npm ci
+        working-directory: frontend
+        run: npm ci
+      - name: tsc --noEmit
+        working-directory: frontend
+        run: npx tsc --noEmit
+      - name: build
+        working-directory: frontend
+        run: npm run build
+
+  eval-regression:
+    name: eval reports are well-formed
+    runs-on: ubuntu-latest
+    needs: [unit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -e "backend[dev]"
+
+      # What this does NOT do: run the agent. That needs a local model, and a runner has none.
+      # It validates the committed reports and enforces the thresholds they already recorded,
+      # so a report committed with a confabulation or a hallucination rate over the ceiling
+      # fails the build. The metrics themselves are produced locally and committed.
+      - name: validate committed reports and enforce their thresholds
+        working-directory: backend
+        run: python scripts/check_eval_reports.py

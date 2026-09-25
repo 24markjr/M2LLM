@@ -31,7 +31,7 @@ Each phase specifies:
 
 ## Progress
 
-*Last updated 2026-09-25 at commit `e425367`+. Kept here rather than per section so there is one
+*Last updated 2026-09-25 at commit `819c630`+. Kept here rather than per section so there is one
 place to read the state of the build.*
 
 | # | Phase | Status | Notes |
@@ -59,12 +59,14 @@ place to read the state of the build.*
 | 20 | Evaluation harness | `DONE` | **Not re-run since the Phase 6/7/13 fixes; baseline is stale.** 3 scenarios, not 20 |
 | 21 | Frontend: Mission Control | `DONE` | React only; Tailwind/Query/Zustand/Recharts/Framer omitted — `frontend/README.md` |
 | 22 | Live execution visualization | `DONE` | Replay (demo insurance), evaluation dashboard, animated replan insertion |
-| 23 | CI | `TODO` | `export_openapi.py --check` is already CI-shaped |
+| 23 | Test hardening & CI | `DONE`, gate red | 581 tests, invariant + adversarial suites, GitHub Actions. `eval-regression` correctly fails on the baseline's confabulation - see testing-strategy.md |
 | 24 | Docs & demo | `IN PROGRESS` | `docs/demo-script.md` exists; this table and the Phase 19/20 docs added |
 
 **Carried debt**
 
-1. The evaluation suite must be re-run and a new baseline committed. Highest value, lowest cost.
+1. **The negative scenario still confabulates** - 3 findings where none is correct, on the
+   2026-09-25 baseline. This is the single highest-value open defect: it fails CI, and it is the
+   failure mode the whole project is built to avoid. See BUG-005.
 2. `app/cli.py` still holds its own copy of the pipeline; it should collapse onto
    `app/orchestration/mission.py`.
 3. The API does not persist runs — `DatabaseEventSink` exists but is not wired into the registry.
