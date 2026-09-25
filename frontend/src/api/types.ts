@@ -208,3 +208,61 @@ export interface ApiErrorBody {
   run_id: string | null;
   details: Record<string, unknown>;
 }
+
+// --- recordings and evaluation reports ----------------------------------------
+
+export interface RecordingSummary {
+  run_id: string;
+  file: string;
+  objective: string;
+  model: string;
+  outcome: string;
+  recorded_at: string;
+  event_count: number;
+  duration_ms: number;
+  /** Committed to the repo rather than local scratch. */
+  committed: boolean;
+}
+
+/**
+ * A recorded run. `events` give the timing, `snapshot` gives the content.
+ *
+ * That split is what makes a replay faithful: event payloads are summaries (a truncated claim,
+ * a rounded confidence), so a replay driven by events alone could animate the graph but never
+ * drill into a finding's evidence. The snapshot holds the same payloads the live routes serve.
+ */
+export interface Recording {
+  run_id: string;
+  objective: string;
+  recorded_at: string;
+  model: string;
+  outcome: string;
+  events: EventRecord[];
+  snapshot: {
+    mission?: MissionDetail;
+    tasks?: TaskGraphResponse;
+    findings?: { run_id: string; findings: Finding[] };
+    gaps?: GapRecord[];
+    report?: FinalReport;
+  };
+}
+
+export interface MetricPoint {
+  generated_at: string;
+  model: string;
+  config_hash: string;
+  prompt_versions: Record<string, number>;
+  suite: string;
+  metrics: Record<string, number>;
+  confabulations: number;
+  blind_spots: number;
+  /**
+   * Points may only be joined into a line within one key. Two reports from different models or
+   * prompt versions describe different systems, and a line between them shows a change that
+   * never happened.
+   */
+  comparable_key: string;
+}
+
+/** Whether higher or lower is better. Served by the API so the UI cannot hold a stale copy. */
+export type MetricDirections = Record<string, "higher" | "lower">;

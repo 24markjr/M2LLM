@@ -8,6 +8,10 @@
 
 import type {
   ApiErrorBody,
+  MetricDirections,
+  MetricPoint,
+  Recording,
+  RecordingSummary,
   EventPage,
   FinalReport,
   Finding,
@@ -97,4 +101,13 @@ export const api = {
 
   /** The URL an `EventSource` connects to. Streaming is not a fetch. */
   streamUrl: (runId: string) => `${BASE}/missions/${runId}/stream`,
+
+  listRecordings: () => request<RecordingSummary[]>(`${BASE}/recordings`),
+
+  getRecording: (name: string) =>
+    request<Recording>(`${BASE}/recordings/${encodeURIComponent(name)}`),
+
+  listEvalReports: () => request<MetricPoint[]>(`${BASE}/evaluation/reports`),
+
+  getMetricDirections: () => request<MetricDirections>(`${BASE}/evaluation/directions`),
 };

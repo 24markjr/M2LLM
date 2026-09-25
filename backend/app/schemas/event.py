@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
+from typing import Any
 
 from pydantic import Field
 
@@ -206,6 +207,16 @@ class ExecutionTrace(FrozenModel):
     config_hash: str = ""
     outcome: str = ""
     events: list[ExecutionEvent] = Field(default_factory=list)
+
+    # The run's final API payloads, recorded alongside the events so a replay can render
+    # exactly what the live view rendered. Event payloads are deliberately summaries - a
+    # FINDING_CREATED carries a truncated claim and a rounded confidence, not the evidence
+    # refs - so a replay driven by events alone could animate the graph but not drill into a
+    # finding's evidence.
+    #
+    # This is still a recording. Every value in it came out of the run; nothing here is
+    # authored, and invariant 5 holds exactly as it does for the events.
+    snapshot: dict[str, Any] = Field(default_factory=dict)
 
     @property
     def duration_ms(self) -> int:

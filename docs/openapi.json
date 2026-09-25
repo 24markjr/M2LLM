@@ -724,6 +724,67 @@
         "title": "Limitation",
         "type": "object"
       },
+      "MetricPoint": {
+        "additionalProperties": false,
+        "description": "One suite run, as a point on a trend line.",
+        "properties": {
+          "blind_spots": {
+            "title": "Blind Spots",
+            "type": "integer"
+          },
+          "comparable_key": {
+            "title": "Comparable Key",
+            "type": "string"
+          },
+          "confabulations": {
+            "title": "Confabulations",
+            "type": "integer"
+          },
+          "config_hash": {
+            "title": "Config Hash",
+            "type": "string"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Metrics",
+            "type": "object"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "prompt_versions": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Prompt Versions",
+            "type": "object"
+          },
+          "suite": {
+            "title": "Suite",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generated_at",
+          "model",
+          "config_hash",
+          "prompt_versions",
+          "suite",
+          "metrics",
+          "confabulations",
+          "blind_spots",
+          "comparable_key"
+        ],
+        "title": "MetricPoint",
+        "type": "object"
+      },
       "MissionDetail": {
         "additionalProperties": false,
         "description": "A mission's current state, without the full event log.",
@@ -917,6 +978,60 @@
           "created_at"
         ],
         "title": "MissionSummary",
+        "type": "object"
+      },
+      "RecordingSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "committed": {
+            "title": "Committed",
+            "type": "boolean"
+          },
+          "duration_ms": {
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "event_count": {
+            "title": "Event Count",
+            "type": "integer"
+          },
+          "file": {
+            "title": "File",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "objective": {
+            "title": "Objective",
+            "type": "string"
+          },
+          "outcome": {
+            "title": "Outcome",
+            "type": "string"
+          },
+          "recorded_at": {
+            "title": "Recorded At",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "file",
+          "objective",
+          "model",
+          "outcome",
+          "recorded_at",
+          "event_count",
+          "duration_ms",
+          "committed"
+        ],
+        "title": "RecordingSummary",
         "type": "object"
       },
       "ReportSection": {
@@ -1432,6 +1547,58 @@
         ]
       }
     },
+    "/api/v1/evaluation/directions": {
+      "get": {
+        "description": "Which way is better for each metric.\n\nServed rather than hardcoded in the UI: the direction of a metric is a property of the\nmetric, and a chart that colours a rising `unsupported_claim_rate` green because the\nfrontend held a stale copy of this list would be worse than no colour at all.",
+        "operationId": "get_metric_directions_api_v1_evaluation_directions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Get Metric Directions Api V1 Evaluation Directions Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Metric Directions",
+        "tags": [
+          "replay"
+        ]
+      }
+    },
+    "/api/v1/evaluation/reports": {
+      "get": {
+        "description": "Every committed evaluation report, oldest first, as trend points.\n\nOldest first because this is charted as a series and a series reads left to right.\n\nThe UI must not join points across a change of `comparable_key`. Two reports produced with\ndifferent models or prompt versions describe different systems, and a line drawn between\nthem shows a regression or an improvement that never happened.",
+        "operationId": "get_evaluation_reports_api_v1_evaluation_reports_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MetricPoint"
+                  },
+                  "title": "Response Get Evaluation Reports Api V1 Evaluation Reports Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Evaluation Reports",
+        "tags": [
+          "replay"
+        ]
+      }
+    },
     "/api/v1/missions": {
       "get": {
         "operationId": "list_missions_api_v1_missions_get",
@@ -1926,6 +2093,77 @@
         "summary": "Get Tasks",
         "tags": [
           "missions"
+        ]
+      }
+    },
+    "/api/v1/recordings": {
+      "get": {
+        "description": "Recorded runs available to replay, newest first.",
+        "operationId": "get_recordings_api_v1_recordings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RecordingSummary"
+                  },
+                  "title": "Response Get Recordings Api V1 Recordings Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Recordings",
+        "tags": [
+          "replay"
+        ]
+      }
+    },
+    "/api/v1/recordings/{name}": {
+      "get": {
+        "description": "One recording: its events and the run's final state.\n\nServed whole. A replay needs every event in order, and paginating them would make the\nclient reassemble a file that is already a single document.",
+        "operationId": "get_recording_api_v1_recordings__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Recording Api V1 Recordings  Name  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Recording",
+        "tags": [
+          "replay"
         ]
       }
     },

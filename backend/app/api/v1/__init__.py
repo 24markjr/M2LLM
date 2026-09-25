@@ -7,10 +7,11 @@ makes such a change possible without a flag day.
 
 from fastapi import APIRouter
 
-from app.api.v1 import documents, missions
+from app.api.v1 import documents, missions, replay
 
 router = APIRouter(prefix="/api/v1")
 router.include_router(missions.router)
 router.include_router(documents.router)
+router.include_router(replay.router)
 
 __all__ = ["router"]

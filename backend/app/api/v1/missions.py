@@ -287,6 +287,61 @@ def _detail(record: MissionRecord) -> MissionDetail:
     )
 
 
+def snapshot_payloads(record: MissionRecord) -> dict[str, object]:
+    """The run's final state in the exact shapes these routes serve.
+
+    Used by `app/api/recording.py` so a replay is fed byte-identical payloads to a live view.
+    Built from the same shapers the routes use rather than assembled separately: if the two
+    ever diverged, a replay would stop being a faithful rendering of the run and become a
+    second implementation of one.
+    """
+    result = record.result
+    payload: dict[str, object] = {"mission": _detail(record).model_dump(mode="json")}
+
+    if result is None:
+        return payload
+
+    if result.plan is not None:
+        nodes = [
+            TaskNode(
+                task_id=task.task_id,
+                task_type=task.task_type,
+                description=task.description,
+                status=task.status,
+                depends_on=list(task.depends_on),
+                tool_id=task.selection.tool_name if task.selection else "",
+                inserted_by_replan=task.created_by_revision > 0,
+            )
+            for task in result.plan.tasks
+        ]
+        payload["tasks"] = TaskGraphResponse(
+            run_id=record.run_id,
+            nodes=nodes,
+            edges=[(dep, t.task_id) for t in result.plan.tasks for dep in t.depends_on],
+            waves=execution_levels(result.plan),
+        ).model_dump(mode="json")
+
+    payload["findings"] = FindingsResponse(
+        run_id=record.run_id, findings=result.findings
+    ).model_dump(mode="json")
+
+    payload["gaps"] = [
+        GapRecord(
+            gap_id=g.gap_id,
+            gap_type=g.gap_type.value,
+            description=g.missing,
+            resolved=g.resolved,
+            finding_id=g.finding_id,
+        ).model_dump(mode="json")
+        for g in result.gaps
+    ]
+
+    if result.report is not None:
+        payload["report"] = result.report.model_dump(mode="json")
+
+    return payload
+
+
 _KIND_BY_SUFFIX = {
     "pdf": DocumentKind.PDF,
     "csv": DocumentKind.CSV,

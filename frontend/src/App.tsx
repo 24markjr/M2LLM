@@ -10,14 +10,27 @@ import { useCallback, useEffect, useState } from "react";
 
 import { api } from "./api/client";
 import type { MissionDetail } from "./api/types";
-import { MissionDetailPage, MissionList, NewMission } from "./pages/pages";
+import {
+  EvaluationPage,
+  MissionDetailPage,
+  MissionList,
+  NewMission,
+  ReplayPage,
+} from "./pages/pages";
 
-type Route = { name: "list" } | { name: "new" } | { name: "mission"; runId: string };
+type Route =
+  | { name: "list" }
+  | { name: "new" }
+  | { name: "mission"; runId: string }
+  | { name: "replay" }
+  | { name: "evaluation" };
 
 function parse(hash: string): Route {
   const match = /^#\/mission\/([\w-]+)$/.exec(hash);
   if (match?.[1]) return { name: "mission", runId: match[1] };
   if (hash === "#/new") return { name: "new" };
+  if (hash === "#/replay") return { name: "replay" };
+  if (hash === "#/evaluation") return { name: "evaluation" };
   return { name: "list" };
 }
 
@@ -49,6 +62,17 @@ export default function App() {
         <div className="brand">
           JARVIS<span>//</span>MISSION CONTROL
         </div>
+        <nav className="nav">
+          <a className={route.name === "list" ? "on" : ""} href="#/">
+            Missions
+          </a>
+          <a className={route.name === "replay" ? "on" : ""} href="#/replay">
+            Replay
+          </a>
+          <a className={route.name === "evaluation" ? "on" : ""} href="#/evaluation">
+            Evaluation
+          </a>
+        </nav>
         <div className="tagline">adaptive, evidence-driven investigation</div>
         <div className="engine">
           <span
@@ -84,6 +108,10 @@ export default function App() {
       {route.name === "mission" ? (
         <MissionDetailPage runId={route.runId} onBack={() => go("#/")} />
       ) : null}
+
+      {route.name === "replay" ? <ReplayPage onBack={() => go("#/")} /> : null}
+
+      {route.name === "evaluation" ? <EvaluationPage onBack={() => go("#/")} /> : null}
     </div>
   );
 }

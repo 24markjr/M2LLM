@@ -692,3 +692,348 @@ header.top {
   color: var(--text-faint);
   margin-top: 6px;
 }
+
+/* ===========================================================================
+ * Phase 22 — live execution visualization
+ *
+ * Animation here has one job: make a state change impossible to miss. It is not
+ * decoration, and anything that would make the run harder to read at a glance is
+ * worse than no animation at all.
+ *
+ * Every animation is disabled under `prefers-reduced-motion`. A viewer who has
+ * asked for less motion still gets the full information, because none of it is
+ * carried by movement alone — the colour, glyph and label are always there too.
+ * ======================================================================== */
+
+/* --- nav -------------------------------------------------------------------- */
+
+.nav {
+  display: flex;
+  gap: 4px;
+}
+.nav a {
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 6px 12px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+}
+.nav a:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+.nav a.on {
+  color: var(--accent);
+  border-color: var(--line-bright);
+  background: var(--panel);
+}
+
+/* --- task state transitions ------------------------------------------------- */
+
+.task {
+  /* The border-left colour carries the status, so transitioning it is what makes
+     PENDING -> RUNNING -> COMPLETED read as a change rather than a redraw. */
+  transition:
+    border-left-color 320ms ease,
+    opacity 320ms ease,
+    transform 220ms ease;
+}
+
+.task.running {
+  animation: task-running 1.6s ease-in-out infinite;
+}
+@keyframes task-running {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(77, 163, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(77, 163, 255, 0.16);
+  }
+}
+
+.task.completed {
+  animation: task-settled 420ms ease-out;
+}
+@keyframes task-settled {
+  0% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* A task the replanning loop inserted animates IN. This is the acceptance
+   criterion for Phase 22 — a viewer must be able to point at the moment the plan
+   changed — so it is the most pronounced motion in the interface, and it is the
+   only element that moves horizontally. */
+.task.inserted {
+  animation: task-inserted 620ms cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+@keyframes task-inserted {
+  0% {
+    opacity: 0;
+    transform: translateX(-18px) scale(0.94);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.task .inserted-tag {
+  animation: tag-flash 1.8s ease-out 3;
+}
+@keyframes tag-flash {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* --- findings and the evidence-gap moment ----------------------------------- */
+
+.finding {
+  animation: finding-in 380ms ease-out;
+}
+@keyframes finding-in {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gap-moment {
+  margin-top: 12px;
+  padding: 11px 13px;
+  border-radius: 5px;
+  border: 1px dashed rgba(232, 179, 74, 0.45);
+  background: rgba(232, 179, 74, 0.05);
+  animation: finding-in 420ms ease-out;
+}
+
+.gap-head {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--warn);
+  margin-bottom: 7px;
+}
+
+.gap-item {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  font-size: 12px;
+  padding: 2px 0;
+}
+.gap-item .gap-type {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.gap-item .gap-missing {
+  color: var(--text);
+}
+
+.gap-spawned {
+  margin-top: 8px;
+  padding-top: 8px
+    /* separated, because the inserted task is a consequence, not part of the gap */;
+  border-top: 1px solid rgba(232, 179, 74, 0.2);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.gap-spawned .mono {
+  color: var(--accent);
+}
+
+/* --- replay ----------------------------------------------------------------- */
+
+.replay-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 18px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--warn);
+  background: rgba(232, 179, 74, 0.08);
+  font-size: 13px;
+  color: var(--text);
+}
+.replay-banner strong {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--warn);
+  border: 1px solid var(--warn);
+  border-radius: 3px;
+  padding: 2px 8px;
+  flex-shrink: 0;
+}
+.replay-banner span {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.replay-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+}
+.replay-controls .dim {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.replay-progress {
+  height: 3px;
+  background: var(--line);
+}
+.replay-progress i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 180ms linear;
+}
+
+/* --- evaluation charts ------------------------------------------------------ */
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(272px, 1fr));
+  gap: 1px;
+  background: var(--line);
+}
+
+.chart {
+  background: var(--panel);
+  padding: 14px 16px;
+}
+
+.chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.chart-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+}
+.chart-dir {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.chart svg {
+  display: block;
+  overflow: visible;
+}
+/* A gap in the line is meaningful: it marks a configuration change, either side of
+   which the numbers describe different systems. Joining them would draw a change
+   that never happened. */
+.spark {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.spark-dot {
+  fill: var(--accent);
+}
+
+.chart-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 8px;
+}
+.chart-value {
+  font-family: var(--mono);
+  font-size: 17px;
+  color: var(--text);
+}
+.delta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.delta.good {
+  color: var(--ok);
+}
+.delta.bad {
+  color: var(--bad);
+}
+
+/* --- metrics table --------------------------------------------------------- */
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table.metrics {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+table.metrics th,
+table.metrics td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+table.metrics th {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  font-weight: 500;
+}
+table.metrics td.num {
+  text-align: right;
+}
+table.metrics td.bad-cell {
+  color: var(--bad);
+  font-weight: 600;
+}
+table.metrics tbody tr:hover {
+  background: var(--panel-raised);
+}
+table.metrics tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* --- reduced motion --------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

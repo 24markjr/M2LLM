@@ -11,8 +11,8 @@ import { useState } from "react";
 
 import type {
   EventRecord,
-  Finding,
   FinalReport,
+  Finding,
   GapRecord,
   Stage,
   TaskGraphResponse,
@@ -125,7 +125,17 @@ function TaskCard({ node }: { node: TaskNode }) {
   );
 }
 
-export function FindingCard({ finding }: { finding: Finding }) {
+export function FindingCard({
+  finding,
+  gaps = [],
+  spawned = [],
+}: {
+  finding: Finding;
+  /** Gaps detected against this finding. */
+  gaps?: GapRecord[];
+  /** Tasks the replanning loop inserted to close those gaps. */
+  spawned?: TaskNode[];
+}) {
   const [open, setOpen] = useState(false);
   const status = finding.verification?.status ?? "UNVERIFIED";
   const confidence = finding.confidence.value;
@@ -197,6 +207,41 @@ export function FindingCard({ finding }: { finding: Finding }) {
           </div>
         </div>
       ) : null}
+
+      {/* The evidence-gap moment. A gap names the specific absent element - never "more
+          evidence needed", which would have failed at its job - and the task the loop
+          inserted to go and find it. This is the plan changing, shown where it happened. */}
+      {gaps.length > 0 ? (
+        <div className="gap-moment">
+          <div className="gap-head">
+            {gaps.every((g) => g.resolved)
+              ? "\u2713 evidence gap closed"
+              : "\u26a0 evidence gap detected"}
+          </div>
+          {gaps.map((gap) => (
+            <div className="gap-item" key={gap.gap_id}>
+              <span className={`res ${gap.resolved ? "resolved" : "unresolved"}`}>
+                {gap.resolved ? "\u2713" : "\u25cb"}
+              </span>
+              <span className="gap-type mono">{gap.gap_type}</span>
+              <span className="gap-missing">missing: {gap.description}</span>
+            </div>
+          ))}
+          {spawned.length > 0 ? (
+            <div className="gap-spawned">
+              the loop inserted{" "}
+              {spawned.map((task, index) => (
+                <span key={task.task_id}>
+                  {index > 0 ? ", " : ""}
+                  <span className="mono">{task.task_id}</span> ({task.task_type},{" "}
+                  {task.status.toLowerCase()})
+                </span>
+              ))}{" "}
+              to close it
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -208,8 +253,26 @@ function formatLocator(ref: { locator: Finding["evidence"][number]["locator"] })
   return document_name;
 }
 
-export function Findings({ findings }: { findings: Finding[] }) {
+export function Findings({
+  findings,
+  gaps = [],
+  tasks = null,
+}: {
+  findings: Finding[];
+  gaps?: GapRecord[];
+  tasks?: TaskGraphResponse | null;
+}) {
   const verified = findings.filter((f) => f.verification?.status === "SUPPORTED").length;
+
+  // Gaps carry the finding they were detected against; inserted tasks carry the gap they were
+  // created for. Joining them here is what turns three separate lists into one story.
+  const gapsByFinding = new Map<string, GapRecord[]>();
+  for (const gap of gaps) {
+    const existing = gapsByFinding.get(gap.finding_id);
+    if (existing) existing.push(gap);
+    else gapsByFinding.set(gap.finding_id, [gap]);
+  }
+  const insertedTasks = (tasks?.nodes ?? []).filter((node) => node.inserted_by_replan);
 
   return (
     <div className="panel">
@@ -228,7 +291,14 @@ export function Findings({ findings }: { findings: Finding[] }) {
             the engine does not invent one to fill the space.
           </div>
         ) : (
-          findings.map((f) => <FindingCard key={f.finding_id} finding={f} />)
+          findings.map((f) => (
+            <FindingCard
+              key={f.finding_id}
+              finding={f}
+              gaps={gapsByFinding.get(f.finding_id) ?? []}
+              spawned={insertedTasks}
+            />
+          ))
         )}
       </div>
     </div>

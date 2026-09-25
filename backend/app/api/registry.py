@@ -19,8 +19,14 @@ import asyncio
 import itertools
 from datetime import datetime
 
+from app.api.recording import write_recording
 from app.core.config import get_settings
-from app.core.events import EventBus, MemoryEventSink, RunEventEmitter, StreamEventSink
+from app.core.events import (
+    EventBus,
+    MemoryEventSink,
+    RunEventEmitter,
+    StreamEventSink,
+)
 from app.core.logging import get_logger
 from app.orchestration.mission import MissionResult, MissionStatus, Stage, run_mission
 from app.schemas.common import RunId, new_run_id, utcnow
@@ -179,6 +185,10 @@ class MissionRegistry:
             self._running -= 1
             record.stage = Stage.DONE
             record.finished_at = utcnow()
+            # Recorded on the way out, so a run that failed or was cancelled is replayable
+            # too. A recording of only the successful runs would make the demo look better
+            # than the system is.
+            write_recording(record)
 
 
 class _HistorySink:

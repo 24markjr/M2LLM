@@ -31,7 +31,7 @@ Each phase specifies:
 
 ## Progress
 
-*Last updated 2026-09-24 at commit `2aacaaf`. Kept here rather than per section so there is one
+*Last updated 2026-09-25 at commit `e425367`+. Kept here rather than per section so there is one
 place to read the state of the build.*
 
 | # | Phase | Status | Notes |
@@ -58,7 +58,7 @@ place to read the state of the build.*
 | 19 | FastAPI + SSE | `DONE` | Built before 21 out of order — see `phase-09-api.md` |
 | 20 | Evaluation harness | `DONE` | **Not re-run since the Phase 6/7/13 fixes; baseline is stale.** 3 scenarios, not 20 |
 | 21 | Frontend: Mission Control | `DONE` | React only; Tailwind/Query/Zustand/Recharts/Framer omitted — `frontend/README.md` |
-| 22 | Live execution visualization | `TODO` | |
+| 22 | Live execution visualization | `DONE` | Replay (demo insurance), evaluation dashboard, animated replan insertion |
 | 23 | CI | `TODO` | `export_openapi.py --check` is already CI-shaped |
 | 24 | Docs & demo | `IN PROGRESS` | `docs/demo-script.md` exists; this table and the Phase 19/20 docs added |
 

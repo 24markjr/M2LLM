@@ -24,8 +24,13 @@ import type {
   TaskGraphResponse,
 } from "../api/types";
 
-/** Events that mark a phase boundary, mirroring `PHASE_EVENTS` in the backend. */
-const STAGE_BY_EVENT: Record<string, Stage> = {
+/**
+ * Events that mark a phase boundary, mirroring `PHASE_EVENTS` in the backend.
+ *
+ * Exported because replay reconstructs the same stage progression from the same events. Two
+ * copies of this map would let a replayed run show a different phase to the live run it records.
+ */
+export const STAGE_BY_EVENT: Record<string, Stage> = {
   INTENT_CREATED: "PLANNING",
   PLAN_CREATED: "PLANNING",
   TASK_GRAPH_CREATED: "EXECUTING",
@@ -64,7 +69,14 @@ export function useMissionList(): {
   return { missions, loading, error, reload };
 }
 
-export interface LiveMission {
+/**
+ * Everything a mission view needs, whether it came from a live run or a recording.
+ *
+ * Shared on purpose: `useMission` and `useReplay` both return this, so the detail page renders a
+ * replay through exactly the same components as a live run. A separate replay view would drift,
+ * and a replay that looks *nearly* like the real thing is worse than one that obviously does not.
+ */
+export interface MissionView {
   mission: MissionDetail | null;
   tasks: TaskGraphResponse | null;
   findings: Finding[];
@@ -75,6 +87,9 @@ export interface LiveMission {
   liveStage: Stage | null;
   streaming: boolean;
   error: string;
+}
+
+export interface LiveMission extends MissionView {
   cancel: () => void;
 }
 

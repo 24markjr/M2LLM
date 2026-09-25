@@ -82,7 +82,58 @@ them is the better long-term answer and needs a codegen step in CI to be worth i
 **Hash routing**, so the app works as static files next to the API without a server that
 rewrites unknown paths to `index.html`. Mission URLs stay shareable.
 
-## Not built yet
+## Replay and Evaluation (Phase 22)
 
-The Evaluation page (Phase 20's reports rendered in the UI) and the animated graph transitions
-of Phase 22. `.agent/evals/reports/*.md` is readable as-is in the meantime.
+Two views beyond the live run, both reading files the system wrote itself.
+
+### Replay — demo insurance
+
+`#/replay` lists every recorded run and plays one back at 1x to 20x.
+
+Local inference on laptop hardware stalls sometimes, and a presentation should not depend on a
+model behaving on the day. A replay renders through **exactly the same components** as a live run,
+because `useReplay` returns the same `MissionView` shape `useMission` does. A separate replay view
+would drift, and a replay that looks *nearly* right is worse than one that obviously does not — it
+invites trust in a rendering no live run ever produced.
+
+**The snapshot gives the content, the events give the timing.** Event payloads are deliberately
+summaries (a truncated claim, a rounded confidence), so a replay driven by events alone could
+animate the graph but never drill into a finding's evidence. Each recording therefore carries both:
+events decide *when* each part appears, and the snapshot — the same payloads the live routes serve —
+decides *what* it contains. A test asserts the two cannot diverge.
+
+Task statuses are rebuilt from events rather than read from the snapshot, so the graph animates
+through `PENDING → RUNNING → COMPLETED` as it did live. Tasks the replay has not reached show
+`PENDING`, not their final status, so the ending is not given away.
+
+**A replay is always disclosed.** The banner is not dismissible and not a toast: a viewer who looks
+away and back must still be able to tell it is a recording. Recordings are never hand-authored —
+invariant 5 — and a scratch recording is marked as not committed.
+
+### Evaluation — `#/evaluation`
+
+Trends across every committed report in `.agent/evals/reports/`, as inline SVG.
+
+Two rules a charting library would not have enforced:
+
+- **Points are only joined within a comparability key.** Two reports from different models or
+  prompt versions describe different systems; a line between them would show a change that never
+  happened, which is exactly the lie the backend's regression check refuses to tell. The series
+  breaks at every configuration change and a banner says how many there are.
+- **Direction comes from the API** (`GET /api/v1/evaluation/directions`). Whether higher is better
+  is a property of the metric, and a frontend holding its own copy would eventually colour a
+  rising `unsupported_claim_rate` green.
+
+Confabulations and blind spots are shown separately from the ten metrics, because neither is
+expressible as one — an agent that invents findings, and one that reports none, both score
+perfectly on coverage and verification.
+
+### Animation
+
+Animation has one job: make a state change impossible to miss. The most pronounced motion in the
+interface belongs to a task the replanning loop **inserted** — it slides in and is the only element
+that moves horizontally — because Phase 22's acceptance criterion is that a viewer can point at the
+moment the plan changed.
+
+All of it is disabled under `prefers-reduced-motion`, and no information is carried by movement
+alone: the colour, glyph and label are always present too.

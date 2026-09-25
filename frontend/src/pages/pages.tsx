@@ -6,10 +6,10 @@
  * in a conversation.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ApiError, api } from "../api/client";
-import type { MissionDetail, MissionSummary } from "../api/types";
+import type { MissionDetail, MissionSummary, RecordingSummary } from "../api/types";
 import {
   EventTimeline,
   ExecutionStats,
@@ -19,7 +19,10 @@ import {
   Report,
   TaskGraph,
 } from "../components/mission";
+import type { MissionView } from "../hooks/useMission";
 import { useMission, useMissionList } from "../hooks/useMission";
+import { SPEEDS, useReplay } from "../hooks/useReplay";
+import { EvaluationDashboard } from "../components/evaluation";
 
 /** Fixtures that ship with the repo, offered so a demo needs no upload. */
 const SUGGESTED = [
@@ -209,10 +212,7 @@ export function NewMission({
 export function MissionDetailPage({ runId, onBack }: { runId: string; onBack: () => void }) {
   const live = useMission(runId);
   const { mission, streaming } = live;
-
-  const done =
-    mission !== null &&
-    ["COMPLETED", "FAILED", "CANCELLED", "CLARIFICATION_NEEDED"].includes(mission.status);
+  const done = isFinished(mission);
 
   return (
     <>
@@ -229,7 +229,34 @@ export function MissionDetailPage({ runId, onBack }: { runId: string; onBack: ()
         </span>
       </div>
 
-      {live.error ? <div className="notice error">{live.error}</div> : null}
+      <MissionViewPanels view={live} />
+    </>
+  );
+}
+
+export function isFinished(mission: MissionDetail | null): boolean {
+  return (
+    mission !== null &&
+    ["COMPLETED", "FAILED", "CANCELLED", "CLARIFICATION_NEEDED"].includes(mission.status)
+  );
+}
+
+/**
+ * Every panel of a mission, driven by a `MissionView`.
+ *
+ * Shared by the live page and the replay page. Both pass the same shape, so a recorded run is
+ * rendered by the same code that renders a live one - which is what lets the replay be called
+ * faithful rather than merely similar. A separate replay view would drift, and a replay that
+ * looks *nearly* right is worse than one that obviously does not: it invites a viewer to trust
+ * a rendering no live run ever produced.
+ */
+export function MissionViewPanels({ view }: { view: MissionView }) {
+  const { mission } = view;
+  const done = isFinished(mission);
+
+  return (
+    <>
+      {view.error ? <div className="notice error">{view.error}</div> : null}
 
       {mission ? (
         <>
@@ -279,19 +306,168 @@ export function MissionDetailPage({ runId, onBack }: { runId: string; onBack: ()
             </div>
           ) : null}
 
-          <PhaseTracker stage={live.liveStage ?? mission.stage} done={done} />
-          <TaskGraph graph={live.tasks} />
-          <Findings findings={live.findings} />
-          <Gaps gaps={live.gaps} />
-          <Report report={live.report} />
-          <ExecutionStats report={live.report} />
-          <EventTimeline events={live.events} />
+          <PhaseTracker stage={view.liveStage ?? mission.stage} done={done} />
+          <TaskGraph graph={view.tasks} />
+          <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} />
+          <Gaps gaps={view.gaps} />
+          <Report report={view.report} />
+          <ExecutionStats report={view.report} />
+          <EventTimeline events={view.events} />
         </>
       ) : (
         <div className="panel">
           <div className="empty">Loading mission.</div>
         </div>
       )}
+    </>
+  );
+}
+
+/**
+ * Replay a recorded run.
+ *
+ * Disclosed, always. Looking identical to a live run is the point; being mistaken for one is not,
+ * so the banner stays for the whole replay rather than appearing once and fading.
+ */
+export function ReplayPage({ onBack }: { onBack: () => void }) {
+  const [recordings, setRecordings] = useState<RecordingSummary[]>([]);
+  const [selected, setSelected] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api
+      .listRecordings()
+      .then((rows) => {
+        setRecordings(rows);
+        const first = rows[0];
+        if (first) setSelected(first.file);
+      })
+      .catch((exc: unknown) => setError(exc instanceof Error ? exc.message : String(exc)));
+  }, []);
+
+  return (
+    <>
+      <div className="row" style={{ marginBottom: 20 }}>
+        <button onClick={onBack}>&larr; Missions</button>
+        <span className="spacer" />
+        <span className="dim mono">{recordings.length} recordings</span>
+      </div>
+
+      {error ? <div className="notice error">{error}</div> : null}
+
+      <div className="panel">
+        <h2>
+          Recorded runs
+          <span className="count">replayed at speed, never re-executed</span>
+        </h2>
+        {recordings.length === 0 ? (
+          <div className="empty">
+            No recordings yet. Every mission started through the API records itself to{" "}
+            <code className="mono">.agent/traces/</code>.
+          </div>
+        ) : (
+          <div className="panel-body">
+            <div className="row">
+              {recordings.map((recording) => (
+                <button
+                  key={recording.file}
+                  className={selected === recording.file ? "primary" : ""}
+                  onClick={() => setSelected(recording.file)}
+                  title={recording.objective}
+                >
+                  {recording.run_id} &middot; {recording.event_count} events &middot;{" "}
+                  {Math.round(recording.duration_ms / 1000)}s
+                  {recording.committed ? " · committed" : ""}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {selected ? <Replay key={selected} name={selected} /> : null}
+    </>
+  );
+}
+
+function Replay({ name }: { name: string }) {
+  const replay = useReplay(name);
+
+  if (replay.loading) {
+    return (
+      <div className="panel">
+        <div className="empty">Loading recording.</div>
+      </div>
+    );
+  }
+
+  const progress = replay.total > 0 ? (replay.position / replay.total) * 100 : 0;
+  const atEnd = replay.position >= replay.total;
+
+  return (
+    <>
+      {/* Not dismissible, and not a toast. A viewer who looks away and back must still be able
+          to tell that this is a recording. */}
+      <div className="replay-banner">
+        <strong>REPLAY</strong>
+        <span>
+          recorded{" "}
+          {replay.recording ? new Date(replay.recording.recorded_at).toLocaleString() : ""}
+          {replay.recording?.model ? ` on ${replay.recording.model}` : ""} &middot; nothing is
+          being executed now
+        </span>
+      </div>
+
+      <div className="panel">
+        <div className="replay-controls">
+          {replay.playing ? (
+            <button onClick={replay.pause}>&#10073;&#10073; Pause</button>
+          ) : (
+            <button className="primary" onClick={replay.play} disabled={atEnd}>
+              &#9654; Play
+            </button>
+          )}
+          <button onClick={replay.restart}>&#8635; Restart</button>
+          <button onClick={replay.skipToEnd} disabled={atEnd}>
+            Skip to end
+          </button>
+
+          <span className="dim">speed</span>
+          {SPEEDS.map((speed) => (
+            <button
+              key={speed}
+              className={replay.speed === speed ? "primary" : ""}
+              onClick={() => replay.setSpeed(speed)}
+            >
+              {speed}x
+            </button>
+          ))}
+
+          <span className="spacer" />
+          <span className="mono dim">
+            {replay.position}/{replay.total} events &middot;{" "}
+            {(replay.elapsedMs / 1000).toFixed(1)}s of {(replay.durationMs / 1000).toFixed(1)}s
+          </span>
+        </div>
+        <div className="replay-progress">
+          <i style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+
+      <MissionViewPanels view={replay} />
+    </>
+  );
+}
+
+export function EvaluationPage({ onBack }: { onBack: () => void }) {
+  return (
+    <>
+      <div className="row" style={{ marginBottom: 20 }}>
+        <button onClick={onBack}>&larr; Missions</button>
+        <span className="spacer" />
+        <span className="dim mono">every figure computed by a run</span>
+      </div>
+      <EvaluationDashboard />
     </>
   );
 }
