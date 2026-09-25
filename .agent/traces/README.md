@@ -59,3 +59,49 @@ was thinking.
 | `sample_success.json` | A clean run, objective to report | 9 |
 | `sample_replan.json` | Gap detected, plan revised, finding resolved | 16 |
 | `sample_failure.json` | Tool failure, retry, fallback, honest degradation | 11 |
+
+---
+
+## Committed recordings
+
+One, currently.
+
+### `aurora-contradiction-demo.json`
+
+A real run of the reference objective — the Aurora contradiction case over all three fixture
+documents. Recorded 2026-09-25 on `qwen3:4b`.
+
+| | |
+|---|---|
+| Events | 95 |
+| Duration | 125 s |
+| Tasks | 7, in 5 waves |
+| Findings | 4, of which 3 verified |
+| Outcome | `COMPLETED` |
+| Report | present |
+
+**What it demonstrates:** the full pipeline end to end — intent, a validated DAG, concurrent
+execution by wave, findings bound to source locators with computed confidence, verification
+verdicts, and the synthesised report. It backs demos 1, 2, 3 and 6 in
+[`docs/demo-script.md`](../../docs/demo-script.md).
+
+**What it does not demonstrate:** this run inserted **no** tasks by replanning
+(`inserted_by_replan: 0`), so it cannot stand in for demo 5's "point at the moment the plan
+changed". Demo 5 leans on `tests/unit/test_replanning.py` instead, which proves the properties that
+actually matter — the loop terminates, every stop records a distinct reason, and a contradicted
+finding is never retried.
+
+Demo 4 (failure recovery) has no recording either, deliberately: making a tool fail on demand would
+mean shipping a tool whose job is to break. The adversarial suite is the demonstration.
+
+So **"every demo has a recorded fallback" is not fully met** — four of six do. The other two have a
+test suite as their fallback, which for those two is the more honest evidence anyway.
+
+## Adding one
+
+Every mission started through the API records itself here as `<run_id>.local.json`, which is
+gitignored. To keep one, rename it without the `.local` — that rename is what makes committing a
+recording a considered act rather than an accident of whatever ran last.
+
+Before committing one, check it actually shows what you intend: a run that happened not to detect a
+gap or insert a task will replay faithfully and demonstrate nothing.

@@ -194,3 +194,10 @@ jobs:
       - name: validate committed reports and enforce their thresholds
         working-directory: backend
         run: python scripts/check_eval_reports.py
+
+      # Phase 24's "no metric shown anywhere is hard-coded", made enforceable. Every figure
+      # quoted in the README or the contribution statement must match the baseline, so a
+      # re-run cannot leave the documentation confidently wrong.
+      - name: documented figures match the baseline
+        working-directory: backend
+        run: python scripts/check_documented_metrics.py

@@ -262,3 +262,97 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
   acceptance criteria for Phase 0 are outstanding until then.
 - **Port 5432 is already bound** by a native PostgreSQL 17 service. Either stop that service
   or set `POSTGRES_PORT=5433` before the first container start.
+
+---
+
+## [0.24.0] — 2026-09-25 — Phases 18-24
+
+The changelog stopped at Phase 0. Rather than reconstruct fifteen releases from memory - which
+would be a fabricated history, and the one thing invariant 5 is about - this is one honest entry
+covering everything since, with the commit range for anyone who wants the detail.
+
+Commits `1c61c1d`..`491de69`. Per-defect detail in `logs/bug-log.md`; per-session detail in
+`logs/development-log.md`.
+
+### Added
+
+- **Report synthesis** (18) - every figure counted from the run; the narrative is the only
+  generated text in the document
+- **Database persistence** (3) - 11 tables, async SQLAlchemy, batching event sink with a
+  terminal-event flush
+- **Evaluation harness** (20) - ten metrics computed from real runs, datasets in the repo,
+  reports stamped with model + prompt versions + config hash
+- **Relevance gate** (13) - a claim that is supported but does not answer the objective is not a
+  finding. Fails open; every drop emits `FINDING_DISCARDED` with a reason
+- **FastAPI + SSE** (19) - the engine is reachable over HTTP and streams live. Reconnection with
+  `Last-Event-ID` replays exactly what was missed: no gap, no duplicate (ADR-008)
+- **Headless orchestrator** (19) - `app/orchestration/mission.py`. The CLI, API and UI now render
+  one pipeline instead of holding copies of it
+- **Mission Control** (21) - React + TypeScript console. Uncertainty is shown, not smoothed, and
+  nothing relies on colour alone
+- **Trace replay** (22) - a recorded run replays at up to 20x through the same components as a
+  live one, and says that it is a replay
+- **Evaluation dashboard** (22) - trends that break the series wherever the configuration changed,
+  because numbers either side of that are not comparable
+- **Invariant and adversarial suites** (23) - the specification's "must not do" list, as tests
+  that fail if violated. Injection, malformed plans, corrupt input, zero-finding runs, tool storms
+- **GitHub Actions** (23) - lint, types, unit, integration against real Postgres, OpenAPI
+  freshness, frontend build, committed-report validation
+- **Documentation** (24) - README rewritten, six-demo script, contribution statement, the
+  architecture and testing docs the plan named
+
+### Fixed
+
+Eight defects, all found by running the system rather than reading it. BUG-004 to BUG-011.
+
+- **BUG-006** - an input and an output token budget were the same number. Reasoning bounded its
+  observations by `max_tokens`, the *generation* limit, so evidence was compressed five times more
+  than intended and a scenario with two planted contradictions returned nothing
+- **BUG-010** - `RequiredOperation.optional` was defined, filtered on, and never set, so the
+  intent demanded 17 operations and no plan could cover them
+- **BUG-005** - the agent confabulated 8 findings on a scenario whose correct answer is none
+- **BUG-009** - one synonym (`detect_contradictions` vs `detect_inconsistencies`) made an
+  objective about contradictions unplannable
+- **BUG-004** - a citation parser split on the last colon, so a model quoting the cited line after
+  the reference made every finding `UNKNOWN` at zero confidence
+- **BUG-011** - `_TOLERANCES` sat below the `__main__` guard, so the regression check never ran
+- **BUG-007** - mission list order was unstable when two missions shared a millisecond
+- **BUG-008** - a property that changes under the caller made a type checker call live code dead
+
+### Changed
+
+- `plan_validity` **0.667 → 0.333**, and this is honest rather than a behavioural regression. The
+  metric counts plans passing with *zero* repairs, and the new terminal-task repair fires on most
+  plans. Those plans previously failed outright and produced nothing; the planner needing help is
+  now visible instead of fatal
+- Plan size cap 20 → 10 once the terminal-task repair made a smaller plan safe to ask for
+- Replan insertion capped at 3 tasks per iteration, measured at 24
+
+### Measured
+
+Baseline `20260925T104354-qwen3-4b-all`, against the previous one:
+
+| Metric | Before | Now |
+|---|---|---|
+| `intent_accuracy` | 0.459 | 0.574 |
+| `dependency_correctness` | 0.667 | 0.833 |
+| `replanning_success` | 0.411 | 0.658 |
+| `task_efficiency` | 3.069 | 2.306 |
+| `latency_s` | 91.8 | 45.2 |
+| `evidence_coverage` | 1.000 | 1.000 |
+| `unsupported_claim_rate` | 0.000 | 0.000 |
+
+581 tests, `mypy --strict` clean across 83 modules, 82% coverage.
+
+### Known Issues
+
+- **The negative scenario confabulates.** 3 findings where none is correct, all restatements of the
+  source. CI is red on `main` because of it and the threshold has not been lowered to change that.
+  BUG-005, and the highest-value open work
+- **The API does not persist runs.** `DatabaseEventSink` exists and is tested; the mission registry
+  wires only in-memory sinks, so a restart loses history
+- **`app/cli.py` holds a second copy of the pipeline** that should collapse onto the orchestrator
+- **Three evaluation scenarios**, where the plan calls for twenty
+- **No frontend test runner**, so the replay reconstruction has no unit test
+- **CI has never run** - only been written
+- Phase 0's Docker/WSL2 and port-5432 issues are resolved

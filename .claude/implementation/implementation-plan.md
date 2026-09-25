@@ -31,7 +31,7 @@ Each phase specifies:
 
 ## Progress
 
-*Last updated 2026-09-25 at commit `819c630`+. Kept here rather than per section so there is one
+*Last updated 2026-09-25 at commit `491de69`+. Kept here rather than per section so there is one
 place to read the state of the build.*
 
 | # | Phase | Status | Notes |
@@ -60,7 +60,7 @@ place to read the state of the build.*
 | 21 | Frontend: Mission Control | `DONE` | React only; Tailwind/Query/Zustand/Recharts/Framer omitted — `frontend/README.md` |
 | 22 | Live execution visualization | `DONE` | Replay (demo insurance), evaluation dashboard, animated replan insertion |
 | 23 | Test hardening & CI | `DONE`, gate red | 581 tests, invariant + adversarial suites, GitHub Actions. `eval-regression` correctly fails on the baseline's confabulation - see testing-strategy.md |
-| 24 | Docs & demo | `IN PROGRESS` | `docs/demo-script.md` exists; this table and the Phase 19/20 docs added |
+| 24 | Documentation & demo package | `DONE`, 2 caveats | README rewritten, six-demo script, contribution statement, changelog current. 4 of 6 demos have a recorded fallback; a clean clone has not been tested from scratch |
 
 **Carried debt**
 

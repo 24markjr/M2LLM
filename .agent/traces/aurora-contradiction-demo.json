@@ -1,0 +1,2493 @@
+{
+  "run_id": "run_645ddfb5a0be",
+  "objective": "Investigate the Aurora project reports and identify any contradictions between the timeline and the financial information.",
+  "recorded_at": "2026-09-25T10:16:31.540277Z",
+  "model": "qwen3:4b",
+  "prompt_versions": {},
+  "config_hash": "",
+  "outcome": "COMPLETED",
+  "events": [
+    {
+      "event_id": "evt_d980bd84aff9",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "RUN_STARTED",
+      "t_offset_ms": 35,
+      "payload": {
+        "objective": "Investigate the Aurora project reports and identify any contradictions between the timeline and the financial information."
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:26.324143Z"
+    },
+    {
+      "event_id": "evt_bf22ca9d24d7",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "LLM_CALL_COMPLETED",
+      "t_offset_ms": 12136,
+      "payload": {
+        "role": "intent",
+        "model": "qwen3:4b",
+        "schema": "CandidateIntent",
+        "ok": true,
+        "repair_attempt": 0,
+        "latency_ms": 12091,
+        "prompt_tokens": 933,
+        "completion_tokens": 83
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:38.424779Z"
+    },
+    {
+      "event_id": "evt_d61a25e406ed",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "INTENT_CREATED",
+      "t_offset_ms": 12137,
+      "payload": {
+        "goal": "investigate_project_consistency",
+        "operations": [
+          "extract_timeline",
+          "extract_budget",
+          "compare_sources",
+          "detect_inconsistencies",
+          "detect_contradictions",
+          "generate_report",
+          "process_documents"
+        ],
+        "unsupported": [],
+        "clarification_needed": false
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:38.425537Z"
+    },
+    {
+      "event_id": "evt_d0960946c090",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "LLM_CALL_COMPLETED",
+      "t_offset_ms": 21764,
+      "payload": {
+        "role": "planner",
+        "model": "qwen3:4b",
+        "schema": "CandidatePlan",
+        "ok": true,
+        "repair_attempt": 0,
+        "latency_ms": 9618,
+        "prompt_tokens": 1005,
+        "completion_tokens": 260
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.052834Z"
+    },
+    {
+      "event_id": "evt_15be63f7e871",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "PLAN_CREATED",
+      "t_offset_ms": 21765,
+      "payload": {
+        "task_count": 7,
+        "edge_count": 7,
+        "clean": false,
+        "repairs": [
+          "CONNECTED_ORPHAN"
+        ]
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.053432Z"
+    },
+    {
+      "event_id": "evt_f82eeaf9f835",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_GRAPH_CREATED",
+      "t_offset_ms": 21770,
+      "payload": {
+        "tasks": [
+          "task_001",
+          "task_002",
+          "task_003",
+          "task_004",
+          "task_005",
+          "task_006",
+          "task_007"
+        ]
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.058625Z"
+    },
+    {
+      "event_id": "evt_6fc7453d3276",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TOOL_SELECTED",
+      "t_offset_ms": 21790,
+      "payload": {
+        "tool": "document_extract",
+        "capability": "DOCUMENT_EXTRACT",
+        "mode": "DETERMINISTIC",
+        "reason": "only registered tool serving DOCUMENT_EXTRACT",
+        "alternatives": []
+      },
+      "task_id": "task_001",
+      "finding_id": null,
+      "tool_name": "document_extract",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.079052Z"
+    },
+    {
+      "event_id": "evt_b71f43f55897",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TOOL_SELECTED",
+      "t_offset_ms": 21791,
+      "payload": {
+        "tool": "document_search",
+        "capability": "DOCUMENT_SEARCH",
+        "mode": "DETERMINISTIC",
+        "reason": "only registered tool serving DOCUMENT_SEARCH",
+        "alternatives": []
+      },
+      "task_id": "task_006",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.079052Z"
+    },
+    {
+      "event_id": "evt_2dee6f55860a",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_STARTED",
+      "t_offset_ms": 21791,
+      "payload": {},
+      "task_id": "task_001",
+      "finding_id": null,
+      "tool_name": "document_extract",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.080053Z"
+    },
+    {
+      "event_id": "evt_fc82b293dcee",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_STARTED",
+      "t_offset_ms": 21792,
+      "payload": {},
+      "task_id": "task_006",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.080053Z"
+    },
+    {
+      "event_id": "evt_e77b6f30ccd5",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_COMPLETED",
+      "t_offset_ms": 21795,
+      "payload": {
+        "sources": 19
+      },
+      "task_id": "task_001",
+      "finding_id": null,
+      "tool_name": "document_extract",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.083058Z"
+    },
+    {
+      "event_id": "evt_a88a6a525517",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_COMPLETED",
+      "t_offset_ms": 21795,
+      "payload": {
+        "sources": 0
+      },
+      "task_id": "task_006",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.084056Z"
+    },
+    {
+      "event_id": "evt_bfc0dd987eaf",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "OBSERVATION_RECORDED",
+      "t_offset_ms": 21796,
+      "payload": {
+        "sources": [
+          "aurora_budget.csv:r2",
+          "aurora_budget.csv:r3",
+          "aurora_budget.csv:r4",
+          "aurora_budget.csv:r5",
+          "aurora_budget.csv:r6"
+        ]
+      },
+      "task_id": "task_001",
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.084056Z"
+    },
+    {
+      "event_id": "evt_f8963fc7d54d",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "OBSERVATION_RECORDED",
+      "t_offset_ms": 21796,
+      "payload": {
+        "sources": []
+      },
+      "task_id": "task_006",
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.084056Z"
+    },
+    {
+      "event_id": "evt_bb44e8b82d2a",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TOOL_SELECTED",
+      "t_offset_ms": 21797,
+      "payload": {
+        "tool": "document_extract",
+        "capability": "DOCUMENT_EXTRACT",
+        "mode": "DETERMINISTIC",
+        "reason": "only registered tool serving DOCUMENT_EXTRACT",
+        "alternatives": []
+      },
+      "task_id": "task_002",
+      "finding_id": null,
+      "tool_name": "document_extract",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.086055Z"
+    },
+    {
+      "event_id": "evt_e1713fc02cf3",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TOOL_SELECTED",
+      "t_offset_ms": 21798,
+      "payload": {
+        "tool": "document_extract",
+        "capability": "DOCUMENT_EXTRACT",
+        "mode": "DETERMINISTIC",
+        "reason": "only registered tool serving DOCUMENT_EXTRACT",
+        "alternatives": []
+      },
+      "task_id": "task_003",
+      "finding_id": null,
+      "tool_name": "document_extract",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.086055Z"
+    },
+    {
+      "event_id": "evt_f4c614e18300",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_STARTED",
+      "t_offset_ms": 21799,
+      "payload": {},
+      "task_id": "task_002",
+      "finding_id": null,
+      "tool_name": "document_extract",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.087053Z"
+    },
+    {
+      "event_id": "evt_02e45e68f1f1",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_STARTED",
+      "t_offset_ms": 21799,
+      "payload": {},
+      "task_id": "task_003",
+      "finding_id": null,
+      "tool_name": "document_extract",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.087053Z"
+    },
+    {
+      "event_id": "evt_cea1f1df6394",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_COMPLETED",
+      "t_offset_ms": 21799,
+      "payload": {
+        "sources": 8
+      },
+      "task_id": "task_002",
+      "finding_id": null,
+      "tool_name": "document_extract",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.088053Z"
+    },
+    {
+      "event_id": "evt_6d13c218c541",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_COMPLETED",
+      "t_offset_ms": 21800,
+      "payload": {
+        "sources": 19
+      },
+      "task_id": "task_003",
+      "finding_id": null,
+      "tool_name": "document_extract",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.088053Z"
+    },
+    {
+      "event_id": "evt_a8dd140a8f43",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "OBSERVATION_RECORDED",
+      "t_offset_ms": 21800,
+      "payload": {
+        "sources": [
+          "aurora_financial_report.txt:r12",
+          "aurora_financial_report.txt:r3",
+          "aurora_project_report.txt:r10",
+          "aurora_project_report.txt:r12",
+          "aurora_project_report.txt:r13"
+        ]
+      },
+      "task_id": "task_002",
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.089051Z"
+    },
+    {
+      "event_id": "evt_ecb47f9da4d2",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "OBSERVATION_RECORDED",
+      "t_offset_ms": 21800,
+      "payload": {
+        "sources": [
+          "aurora_budget.csv:r2",
+          "aurora_budget.csv:r3",
+          "aurora_budget.csv:r4",
+          "aurora_budget.csv:r5",
+          "aurora_budget.csv:r6"
+        ]
+      },
+      "task_id": "task_003",
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.089051Z"
+    },
+    {
+      "event_id": "evt_509434ef2774",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TOOL_SELECTED",
+      "t_offset_ms": 21802,
+      "payload": {
+        "tool": "document_search",
+        "capability": "DOCUMENT_SEARCH",
+        "mode": "DETERMINISTIC",
+        "reason": "only registered tool serving DOCUMENT_SEARCH",
+        "alternatives": []
+      },
+      "task_id": "task_004",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.090052Z"
+    },
+    {
+      "event_id": "evt_ba5c96a39150",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_STARTED",
+      "t_offset_ms": 21802,
+      "payload": {},
+      "task_id": "task_004",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.090052Z"
+    },
+    {
+      "event_id": "evt_9c9a3b34b7ec",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_COMPLETED",
+      "t_offset_ms": 21803,
+      "payload": {
+        "sources": 0
+      },
+      "task_id": "task_004",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.091052Z"
+    },
+    {
+      "event_id": "evt_184e0d48f901",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "OBSERVATION_RECORDED",
+      "t_offset_ms": 21803,
+      "payload": {
+        "sources": []
+      },
+      "task_id": "task_004",
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.091052Z"
+    },
+    {
+      "event_id": "evt_7294c63c9609",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TOOL_SELECTED",
+      "t_offset_ms": 21804,
+      "payload": {
+        "tool": "document_search",
+        "capability": "DOCUMENT_SEARCH",
+        "mode": "DETERMINISTIC",
+        "reason": "only registered tool serving DOCUMENT_SEARCH",
+        "alternatives": []
+      },
+      "task_id": "task_005",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.092052Z"
+    },
+    {
+      "event_id": "evt_4203e8d18dc7",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_STARTED",
+      "t_offset_ms": 21804,
+      "payload": {},
+      "task_id": "task_005",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.092052Z"
+    },
+    {
+      "event_id": "evt_d11d7743399d",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_COMPLETED",
+      "t_offset_ms": 21805,
+      "payload": {
+        "sources": 0
+      },
+      "task_id": "task_005",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.093052Z"
+    },
+    {
+      "event_id": "evt_af4f69203bd2",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "OBSERVATION_RECORDED",
+      "t_offset_ms": 21805,
+      "payload": {
+        "sources": []
+      },
+      "task_id": "task_005",
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.093052Z"
+    },
+    {
+      "event_id": "evt_a0d7fc5afe60",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TOOL_SELECTED",
+      "t_offset_ms": 21806,
+      "payload": {
+        "tool": "context_retrieval",
+        "capability": "CONTEXT_RETRIEVAL",
+        "mode": "DETERMINISTIC",
+        "reason": "only registered tool serving CONTEXT_RETRIEVAL",
+        "alternatives": []
+      },
+      "task_id": "task_007",
+      "finding_id": null,
+      "tool_name": "context_retrieval",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.094052Z"
+    },
+    {
+      "event_id": "evt_eb6bdd117904",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_STARTED",
+      "t_offset_ms": 21806,
+      "payload": {},
+      "task_id": "task_007",
+      "finding_id": null,
+      "tool_name": "context_retrieval",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.094052Z"
+    },
+    {
+      "event_id": "evt_f464db653543",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_COMPLETED",
+      "t_offset_ms": 21807,
+      "payload": {
+        "sources": 0
+      },
+      "task_id": "task_007",
+      "finding_id": null,
+      "tool_name": "context_retrieval",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.095051Z"
+    },
+    {
+      "event_id": "evt_fc81eb8c8779",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "OBSERVATION_RECORDED",
+      "t_offset_ms": 21807,
+      "payload": {
+        "sources": []
+      },
+      "task_id": "task_007",
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.095051Z"
+    },
+    {
+      "event_id": "evt_3f7e15d324f7",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "REASONING_STARTED",
+      "t_offset_ms": 21813,
+      "payload": {
+        "observations": 7
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:14:48.102054Z"
+    },
+    {
+      "event_id": "evt_8724e8f2389a",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "LLM_CALL_COMPLETED",
+      "t_offset_ms": 44175,
+      "payload": {
+        "role": "reasoning",
+        "model": "qwen3:4b",
+        "schema": "CandidateFindings",
+        "ok": true,
+        "repair_attempt": 0,
+        "latency_ms": 22357,
+        "prompt_tokens": 3326,
+        "completion_tokens": 542
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:10.464162Z"
+    },
+    {
+      "event_id": "evt_c23d7a956a65",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "LLM_CALL_COMPLETED",
+      "t_offset_ms": 58177,
+      "payload": {
+        "role": "relevance",
+        "model": "qwen3:4b",
+        "schema": "RelevanceVerdicts",
+        "ok": true,
+        "repair_attempt": 0,
+        "latency_ms": 13998,
+        "prompt_tokens": 790,
+        "completion_tokens": 393
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:24.465060Z"
+    },
+    {
+      "event_id": "evt_4d5c26424a16",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_DISCARDED",
+      "t_offset_ms": 58177,
+      "payload": {
+        "claim": "The approved completion date is 30 April 2026",
+        "reason": "This is the approved completion date, which is context but does not directly address a conflict between timeline and financial information."
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:24.465060Z"
+    },
+    {
+      "event_id": "evt_5a5c89207217",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_CREATED",
+      "t_offset_ms": 58178,
+      "payload": {
+        "claim": "The project's financial target for the year is 450,000",
+        "classification": "INFERENCE",
+        "confidence": 0.85,
+        "resolved_evidence": 2,
+        "cited": 2
+      },
+      "task_id": null,
+      "finding_id": "F-001",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:24.466063Z"
+    },
+    {
+      "event_id": "evt_2f0d1e0d007f",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_CREATED",
+      "t_offset_ms": 58178,
+      "payload": {
+        "claim": "The project's financial target for the year is 380,000",
+        "classification": "INFERENCE",
+        "confidence": 0.85,
+        "resolved_evidence": 2,
+        "cited": 2
+      },
+      "task_id": null,
+      "finding_id": "F-002",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:24.467063Z"
+    },
+    {
+      "event_id": "evt_75e21c6f690e",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_CREATED",
+      "t_offset_ms": 58179,
+      "payload": {
+        "claim": "The project's budget for the year is 180,000",
+        "classification": "INFERENCE",
+        "confidence": 0.85,
+        "resolved_evidence": 2,
+        "cited": 2
+      },
+      "task_id": null,
+      "finding_id": "F-003",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:24.467063Z"
+    },
+    {
+      "event_id": "evt_f7d63a33f1ce",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_CREATED",
+      "t_offset_ms": 58179,
+      "payload": {
+        "claim": "The project's budget for the year is 70,000",
+        "classification": "INFERENCE",
+        "confidence": 0.85,
+        "resolved_evidence": 2,
+        "cited": 2
+      },
+      "task_id": null,
+      "finding_id": "F-004",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:24.467063Z"
+    },
+    {
+      "event_id": "evt_ca08d30c5046",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_CREATED",
+      "t_offset_ms": 58180,
+      "payload": {
+        "claim": "The project's budget for the year is 90,000",
+        "classification": "INFERENCE",
+        "confidence": 0.85,
+        "resolved_evidence": 2,
+        "cited": 2
+      },
+      "task_id": null,
+      "finding_id": "F-005",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:24.468061Z"
+    },
+    {
+      "event_id": "evt_e1d0769f7e83",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_CREATED",
+      "t_offset_ms": 58180,
+      "payload": {
+        "claim": "The project's budget for the year is 60,000",
+        "classification": "FACT",
+        "confidence": 0.85,
+        "resolved_evidence": 1,
+        "cited": 1
+      },
+      "task_id": null,
+      "finding_id": "F-006",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:24.468061Z"
+    },
+    {
+      "event_id": "evt_90cddc791e05",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_CREATED",
+      "t_offset_ms": 58180,
+      "payload": {
+        "claim": "The project's budget for the year is 450,000",
+        "classification": "FACT",
+        "confidence": 0.85,
+        "resolved_evidence": 1,
+        "cited": 1
+      },
+      "task_id": null,
+      "finding_id": "F-007",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:24.468061Z"
+    },
+    {
+      "event_id": "evt_85b8071c6b4e",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_CREATED",
+      "t_offset_ms": 58181,
+      "payload": {
+        "claim": "The project's financial target for the year is 90,000",
+        "classification": "INFERENCE",
+        "confidence": 0.85,
+        "resolved_evidence": 2,
+        "cited": 2
+      },
+      "task_id": null,
+      "finding_id": "F-008",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:24.469060Z"
+    },
+    {
+      "event_id": "evt_c42287c2b628",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "VERIFICATION_STARTED",
+      "t_offset_ms": 58181,
+      "payload": {
+        "findings": 8
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:24.470060Z"
+    },
+    {
+      "event_id": "evt_41657b6e3363",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_REJECTED",
+      "t_offset_ms": 62116,
+      "payload": {
+        "status": "UNSUPPORTED",
+        "verifier": "baseline",
+        "degraded": false,
+        "issues": [
+          "NO_EVIDENCE"
+        ]
+      },
+      "task_id": null,
+      "finding_id": "F-001",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:28.403820Z"
+    },
+    {
+      "event_id": "evt_8aaaffa0ed66",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_REJECTED",
+      "t_offset_ms": 66001,
+      "payload": {
+        "status": "UNSUPPORTED",
+        "verifier": "baseline",
+        "degraded": false,
+        "issues": [
+          "NO_EVIDENCE"
+        ]
+      },
+      "task_id": null,
+      "finding_id": "F-002",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:32.289714Z"
+    },
+    {
+      "event_id": "evt_4c8b3cf6a418",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_VERIFIED",
+      "t_offset_ms": 67613,
+      "payload": {
+        "status": "SUPPORTED",
+        "verifier": "baseline",
+        "degraded": false,
+        "issues": []
+      },
+      "task_id": null,
+      "finding_id": "F-003",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:33.901651Z"
+    },
+    {
+      "event_id": "evt_71145a60f3b0",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_VERIFIED",
+      "t_offset_ms": 69199,
+      "payload": {
+        "status": "SUPPORTED",
+        "verifier": "baseline",
+        "degraded": false,
+        "issues": []
+      },
+      "task_id": null,
+      "finding_id": "F-004",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:35.487868Z"
+    },
+    {
+      "event_id": "evt_320366d6a019",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_VERIFIED",
+      "t_offset_ms": 70793,
+      "payload": {
+        "status": "SUPPORTED",
+        "verifier": "baseline",
+        "degraded": false,
+        "issues": []
+      },
+      "task_id": null,
+      "finding_id": "F-005",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:37.082225Z"
+    },
+    {
+      "event_id": "evt_e8c81ab17a14",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_REJECTED",
+      "t_offset_ms": 75202,
+      "payload": {
+        "status": "UNSUPPORTED",
+        "verifier": "baseline",
+        "degraded": false,
+        "issues": [
+          "NO_EVIDENCE"
+        ]
+      },
+      "task_id": null,
+      "finding_id": "F-006",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:41.490736Z"
+    },
+    {
+      "event_id": "evt_2c2e6220c9ab",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_REJECTED",
+      "t_offset_ms": 80488,
+      "payload": {
+        "status": "UNSUPPORTED",
+        "verifier": "baseline",
+        "degraded": false,
+        "issues": [
+          "NO_EVIDENCE"
+        ]
+      },
+      "task_id": null,
+      "finding_id": "F-007",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:46.776594Z"
+    },
+    {
+      "event_id": "evt_e3f462942d99",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_REJECTED",
+      "t_offset_ms": 84376,
+      "payload": {
+        "status": "UNSUPPORTED",
+        "verifier": "baseline",
+        "degraded": false,
+        "issues": [
+          "NO_EVIDENCE"
+        ]
+      },
+      "task_id": null,
+      "finding_id": "F-008",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.664161Z"
+    },
+    {
+      "event_id": "evt_7e55fd41ce86",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "VERIFICATION_COMPLETED",
+      "t_offset_ms": 84376,
+      "payload": {
+        "findings": 8
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.665174Z"
+    },
+    {
+      "event_id": "evt_98b7645cfd1b",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "EVIDENCE_GAP_DETECTED",
+      "t_offset_ms": 84378,
+      "payload": {
+        "type": "MISSING_SOURCE",
+        "missing": "a source stating quantity '450,000'",
+        "severity": 0.6,
+        "query": "450,000"
+      },
+      "task_id": null,
+      "finding_id": "F-001",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.666508Z"
+    },
+    {
+      "event_id": "evt_be35b2136074",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "EVIDENCE_GAP_DETECTED",
+      "t_offset_ms": 84378,
+      "payload": {
+        "type": "MISSING_SOURCE",
+        "missing": "a source stating quantity '380,000'",
+        "severity": 0.6,
+        "query": "380,000"
+      },
+      "task_id": null,
+      "finding_id": "F-002",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.666508Z"
+    },
+    {
+      "event_id": "evt_5beb50dac59b",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "EVIDENCE_GAP_DETECTED",
+      "t_offset_ms": 84378,
+      "payload": {
+        "type": "MISSING_SOURCE",
+        "missing": "a source stating quantity '60,000'",
+        "severity": 0.6,
+        "query": "60,000"
+      },
+      "task_id": null,
+      "finding_id": "F-006",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.666918Z"
+    },
+    {
+      "event_id": "evt_efbb087b8982",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "EVIDENCE_GAP_DETECTED",
+      "t_offset_ms": 84378,
+      "payload": {
+        "type": "MISSING_SOURCE",
+        "missing": "a source stating quantity '450,000'",
+        "severity": 0.6,
+        "query": "450,000"
+      },
+      "task_id": null,
+      "finding_id": "F-007",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.666918Z"
+    },
+    {
+      "event_id": "evt_5c93fe9bfedc",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "EVIDENCE_GAP_DETECTED",
+      "t_offset_ms": 84378,
+      "payload": {
+        "type": "MISSING_SOURCE",
+        "missing": "a source stating quantity '90,000'",
+        "severity": 0.6,
+        "query": "90,000"
+      },
+      "task_id": null,
+      "finding_id": "F-008",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.666918Z"
+    },
+    {
+      "event_id": "evt_5a6728d7a71a",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "REPLAN_STARTED",
+      "t_offset_ms": 84379,
+      "payload": {
+        "iteration": 1,
+        "gaps": 5,
+        "trigger": "EVIDENCE_GAP"
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.666918Z"
+    },
+    {
+      "event_id": "evt_c8a0b67513df",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_CREATED",
+      "t_offset_ms": 84379,
+      "payload": {
+        "gap_id": "G-001",
+        "missing": "a source stating quantity '450,000'",
+        "query": "450,000"
+      },
+      "task_id": "task_008",
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.667932Z"
+    },
+    {
+      "event_id": "evt_6f9e3ca796e4",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_CREATED",
+      "t_offset_ms": 84379,
+      "payload": {
+        "gap_id": "G-002",
+        "missing": "a source stating quantity '380,000'",
+        "query": "380,000"
+      },
+      "task_id": "task_009",
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.667932Z"
+    },
+    {
+      "event_id": "evt_30813ba4bb7e",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_CREATED",
+      "t_offset_ms": 84379,
+      "payload": {
+        "gap_id": "G-003",
+        "missing": "a source stating quantity '60,000'",
+        "query": "60,000"
+      },
+      "task_id": "task_010",
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.667932Z"
+    },
+    {
+      "event_id": "evt_5a33f8f554e4",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "PLAN_REVISED",
+      "t_offset_ms": 84380,
+      "payload": {
+        "revision": 1,
+        "added": [
+          "task_008",
+          "task_009",
+          "task_010"
+        ]
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.667932Z"
+    },
+    {
+      "event_id": "evt_e468c9b26bd1",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TOOL_SELECTED",
+      "t_offset_ms": 84380,
+      "payload": {
+        "tool": "document_search",
+        "capability": "EVIDENCE_RETRIEVAL",
+        "mode": "DETERMINISTIC",
+        "reason": "only registered tool serving EVIDENCE_RETRIEVAL",
+        "alternatives": []
+      },
+      "task_id": "task_008",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.668933Z"
+    },
+    {
+      "event_id": "evt_74937eeea377",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TOOL_SELECTED",
+      "t_offset_ms": 84381,
+      "payload": {
+        "tool": "document_search",
+        "capability": "EVIDENCE_RETRIEVAL",
+        "mode": "DETERMINISTIC",
+        "reason": "only registered tool serving EVIDENCE_RETRIEVAL",
+        "alternatives": []
+      },
+      "task_id": "task_009",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.668933Z"
+    },
+    {
+      "event_id": "evt_d88a658ccea4",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TOOL_SELECTED",
+      "t_offset_ms": 84383,
+      "payload": {
+        "tool": "document_search",
+        "capability": "EVIDENCE_RETRIEVAL",
+        "mode": "DETERMINISTIC",
+        "reason": "only registered tool serving EVIDENCE_RETRIEVAL",
+        "alternatives": []
+      },
+      "task_id": "task_010",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.670933Z"
+    },
+    {
+      "event_id": "evt_926e87008215",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_STARTED",
+      "t_offset_ms": 84383,
+      "payload": {},
+      "task_id": "task_008",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.670933Z"
+    },
+    {
+      "event_id": "evt_dde8814beed2",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_STARTED",
+      "t_offset_ms": 84383,
+      "payload": {},
+      "task_id": "task_009",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.670933Z"
+    },
+    {
+      "event_id": "evt_0916f693faad",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_STARTED",
+      "t_offset_ms": 84383,
+      "payload": {},
+      "task_id": "task_010",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.670933Z"
+    },
+    {
+      "event_id": "evt_6d072577c2be",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_COMPLETED",
+      "t_offset_ms": 84384,
+      "payload": {
+        "sources": 5
+      },
+      "task_id": "task_008",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.671932Z"
+    },
+    {
+      "event_id": "evt_4857da854c36",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_COMPLETED",
+      "t_offset_ms": 84384,
+      "payload": {
+        "sources": 5
+      },
+      "task_id": "task_009",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.671932Z"
+    },
+    {
+      "event_id": "evt_54495b4c3d3a",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "TASK_COMPLETED",
+      "t_offset_ms": 84384,
+      "payload": {
+        "sources": 5
+      },
+      "task_id": "task_010",
+      "finding_id": null,
+      "tool_name": "document_search",
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.672933Z"
+    },
+    {
+      "event_id": "evt_ff3d3775140d",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "OBSERVATION_RECORDED",
+      "t_offset_ms": 84385,
+      "payload": {
+        "sources": [
+          "aurora_financial_report.txt:r6",
+          "aurora_financial_report.txt:r15",
+          "aurora_project_report.txt:r18",
+          "aurora_budget.csv:r2",
+          "aurora_budget.csv:r3"
+        ]
+      },
+      "task_id": "task_008",
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.672933Z"
+    },
+    {
+      "event_id": "evt_cdde9a59beea",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "OBSERVATION_RECORDED",
+      "t_offset_ms": 84385,
+      "payload": {
+        "sources": [
+          "aurora_project_report.txt:r18",
+          "aurora_financial_report.txt:r15",
+          "aurora_financial_report.txt:r6",
+          "aurora_budget.csv:r2",
+          "aurora_budget.csv:r3"
+        ]
+      },
+      "task_id": "task_009",
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.672933Z"
+    },
+    {
+      "event_id": "evt_b5e53cc09ddb",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "OBSERVATION_RECORDED",
+      "t_offset_ms": 84385,
+      "payload": {
+        "sources": [
+          "aurora_project_report.txt:r18",
+          "aurora_financial_report.txt:r6",
+          "aurora_financial_report.txt:r15",
+          "aurora_budget.csv:r2",
+          "aurora_budget.csv:r3"
+        ]
+      },
+      "task_id": "task_010",
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.672933Z"
+    },
+    {
+      "event_id": "evt_4364c8439ce2",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "REASONING_STARTED",
+      "t_offset_ms": 84385,
+      "payload": {
+        "observations": 10
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:15:50.673932Z"
+    },
+    {
+      "event_id": "evt_88e10eb767c3",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "LLM_CALL_COMPLETED",
+      "t_offset_ms": 99959,
+      "payload": {
+        "role": "reasoning",
+        "model": "qwen3:4b",
+        "schema": "CandidateFindings",
+        "ok": true,
+        "repair_attempt": 0,
+        "latency_ms": 15571,
+        "prompt_tokens": 2050,
+        "completion_tokens": 395
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:06.247968Z"
+    },
+    {
+      "event_id": "evt_6cc9139cd2e5",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "LLM_CALL_COMPLETED",
+      "t_offset_ms": 107026,
+      "payload": {
+        "role": "relevance",
+        "model": "qwen3:4b",
+        "schema": "RelevanceVerdicts",
+        "ok": true,
+        "repair_attempt": 0,
+        "latency_ms": 7064,
+        "prompt_tokens": 652,
+        "completion_tokens": 178
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:13.314758Z"
+    },
+    {
+      "event_id": "evt_6299903dd151",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_CREATED",
+      "t_offset_ms": 107026,
+      "payload": {
+        "claim": "The Aurora project has a budget of INR 380,000.",
+        "classification": "FACT",
+        "confidence": 0.85,
+        "resolved_evidence": 1,
+        "cited": 1
+      },
+      "task_id": null,
+      "finding_id": "F-001",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:13.314758Z"
+    },
+    {
+      "event_id": "evt_257a5f4b3d1a",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_CREATED",
+      "t_offset_ms": 107027,
+      "payload": {
+        "claim": "The Aurora project has spent INR 450,000 so far.",
+        "classification": "FACT",
+        "confidence": 0.85,
+        "resolved_evidence": 2,
+        "cited": 2
+      },
+      "task_id": null,
+      "finding_id": "F-002",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:13.315586Z"
+    },
+    {
+      "event_id": "evt_7deae03e3515",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_CREATED",
+      "t_offset_ms": 107027,
+      "payload": {
+        "claim": "The Aurora project's budget is broken down into development (INR 180,000) and infrastructure (INR 70,000).",
+        "classification": "FACT",
+        "confidence": 0.85,
+        "resolved_evidence": 2,
+        "cited": 2
+      },
+      "task_id": null,
+      "finding_id": "F-003",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:13.315586Z"
+    },
+    {
+      "event_id": "evt_3aed27b785ef",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_CREATED",
+      "t_offset_ms": 107027,
+      "payload": {
+        "claim": "The Aurora project's budget exceeds the approved amount by INR 70,000.",
+        "classification": "INFERENCE",
+        "confidence": 0.85,
+        "resolved_evidence": 2,
+        "cited": 2
+      },
+      "task_id": null,
+      "finding_id": "F-004",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:13.315586Z"
+    },
+    {
+      "event_id": "evt_622fe9468729",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "VERIFICATION_STARTED",
+      "t_offset_ms": 107030,
+      "payload": {
+        "findings": 4
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:13.318295Z"
+    },
+    {
+      "event_id": "evt_d501a9baec44",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_REJECTED",
+      "t_offset_ms": 111128,
+      "payload": {
+        "status": "UNSUPPORTED",
+        "verifier": "baseline",
+        "degraded": false,
+        "issues": [
+          "NO_EVIDENCE"
+        ]
+      },
+      "task_id": null,
+      "finding_id": "F-001",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:17.416584Z"
+    },
+    {
+      "event_id": "evt_bdf2039442f8",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_VERIFIED",
+      "t_offset_ms": 112756,
+      "payload": {
+        "status": "SUPPORTED",
+        "verifier": "baseline",
+        "degraded": false,
+        "issues": []
+      },
+      "task_id": null,
+      "finding_id": "F-002",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:19.044563Z"
+    },
+    {
+      "event_id": "evt_bde87a57f63b",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_VERIFIED",
+      "t_offset_ms": 114381,
+      "payload": {
+        "status": "SUPPORTED",
+        "verifier": "baseline",
+        "degraded": false,
+        "issues": []
+      },
+      "task_id": null,
+      "finding_id": "F-003",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:20.669372Z"
+    },
+    {
+      "event_id": "evt_b4b741215885",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "FINDING_VERIFIED",
+      "t_offset_ms": 115980,
+      "payload": {
+        "status": "SUPPORTED",
+        "verifier": "baseline",
+        "degraded": false,
+        "issues": []
+      },
+      "task_id": null,
+      "finding_id": "F-004",
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:22.268376Z"
+    },
+    {
+      "event_id": "evt_6554a98dd62a",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "VERIFICATION_COMPLETED",
+      "t_offset_ms": 115980,
+      "payload": {
+        "findings": 4
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:22.268930Z"
+    },
+    {
+      "event_id": "evt_15805e694d7e",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "REPLAN_COMPLETED",
+      "t_offset_ms": 115981,
+      "payload": {
+        "iteration": 1,
+        "tasks_added": 3,
+        "confidence_before": 0.85,
+        "confidence_after": 0.85
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:22.268930Z"
+    },
+    {
+      "event_id": "evt_b47b9b5572ac",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "SYNTHESIS_STARTED",
+      "t_offset_ms": 115981,
+      "payload": {
+        "findings": 4
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:22.269631Z"
+    },
+    {
+      "event_id": "evt_0d72c43a134a",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "SYNTHESIS_COMPLETED",
+      "t_offset_ms": 125198,
+      "payload": {
+        "verified": 3,
+        "uncertain": 1,
+        "rejected": 0,
+        "limitations": 2
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:31.486329Z"
+    },
+    {
+      "event_id": "evt_ceceb4bea94b",
+      "run_id": "run_645ddfb5a0be",
+      "event_type": "RUN_COMPLETED",
+      "t_offset_ms": 125199,
+      "payload": {
+        "status": "COMPLETED"
+      },
+      "task_id": null,
+      "finding_id": null,
+      "tool_name": null,
+      "revision": 0,
+      "timestamp": "2026-09-25T10:16:31.487332Z"
+    }
+  ],
+  "snapshot": {
+    "mission": {
+      "run_id": "run_645ddfb5a0be",
+      "objective": "Investigate the Aurora project reports and identify any contradictions between the timeline and the financial information.",
+      "status": "COMPLETED",
+      "stage": "DONE",
+      "documents": [
+        "aurora_budget.csv",
+        "aurora_financial_report.txt",
+        "aurora_project_report.txt"
+      ],
+      "created_at": "2026-09-25T10:14:26.287726Z",
+      "finished_at": "2026-09-25T10:16:31.487332Z",
+      "finding_count": 4,
+      "verified_count": 3,
+      "unresolved_gap_count": 2,
+      "goal": "investigate_project_consistency",
+      "required_operations": [
+        "extract_timeline",
+        "extract_budget",
+        "compare_sources",
+        "detect_inconsistencies",
+        "detect_contradictions",
+        "generate_report",
+        "process_documents"
+      ],
+      "task_count": 7,
+      "replan_iterations": 1,
+      "termination_reason": "DIMINISHING_RETURNS",
+      "error_code": "",
+      "error_message": "",
+      "clarification_question": "",
+      "has_report": true
+    },
+    "tasks": {
+      "run_id": "run_645ddfb5a0be",
+      "nodes": [
+        {
+          "task_id": "task_001",
+          "task_type": "process_documents",
+          "description": "process_documents",
+          "status": "PENDING",
+          "depends_on": [],
+          "tool_id": "",
+          "inserted_by_replan": false
+        },
+        {
+          "task_id": "task_002",
+          "task_type": "extract_timeline",
+          "description": "extract_timeline",
+          "status": "PENDING",
+          "depends_on": [
+            "task_001"
+          ],
+          "tool_id": "",
+          "inserted_by_replan": false
+        },
+        {
+          "task_id": "task_003",
+          "task_type": "extract_budget",
+          "description": "extract_budget",
+          "status": "PENDING",
+          "depends_on": [
+            "task_001"
+          ],
+          "tool_id": "",
+          "inserted_by_replan": false
+        },
+        {
+          "task_id": "task_004",
+          "task_type": "compare_sources",
+          "description": "compare_sources",
+          "status": "PENDING",
+          "depends_on": [
+            "task_002",
+            "task_003"
+          ],
+          "tool_id": "",
+          "inserted_by_replan": false
+        },
+        {
+          "task_id": "task_005",
+          "task_type": "detect_inconsistencies",
+          "description": "detect_inconsistencies",
+          "status": "PENDING",
+          "depends_on": [
+            "task_004"
+          ],
+          "tool_id": "",
+          "inserted_by_replan": false
+        },
+        {
+          "task_id": "task_006",
+          "task_type": "detect_inconsistencies",
+          "description": "detect_inconsistencies",
+          "status": "PENDING",
+          "depends_on": [],
+          "tool_id": "",
+          "inserted_by_replan": false
+        },
+        {
+          "task_id": "task_007",
+          "task_type": "synthesize",
+          "description": "synthesize",
+          "status": "PENDING",
+          "depends_on": [
+            "task_005",
+            "task_006"
+          ],
+          "tool_id": "",
+          "inserted_by_replan": false
+        }
+      ],
+      "edges": [
+        [
+          "task_001",
+          "task_002"
+        ],
+        [
+          "task_001",
+          "task_003"
+        ],
+        [
+          "task_002",
+          "task_004"
+        ],
+        [
+          "task_003",
+          "task_004"
+        ],
+        [
+          "task_004",
+          "task_005"
+        ],
+        [
+          "task_005",
+          "task_007"
+        ],
+        [
+          "task_006",
+          "task_007"
+        ]
+      ],
+      "waves": [
+        [
+          "task_001",
+          "task_006"
+        ],
+        [
+          "task_002",
+          "task_003"
+        ],
+        [
+          "task_004"
+        ],
+        [
+          "task_005"
+        ],
+        [
+          "task_007"
+        ]
+      ]
+    },
+    "findings": {
+      "run_id": "run_645ddfb5a0be",
+      "findings": [
+        {
+          "finding_id": "F-001",
+          "claim": "The Aurora project has a budget of INR 380,000.",
+          "classification": "FACT",
+          "evidence": [
+            {
+              "evidence_id": "E-001",
+              "locator": {
+                "document_id": "aurora_project_report.txt",
+                "document_name": "aurora_project_report.txt",
+                "page": null,
+                "row": 18,
+                "char_start": null,
+                "char_end": null
+              },
+              "resolution": "RESOLVED",
+              "resolution_note": ""
+            }
+          ],
+          "confidence": {
+            "value": 0.85,
+            "resolution_rate": 1.0,
+            "evidence_strength": 1.0,
+            "source_agreement": 0.85,
+            "classification_ceiling": 1.0
+          },
+          "elements": [],
+          "gaps": [],
+          "verification": {
+            "status": "UNSUPPORTED",
+            "confidence": 0.8,
+            "issues": [
+              {
+                "issue_type": "NO_EVIDENCE",
+                "description": "The evidence provided is a citation to a report with 5 matching passages but does not contain the actual text of the report. The claim states the budget is INR 380,000, but the evidence does not include any specific information about the budget amount.",
+                "severity": "MEDIUM",
+                "element": ""
+              }
+            ],
+            "verifier": "baseline",
+            "degraded": false,
+            "degraded_reason": "",
+            "verified_at": "2026-09-25T10:16:17.416584Z"
+          },
+          "derived_from_task_ids": [
+            "task_001",
+            "task_002",
+            "task_003",
+            "task_004",
+            "task_005",
+            "task_006",
+            "task_007",
+            "task_008",
+            "task_009",
+            "task_010"
+          ],
+          "revision": 0,
+          "created_at": "2026-09-25T10:16:13.314758Z"
+        },
+        {
+          "finding_id": "F-002",
+          "claim": "The Aurora project has spent INR 450,000 so far.",
+          "classification": "FACT",
+          "evidence": [
+            {
+              "evidence_id": "E-002",
+              "locator": {
+                "document_id": "aurora_financial_report.txt",
+                "document_name": "aurora_financial_report.txt",
+                "page": null,
+                "row": 6,
+                "char_start": null,
+                "char_end": null
+              },
+              "resolution": "RESOLVED",
+              "resolution_note": ""
+            },
+            {
+              "evidence_id": "E-003",
+              "locator": {
+                "document_id": "aurora_financial_report.txt",
+                "document_name": "aurora_financial_report.txt",
+                "page": null,
+                "row": 15,
+                "char_start": null,
+                "char_end": null
+              },
+              "resolution": "RESOLVED",
+              "resolution_note": ""
+            }
+          ],
+          "confidence": {
+            "value": 0.85,
+            "resolution_rate": 1.0,
+            "evidence_strength": 1.0,
+            "source_agreement": 0.85,
+            "classification_ceiling": 1.0
+          },
+          "elements": [],
+          "gaps": [],
+          "verification": {
+            "status": "SUPPORTED",
+            "confidence": 0.8,
+            "issues": [],
+            "verifier": "baseline",
+            "degraded": false,
+            "degraded_reason": "",
+            "verified_at": "2026-09-25T10:16:19.044563Z"
+          },
+          "derived_from_task_ids": [
+            "task_001",
+            "task_002",
+            "task_003",
+            "task_004",
+            "task_005",
+            "task_006",
+            "task_007",
+            "task_008",
+            "task_009",
+            "task_010"
+          ],
+          "revision": 0,
+          "created_at": "2026-09-25T10:16:13.315586Z"
+        },
+        {
+          "finding_id": "F-003",
+          "claim": "The Aurora project's budget is broken down into development (INR 180,000) and infrastructure (INR 70,000).",
+          "classification": "FACT",
+          "evidence": [
+            {
+              "evidence_id": "E-004",
+              "locator": {
+                "document_id": "aurora_budget.csv",
+                "document_name": "aurora_budget.csv",
+                "page": null,
+                "row": 2,
+                "char_start": null,
+                "char_end": null
+              },
+              "resolution": "RESOLVED",
+              "resolution_note": ""
+            },
+            {
+              "evidence_id": "E-005",
+              "locator": {
+                "document_id": "aurora_budget.csv",
+                "document_name": "aurora_budget.csv",
+                "page": null,
+                "row": 3,
+                "char_start": null,
+                "char_end": null
+              },
+              "resolution": "RESOLVED",
+              "resolution_note": ""
+            }
+          ],
+          "confidence": {
+            "value": 0.85,
+            "resolution_rate": 1.0,
+            "evidence_strength": 1.0,
+            "source_agreement": 0.85,
+            "classification_ceiling": 1.0
+          },
+          "elements": [],
+          "gaps": [],
+          "verification": {
+            "status": "SUPPORTED",
+            "confidence": 0.8,
+            "issues": [],
+            "verifier": "baseline",
+            "degraded": false,
+            "degraded_reason": "",
+            "verified_at": "2026-09-25T10:16:20.669372Z"
+          },
+          "derived_from_task_ids": [
+            "task_001",
+            "task_002",
+            "task_003",
+            "task_004",
+            "task_005",
+            "task_006",
+            "task_007",
+            "task_008",
+            "task_009",
+            "task_010"
+          ],
+          "revision": 0,
+          "created_at": "2026-09-25T10:16:13.315586Z"
+        },
+        {
+          "finding_id": "F-004",
+          "claim": "The Aurora project's budget exceeds the approved amount by INR 70,000.",
+          "classification": "INFERENCE",
+          "evidence": [
+            {
+              "evidence_id": "E-006",
+              "locator": {
+                "document_id": "aurora_project_report.txt",
+                "document_name": "aurora_project_report.txt",
+                "page": null,
+                "row": 18,
+                "char_start": null,
+                "char_end": null
+              },
+              "resolution": "RESOLVED",
+              "resolution_note": ""
+            },
+            {
+              "evidence_id": "E-007",
+              "locator": {
+                "document_id": "aurora_financial_report.txt",
+                "document_name": "aurora_financial_report.txt",
+                "page": null,
+                "row": 6,
+                "char_start": null,
+                "char_end": null
+              },
+              "resolution": "RESOLVED",
+              "resolution_note": ""
+            }
+          ],
+          "confidence": {
+            "value": 0.85,
+            "resolution_rate": 1.0,
+            "evidence_strength": 1.0,
+            "source_agreement": 1.0,
+            "classification_ceiling": 0.85
+          },
+          "elements": [],
+          "gaps": [],
+          "verification": {
+            "status": "SUPPORTED",
+            "confidence": 1.0,
+            "issues": [],
+            "verifier": "baseline",
+            "degraded": false,
+            "degraded_reason": "",
+            "verified_at": "2026-09-25T10:16:22.268376Z"
+          },
+          "derived_from_task_ids": [
+            "task_001",
+            "task_002",
+            "task_003",
+            "task_004",
+            "task_005",
+            "task_006",
+            "task_007",
+            "task_008",
+            "task_009",
+            "task_010"
+          ],
+          "revision": 0,
+          "created_at": "2026-09-25T10:16:13.315586Z"
+        }
+      ]
+    },
+    "gaps": [
+      {
+        "gap_id": "G-001",
+        "gap_type": "MISSING_SOURCE",
+        "description": "a source stating quantity '450,000'",
+        "resolved": true,
+        "finding_id": "F-001"
+      },
+      {
+        "gap_id": "G-002",
+        "gap_type": "MISSING_SOURCE",
+        "description": "a source stating quantity '380,000'",
+        "resolved": true,
+        "finding_id": "F-002"
+      },
+      {
+        "gap_id": "G-003",
+        "gap_type": "MISSING_SOURCE",
+        "description": "a source stating quantity '60,000'",
+        "resolved": true,
+        "finding_id": "F-006"
+      },
+      {
+        "gap_id": "G-004",
+        "gap_type": "MISSING_SOURCE",
+        "description": "a source stating quantity '450,000'",
+        "resolved": false,
+        "finding_id": "F-007"
+      },
+      {
+        "gap_id": "G-005",
+        "gap_type": "MISSING_SOURCE",
+        "description": "a source stating quantity '90,000'",
+        "resolved": false,
+        "finding_id": "F-008"
+      }
+    ],
+    "report": {
+      "run_id": "run_645ddfb5a0be",
+      "objective": "Investigate the Aurora project reports and identify any contradictions between the timeline and the financial information.",
+      "sections": [
+        {
+          "kind": "EXECUTIVE_SUMMARY",
+          "heading": "Executive Summary",
+          "narrative": "The Aurora project has spent INR 450,000 so far, but its budget is broken down into development (INR 180,000) and infrastructure (INR 70,000), indicating a budget that exceeds the approved amount by INR 70,000. The discrepancy between the reported budget of INR 380,000 and the actual spending remains unverified, while two sources with conflicting financial figures could not be obtained. The investigation confirms the spending and budget breakdown but cannot resolve the inconsistency in the approved budget amount.",
+          "items": [],
+          "finding_ids": []
+        },
+        {
+          "kind": "INVESTIGATION_SCOPE",
+          "heading": "Investigation Scope",
+          "narrative": "",
+          "items": [
+            "Objective: Investigate the Aurora project reports and identify any contradictions between the timeline and the financial information.",
+            "Document: aurora_project_report.txt",
+            "Document: aurora_financial_report.txt",
+            "Document: aurora_budget.csv"
+          ],
+          "finding_ids": []
+        },
+        {
+          "kind": "EXECUTION_SUMMARY",
+          "heading": "Execution Summary",
+          "narrative": "",
+          "items": [
+            "Tasks planned: 10",
+            "Tasks completed: 10",
+            "Tasks failed: 0",
+            "Tasks skipped: 0",
+            "Tool calls: 10",
+            "Documents processed: 3",
+            "Replan iterations: 1",
+            "Evidence gaps: 3 of 5 closed"
+          ],
+          "finding_ids": []
+        },
+        {
+          "kind": "VERIFIED_FINDINGS",
+          "heading": "Verified Findings",
+          "narrative": "",
+          "items": [
+            "[F-002] The Aurora project has spent INR 450,000 so far. (FACT, confidence 0.85; aurora_financial_report.txt:r6, aurora_financial_report.txt:r15)",
+            "[F-003] The Aurora project's budget is broken down into development (INR 180,000) and infrastructure (INR 70,000). (FACT, confidence 0.85; aurora_budget.csv:r2, aurora_budget.csv:r3)",
+            "[F-004] The Aurora project's budget exceeds the approved amount by INR 70,000. (INFERENCE, confidence 0.85; aurora_project_report.txt:r18, aurora_financial_report.txt:r6)"
+          ],
+          "finding_ids": [
+            "F-002",
+            "F-003",
+            "F-004"
+          ]
+        },
+        {
+          "kind": "EVIDENCE",
+          "heading": "Evidence",
+          "narrative": "",
+          "items": [
+            "[F-002] aurora_financial_report.txt:r6 (resolved)",
+            "[F-002] aurora_financial_report.txt:r15 (resolved)",
+            "[F-003] aurora_budget.csv:r2 (resolved)",
+            "[F-003] aurora_budget.csv:r3 (resolved)",
+            "[F-004] aurora_project_report.txt:r18 (resolved)",
+            "[F-004] aurora_financial_report.txt:r6 (resolved)",
+            "[F-001] aurora_project_report.txt:r18 (resolved)"
+          ],
+          "finding_ids": []
+        },
+        {
+          "kind": "UNCERTAIN_FINDINGS",
+          "heading": "Uncertain Findings",
+          "narrative": "",
+          "items": [
+            "[F-001] The Aurora project has a budget of INR 380,000. (FACT, confidence 0.85; aurora_project_report.txt:r18)"
+          ],
+          "finding_ids": [
+            "F-001"
+          ]
+        },
+        {
+          "kind": "REJECTED_FINDINGS",
+          "heading": "Rejected Findings",
+          "narrative": "",
+          "items": [
+            "None."
+          ],
+          "finding_ids": []
+        },
+        {
+          "kind": "REASONING",
+          "heading": "Reasoning",
+          "narrative": "The verified findings show that the project has spent INR 450,000, with a budget split into development and infrastructure totaling INR 250,000, which exceeds the approved amount by INR 70,000. This contradicts the uncertain finding that the project has a budget of INR 380,000, as the verified spending and budget breakdown suggest a higher expenditure than the reported budget. The evidence gaps involving conflicting financial sources prevent a definitive resolution of the budget discrepancy.",
+          "items": [],
+          "finding_ids": []
+        },
+        {
+          "kind": "ACTIONS_PERFORMED",
+          "heading": "Actions Performed",
+          "narrative": "",
+          "items": [
+            "10 task(s) executed across 3 document(s)",
+            "10 tool call(s)",
+            "1 adaptive replan iteration(s)"
+          ],
+          "finding_ids": []
+        },
+        {
+          "kind": "CONFIDENCE",
+          "heading": "Confidence",
+          "narrative": "",
+          "items": [
+            "[F-002] 0.85 (resolved 100%, strength 1.00, agreement 0.85, cap 1.00)",
+            "[F-003] 0.85 (resolved 100%, strength 1.00, agreement 0.85, cap 1.00)",
+            "[F-004] 0.85 (resolved 100%, strength 1.00, agreement 1.00, cap 0.85)",
+            "[F-001] 0.85 (resolved 100%, strength 1.00, agreement 0.85, cap 1.00)"
+          ],
+          "finding_ids": []
+        },
+        {
+          "kind": "LIMITATIONS",
+          "heading": "Limitations",
+          "narrative": "",
+          "items": [
+            "(generated from run facts - see the limitations list)"
+          ],
+          "finding_ids": []
+        }
+      ],
+      "verified_findings": [
+        {
+          "finding_id": "F-002",
+          "claim": "The Aurora project has spent INR 450,000 so far.",
+          "classification": "FACT",
+          "evidence": [
+            {
+              "evidence_id": "E-002",
+              "locator": {
+                "document_id": "aurora_financial_report.txt",
+                "document_name": "aurora_financial_report.txt",
+                "page": null,
+                "row": 6,
+                "char_start": null,
+                "char_end": null
+              },
+              "resolution": "RESOLVED",
+              "resolution_note": ""
+            },
+            {
+              "evidence_id": "E-003",
+              "locator": {
+                "document_id": "aurora_financial_report.txt",
+                "document_name": "aurora_financial_report.txt",
+                "page": null,
+                "row": 15,
+                "char_start": null,
+                "char_end": null
+              },
+              "resolution": "RESOLVED",
+              "resolution_note": ""
+            }
+          ],
+          "confidence": {
+            "value": 0.85,
+            "resolution_rate": 1.0,
+            "evidence_strength": 1.0,
+            "source_agreement": 0.85,
+            "classification_ceiling": 1.0
+          },
+          "elements": [],
+          "gaps": [],
+          "verification": {
+            "status": "SUPPORTED",
+            "confidence": 0.8,
+            "issues": [],
+            "verifier": "baseline",
+            "degraded": false,
+            "degraded_reason": "",
+            "verified_at": "2026-09-25T10:16:19.044563Z"
+          },
+          "derived_from_task_ids": [
+            "task_001",
+            "task_002",
+            "task_003",
+            "task_004",
+            "task_005",
+            "task_006",
+            "task_007",
+            "task_008",
+            "task_009",
+            "task_010"
+          ],
+          "revision": 0,
+          "created_at": "2026-09-25T10:16:13.315586Z"
+        },
+        {
+          "finding_id": "F-003",
+          "claim": "The Aurora project's budget is broken down into development (INR 180,000) and infrastructure (INR 70,000).",
+          "classification": "FACT",
+          "evidence": [
+            {
+              "evidence_id": "E-004",
+              "locator": {
+                "document_id": "aurora_budget.csv",
+                "document_name": "aurora_budget.csv",
+                "page": null,
+                "row": 2,
+                "char_start": null,
+                "char_end": null
+              },
+              "resolution": "RESOLVED",
+              "resolution_note": ""
+            },
+            {
+              "evidence_id": "E-005",
+              "locator": {
+                "document_id": "aurora_budget.csv",
+                "document_name": "aurora_budget.csv",
+                "page": null,
+                "row": 3,
+                "char_start": null,
+                "char_end": null
+              },
+              "resolution": "RESOLVED",
+              "resolution_note": ""
+            }
+          ],
+          "confidence": {
+            "value": 0.85,
+            "resolution_rate": 1.0,
+            "evidence_strength": 1.0,
+            "source_agreement": 0.85,
+            "classification_ceiling": 1.0
+          },
+          "elements": [],
+          "gaps": [],
+          "verification": {
+            "status": "SUPPORTED",
+            "confidence": 0.8,
+            "issues": [],
+            "verifier": "baseline",
+            "degraded": false,
+            "degraded_reason": "",
+            "verified_at": "2026-09-25T10:16:20.669372Z"
+          },
+          "derived_from_task_ids": [
+            "task_001",
+            "task_002",
+            "task_003",
+            "task_004",
+            "task_005",
+            "task_006",
+            "task_007",
+            "task_008",
+            "task_009",
+            "task_010"
+          ],
+          "revision": 0,
+          "created_at": "2026-09-25T10:16:13.315586Z"
+        },
+        {
+          "finding_id": "F-004",
+          "claim": "The Aurora project's budget exceeds the approved amount by INR 70,000.",
+          "classification": "INFERENCE",
+          "evidence": [
+            {
+              "evidence_id": "E-006",
+              "locator": {
+                "document_id": "aurora_project_report.txt",
+                "document_name": "aurora_project_report.txt",
+                "page": null,
+                "row": 18,
+                "char_start": null,
+                "char_end": null
+              },
+              "resolution": "RESOLVED",
+              "resolution_note": ""
+            },
+            {
+              "evidence_id": "E-007",
+              "locator": {
+                "document_id": "aurora_financial_report.txt",
+                "document_name": "aurora_financial_report.txt",
+                "page": null,
+                "row": 6,
+                "char_start": null,
+                "char_end": null
+              },
+              "resolution": "RESOLVED",
+              "resolution_note": ""
+            }
+          ],
+          "confidence": {
+            "value": 0.85,
+            "resolution_rate": 1.0,
+            "evidence_strength": 1.0,
+            "source_agreement": 1.0,
+            "classification_ceiling": 0.85
+          },
+          "elements": [],
+          "gaps": [],
+          "verification": {
+            "status": "SUPPORTED",
+            "confidence": 1.0,
+            "issues": [],
+            "verifier": "baseline",
+            "degraded": false,
+            "degraded_reason": "",
+            "verified_at": "2026-09-25T10:16:22.268376Z"
+          },
+          "derived_from_task_ids": [
+            "task_001",
+            "task_002",
+            "task_003",
+            "task_004",
+            "task_005",
+            "task_006",
+            "task_007",
+            "task_008",
+            "task_009",
+            "task_010"
+          ],
+          "revision": 0,
+          "created_at": "2026-09-25T10:16:13.315586Z"
+        }
+      ],
+      "uncertain_findings": [
+        {
+          "finding_id": "F-001",
+          "claim": "The Aurora project has a budget of INR 380,000.",
+          "classification": "FACT",
+          "evidence": [
+            {
+              "evidence_id": "E-001",
+              "locator": {
+                "document_id": "aurora_project_report.txt",
+                "document_name": "aurora_project_report.txt",
+                "page": null,
+                "row": 18,
+                "char_start": null,
+                "char_end": null
+              },
+              "resolution": "RESOLVED",
+              "resolution_note": ""
+            }
+          ],
+          "confidence": {
+            "value": 0.85,
+            "resolution_rate": 1.0,
+            "evidence_strength": 1.0,
+            "source_agreement": 0.85,
+            "classification_ceiling": 1.0
+          },
+          "elements": [],
+          "gaps": [],
+          "verification": {
+            "status": "UNSUPPORTED",
+            "confidence": 0.8,
+            "issues": [
+              {
+                "issue_type": "NO_EVIDENCE",
+                "description": "The evidence provided is a citation to a report with 5 matching passages but does not contain the actual text of the report. The claim states the budget is INR 380,000, but the evidence does not include any specific information about the budget amount.",
+                "severity": "MEDIUM",
+                "element": ""
+              }
+            ],
+            "verifier": "baseline",
+            "degraded": false,
+            "degraded_reason": "",
+            "verified_at": "2026-09-25T10:16:17.416584Z"
+          },
+          "derived_from_task_ids": [
+            "task_001",
+            "task_002",
+            "task_003",
+            "task_004",
+            "task_005",
+            "task_006",
+            "task_007",
+            "task_008",
+            "task_009",
+            "task_010"
+          ],
+          "revision": 0,
+          "created_at": "2026-09-25T10:16:13.314758Z"
+        }
+      ],
+      "rejected_findings": [],
+      "unresolved_gaps": [
+        {
+          "gap_id": "G-004",
+          "finding_id": "F-007",
+          "gap_type": "MISSING_SOURCE",
+          "missing": "a source stating quantity '450,000'",
+          "element": null,
+          "severity": 0.6,
+          "suggested_query": "450,000",
+          "suggested_scope": [],
+          "resolved": false,
+          "resolved_by_task_id": null
+        },
+        {
+          "gap_id": "G-005",
+          "finding_id": "F-008",
+          "gap_type": "MISSING_SOURCE",
+          "missing": "a source stating quantity '90,000'",
+          "element": null,
+          "severity": 0.6,
+          "suggested_query": "90,000",
+          "suggested_scope": [],
+          "resolved": false,
+          "resolved_by_task_id": null
+        }
+      ],
+      "execution": {
+        "tasks_planned": 10,
+        "tasks_completed": 10,
+        "tasks_failed": 0,
+        "tasks_skipped": 0,
+        "tool_calls": 10,
+        "documents_processed": 3,
+        "replan_iterations": 1,
+        "gaps_detected": 5,
+        "gaps_resolved": 3,
+        "duration_ms": 0
+      },
+      "limitations": [
+        {
+          "description": "Missing evidence: a source stating quantity '450,000'",
+          "cause": "missing source, not obtained"
+        },
+        {
+          "description": "Missing evidence: a source stating quantity '90,000'",
+          "cause": "missing source, not obtained"
+        }
+      ],
+      "overall_confidence": 0.85,
+      "generated_at": "2026-09-25T10:16:31.486329Z"
+    }
+  }
+}

@@ -1,8 +1,8 @@
 # ADR-008 — Server-sent events, not WebSocket, for live execution
 
-**Status:** Accepted
-**Date:** 2026-09-24
-**Phase:** 19
+## Status
+
+Accepted — 2026-09-24 (Phase 19)
 
 ## Context
 

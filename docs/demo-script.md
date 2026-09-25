@@ -1,220 +1,296 @@
 # JARVIS — Demo Script
 
-**For:** external evaluator review
-**Status at this demo:** Phases 0-2, 4-7, 9-10 complete. Phase 3 (persistence) blocked on a
-pending WSL2 reboot. Phases 8, 11+ not started.
+Six demos, ten minutes, and nothing here depends on luck.
 
-Be straight about what this is: **the foundation and the first agent component**, built to a
-standard, not a finished product. What follows is what actually runs today.
+Every command below has been run. Every one has a **recorded fallback**, because local inference
+on laptop hardware occasionally stalls and a presentation should not be hostage to that. The
+fallback is a real recording of a real run, replayed — never a mock, never hand-written
+(invariant 5).
 
 ---
 
 ## Before the room
 
 ```bash
-cd D:\M2LLM
-.venv\Scripts\activate
-python -m app.cli health          # run from backend/
+ollama serve                                    # leave running
+cd backend && python -m app.cli health          # must report provider_healthy
+ollama run qwen3:4b "ready"                     # warms the model into memory
 ```
 
-**Warm the model first.** The first call loads qwen3:4b into VRAM and takes ~36 s; every
-call after that is ~3 s for intent, ~60 s for a full investigate (two calls, the planner
-emits a lot of tokens). Run any command once before the demo starts.
+That last one matters more than it looks. A cold model adds 10–20 seconds to the first call, which
+is exactly when everyone is watching.
+
+**Have the web console up as well**, in a second browser tab:
 
 ```bash
-cd backend
-python -m app.cli intent "warm up" 
+# terminal 2
+cd backend && uvicorn app.api.app:create_app --factory --reload
+# terminal 3
+cd frontend && npm run dev                      # http://localhost:5173
 ```
+
+If the model stalls at any point: switch to that tab, go to **`#/replay`**, and play a recording.
+It renders through the same components as a live run. Say that it is a replay — the banner says so
+anyway, and it is not dismissible.
 
 ---
 
-## 1. The problem, in one sentence (30 s)
+## The one-sentence framing (30 s)
 
-> Most AI assistants are `prompt -> LLM -> answer`. That works for questions. It does not
-> work for *tasks*, because the right sequence of steps depends on what the earlier steps
-> find. JARVIS turns an ambiguous objective into a controlled, evidence-aware process.
+> Most systems built on a language model ask the model how confident it is. This one never does.
+> Every claim is bound to the evidence that produced it, confidence is computed from what actually
+> resolved, and there is no way in the code to assert a confidence you did not derive.
+
+Then run something.
 
 ---
 
-## 2. Live: objective to a validated task graph (3 min)
+## Demo 1 — Basic investigation
 
-**This is the main demo.** One command, end to end.
+**Shows:** objective → intent → plan → execution → evidence-backed result.
 
 ```bash
 cd backend
-python -m app.cli investigate "Investigate these project reports and determine whether the timeline and budget information is consistent." --docs project_report.pdf financial_report.pdf budget.csv
+python -m app.cli investigate \
+  "Investigate the Aurora project reports and identify any contradictions between the timeline and the financial information." \
+  --docs aurora_project_report.txt aurora_financial_report.txt aurora_budget.csv \
+  --report aurora.md
 ```
 
-Takes ~60 s warm (two model calls). Talk while it runs.
+**What to point at, in order:**
 
-**Point at four things in the output:**
+1. **Intent** — the goal and the required operations. The agent decided what kind of work this is;
+   nobody configured it.
+2. **The task graph** — a DAG, not a list. Roughly 7 tasks.
+3. **Findings** — each with a classification, a computed confidence, and the source locators it
+   rests on.
 
-**The trace.** Every state transition with a millisecond offset. The run is reconstructable
-from this alone - it is what the UI and the evaluation harness will both read.
+**Expected trace:** `RUN_STARTED` → `INTENT_CREATED` → `PLAN_CREATED` → `TASK_GRAPH_CREATED` →
+`TOOL_SELECTED` ×n → `TASK_STARTED`/`TASK_COMPLETED` ×n → `OBSERVATION_RECORDED` ×n →
+`REASONING_STARTED` → `FINDING_CREATED` ×n → `VERIFICATION_STARTED` → `FINDING_VERIFIED` →
+`SYNTHESIS_STARTED` → `RUN_COMPLETED`. Around 95 events, ~45–90 s.
 
-**The task graph.** 13 tasks with real dependencies. Nobody wrote these steps; the agent
-decomposed the objective itself.
+**Fallback:** `#/replay`, newest recording.
 
-**The execution waves.** This is the bit worth pausing on:
+---
+
+## Demo 2 — Parallel execution
+
+**Shows:** fan-out, genuine concurrency, convergence.
+
+Same run as Demo 1 — this is the *timing* view of it. Either read the CLI's wave output:
 
 ```
+execution waves (5):
+  wave 0: task_001, task_006   <- these run in parallel
   wave 1: task_002, task_003   <- these run in parallel
-  wave 2: task_004, task_005   <- these run in parallel
-```
-
-> Extracting the timeline from one document and the budget from another are independent, so
-> the graph says so and they can run concurrently. Comparing them depends on both. That is a
-> DAG doing work, not a list of steps.
-
-**The validation line.**
-
-```
-validation      : PASSED
-clean           : True  (no repairs, no re-prompts)
-```
-
-> `clean` is the important word. The model proposed this decomposition; the *system* checked
-> it for cycles, dangling dependencies, orphan tasks and whether it actually covers every
-> operation the intent required. `clean` means it passed first time with no repairs. A plan
-> that needed three repairs is valid but rescued, and we count those separately - otherwise
-> a planner could silently degrade and the metric would never notice.
-
----
-
-
-**The tool routing table.** This is the fourth pillar of the role - selecting tools:
-
-```
-TOOL ROUTING  (5 tools registered)
-  task_001  document_extract       DETERMINISTIC
-  task_004  calculator             FALLBACK
-  task_005  calculator             LLM_TIEBREAK
   ...
-selection modes : 6 deterministic, 1 fallback, 1 llm_tiebreak
 ```
 
-> Routing runs in three stages. First a capability filter - the task type declares what it
-> needs, and only tools serving that capability survive. Then schema compatibility: can the
-> task's inputs actually satisfy the tool's required fields? Only if two or more candidates
-> still remain does the model break the tie.
->
-> Six of these eight never consulted the model at all. That is deliberate: it makes tool
-> selection accuracy measurable and largely model-independent. If the model chose every
-> time, the metric would be measuring the model rather than the system, and it would move
-> for reasons nobody could attribute.
+or, better, show the **task graph panel** in the web console, which lays the waves out as columns.
+
+**The point:** the waves are computed from the graph, not configured. Two extraction tasks that do
+not depend on each other have no edge between them, and that absence is what makes them concurrent.
+The parallelism is a property of the plan, not a setting.
+
+**Fallback:** `#/replay` — the graph animates through the waves, which reads better than the CLI
+does.
 
 ---
 
-## 3. Live: the agent refuses to guess (1 min)
+## Demo 3 — Evidence gap
+
+**Shows:** gap detected → task created → evidence sought → finding re-verified.
+
+This one is best seen in the console, because the gap renders *on the finding that provoked it*.
+
+1. Run a mission from `#/new` (Aurora objective, all three documents).
+2. Wait for findings to appear, then verification.
+3. When a finding comes back `UNSUPPORTED`, a **dashed amber block** appears on that card showing:
+   - the specific missing element — never "more evidence needed", which would have failed at its job
+   - the task the replanning loop **inserted** to go and find it
+
+**What makes this defensible:** the decision that a gap exists is *deterministic*. It comes from
+comparing claim elements against resolved evidence, before any model is asked anything. Only the
+suggested query is phrased by a model, and only after the gap already exists. A model that could
+decide whether a gap exists could also decide there wasn't one.
+
+**If no gap appears:** that is a legitimate outcome — all findings were supported. Use the replay
+of a run that did produce one, or move on. Do not re-run hoping for a failure.
+
+**Backing dataset:** [`.agent/evals/datasets/aurora_timeline_only.yaml`](../.agent/evals/datasets/aurora_timeline_only.yaml)
+reliably produces gaps (one document, so cross-source claims cannot be supported).
+
+---
+
+## Demo 4 — Failure recovery
+
+**Shows:** tool fails → retry with backoff → fallback tool → run continues.
+
+There is no fixture that makes a real tool fail on demand, so demonstrate this from the **tests**,
+which is the honest version:
 
 ```bash
-python -m app.cli investigate "Look at these files." --docs report.pdf
+cd backend
+pytest tests/unit/test_adversarial.py -v -k "tool"
+pytest tests/unit/test_execution.py -v -k "retry or fallback"
 ```
 
-Stops before planning:
+**What to say:** every tool in the registry is replaced with one that always raises. The run still
+terminates, marks the graph, and emits `TASK_FAILED` — and a downstream task whose inputs never
+arrived is **skipped rather than run on nothing**, because a task that reports success on absent
+data is worse than one that fails.
 
-```
-CLARIFICATION NEEDED
-  What specifically should be investigated in these documents - for example a
-  consistency check, a comparison, or a summary?
-  (planning stops here - an ambiguous objective must not produce a plan)
-```
+Retries are bounded by `max_task_retries` with exponential backoff; when they are exhausted the
+router walks a fallback chain; when that is exhausted the task fails cleanly. Every step is on the
+timeline.
 
-> A system that plans confidently from a vague request wastes the whole run and produces
-> findings nobody asked for. Ambiguity is a valid answer.
+**Why not a live failure:** faking one would mean shipping a tool whose job is to break, and that
+is a fixture pretending to be a finding. The test is the real demonstration.
 
 ---
 
-## 4. If asked: what stops a bad plan executing (1 min)
+## Demo 5 — Replanning
 
-Show `app/intelligence/planner/validator.py`. Ten violation codes, each with a test that
-feeds the validator a deliberately malformed plan:
+**Shows:** the plan changes *while it is running*.
 
-| Violation | Why it matters |
-|---|---|
-| `CYCLE` | Would hang the scheduler. The path is reported, not just the fact |
-| `UNCOVERED_OPERATION` | The plan silently dropped part of the request |
-| `ORPHAN_TASK` | Output produced and discarded - wasted budget |
-| `NO_TERMINAL_TASK` | Nothing consumes the analysis, so no report |
+Two ways, depending on what the room wants.
 
-If the model cannot produce a legal plan in three attempts, the run fails with
-`PLAN_INVALID` rather than executing something malformed.
+**The evidence:** in the web console task graph, a task the loop inserted is drawn with a **dashed
+border**, labelled `INSERTED BY REPLAN`, and it is the only element in the interface that slides in
+horizontally. You can point at the moment the plan changed.
 
----
-
-## 5. The engineering standard (2 min)
+**The guarantees**, which matter more than the animation:
 
 ```bash
-python -m pytest tests -q -m "not llm"     # 255 passed
-mypy app                                    # clean, strict mode, 43 files
+pytest tests/unit/test_replanning.py -v
 ```
 
-**Show `tests/unit/test_llm_isolation.py`.** It's the most unusual thing in the repo. It
-fails the build if any module outside `app/llm/` imports an HTTP client, if anything outside
-`config.py` reads `os.environ`, or if `eval`/`exec` appears anywhere. The architectural
-claim "the LLM is a component, not the architecture" is *checked*, not asserted in a README.
+- **It always terminates.** `MAX_REPLAN_ITERATIONS` is a hard ceiling clamped from `.env`.
+- **Every stop records a distinct, honest reason.** `ALL_RESOLVED` and `DIMINISHING_RETURNS` are
+  both good outcomes and mean different things; `MAX_ITERATIONS` and `NO_ACTIONABLE_GAP` are both
+  honest failures and mean different things. A loop that stops silently is indistinguishable from
+  one that gave up.
+- **A contradicted finding is never retried.** More evidence cannot rescue a claim the sources
+  refute; spending iterations on one would be the loop working hard and achieving nothing.
+- **One iteration may insert at most 3 tasks.** Measured at 24 before that cap, which drove task
+  efficiency to 3.6× the minimum.
 
-**Show `Confidence` in `app/schemas/finding.py`** if there's time:
+---
+
+## Demo 6 — Confidence and verification
+
+**Shows:** finding → evidence → computed confidence → verification → reported status.
+
+Expand any finding card in the console. Or, more convincingly, do this in a Python shell:
+
+```bash
+cd backend && python
+```
 
 ```python
-Confidence(value=0.96)          # ValidationError - no such constructor
-Confidence.compute(refs=..., classification=...)   # the only way
+from app.schemas.finding import Confidence
+Confidence(value=0.96)
+# ValidationError — there is no constructor that takes a bare number
 ```
 
-> Confidence is computed from resolved evidence. A model's self-reported certainty has
-> nowhere to put itself. That's enforced by the type system rather than by a convention
-> someone has to remember.
+**That is the whole argument in one line.** Confidence cannot be asserted anywhere in this system,
+only computed, and it is enforced in the type rather than by convention.
+
+Then expand a finding and show the four factors it decomposes into — resolution rate, evidence
+strength, source agreement, classification ceiling. A confidence nobody can take apart is
+indistinguishable from one that was made up.
+
+**Also show an `UNRESOLVED` citation if one is present.** It was kept, not dropped. A dropped bad
+citation leaves a claim that looks fully supported, which is the more dangerous outcome.
 
 ---
 
-## 6. What's next, honestly (1 min)
+## The uncomfortable slide — show it before they find it
 
-| Phase | Status |
-|---|---|
-| 0-2, 4-7, 9-10 | Complete: environment, schemas, LLM layer, event bus, intent, planner, tools, router |
-| 3 | Blocked on a pending WSL2 install for Docker/Postgres |
-| 8, 11 | Task graph engine and execution engine - makes the plan actually run |
-| 13 | Reasoning engine - findings with bound evidence |
-| 14, 16 | Evidence gap detection and adaptive replanning - the headline features |
-| 20 | Evaluation harness - the measured metrics |
+**Do this deliberately.** It is stronger coming from you.
 
-The build order is in `.claude/implementation/implementation-plan.md`, 25 phases with
-acceptance criteria per phase.
+```bash
+cd backend
+python -m app.cli investigate \
+  "Determine whether the Aurora project report contradicts itself on the approved completion date." \
+  --docs aurora_project_report.txt
+```
+
+The correct answer is **no findings**. The agent currently produces about three, and they are
+restatements of the source — true, correctly cited, and not answers to the question.
+
+**What to say:**
+
+> This is the failure mode the whole system is built to avoid, and I can show you exactly how I
+> know about it. It is not a guess — it is measured. The evaluation suite has a negative scenario
+> whose correct answer is nothing, it fails the build when the agent finds something, and the
+> report names the specific claims it invented. It is BUG-005 in the bug log, it is on the
+> evaluation dashboard, and CI is red on `main` because of it. I have not weakened the threshold to
+> go green.
+
+Then show `#/evaluation` — the confabulation count sits next to the ten metrics, because no metric
+can express it: an agent that invents findings scores 1.000 on coverage, 1.000 on verification and
+0.000 on unsupported claims. A perfect score for being exactly wrong.
+
+**Why lead with this:** a reviewer's first question about any agent is "how do you know it isn't
+making things up?" The answer is not a reassurance. It is a harness that catches it, a number that
+moves, and a build that fails.
 
 ---
 
 ## Questions to expect
 
-**"Isn't this just a wrapper around an LLM?"**
-The model proposes free-text operations; the system maps them onto a closed vocabulary and
-surfaces anything out-of-vocabulary as explicitly unsupported. That pattern repeats
-throughout: the planner proposes a decomposition and the system validates it into a
-legal DAG. The model's output is an input to the system, not the system's output.
+**"Why not LangChain / AutoGPT / CrewAI?"**
+[ADR-004](../.claude/decisions/ADR-004-custom-orchestration.md). The contribution *is* the
+orchestration — the validated DAG, the evidence binder, the deterministic gap detector, the bounded
+replanning loop. Delegating those to a framework would have meant delegating the thing being
+evaluated. A framework would also have made invariant 1 unenforceable.
 
-**"How do you know it works?"**
-255 tests today, plus `.agent/` — scenarios that assert against the *execution trace*, not
-the prose. An agent can produce a plausible report while skipping every step that made it
-trustworthy; asserting on the trace catches that, asserting on the output does not. The
-evaluation harness in Phase 20 computes ten metrics, none hard-coded.
+**"How do you know it isn't hallucinating?"**
+`unsupported_claim_rate` is 0.000 on the current baseline, `evidence_coverage` is 1.000, and
+neither is a reassurance — both are computed from runs over datasets in the repo. And the negative
+case above is the honest limit of that claim.
 
-**"Why a local model?"**
-Evaluation is the dominant cost driver — the whole suite runs across 20+ scenarios
-repeatedly. Metered API calls would make measuring something you think twice about. It also
-forced the structured-output repair loop to be a real component. ADR-003 has the reasoning.
+**"Isn't the model just doing all the work?"**
+Show `plan_validity` at 0.333 — two plans in three need a deterministic repair before they can
+execute. And the intent engine, the validator, the gap detector and the confidence computation
+never call a model at all. Then `pytest tests/unit/test_llm_isolation.py` — the source tree is
+parsed to prove the model is reachable from exactly one package.
 
-**"What was hard?"**
-Two things worth mentioning. qwen3 is a reasoning model — Ollama returns its deliberation in
-a separate field, and it consumed the whole token budget, so every structured call returned
-empty. Fixing it also mattered architecturally: that deliberation is exactly what the
-no-hidden-reasoning rule keeps out of the record. And a JSON extraction bug that returned the
-first element of an array instead of the array — still valid JSON, so nothing would have
-raised; a reasoning engine asked for candidate findings would have silently received one.
-Both are in `.claude/logs/bug-log.md`.
+**"Why such a small model?"**
+It runs on a laptop, and every number here is honest about it. The abstraction is a `Protocol`, so
+swapping model is one environment variable — and a report produced with a different model is
+*refused* as incomparable rather than quietly compared.
+
+**"What would you do next?"**
+Fix the confabulation. It is one restatement filter away, and it is the only thing keeping the
+build red. After that, more evaluation scenarios — there are three where the plan calls for twenty.
 
 ---
 
 ## If the model misbehaves live
 
-Set `LLM_PROVIDER=echo` in `.env` and rerun — the deterministic provider serves fixtures with
-no network. Say so if you use it; a replay presented as a live run would be exactly the kind
-of thing this project is built to prevent.
+In order of preference:
+
+1. **Switch to `#/replay`.** A real recording, at 4x, through the same components. Say it is a
+   replay.
+2. **Show the committed report** — `.agent/evals/reports/20260925T104354-qwen3-4b-all.md`. The
+   numbers exist whether or not the laptop cooperates.
+3. **Run the tests.** `pytest tests -m "not llm"` — 581 of them, no model required, in about 18
+   seconds. Every invariant is proven there.
+
+Never re-run a failed live demo hoping for a better result. It looks exactly like what it is, and
+the recording is better anyway.
+
+---
+
+## What is not built
+
+Worth knowing before someone asks:
+
+- **The API does not persist runs.** The database layer exists and is tested; the registry wires
+  only in-memory sinks, so a restart loses history.
+- **Three evaluation scenarios, not twenty.**
+- **No frontend test runner**, so the replay reconstruction has no unit test.
+- **CI has never run**, only been written.

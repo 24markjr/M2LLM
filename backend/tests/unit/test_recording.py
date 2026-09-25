@@ -14,8 +14,9 @@ import json
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.api import recording as recording_module
 from app.api.app import create_app
-from app.api.recording import list_recordings, load_recording, recordings_dir, write_recording
+from app.api.recording import list_recordings, load_recording, write_recording
 from app.api.registry import MissionRecord, reset_registry
 from app.core.events import EventBus, RunEventEmitter
 from app.orchestration.mission import MissionStatus
@@ -122,7 +123,10 @@ def test_a_traversal_attempt_reads_nothing() -> None:
 
 def test_an_unreadable_recording_is_skipped_not_fatal() -> None:
     """One corrupt file must not empty the whole picker."""
-    directory = recordings_dir()
+    # Through the module, not the name imported at the top of this file: that binding is the
+    # real function and would write into the repository's own traces directory, leaving a file
+    # that looks like a recording of a run that never happened.
+    directory = recording_module.recordings_dir()
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "broken.local.json").write_text("{not json", encoding="utf-8")
 
