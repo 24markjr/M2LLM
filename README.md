@@ -166,7 +166,7 @@ repository is hand-written** — a report carries the model, prompt versions and
 two reports produced with different stamps are refused as incomparable rather than quietly
 compared.
 
-The current baseline is `20260925T104354-qwen3-4b-all`. Its headline numbers:
+The current baseline is `20260925T112350-qwen3-4b-all`. Its headline numbers:
 
 | Metric | Value | |
 |---|---|---|
@@ -174,7 +174,7 @@ The current baseline is `20260925T104354-qwen3-4b-all`. Its headline numbers:
 | `unsupported_claim_rate` | 0.000 | the hallucination proxy |
 | `tool_selection_accuracy` | 1.000 | |
 | `dependency_correctness` | 0.833 | |
-| `replanning_success` | 0.658 | gaps closed within the iteration ceiling |
+| `replanning_success` | 0.625 | gaps closed within the iteration ceiling |
 | `intent_accuracy` | 0.574 | |
 | `task_efficiency` | 2.306 | tasks ÷ minimal sufficient tasks — lower is better |
 | `plan_validity` | 0.333 | plans passing with **zero** repairs |
@@ -190,14 +190,24 @@ approved everything would score 1.000 and be worthless.
 
 ### The open defect, stated plainly
 
-The negative scenario — one internally consistent document, asked whether it contradicts itself —
-currently produces **3 findings where the correct answer is none.** They are restatements of the
-source: true, correctly cited, and not answers.
+**Fixed:** the negative scenario — one consistent document, asked whether it contradicts itself —
+produced 3 findings where the correct answer is none. It now produces **none**, and
+`unsupported_claim_rate` is 0.000 with `evidence_coverage` 1.000. The rule that fixed it is
+structural: *a claim of conflict must cite both sides*, so a claim fully supported by a single
+locator cannot answer a comparative objective. See BUG-012.
 
-This fails CI by design, and it is the highest-value open defect in the project. It is tracked as
-BUG-005 in [`.claude/logs/bug-log.md`](.claude/logs/bug-log.md), and the `#/evaluation` page
-shows it. It is not hidden because hiding it would undermine the only claim this system really
-makes.
+**What replaced it:** the contradiction scenario now produces **0–1 findings where 2 are planted.**
+The build still fails, on the opposite criterion.
+
+That trade is worth understanding rather than glossing. Before the fix that scenario reported four
+findings — but three of them were restatements, counted as successes by every metric. Removing them
+did not lower the agent's real recall; it revealed it. The true figure was always about one
+contradiction per run, and the ceiling is the model: `qwen3:4b` does not reliably produce a claim
+that pairs two documents, and a claim that does not pair them is correctly rejected.
+
+Both states fail CI. This one is the better failure: an investigation that reports nothing is
+honest, and one that invents three findings is not. Tracked as BUG-005 and BUG-012 in
+[`.claude/logs/bug-log.md`](.claude/logs/bug-log.md), and visible on the `#/evaluation` page.
 
 ---
 
@@ -276,4 +286,4 @@ never blocked, and **no member's implementation is ever imported directly**. See
 ## Status
 
 Phases 0–24 built. CI is red on `main`, deliberately: the evaluation gate fails on the
-confabulation described above, and the gate has not been weakened to make it green.
+under-reporting described above, and the gate has not been weakened to make it green.

@@ -64,10 +64,14 @@ place to read the state of the build.*
 
 **Carried debt**
 
-1. **The negative scenario still confabulates** - 3 findings where none is correct, on the
-   2026-09-25 baseline. This is the single highest-value open defect: it fails CI, and it is the
-   failure mode the whole project is built to avoid. See BUG-005.
-2. `app/cli.py` still holds its own copy of the pipeline; it should collapse onto
+1. **The confabulation is fixed** (BUG-005): the negative scenario now produces 0 findings,
+   `unsupported_claim_rate` 0.000, `evidence_coverage` 1.000. **What replaced it:** the
+   contradiction scenario yields 0-1 findings where 2 are planted, so the build is still red on
+   the opposite criterion. Removing three restatements from that scenario did not lower recall, it
+   exposed it - the ceiling is `qwen3:4b` not reliably pairing two documents in one claim.
+2. **Three places construct the replanning pipeline** - `app/cli.py`, the orchestrator and
+   `app/evaluation/runner.py`. This already cost two wasted evaluation runs: the BUG-005 fix was
+   wired into one copy and silently did not apply to the others. They should collapse onto
    `app/orchestration/mission.py`.
 3. The API does not persist runs — `DatabaseEventSink` exists but is not wired into the registry.
 4. Phases 1–18 and 20 have no development-log entries; their reasoning is in commit messages and

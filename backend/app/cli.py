@@ -37,6 +37,7 @@ from app.llm import get_provider
 from app.schemas.common import new_run_id
 from app.schemas.event import EventType
 from app.schemas.execution import Observation
+from app.schemas.intent import Intent
 from app.schemas.objective import AttachedDocument, DocumentKind, Objective, ObjectiveScope
 from app.schemas.plan import Plan
 from app.schemas.result import ExecutionSummary
@@ -229,7 +230,9 @@ async def run_investigate(text: str, docs: list[str], report_path: str = "") -> 
     await _print_routing(plan, emitter)
 
     observations, graph, registry = await _execute(plan, docs, emitter, sink)
-    await _investigate(objective, observations, graph, registry, docs, emitter, report_path)
+    await _investigate(
+        objective, observations, graph, registry, docs, emitter, report_path, intent=intent
+    )
 
     validation = plan.validation
     if validation:
@@ -342,6 +345,7 @@ async def _investigate(
     docs: list[str],
     emitter: RunEventEmitter,
     report_path: str = "",
+    intent: Intent | None = None,
 ) -> None:
     """Reason, verify, detect gaps, and replan until resolved or bounded out.
 
@@ -368,6 +372,7 @@ async def _investigate(
         reasoner=ReasoningEngine(provider),
         verifier=build_verification_provider(provider),
         emit=emitter,
+        intent=intent,
     )
     ctx = ToolContext(
         run_id=emitter.run_id,

@@ -3,8 +3,8 @@
 **Scope:** understanding user intent, planning tasks, selecting tools, and reasoning across all
 gathered information.
 **Repository:** [github.com/24markjr/M2LLM](https://github.com/24markjr/M2LLM)
-**Baseline for every number below:** `.agent/evals/reports/20260925T104354-qwen3-4b-all.json`
-(`qwen3:4b`, prompt versions `intent=2 planner=2 reasoning=2 relevance=2 verification=1`)
+**Baseline for every number below:** `.agent/evals/reports/20260925T112350-qwen3-4b-all.json`
+(`qwen3:4b`, prompt versions `intent=2 planner=2 reasoning=3 relevance=2 verification=1`)
 
 ---
 
@@ -39,7 +39,7 @@ Everything else in the design follows from taking that seriously.
 | **Task planning** — a validated DAG, with deterministic repair and bounded re-prompting | [`intelligence/planner/`](../backend/app/intelligence/planner/) | `plan_validity` **0.333**, `dependency_correctness` **0.833** |
 | **Tool selection** — capability filter → schema compatibility → model tiebreak only on a tie | [`intelligence/router/engine.py`](../backend/app/intelligence/router/engine.py) | `tool_selection_accuracy` **1.000** |
 | **Reasoning over evidence** — claims bound to real locators, classification and confidence recomputed | [`intelligence/reasoning/engine.py`](../backend/app/intelligence/reasoning/engine.py) | `evidence_coverage` **1.000**, `unsupported_claim_rate` **0.000** |
-| **Evidence gap detection** — deterministic, naming the specific absent element | [`intelligence/evidence_gap/detector.py`](../backend/app/intelligence/evidence_gap/detector.py) | `replanning_success` **0.658** |
+| **Evidence gap detection** — deterministic, naming the specific absent element | [`intelligence/evidence_gap/detector.py`](../backend/app/intelligence/evidence_gap/detector.py) | `replanning_success` **0.625** |
 | **Adaptive replanning** — the graph is edited while it runs, bounded, every stop reasoned | [`intelligence/replanning/controller.py`](../backend/app/intelligence/replanning/controller.py) | `task_efficiency` **2.306** |
 | **Measurement** — ten metrics computed from real runs | [`app/evaluation/`](../backend/app/evaluation/) | reports in [`.agent/evals/reports/`](../.agent/evals/reports/) |
 
@@ -111,18 +111,34 @@ number.
 
 ---
 
-## The open defect
+## The open defect, and what fixing it revealed
 
-The negative scenario currently produces **3 findings where none is correct.** They are
-restatements of the source — true, correctly cited, and not answers to the question asked.
+The negative scenario produced **3 findings where none is correct** — restatements of the source,
+true and correctly cited and not answers. That is fixed: it now produces none,
+`unsupported_claim_rate` is 0.000 and `evidence_coverage` is 1.000.
 
-CI is red on `main` because of it, and I have not weakened the threshold to change that. It is
-BUG-005, it is on the evaluation dashboard, and it is the highest-value remaining work. I would
-rather present a red build with a known cause than a green one that got there by lowering a bar.
+The fix is the part I would want discussed. Asking a model more firmly not to do it did not work,
+and tuning the relevance gate traded one failure for the other — kept loosely it admitted
+restatements, kept tightly it suppressed real contradictions. One model judgement cannot hold both
+ends of that. So the decision became structural: **a claim of conflict must cite both sides**, and
+a claim fully supported by a single locator cannot answer a comparative objective. It reads the
+intent rather than the claim, because the same sentence is an answer to "extract the timeline" and
+noise in "do these conflict?".
+
+**What it revealed is less comfortable.** That scenario previously reported four findings; three
+were restatements, and every metric counted them as successes. Removing them did not lower the
+agent's recall — it exposed it. The real figure was always about one genuine contradiction per run,
+and the ceiling is the model: `qwen3:4b` does not reliably produce a claim that pairs two
+documents.
+
+So the build is still red, now on the opposite criterion: the contradiction scenario yields 0–1
+findings where 2 are planted. I have not weakened the threshold to change that. Of the two failures
+this is the better one — an investigation that reports nothing is honest, and one that invents three
+findings is not — but it is a real limit and I would rather present it than a green build that got
+there by lowering a bar.
 
 Also honestly outstanding: three evaluation scenarios where the plan calls for twenty; the API does
-not yet persist runs; the CLI still holds a second copy of the pipeline that should collapse onto
-the orchestrator; no frontend test runner.
+not yet persist runs; no frontend test runner.
 
 ---
 

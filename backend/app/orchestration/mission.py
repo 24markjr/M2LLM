@@ -204,6 +204,7 @@ async def run_mission(
             reasoner=ReasoningEngine(provider),
             verifier=build_verification_provider(provider),
             emit=emitter,
+            intent=result.intent,
         )
         replan = await controller.run(objective, result.observations, ctx)
 

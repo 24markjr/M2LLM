@@ -171,6 +171,11 @@ async def run_scenario(expectation: ScenarioExpectation) -> ScenarioOutcome:
             reasoner=ReasoningEngine(provider),
             verifier=build_verification_provider(provider),
             emit=emitter,
+            # Without this the comparative rule cannot fire, and the negative scenario this
+            # harness exists to police would pass restatements straight through. Three places
+            # construct this pipeline - here, the CLI and the orchestrator - and that is the
+            # duplication biting: a fix applied to one silently did not apply to the others.
+            intent=outcome.intent,
         ).run(objective, observations, ctx)
 
         outcome.findings = result.findings

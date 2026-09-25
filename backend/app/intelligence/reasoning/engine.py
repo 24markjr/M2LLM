@@ -36,6 +36,7 @@ from app.schemas.evidence import (
 )
 from app.schemas.execution import Observation
 from app.schemas.finding import Confidence, Finding, FindingClassification
+from app.schemas.intent import Intent, Operation
 from app.schemas.objective import Objective
 
 log = get_logger(__name__)
@@ -182,6 +183,33 @@ def source_agreement(refs: list[EvidenceRef]) -> float:
     return 1.0 if len(documents) >= 2 else 0.85
 
 
+# Operations whose answer is inherently a comparison between two or more pieces of evidence. When
+# the intent requires one of these, a finding resting on a single locator cannot be the answer: a
+# contradiction, a mismatch or a difference needs two sides, and a claim citing one side is a
+# restatement of it.
+COMPARATIVE_OPERATIONS: frozenset[Operation] = frozenset(
+    {
+        Operation.DETECT_INCONSISTENCIES,
+        Operation.DETECT_CONTRADICTIONS,
+        Operation.COMPARE_SOURCES,
+        Operation.CALCULATE_DIFFERENCE,
+    }
+)
+
+# How many distinct locators a comparative claim must rest on. Locators, not documents: a report
+# that contradicts itself does so across two of its own lines, and requiring two *documents* would
+# make a self-contradiction unreportable - which is exactly what several of these objectives ask
+# about.
+MIN_REFS_FOR_COMPARATIVE = 2
+
+
+def requires_comparison(intent: Intent | None) -> bool:
+    """Whether this objective's answer is inherently comparative."""
+    if intent is None:
+        return False
+    return any(op in COMPARATIVE_OPERATIONS for op in intent.mandatory_operations)
+
+
 class ReasoningEngine:
     """Derives findings from observations, binding every claim to real evidence."""
 
@@ -196,6 +224,7 @@ class ReasoningEngine:
         *,
         emit: object | None = None,
         start_index: int = 0,
+        intent: Intent | None = None,
     ) -> list[Finding]:
         if not observations:
             return []
@@ -215,6 +244,7 @@ class ReasoningEngine:
 
         candidates = await self._ask_model(objective, bounded, emit)
         candidates = await self._filter_irrelevant(objective, candidates, emit)
+        comparative = requires_comparison(intent)
         binder = EvidenceBinder(observations)
         findings: list[Finding] = []
 
@@ -240,6 +270,36 @@ class ReasoningEngine:
                 source_agreement=source_agreement(refs),
                 classification=finding.classification,
             )
+
+            # A claim of conflict must cite both sides - but only a claim that is *fully
+            # supported* by too few sources is a restatement. A claim whose citations failed to
+            # resolve is kept and marked, never dropped: that is the project's whole stance on
+            # unresolvable evidence, and an exception here would quietly hollow it out.
+            #
+            # Measured: the first version of this rule dropped "Document A gives 30 April,
+            # document B gives 14 May" - a real contradiction whose citations happened not to
+            # resolve because the model wrote placeholder document names. Verification already
+            # rejects that claim, and it does so visibly. Dropping it hid a model problem.
+            restatement = (
+                comparative
+                and finding.resolved_evidence_count < MIN_REFS_FOR_COMPARATIVE
+                and finding.resolved_evidence_count == len(finding.evidence)
+            )
+            if restatement:
+                await self._event(
+                    emit,
+                    EventType.FINDING_DISCARDED,
+                    {
+                        "claim": claim[:160],
+                        "reason": (
+                            "the objective asks for a comparison; this claim is fully supported "
+                            f"by {finding.resolved_evidence_count} locator(s), so it restates a "
+                            "source rather than comparing two - a contradiction needs two sides"
+                        ),
+                    },
+                )
+                log.info("restatement_discarded", claim=claim[:80])
+                continue
 
             findings.append(finding)
             await self._event(

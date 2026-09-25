@@ -42,6 +42,7 @@ from app.schemas.event import EventType
 from app.schemas.evidence import Evidence, EvidenceGap
 from app.schemas.execution import Observation, TerminationReason
 from app.schemas.finding import Finding
+from app.schemas.intent import Intent
 from app.schemas.objective import Objective
 from app.schemas.plan import PlanRevision, RevisionTrigger
 from app.schemas.task import Task
@@ -124,7 +125,12 @@ class ReplanningController:
         reasoner: ReasoningEngine,
         verifier: VerificationProvider,
         emit: object | None = None,
+        intent: Intent | None = None,
     ) -> None:
+        # The intent decides whether a finding must be comparative. Carried here rather than
+        # re-derived from the objective text, because the intent engine already made that
+        # determination and two places deciding it would eventually disagree.
+        self._intent = intent
         self._graph = graph
         self._registry = registry
         self._router = router
@@ -220,7 +226,9 @@ class ReplanningController:
     async def _reason_and_verify(
         self, objective: Objective, observations: list[Observation]
     ) -> list[Finding]:
-        findings = await self._reasoner.derive_findings(objective, observations, emit=self._emit)
+        findings = await self._reasoner.derive_findings(
+            objective, observations, emit=self._emit, intent=self._intent
+        )
         text = evidence_text_map(evidence_from_observations(observations))
 
         await self._event(EventType.VERIFICATION_STARTED, {"findings": len(findings)})

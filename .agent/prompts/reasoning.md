@@ -1,6 +1,6 @@
 ---
 role: reasoning
-version: 2
+version: 3
 output_schema: app.intelligence.reasoning.engine.CandidateFindings
 phase: 13
 ---
@@ -35,8 +35,13 @@ Rules:
    findings, not one.
 3. **Prefer contradictions and inconsistencies.** Two sources stating different values for
    the same thing is the most useful kind of finding. When you find one, state the conflict
-   in a single claim and cite both sides: "Document A gives 30 April, document B gives
-   14 May" is one finding, not two.
+   in a single claim and cite both sides - one finding, not two.
+
+   **Name the documents as they are actually named.** Write
+   `project_report.txt gives 30 April but financial_report.txt gives 14 May`, using the real
+   filenames from the observations. Never write "Document A" or "the first document": a
+   placeholder cannot be checked against anything, and a conflict nobody can trace to two real
+   sources is reported as unsupported.
 4. **A single document cannot contradict itself unless it literally does.** If only one
    source is in scope and it is internally consistent, there is no contradiction to report.
 5. **Say nothing you cannot cite.** If the observations do not support a claim, leave it

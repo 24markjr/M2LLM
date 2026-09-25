@@ -408,3 +408,101 @@ Moved above the entry point.
 
 Module-level code after the `__main__` guard is unreachable when the module *is* the entry point.
 It looked like ordinary top-level configuration.
+
+---
+
+## BUG-012 — My own prompt example taught the model to write uncheckable citations
+
+**Found:** 2026-09-25, Phase 13 (while fixing BUG-005)
+**Severity:** Medium — the only surviving contradiction was unsupportable
+**Status:** Fixed
+
+**Symptom**
+
+After the comparative rule landed, the one finding that survived on the contradiction scenario was:
+
+```
+The dates conflict: Document A gives 30 April, document B gives 14 May
+```
+
+Its citations did not resolve, so `unsupported_claim_rate` went from 0.000 to **0.333** — over the
+0.15 ceiling — and `evidence_coverage` fell to 0.667.
+
+**Cause**
+
+That sentence is **verbatim from `reasoning.md` v2**, where I had written it as an illustration of
+how to phrase a contradiction:
+
+> state the conflict in a single claim and cite both sides: "Document A gives 30 April, document B
+> gives 14 May" is one finding, not two
+
+The model copied the example including the placeholder document names, so the claim referred to
+documents that do not exist and nothing could be resolved against them.
+
+**Fix**
+
+Prompt v3: the example now uses real filenames, and the rule says explicitly never to write
+"Document A" or "the first document", because a placeholder cannot be checked against anything.
+
+**Pattern**
+
+An example in a prompt is not illustration, it is a template. A small model will copy its surface
+form, placeholders included. Every example must be something you would be happy to receive
+verbatim — which mine was not.
+
+---
+
+## BUG-005 (continued) — how the confabulation was actually fixed, and what it revealed
+
+**Status:** Fixed. The negative scenario now produces 0 findings, `unsupported_claim_rate` 0.000,
+`evidence_coverage` 1.000.
+
+**What did not work**
+
+Two attempts, both by asking the model more firmly:
+
+1. **Prompt wording** ("returning no findings is a correct answer") took it from 8 findings to 1-3,
+   and no further.
+2. **Tuning the relevance gate** traded one failure for the other. Kept loosely it admitted
+   restatements; kept tightly it suppressed real contradictions on the *positive* scenario. One
+   model judgement at 4B cannot hold both ends of that.
+
+**What worked**
+
+A structural rule: **a claim of conflict must cite both sides.** When the intent requires a
+comparative operation, a finding fully supported by a single locator cannot be the answer - a
+contradiction needs two things in tension, and a claim citing one side restates it.
+
+Three details decided whether the rule was right or merely effective:
+
+- **It reads the intent, not the claim.** `aurora_timeline_only` asks to *extract* a timeline, where
+  a single-locator finding is exactly the answer. The same sentence answers one objective and is
+  noise in another.
+- **Locators, not documents.** A report that contradicts itself does so across two of its own lines,
+  and requiring two *documents* would make a self-contradiction unreportable - which several of
+  these objectives ask about.
+- **Only fully-supported claims are dropped.** The first version also dropped claims whose citations
+  failed to resolve, which broke the project's stance that unresolvable evidence is *kept and
+  marked, never dropped* - and in practice it hid BUG-012 behind a clean-looking result.
+
+**The rule fired nowhere for two evaluation runs** because three separate places construct the
+replanning pipeline - the CLI, the orchestrator and the evaluation runner - and I had wired the
+intent into one. That is the pipeline-duplication debt, biting exactly as predicted: a fix applied
+to one copy silently did not apply to the others.
+
+**What it revealed**
+
+The contradiction scenario previously reported four findings; three were restatements, and every
+metric counted them as successes. Removing them did not lower the agent's recall - it exposed it.
+The real figure was always about one genuine contradiction per run, and the ceiling is the model.
+
+So the build is still red, now on the opposite criterion: `aurora_contradiction` yields 0-1 findings
+where 2 are planted. The threshold has not been moved. Of the two failures this is the better one -
+an investigation that reports nothing is honest, and one that invents three findings is not - but it
+is a real limit, not a fixed problem.
+
+**Pattern**
+
+A metric can be satisfied by the wrong thing. Four findings looked like better recall than one;
+three of them were noise, and no metric in the suite could tell. The negative case was the only
+test that could, which is the whole argument for having one.

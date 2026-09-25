@@ -179,3 +179,131 @@ async def test_every_discarded_claim_is_recorded() -> None:
     assert len(discarded) == 1
     assert "30 April 2026" in str(discarded[0].payload["claim"])
     assert discarded[0].payload["reason"], "the reason it was dropped is recorded"
+
+
+# --- a claim of conflict must cite both sides -----------------------------------
+#
+# The relevance gate asks a model whether a claim answers the objective, and at 4B that judgement
+# is not reliable enough to be the only defence. Tuned to keep borderline claims it let
+# restatements through; tuned to drop them it suppressed real contradictions. One model call cannot
+# hold both ends of that trade, so the part that can be decided structurally is.
+
+
+def _intent(*operations: str) -> object:
+    from app.schemas.intent import Intent, Operation, RequiredOperation
+
+    return Intent(
+        goal="check",
+        objective="check the reports",
+        required_operations=[RequiredOperation(operation=Operation(op)) for op in operations],
+    )
+
+
+async def test_a_comparative_objective_drops_a_single_locator_claim() -> None:
+    """The measured confabulation. A contradiction needs two things in tension, so a claim
+    resting on one locator is a restatement of it - whatever the claim says."""
+    engine = _engine(
+        [_findings(("The approved completion date is 30 April 2026", ["report.txt:r1"]))],
+        [_verdicts((1, True))],  # the gate kept it; the structural rule must not
+    )
+
+    findings = await engine.derive_findings(
+        OBJECTIVE, OBSERVATIONS, intent=_intent("detect_inconsistencies")
+    )
+
+    assert findings == [], "a one-sided claim survived a comparative objective"
+
+
+async def test_a_comparative_objective_keeps_a_claim_that_cites_both_sides() -> None:
+    """The rule must not suppress the finding the run exists to produce."""
+    engine = _engine(
+        [
+            _findings(
+                (
+                    "The approved date of 30 April conflicts with the 14 May delivery",
+                    ["report.txt:r1", "finance.txt:r1"],
+                )
+            )
+        ],
+        [_verdicts((1, True))],
+    )
+
+    findings = await engine.derive_findings(
+        OBJECTIVE, OBSERVATIONS, intent=_intent("detect_inconsistencies")
+    )
+
+    assert len(findings) == 1
+    assert findings[0].resolved_evidence_count == 2
+
+
+async def test_an_extraction_objective_keeps_a_single_locator_claim() -> None:
+    """This is why the rule reads the intent rather than the claim.
+
+    `aurora_timeline_only` asks to *extract* the timeline, and there a single-locator finding is
+    exactly the answer. The same claim is an answer to one objective and noise in another.
+    """
+    engine = _engine(
+        [_findings(("The approved completion date is 30 April 2026", ["report.txt:r1"]))],
+        [_verdicts((1, True))],
+    )
+
+    findings = await engine.derive_findings(
+        OBJECTIVE, OBSERVATIONS, intent=_intent("extract_timeline")
+    )
+
+    assert len(findings) == 1, "extraction objectives are answered by single-source facts"
+
+
+async def test_a_claim_with_an_unresolved_citation_is_kept_and_marked() -> None:
+    """The structural rule must not become an exception to "never drop, always mark".
+
+    Measured: the first version of this rule dropped "Document A gives 30 April, document B gives
+    14 May" - a real contradiction whose citations happened not to resolve because the model wrote
+    placeholder document names. Dropping it hid a model problem behind a clean-looking result.
+
+    Only a claim that is *fully supported* by too few sources is a restatement. One whose citations
+    failed to resolve is kept, marked, and rejected by verification - visibly.
+    """
+    engine = _engine(
+        [_findings(("The dates conflict.", ["report.txt:r1", "ghost.txt:r99"]))],
+        [_verdicts((1, True))],
+    )
+
+    findings = await engine.derive_findings(
+        OBJECTIVE, OBSERVATIONS, intent=_intent("detect_inconsistencies")
+    )
+
+    assert len(findings) == 1, "a claim with unresolved evidence must be reported, not hidden"
+    finding = findings[0]
+    assert finding.resolved_evidence_count == 1
+    assert len(finding.evidence) == 2, "the unresolvable citation is kept on the record"
+    assert finding.confidence.value < 0.5, "and it cannot present as confident"
+
+
+async def test_no_intent_means_no_structural_filtering() -> None:
+    """Callers that do not know the intent get the previous behaviour rather than a silent drop."""
+    engine = _engine(
+        [_findings(("The approved completion date is 30 April 2026", ["report.txt:r1"]))],
+        [_verdicts((1, True))],
+    )
+
+    findings = await engine.derive_findings(OBJECTIVE, OBSERVATIONS)
+
+    assert len(findings) == 1
+
+
+async def test_a_dropped_restatement_is_recorded_with_its_reason() -> None:
+    """A claim that vanished with no event is indistinguishable from one never produced."""
+    emitter, memory = _emitter()
+    engine = _engine(
+        [_findings(("The approved completion date is 30 April 2026", ["report.txt:r1"]))],
+        [_verdicts((1, True))],
+    )
+
+    await engine.derive_findings(
+        OBJECTIVE, OBSERVATIONS, emit=emitter, intent=_intent("detect_inconsistencies")
+    )
+
+    discarded = memory.of_type(EventType.FINDING_DISCARDED)
+    assert len(discarded) == 1
+    assert "two sides" in str(discarded[0].payload["reason"])
