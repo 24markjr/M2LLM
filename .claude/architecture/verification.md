@@ -114,6 +114,41 @@ run actually was.
 
 ---
 
+## The four implementations
+
+Selected with `VERIFICATION_PROVIDER`. All four see the same `VerificationRequest`: the claim and
+the cited text, never the reasoning.
+
+| Provider | What it is | Model call |
+|---|---|---|
+| `baseline` (default) | Member 1's model-based check, `verification.md` prompt | yes |
+| `remote` | Adapter for a verification service at `VERIFICATION_BASE_URL`; degrades to baseline | via service |
+| `lexical` | **Member 4's verifier, ported (Phase 26).** TF-IDF relevance, plus a contradiction when claim and evidence share an identifying number and disagree on a date or time | no |
+| `composite` | `baseline` and `lexical` together, with the rules below | yes |
+
+**What the text is.** Since BUG-015 (Phase 25), the evidence text for each locator is the cited
+line, or the matched lines of a cited PDF page. Before that, every verifier received the tool's
+summary ("11 date(s)"), so verdicts before 2026-10-03 were made against the wrong text.
+
+**Mapping Member 4's vocabulary.** `INSUFFICIENT_EVIDENCE` becomes `INCONCLUSIVE` with a
+`NO_EVIDENCE` issue, and is never a pass. `CONTRADICTED` carries a `SOURCE_CONFLICT` issue naming
+the conflicting locator and the reason ("dates 2026-09-20 vs 2026-09-14 on shared id 4821").
+
+**Composite rules**, in order:
+
+1. Lexical `CONTRADICTED` and the model not → `CONTRADICTED`. The lexical rule is high precision:
+   it needs a shared identifier, disjoint dates or times, and relevance ≥ 0.5.
+2. The model `INCONCLUSIVE` and lexical decisive → lexical's verdict, `degraded=True`, with the
+   reason. A weaker check being used is never silent.
+3. Otherwise the model's verdict. A lexical `SUPPORTED` never overrides a model rejection, because
+   word overlap is not meaning.
+
+Both opinions are recorded on the result (`opinions`) and in the `FINDING_VERIFIED` /
+`FINDING_REJECTED` payload, so disagreement is measurable. Whether `composite` becomes the default
+is decided by Exp-004 (Phase 34), not by argument.
+
+---
+
 ## What this component never does
 
 - **Never rescues a claim.** It has no authority to rewrite, soften or reclassify a finding. It

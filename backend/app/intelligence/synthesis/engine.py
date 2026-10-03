@@ -37,6 +37,7 @@ from app.schemas.result import (
     ReportSection,
     SectionKind,
 )
+from app.schemas.trust import InjectionScan
 
 log = get_logger(__name__)
 
@@ -66,6 +67,7 @@ class SynthesisEngine:
         execution: ExecutionSummary,
         termination: TerminationReason | None = None,
         emit: object | None = None,
+        security: list[InjectionScan] | None = None,
     ) -> FinalReport:
         await self._event(emit, EventType.SYNTHESIS_STARTED, {"findings": len(findings)})
 
@@ -87,7 +89,7 @@ class SynthesisEngine:
             unresolved_gaps=unresolved,
             execution=execution,
             limitations=self._limitations(
-                findings, unresolved, observations, execution, termination
+                findings, unresolved, observations, execution, termination, security or []
             ),
             overall_confidence=self._overall_confidence(verified),
             sections=self._sections(
@@ -241,6 +243,7 @@ class SynthesisEngine:
         observations: list[Observation],
         execution: ExecutionSummary,
         termination: TerminationReason | None,
+        security: list[InjectionScan] | None = None,
     ) -> list[Limitation]:
         """Derived from what the run actually did, never from the model's modesty.
 
@@ -249,6 +252,18 @@ class SynthesisEngine:
         precisely how far to trust the rest of the document.
         """
         limitations: list[Limitation] = []
+
+        for flagged in security or []:
+            limitations.append(
+                Limitation(
+                    description=(
+                        f"{flagged.source} contains text resembling a prompt injection "
+                        f"({flagged.severity.value}: {', '.join(sorted(flagged.hits))}); "
+                        "it was treated as data, never as instruction"
+                    ),
+                    cause="untrusted document content matched an injection pattern",
+                )
+            )
 
         if execution.tasks_skipped:
             limitations.append(

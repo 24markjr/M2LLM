@@ -7,7 +7,8 @@ company, location, clock time, shipment id and amount each). Every fact gets one
 document; a random 20% get a verbatim duplicate; a random 25% get a second copy with the hour
 shifted by 1-3, which is the planted contradiction. Cases are one claim per fact, expected
 `CONTRADICTED` if it was conflicted and `SUPPORTED` otherwise, plus 20 `INSUFFICIENT_EVIDENCE`
-cases about shipments and people that do not exist. With the same seed (42) it produces
+cases about shipments and people that do not exist. A risky case is one expected `CONTRADICTED` or
+`INSUFFICIENT_EVIDENCE`. With the same seed (42) it produces
 **byte-identical data** to the original, which a test checks against the committed files.
 
 **The runner** verifies every case against the whole corpus and reports Member 4's metrics:
@@ -15,7 +16,7 @@ cases about shipments and people that do not exist. With the same seed (42) it p
 | Metric | Definition |
 |---|---|
 | `accuracy` | share of cases whose status matches the expected one |
-| `hallucination_rate` | of the *risky* cases (expected `CONTRADICTED` or `INSUFFICIENT_EVIDENCE`), the share marked `SUPPORTED`: false confidence |
+| `hallucination_rate` | share of risky cases marked `SUPPORTED` (false confidence) |
 | `category_accuracy` | accuracy per category: supported, contradiction, insufficient_evidence |
 | `avg_latency_ms` | mean verification time per case |
 
@@ -123,7 +124,12 @@ def generate(
             f"was processed at {fact['time']}."
         )
         corpus.append(
-            {"source": _doc_name(counter), "page": 1, "content": content, "fact_id": fact["fact_id"]}
+            {
+                "source": _doc_name(counter),
+                "page": 1,
+                "content": content,
+                "fact_id": fact["fact_id"],
+            }
         )
         counter += 1
 
@@ -141,7 +147,9 @@ def generate(
         if idx in contradicted:
             hour = int(str(fact["time"]).split(":")[0])
             alt_hour = (hour + rng.choice([1, 2, 3])) % 24
-            alt_time = f"{alt_hour}:{rng.choice(['00', '15', '30'])} {'AM' if alt_hour < 12 else 'PM'}"
+            alt_time = (
+                f"{alt_hour}:{rng.choice(['00', '15', '30'])} {'AM' if alt_hour < 12 else 'PM'}"
+            )
             conflict = (
                 f"{fact['person']} was present at {fact['location']} representing "
                 f"{fact['company']}. Shipment {fact['shipment_id']} (amount {fact['amount']}) "

@@ -205,10 +205,44 @@ def identifiers(text: str) -> set[str]:
     The original read the year in "30 April 2026" as an identifier. Two unrelated statements
     about different 2026 events then "shared an ID" and became eligible to contradict each other.
     """
+    return set(_ID.findall(_mask_dates(text)))
+
+
+def _mask_dates(text: str) -> str:
     masked = text
     for (start, end), _ in reversed(find_dates(text)):
         masked = masked[:start] + " " * (end - start) + masked[end:]
-    return set(_ID.findall(masked))
+    return masked
+
+
+# A run of digits, commas and one decimal part, not glued to a letter: "450,000", "180000,70000"
+# in a CSV row, "1,200.50". "r10" and "M4" are labels and never match.
+_DIGIT_RUN = re.compile(r"(?<![A-Za-z_\d])\d[\d,]*(?:\.\d+)?(?![A-Za-z_\d])")
+_THOUSANDS = re.compile(r"^\d{1,3}(?:,\d{3})+(?:\.\d+)?$")
+# Figures worth checking have three or more digits. Smaller integers ("2 reports", "phase 3")
+# are counts and labels.
+MIN_FIGURE_DIGITS = 3
+
+
+def find_figures(text: str) -> list[tuple[str, Decimal]]:
+    """Figures in `text` as (as written, value), with digits inside dates ignored.
+
+    "INR 380,000" and "380000" are the same figure. In "migration,450000,no" the commas separate
+    fields, so 450000 is one figure. "30 April 2026" contributes none: its year belongs to a date,
+    and dates are compared as dates.
+    """
+    found: list[tuple[str, Decimal]] = []
+    for match in _DIGIT_RUN.finditer(_mask_dates(text)):
+        run = match.group(0).strip(",")
+        parts = [run] if _THOUSANDS.match(run) else [p for p in run.split(",") if p]
+        for part in parts:
+            if sum(c.isdigit() for c in part.split(".")[0]) < MIN_FIGURE_DIGITS:
+                continue
+            try:
+                found.append((part, Decimal(part.replace(",", ""))))
+            except InvalidOperation:
+                continue
+    return found
 
 
 def parse_number(value: str) -> Decimal | None:

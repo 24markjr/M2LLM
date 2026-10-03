@@ -26,6 +26,7 @@ from app.core.agent_config import get_lexical_thresholds
 from app.core.config import VerificationProviderName, get_settings
 from app.core.logging import get_logger
 from app.intelligence.trust.lexical import verify_claim
+from app.intelligence.trust.specifics import ungrounded_specifics
 from app.llm.errors import StructuredOutputError
 from app.llm.prompts import get_prompt_library
 from app.llm.provider import LLMProvider
@@ -276,11 +277,7 @@ class LexicalVerifier:
                 ],
             )
 
-        pool = [
-            EvidenceText(source=ref, content=_without_ref(ref, text))
-            for ref, text in request.evidence_content.items()
-            if _without_ref(ref, text).strip()
-        ]
+        pool = evidence_pool(request)
         if not pool:
             return VerificationResult(
                 status=VerificationStatus.INCONCLUSIVE,
@@ -297,6 +294,15 @@ class LexicalVerifier:
 
         verdict = verify_claim(request.claim, pool, self._thresholds)
         return lexical_result(verdict, documents={r.locator.document_id for r in resolved})
+
+
+def evidence_pool(request: VerificationRequest) -> list[EvidenceText]:
+    """The readable evidence text of a request, one item per cited locator."""
+    return [
+        EvidenceText(source=ref, content=_without_ref(ref, text))
+        for ref, text in request.evidence_content.items()
+        if _without_ref(ref, text).strip()
+    ]
 
 
 def _without_ref(ref: str, text: str) -> str:
@@ -376,6 +382,9 @@ class CompositeVerifier:
        marked **degraded** with the reason. A weaker check that is used is never a silent one.
     3. Otherwise the model's verdict. A lexical SUPPORTED never overrides a model rejection:
        word overlap is not meaning.
+    4. Whatever the verdict, a SUPPORTED one becomes **PARTIALLY_SUPPORTED** when the claim
+       states a date or figure that none of its cited evidence contains (A15, BUG-018). The
+       issue names the value, which gives the replanning loop something specific to look for.
 
     Both opinions are recorded on the result, so how often they disagree can be measured.
     """
@@ -414,6 +423,27 @@ class CompositeVerifier:
             )
         else:
             chosen = model
+
+        if chosen.status is VerificationStatus.SUPPORTED:
+            missing = ungrounded_specifics(request.claim, evidence_pool(request))
+            if missing:
+                chosen = chosen.model_copy(
+                    update={
+                        "status": VerificationStatus.PARTIALLY_SUPPORTED,
+                        "issues": [
+                            *chosen.issues,
+                            VerificationIssue(
+                                issue_type=IssueType.OVERSTATED_CLAIM,
+                                description=(
+                                    "the claim states "
+                                    + ", ".join(missing)
+                                    + ", which none of its cited evidence contains"
+                                ),
+                                element=", ".join(missing),
+                            ),
+                        ],
+                    }
+                )
 
         return chosen.model_copy(update={"verifier": self.name, "opinions": opinions})
 

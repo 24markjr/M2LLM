@@ -521,6 +521,36 @@ async def run_eval(suite: str, *, write: bool = True) -> int:
     return 1 if failures else 0
 
 
+def run_eval_trust(*, write: bool) -> int:
+    """Member 4's verifier benchmark (Phase 26). Deterministic, no model, about a second."""
+    from app.evaluation.trust import run_trust_benchmark, write_trust_report
+
+    report = run_trust_benchmark()
+    print()
+    print(RULE)
+    print("JARVIS TRUST BENCHMARK  (Member 4's verifier, ported)")
+    print(RULE)
+    print(f"  cases                 {report.cases}")
+    print(f"  accuracy              {report.accuracy:.3f}  ({report.correct}/{report.cases})")
+    print(
+        f"  hallucination_rate    {report.hallucination_rate:.3f}  "
+        f"({report.false_confidence}/{report.risky_cases} risky cases marked SUPPORTED)"
+    )
+    print(f"  avg_latency_ms        {report.avg_latency_ms:.2f}")
+    for category, accuracy in report.category_accuracy.items():
+        print(f"    {category:<24} {accuracy:.3f}")
+    for failure in report.failures[:10]:
+        print(f"  ! {failure.case_id}: expected {failure.expected}, got {failure.actual}")
+    if write:
+        _, md_path = write_trust_report(report)
+        print()
+        print(f"report written to {md_path}")
+    print(RULE)
+    # The gate is false confidence, as in the original's dashboard: a risky claim marked
+    # SUPPORTED is the failure that matters. Accuracy alone is reported, not gated.
+    return 1 if report.false_confidence else 0
+
+
 async def run_health() -> int:
     provider = get_provider()
     ok = await provider.health()
@@ -550,6 +580,9 @@ def main(argv: list[str] | None = None) -> int:
     eval_cmd.add_argument("--suite", default="all", help="core | negative | all")
     eval_cmd.add_argument("--no-write", action="store_true", help="do not write a report file")
 
+    trust_cmd = sub.add_parser("eval-trust", help="run Member 4's verifier benchmark")
+    trust_cmd.add_argument("--no-write", action="store_true", help="do not write a report file")
+
     sub.add_parser("health", help="check the configured provider")
 
     args = parser.parse_args(argv)
@@ -558,6 +591,8 @@ def main(argv: list[str] | None = None) -> int:
         return asyncio.run(run_intent(args.objective, args.docs))
     if args.command == "eval":
         return asyncio.run(run_eval(args.suite, write=not args.no_write))
+    if args.command == "eval-trust":
+        return run_eval_trust(write=not args.no_write)
     if args.command == "investigate":
         return asyncio.run(run_investigate(args.objective, args.docs, args.report))
     return asyncio.run(run_health())

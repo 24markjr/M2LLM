@@ -13,6 +13,7 @@ from app.intelligence.temporal import (
     compare_dates,
     dates_disjoint,
     find_dates,
+    find_figures,
     find_times,
     identifiers,
     parse_date,
@@ -168,3 +169,27 @@ def test_single_numbers_parse_with_currency_removed(value: str, number: str) -> 
 @pytest.mark.parametrize("value", ["Phase 2 of 3", "14 September", "approved", ""])
 def test_values_that_are_not_one_number_do_not_parse(value: str) -> None:
     assert parse_number(value) is None
+
+
+# --- figures (A15) --------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("text", "figures"),
+    [
+        ("Total spend 450,000 against INR 380,000", ["450000", "380000"]),
+        ("migration,450000,no", ["450000"]),
+        ("Development,Software engineering,180000", ["180000"]),
+        ("1,200.50 recorded", ["1200.50"]),
+        ("Shipment 4821 (amount 5620)", ["4821", "5620"]),
+    ],
+)
+def test_figures_are_read_by_value(text: str, figures: list[str]) -> None:
+    assert [str(value) for _, value in find_figures(text)] == figures
+
+
+@pytest.mark.parametrize(
+    "text", ["milestone r10 on 30 April 2026", "M4 phase 3 of 2 reports", "2026-04-30"]
+)
+def test_labels_counts_and_dates_are_not_figures(text: str) -> None:
+    assert find_figures(text) == []

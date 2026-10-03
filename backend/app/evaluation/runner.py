@@ -16,7 +16,7 @@ from pathlib import Path
 
 import yaml
 
-from app.core.agent_config import get_models_config
+from app.core.agent_config import get_lexical_thresholds, get_models_config
 from app.core.config import get_settings
 from app.core.events import EventBus, MemoryEventSink, RunEventEmitter
 from app.core.logging import get_logger
@@ -190,6 +190,11 @@ async def run_suite(suite: str = "all") -> EvalReport:
                 "max_parallel_tasks": settings.max_parallel_tasks,
                 "planning_policy": settings.planning_policy.value,
                 "structured_max_repairs": get_models_config().structured_output.max_repairs,
+                # BUG-017: which verifier ran, and with what thresholds. Without these a run with
+                # `baseline` and a run with `composite` carried the same stamp, and the regression
+                # check would have compared two different systems as one.
+                "verification_provider": settings.verification_provider.value,
+                "lexical_thresholds": get_lexical_thresholds().model_dump(),
             }
         ),
     )

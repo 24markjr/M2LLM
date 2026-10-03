@@ -96,22 +96,22 @@ the reason).
 
 | ID | Feature | Original (file) | JARVIS location | Status |
 |---|---|---|---|---|
-| T1 | TF-IDF relevance scoring | `trust/verifier.py:relevance_scores` (scikit-learn) | `app/intelligence/trust/tfidf.py` (no dependency) | TODO |
-| T2 | Word-overlap fallback | `trust/verifier.py:_word_overlap_score` | `tfidf.py`, reachable only on an empty vocabulary | TODO |
-| T3 | Claim verification, 4 statuses | `trust/verifier.py:verify_claim` | `app/intelligence/trust/lexical.py` | TODO |
-| T4 | Entity-aware conflict rule (shared ID, disjoint times) | `trust/verifier.py:_conflicts` | `lexical.py` | TODO |
-| T5 | Answer-level hallucination evaluation | `trust/hallucination_evaluator.py` | `app/intelligence/trust/answer.py` | TODO |
-| T6 | Verifier as a JARVIS `VerificationProvider` | (none; the seam is Member 1's) | `app/integrations/verification.py` | TODO |
+| T1 | TF-IDF relevance scoring | `trust/verifier.py:relevance_scores` (scikit-learn) | `app/intelligence/trust/tfidf.py` (no dependency) | DONE. Parity with scikit-learn 1.9.1: max difference 4.4e-16 over 60 claims x 58 documents |
+| T2 | Word-overlap fallback | `trust/verifier.py:_word_overlap_score` | `tfidf.py`, reachable only on an empty vocabulary | CHANGED. Reachable only on an empty vocabulary, never by a missing package |
+| T3 | Claim verification, 4 statuses | `trust/verifier.py:verify_claim` | `app/intelligence/trust/lexical.py` | CHANGED. Same procedure and thresholds; dates conflict too (A4) |
+| T4 | Entity-aware conflict rule (shared ID, disjoint times) | `trust/verifier.py:_conflicts` | `lexical.py` | CHANGED. Adds disjoint dates; times compared by minute; years in dates are not ids |
+| T5 | Answer-level hallucination evaluation | `trust/hallucination_evaluator.py` | `app/intelligence/trust/answer.py` | DONE. Logic unchanged |
+| T6 | Verifier as a JARVIS `VerificationProvider` | (none; the seam is Member 1's) | `app/integrations/verification.py` | DONE. `LexicalVerifier` and `CompositeVerifier`; `VERIFICATION_PROVIDER=lexical|composite` |
 | T7 | Prompt-injection scanner, 5 categories, severity | `security/injection_guard.py` | `app/security/injection.py` | TODO |
 | T8 | Safe prompt construction (`<document>` wrapping) | `security/injection_guard.py` | `app/security/injection.py` | TODO |
 | T9 | 14-case adversarial security suite | `security/security_test_suite.py` | `.agent/evals/security/injection_cases.yaml` + tests | TODO |
 | T10 | Working memory | `memory/working_memory.py` | `app/memory/working.py` | TODO |
 | T11 | Episodic memory (Q&A log, archived investigations, keyword search) | `memory/episodic_memory.py` (SQLite) | `app/memory/` | TODO |
 | T12 | Semantic memory (subject-predicate-object facts) | `memory/semantic_memory.py` (SQLite) | `app/memory/` | TODO |
-| T13 | Synthetic benchmark generator | `eval/generate_benchmark.py` | `app/evaluation/verification_benchmark.py` | TODO |
-| T14 | Benchmark runner and dashboard | `eval/run_benchmark.py` | `python -m app.cli eval-trust` | TODO |
-| T15 | Benchmark data (60 cases, 58 documents) | `eval/benchmark.json`, `eval/evidence_corpus.json` | `.agent/evals/trust/` | TODO |
-| T16 | `contradiction_test.py` demo | `trust/contradiction_test.py` | a unit test | TODO |
+| T13 | Synthetic benchmark generator | `eval/generate_benchmark.py` | `app/evaluation/trust.py` | DONE. Byte-identical data from seed 42, checked by test |
+| T14 | Benchmark runner and dashboard | `eval/run_benchmark.py` | `python -m app.cli eval-trust` | CHANGED. Typed, stamped report; per-case episodic logging returns in Phase 33 |
+| T15 | Benchmark data (60 cases, 58 documents) | `eval/benchmark.json`, `eval/evidence_corpus.json` | `.agent/evals/trust/` | DONE. Copied verbatim |
+| T16 | `contradiction_test.py` demo | `trust/contradiction_test.py` | `tests/unit/test_trust.py` | CHANGED. The original demo itself returns SUPPORTED (see T16 below); kept as a test of that, plus a working variant |
 | T17 | `member4_steps1-5/` | an older copy of five files | superseded by `Mem-4/`, not ported | NOT PORTED |
 
 ---
@@ -293,4 +293,70 @@ Patterns, case-insensitive, first match per pattern:
 
 ## Design of the port
 
-Filled in as each part lands. See ADR-009 for the decision itself.
+Filled in as each part lands. See ADR-009 for the decision itself, and
+[`../implementation/integration-plan-phases-25-35.md`](../implementation/integration-plan-phases-25-35.md)
+for the phase plan.
+
+### Phase 25 — groundwork (2026-10-03)
+
+**The shared parser, `app/intelligence/temporal.py`.** Both teammates parsed time separately, with
+different defects. One module now serves the knowledge layer and the verifier:
+
+| Behaviour | Member 3 | Member 4 | Now |
+|---|---|---|---|
+| Date formats | six `strptime` formats | none | the six, plus ISO, abbreviations, ordinals, month + year |
+| Missing year | forced to 2026 | - | stays missing (`PartialDate.year = None`) |
+| Stated year | **also** forced to 2026 | - | kept |
+| Two dates equal? | same ISO string | - | `compatible()`: every field known on both sides agrees |
+| Clock times | - | lower-cased strings, spaces removed | minutes; `11:40` matches `11:40 AM` |
+| Identifiers | - | `\b\d{3,}\b` anywhere | same, with date spans masked so "2026" is not an id |
+
+**BUG-015 and BUG-016**, both in Member 1's code, found while scanning Member 4's verifier. See the
+bug log. BUG-015 was a prerequisite: Member 4's verifier scores claim text against evidence text,
+and JARVIS was passing evidence as tool summaries ("11 date(s)").
+
+### Phase 26 — trust layer (2026-10-03)
+
+**TF-IDF without scikit-learn (T1/T2).** The original made scikit-learn optional and fell back to
+word overlap without it. That fallback cost 14 of 60 benchmark cases and passed a wrong date as
+`SUPPORTED`. `tfidf.py` computes the same numbers as `TfidfVectorizer(stop_words="english")`:
+the same token pattern, scikit-learn's 318 stop words copied verbatim (BSD-3), raw counts,
+smoothed idf `ln((1+n)/(1+df)) + 1`, and L2-normalised rows. **Measured parity:** largest
+difference 4.4e-16 across all 60 benchmark claims against all 58 documents. Overlap remains only
+for an empty vocabulary, the one case the original reached it with scikit-learn installed.
+
+**The verifier (T3/T4).** Step for step the original, with these thresholds unchanged and
+configured in `agent.yaml:verification.lexical`: relevance 0.2, support 0.4, conflict 0.5.
+Three deviations:
+
+| Deviation | Effect on the original benchmark | Effect on the shipment probes |
+|---|---|---|
+| Disjoint **dates** on a shared id also conflict | none: 60/60 before and after (it has no dated claims) | "arrived 20 September" vs one report saying 14 September is now `CONTRADICTED`. Against both shipping reports it stays `UNSUPPORTED`, because relevance (0.34) is under the 0.5 conflict threshold. The threshold was kept rather than tuned to the probe |
+| Times compared by minute | none | - |
+| Years inside dates are not ids | none | prevents "M1 complete 15 January 2026" from contradicting "M4 ready 30 April 2026" |
+
+**The adapter and the composite (T6).** `LexicalVerifier` maps Member 4's vocabulary onto
+JARVIS's in one place (`INSUFFICIENT_EVIDENCE` → `INCONCLUSIVE`, never a pass) and strips the
+`doc.txt:r10: ` prefix so a document name is not scored as a matching term. `CompositeVerifier`
+gives the lexical check a veto on contradictions only, lets it stand in (marked `degraded`) when
+the model reaches no verdict, and otherwise defers to the model. Both opinions are recorded on
+every result (`VerificationResult.opinions`) and in the event payload. **The default stays
+`baseline`** until Exp-004 (Phase 34) measures `composite` on the full suite. That is decision D5.
+
+**Confidence.** The TF-IDF score is not used as verdict confidence. It is a similarity, not a
+calibrated probability. Verdict confidence uses the baseline's derivation from the number of
+distinct documents.
+
+**The benchmark (T13–T15).** `app/evaluation/trust.py` reproduces the generator with a private
+`Random(42)` drawing in the original order. **Measured:** byte-identical corpus (58) and cases (60)
+to the committed files, checked by test. `python -m app.cli eval-trust` gives **60/60, hallucination
+rate 0.000, 1.2 ms per case** (theirs: 60/60, 1.78 ms with scikit-learn). The command exits non-zero
+on any false confidence, which is the original dashboard's headline. Per-case episodic logging
+returns with memory in Phase 33.
+
+**T16, the contradiction demo.** Member 4's README says `trust/contradiction_test.py`
+demonstrates conflict detection. Run against their own current code (2026-10-03) it prints
+`SUPPORTED`. Their later shared-identifier safeguard removed the demo's ability to conflict,
+because "The incident occurred at 11:40 AM" has no identifier to share. The port behaves
+identically, and a test pins that, with a working variant (a shared shipment id) beside it.
+Worth telling Member 4.

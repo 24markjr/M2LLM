@@ -48,6 +48,8 @@ from app.schemas.objective import Objective
 from app.schemas.plan import Plan, PlanRevision
 from app.schemas.result import ExecutionSummary, FinalReport
 from app.schemas.task import TaskStatus
+from app.schemas.trust import InjectionScan
+from app.security.injection import scan
 from app.tools.base import ToolContext, build_default_registry
 
 log = get_logger(__name__)
@@ -109,6 +111,10 @@ class MissionResult(JarvisModel):
     replan_iterations: int = 0
     termination_reason: TerminationReason | None = None
 
+    # Documents whose text resembles a prompt injection (Phase 27). Flagged, never dropped: each
+    # was still read as data, and the report says so.
+    security: list[InjectionScan] = Field(default_factory=list)
+
     # Why the run did not complete. A code the client can branch on, plus a message a
     # person can read - never a raw exception string.
     error_code: str = ""
@@ -146,6 +152,10 @@ async def run_mission(
     await _emit(emitter, EventType.RUN_STARTED, {"objective": objective.text})
 
     try:
+        # Scanned before anything reads them, so a flag is on the record before the first model
+        # call that sees the text. Member 4's guard, ported (Phase 27).
+        result.security = await _scan_documents(documents, emitter)
+
         await _advance(result, Stage.UNDERSTANDING, on_stage)
         result.intent = await IntentEngine(provider).analyze(objective, emit=emitter)
 
@@ -237,6 +247,7 @@ async def run_mission(
                 execution=_summarise(graph, documents, replan),
                 termination=result.termination_reason,
                 emit=emitter,
+                security=result.security,
             )
 
         result.status = MissionStatus.COMPLETED
@@ -260,6 +271,37 @@ async def run_mission(
         log.exception("mission_failed", run_id=result.run_id)
         await _finish(result, emitter, on_stage, EventType.RUN_FAILED)
         return result
+
+
+async def _scan_documents(documents: dict[str, str], emitter: object) -> list[InjectionScan]:
+    """Scan every document for prompt-injection patterns and record each one flagged.
+
+    A flag never removes a document. A report that quotes an attack phrase matches the patterns
+    too, and dropping documents on a match would let anyone delete evidence by quoting one.
+    """
+    flagged: list[InjectionScan] = []
+    for name, text in documents.items():
+        found = scan(text, source=name)
+        if not found.flagged:
+            continue
+        flagged.append(found)
+        log.warning(
+            "injection_detected",
+            document=name,
+            severity=found.severity.value,
+            categories=sorted(found.hits),
+        )
+        await _emit(
+            emitter,
+            EventType.INJECTION_DETECTED,
+            {
+                "document": name,
+                "severity": found.severity.value,
+                "categories": sorted(found.hits),
+                "matches": found.hits,
+            },
+        )
+    return flagged
 
 
 def _summarise(graph: TaskGraph, documents: dict[str, str], replan: object) -> ExecutionSummary:

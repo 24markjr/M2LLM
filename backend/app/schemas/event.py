@@ -97,6 +97,10 @@ class EventType(StrEnum):
     LLM_CALL_COMPLETED = "LLM_CALL_COMPLETED"
     BUDGET_WARNING = "BUDGET_WARNING"
 
+    # Security (Phase 27). A document contains text resembling a prompt injection. The document is
+    # still read, as data; this records that it was flagged, by which patterns, and how severely.
+    INJECTION_DETECTED = "INJECTION_DETECTED"
+
 
 # Payload keys stripped before persistence. This is the enforcement point for invariant #3:
 # a component may put raw model output in a payload for local debugging, and it will not

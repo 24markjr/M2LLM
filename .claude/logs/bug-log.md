@@ -679,3 +679,35 @@ every document in one observation.
 
 Match `document_id` as well as `line`. Items without a `document_id` still match on line alone, so
 existing tool output is unaffected. Two tests.
+
+---
+
+## BUG-017 — An evaluation report did not record which verifier ran
+
+**Found:** 2026-10-03, preparing Exp-004 (Phase 26)
+**Severity:** Medium. Would have made the composite-verifier experiment unmeasurable
+**Status:** Fixed (`evaluation/runner.py`)
+
+**Cause**
+
+A report's `comparable_key` is model + prompt versions + config hash, and the regression check
+refuses to compare two reports whose keys differ. The config hash covered temperature, seed,
+iteration and parallelism ceilings, planning policy and the repair budget. It did not cover
+`VERIFICATION_PROVIDER`. A run with `baseline` and a run with `composite` would have carried the
+same stamp, and the regression check would have reported the verifier change as a regression or an
+improvement of one system rather than a comparison of two.
+
+It went unnoticed because until Phase 26 only one verifier was ever used in an evaluation.
+
+**Fix**
+
+The hash includes `verification_provider` and the lexical thresholds. Every report written after
+this has a different config hash from every report before it, including runs on `baseline`. That
+is correct: the stamp now describes something it did not describe before.
+
+**Pattern**
+
+The same one as `_TOLERANCES` (BUG-011) and `created_by_revision` (BUG-013): a mechanism that is
+correct for the configurations that existed when it was written, and silently incomplete for the
+first new one. A new setting that changes behaviour needs to be added to the stamp in the same
+change. This is now noted in `.claude/testing/agent-evaluation.md`.
