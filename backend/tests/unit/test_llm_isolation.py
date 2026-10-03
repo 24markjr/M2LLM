@@ -137,3 +137,16 @@ def test_the_llm_package_does_not_import_engines() -> None:
                 offenders.append(f"{path.relative_to(APP_ROOT)}: {imported}")
 
     assert not offenders, "app/llm must not import engines:\n" + "\n".join(offenders)
+
+
+def test_only_the_neo4j_store_imports_the_neo4j_driver() -> None:
+    """Phase 29, ADR-010: Neo4j is reached through one module, so the rest of the application
+    depends on the `KnowledgeBase` protocol and never on the database it happens to run on."""
+    allowed = INTEGRATION_PACKAGE / "neo4j_store.py"
+    offenders = [
+        str(path.relative_to(APP_ROOT))
+        for path in _python_files(APP_ROOT)
+        if path != allowed and any(i.split(".")[0] == "neo4j" for i in _module_imports(path))
+    ]
+    message = "only app/integrations/neo4j_store.py may import neo4j: "
+    assert not offenders, message + ", ".join(offenders)

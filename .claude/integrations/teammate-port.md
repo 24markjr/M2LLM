@@ -81,13 +81,13 @@ the reason).
 | K2 | Entity resolution by case-insensitive name | `db.py:find_or_create_entity`, `resolve.py` | `app/intelligence/knowledge/store.py` | CHANGED. Wider name normalisation; unextracted entities created, not stored as raw names |
 | K3 | Relationship linking, unknown endpoints skipped | `resolve.py` | `store.py` | CHANGED. Endpoints resolve across the run, not the chunk; skips counted |
 | K4 | Claim storage with source document + page | `resolve.py`, `db.py` | `store.py`, `app/schemas/knowledge.py` | CHANGED. Tool-style citations; identical claims stored once; per run, not global |
-| K5 | Knowledge graph, N-hop neighbourhood | `graph.py` (NetworkX) | `app/intelligence/knowledge/graph.py` | DONE in memory (BFS, no NetworkX); Neo4j in Phase 29 |
+| K5 | Knowledge graph, N-hop neighbourhood | `graph.py` (NetworkX) | `app/intelligence/knowledge/graph.py`; `app/integrations/neo4j_store.py` | DONE. Memory (BFS) and Neo4j (variable-length `RELATES` path), one test suite |
 | K6 | Contradiction detection by (entity, attribute) | `contradictions.py` | `app/intelligence/knowledge/conflicts.py` | CHANGED. Values compared by kind (date, number, text); grounded claims only |
 | K7 | Timeline with before/after/same labels | `timeline.py:build_timeline` | `app/intelligence/knowledge/timeline.py` | CHANGED. No invented year (inferred for ordering, flagged); date-valued claims included |
 | K8 | Compare two claims temporally | `timeline.py:compare_events` | `timeline.py` | CHANGED. Same labels; different precision is `UNKNOWN` |
 | K9 | Hybrid search with explainable score | `retrieval.py` | `app/intelligence/knowledge/search.py` | CHANGED. Same score and reasons; no longer returns every claim |
-| K10 | Investigation aggregate for one entity | `main.py:/investigation/{name}` | `app/intelligence/knowledge/base.py` | DONE in memory; exact match ranked first |
-| K11 | Evidence lookup for a claim | `main.py:/evidence/{claim_id}` | `base.py` | DONE in memory |
+| K10 | Investigation aggregate for one entity | `main.py:/investigation/{name}` | `app/intelligence/knowledge/base.py` | DONE. One shared aggregate over either store |
+| K11 | Evidence lookup for a claim | `main.py:/evidence/{claim_id}` | `base.py`; `neo4j_store.py` | DONE on both stores |
 | K12 | REST API (14 endpoints) | `main.py` | `app/api/v1/knowledge.py` | TODO |
 | K13 | Browser dashboard | `dashboard.html` | Mission Control `#/knowledge` | TODO |
 | K14 | Sample data (7 chunks) and loader | `sample_data.json`, `load_sample.py` | `.agent/fixtures/documents/shipment_*.txt`, evaluation scenario | TODO |
@@ -428,3 +428,12 @@ and the investigation aggregate need them.
 **Known limit, measured.** A value that is on its line but misread ("according to security logs"
 read as `received_by`) passes grounding and makes a false conflict. Conflicts are inputs to
 reasoning and verification, never findings by themselves.
+
+### Phase 29 — Neo4j (2026-10-03)
+
+Member 3 rebuilt a NetworkX graph from SQLite on every request. The graph now lives in Neo4j
+(ADR-010), per run. The analysis stays the shared Python of Phase 28, and only storage, lookup and
+the neighbourhood traversal are Cypher. One test suite runs against Neo4j and the in-memory fallback.
+A live extraction of Member 3's sample answered identically from both, and is kept in the local
+database as `run_00000000a3a3` for browsing. A contradiction is an edge (`CONFLICTS_WITH`) between
+the claims on its two sides, which Member 3's graph never had: there, a claim was not a node.

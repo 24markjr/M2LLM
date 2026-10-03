@@ -21,6 +21,8 @@ dependencies = [
     "python-multipart>=0.0.12",
     "pyyaml>=6.0",
     "pypdf>=5.1",
+    # The knowledge graph store (Phase 29, ADR-010). Imported only by app/integrations/.
+    "neo4j>=5.20",
 ]
 
 [project.optional-dependencies]

@@ -87,3 +87,9 @@ is counted as `entities_ungrounded` and not created), and identical claims are s
 citations, on both runs. The knowledge layer is no better than its extraction, though. One false
 conflict per run came from a misread the grounding check cannot see. Its conflicts are therefore
 inputs to reasoning and verification (Phase 30), never findings by themselves.
+
+**Addendum (Phase 29).** Run 3, stored through `open_knowledge_base` into Neo4j as
+`run_00000000a3a3`: entities, claims, conflicts, timeline, search ("Rahul warehouse") and
+`investigate("Shipment 4821")` all compared equal between the Neo4j store and the in-memory store.
+Neo4j held 1 run, 6 documents, 14 entities, 16 claims, 3 conflicts and 3 `CONFLICTS_WITH` edges.
+The arrival-date conflict was found again, so it held across three runs.

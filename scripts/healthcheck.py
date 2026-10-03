@@ -107,6 +107,33 @@ async def check_postgres(settings: Settings, report: Report) -> None:
         await conn.close()
 
 
+async def check_neo4j(settings: Settings, report: Report) -> None:
+    """The knowledge graph store (Phase 29). Optional: runs fall back to memory without it."""
+    from app.core.config import GraphStoreName
+    from app.integrations.neo4j_store import Neo4jGraphStore
+
+    check = report.add(
+        Check(
+            "neo4j:connect",
+            required=False,
+            hint="docker compose up -d neo4j  (optional: runs fall back to memory)",
+        )
+    )
+    if settings.graph_store is not GraphStoreName.NEO4J:
+        check.status, check.detail = SKIP, f"GRAPH_STORE={settings.graph_store.value}"
+        return
+    store = Neo4jGraphStore.connect(
+        settings.neo4j_uri, settings.neo4j_user, settings.neo4j_password, settings.neo4j_database
+    )
+    try:
+        if await store.available():
+            check.status, check.detail = OK, settings.neo4j_uri
+        else:
+            check.detail = f"{settings.neo4j_uri} not reachable; knowledge graphs stay in memory"
+    finally:
+        await store.close()
+
+
 async def check_llm(settings: Settings, report: Report) -> None:
     reach = report.add(
         Check(
@@ -209,6 +236,7 @@ async def main() -> int:
 
     check_config(settings, report)
     await check_postgres(settings, report)
+    await check_neo4j(settings, report)
     await check_llm(settings, report)
 
     if args.json:

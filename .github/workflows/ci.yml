@@ -89,7 +89,7 @@ jobs:
           path: backend/coverage.xml
 
   integration:
-    name: integration (real Postgres)
+    name: integration (real Postgres and Neo4j)
     runs-on: ubuntu-latest
     needs: [lint, types]
     services:
@@ -107,8 +107,22 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      # The knowledge graph store (Phase 29, ADR-010). The same suite runs against it and the
+      # in-memory store, so the two cannot drift apart.
+      neo4j:
+        image: neo4j:5-community
+        env:
+          NEO4J_AUTH: neo4j/jarvis-neo4j
+        ports: ["7687:7687"]
+        options: >-
+          --health-cmd "wget -qO- http://localhost:7474 || exit 1"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
     env:
       DATABASE_URL: postgresql+asyncpg://jarvis:jarvis@localhost:5432/jarvis
+      GRAPH_STORE: neo4j
+      NEO4J_URI: bolt://localhost:7687
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -134,6 +148,19 @@ jobs:
           pytest tests/integration -m "not llm" -p no:randomly -q 2>&1 | tee result.txt
           if grep -qi "no database reachable" result.txt; then
             echo "::error::integration tests skipped - the Postgres service did not come up"
+            exit 1
+          fi
+
+      # The two-store knowledge suite lives under tests/unit so the in-memory half runs in the unit
+      # job. Here it runs again with Neo4j up, and a skip is a failure: it would mean the Neo4j half
+      # never ran.
+      - name: pytest (knowledge stores, Neo4j)
+        working-directory: backend
+        run: |
+          set -o pipefail
+          pytest tests/unit/test_knowledge_stores.py -p no:randomly -rs -q 2>&1 | tee stores.txt
+          if grep -q "SKIPPED" stores.txt; then
+            echo "::error::the Neo4j store tests skipped - the Neo4j service did not come up"
             exit 1
           fi
 

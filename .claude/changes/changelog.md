@@ -5,6 +5,36 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-03 - Phase 29: Neo4j knowledge graph store
+
+### Added
+
+- `docker-compose.yml` service `neo4j` (5 Community, 512 MB heap, 256 MB page cache, healthcheck)
+- `app/integrations/neo4j_store.py` - `Neo4jGraphStore` (one-transaction write per run, load,
+  delete) and `Neo4jKnowledgeBase` (the protocol in Cypher plus shared analysis)
+- `app/integrations/graph_store.py` - `open_knowledge_base`: Neo4j by default, memory when it is off,
+  unreachable or a write fails; probed and logged once per process
+- Settings `GRAPH_STORE`, `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`, `NEO4J_DATABASE`; dependency
+  `neo4j>=5.20`; healthcheck row `neo4j:connect` (optional)
+- `tests/unit/test_knowledge_stores.py` - 34 tests, the protocol suite run against both stores, plus
+  Neo4j round trip, run isolation, replace-on-rewrite, conflict edges, and the three fallbacks
+- Invariant test: only `neo4j_store.py` imports the driver
+- CI integration job: a Neo4j service; the store suite fails the build if it skips
+- `ADR-010`
+
+### Changed
+
+- `KnowledgeBase` protocol is async; the investigation aggregate and entity ranking are shared
+  functions used by both stores
+- The API closes the Neo4j driver on shutdown
+
+### Measured
+
+- Member 3's sample, extracted live and stored in Neo4j: every query answered identically to memory
+- 829 tests, `mypy --strict` clean (106 modules)
+
+---
+
 ## 2026-10-03 - Phase 28: knowledge core (Member 3's knowledge graph, ported)
 
 ### Added

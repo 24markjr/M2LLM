@@ -6,6 +6,40 @@ and what is still broken.
 
 ---
 
+# 2026-10-03 - Phase 29: Neo4j
+
+## What was done
+
+Neo4j 5 Community in compose, an async store behind the `KnowledgeBase` protocol, a factory that
+falls back to memory, and one test suite run against both. The protocol became async here rather
+than later, because the API (Phase 31) is its first real consumer and the change was cheapest
+before anything depended on it.
+
+## Decisions
+
+- **Analysis stays in shared Python.** Re-implementing search scoring or timeline order in Cypher
+  would give two answers to one question. Only storage, lookup and the traversal are Cypher.
+- **Composite uniqueness, not node keys.** Node keys are Enterprise-only, checked against the
+  running container before relying on them.
+- **The phase's "done when" was adjusted.** The plan said "a mission writes its graph", but missions
+  only build knowledge from Phase 30. The equivalent check was run instead: a live extraction stored
+  through the factory and confirmed from Neo4j's side with `cypher-shell`.
+- **Run `run_00000000a3a3` is left in the local database** so the graph can be browsed.
+
+## Mistakes caught
+
+- A test assertion built with an escaped newline in a shell heredoc became a real newline and broke
+  the file. Repaired. Multi-line edits now go through script files, not heredocs.
+- A CI step piped pytest into `tee`, which hides pytest's exit code. Added `set -o pipefail`.
+
+## Verification
+
+- `pytest tests -m "not llm"` -> **829 passed**, with all 17 Neo4j variants run against the live
+  container (none skipped)
+- `mypy --strict` clean (106 modules), `ruff` clean, healthcheck all green including Neo4j
+
+---
+
 # 2026-10-03 - Phase 28: knowledge core
 
 ## What was done

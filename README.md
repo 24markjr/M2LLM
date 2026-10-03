@@ -67,7 +67,7 @@ bug in this file.
 | Python | 3.12 | everything |
 | [Ollama](https://ollama.com) | any recent | the model |
 | Node | 20+ | the web console only |
-| Docker | any recent | Postgres only — **not needed for the demo**; runs are simply not stored without it |
+| Docker | any recent | Postgres and Neo4j — **not needed for the demo**; without them runs are not stored and knowledge graphs stay in memory |
 
 ### 1. The model
 
@@ -92,6 +92,12 @@ python -m venv .venv
 source .venv/bin/activate
 
 pip install -e "backend[dev]"
+```
+
+Optional, for stored runs and the knowledge graph in Neo4j ([ADR-010](.claude/decisions/ADR-010-neo4j-knowledge-graph.md)):
+
+```bash
+docker compose up -d postgres neo4j   # Neo4j Browser: http://localhost:7474
 ```
 
 ### 3. Check it can run
@@ -139,7 +145,7 @@ charts the committed evaluation reports.
 
 ```bash
 cd backend
-pytest tests -m "not llm"      # 798 tests, no model needed
+pytest tests -m "not llm"      # 829 tests, no model needed
 ```
 
 ---

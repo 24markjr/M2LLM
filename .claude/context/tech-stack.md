@@ -18,6 +18,7 @@ Where a choice was contested, it has an ADR.
 | ORM | SQLAlchemy 2.0 (async) | Typed `Mapped[...]` declarative models; async engine matches the runtime |
 | DB driver | asyncpg | Fastest async PostgreSQL driver; the event sink writes on the hot path |
 | Migrations | Alembic | Reproducible schema; `upgrade head` on a clean DB is a Phase 3 acceptance criterion |
+| Knowledge graph | Neo4j 5 Community, `neo4j` async driver | Path queries for the knowledge layer and cross-run memory; optional, falls back to memory - see ADR-010 |
 | Vectors | pgvector | Embeddings live in the same database as structured state — see ADR-005 |
 | HTTP client | httpx | Async, used only inside `app/llm/` and `app/integrations/` (invariant #1) |
 | Logging | structlog | Structured events, not string soup; pairs with the execution event log |

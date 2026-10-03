@@ -11,7 +11,6 @@ import json
 import pytest
 
 from app.core.agent_config import KnowledgePolicy
-from app.intelligence.knowledge.base import MAX_DEPTH, InMemoryKnowledgeBase, KnowledgeBase
 from app.intelligence.knowledge.conflicts import detect_conflicts
 from app.intelligence.knowledge.extraction import (
     Chunk,
@@ -36,7 +35,6 @@ from app.schemas.knowledge import (
     KnowledgeClaim,
     KnowledgeEntity,
     KnowledgeRelationship,
-    KnowledgeSnapshot,
     TimelineRelation,
 )
 
@@ -500,62 +498,4 @@ def test_short_query_words_do_not_match_entity_names() -> None:
     assert hybrid_search("ab", ENTITIES, RELATIONSHIPS, claims) == []
 
 
-# --- the query surface (K10, K11) ----------------------------------------------------
-
-
-def _base() -> InMemoryKnowledgeBase:
-    claims = [
-        _claim(1, "ENT-001", "arrival_date", "14 September", "a.txt:r1"),
-        _claim(2, "ENT-001", "arrival_date", "16 September", "b.txt:r1"),
-        _claim(3, "ENT-002", "works_for", "ABC Logistics", "c.txt:r1"),
-    ]
-    entities = [
-        e.model_copy(update={"sources": ["a.txt:r1"]}) if e.entity_id == "ENT-001" else e
-        for e in ENTITIES
-    ]
-    return InMemoryKnowledgeBase(
-        KnowledgeSnapshot(
-            entities=entities,
-            relationships=RELATIONSHIPS,
-            claims=claims,
-            conflicts=detect_conflicts(claims, entities),
-        )
-    )
-
-
-def test_the_in_memory_base_satisfies_the_protocol() -> None:
-    assert isinstance(_base(), KnowledgeBase)
-
-
-def test_find_entity_puts_the_exact_match_first() -> None:
-    base = _base()
-    assert [e.name for e in base.find_entity("shipment 4821")] == ["Shipment 4821"]
-    assert [e.name for e in base.find_entity("mumbai")] == ["Mumbai warehouse"]
-    assert base.find_entity("") == []
-
-
-def test_an_investigation_aggregates_everything_about_one_entity() -> None:
-    result = _base().investigate("Shipment 4821")
-    assert result is not None
-    assert result.entity.entity_id == "ENT-001"
-    assert result.sources == ["a.txt:r1", "b.txt:r1"]
-    assert len(result.claims) == 2
-    assert len(result.conflicts) == 1
-    assert {n.name for n in result.network.nodes} >= {
-        "Shipment 4821",
-        "Mumbai warehouse",
-        "Rahul Sharma",
-    }
-    assert _base().investigate("nobody") is None
-
-
-def test_claim_lookup_compare_and_depth_cap() -> None:
-    base = _base()
-    assert base.claim("CLM-003") is not None
-    assert base.claim("CLM-999") is None
-    comparison = base.compare("CLM-001", "CLM-002")
-    assert comparison is not None and comparison.relation is ClaimOrder.A_BEFORE_B
-    assert base.compare("CLM-001", "CLM-999") is None
-    network = base.network("ENT-003", depth=99)
-    assert network is not None and network.depth == MAX_DEPTH
-    assert [r.relationship_id for r in base.relationships("ENT-001")] == ["REL-003"]
+# The query surface (K10, K11) is tested against both stores in test_knowledge_stores.py.

@@ -67,6 +67,30 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  neo4j:
+    # The knowledge graph store (Phase 29, ADR-010). Optional: with it stopped, runs use the
+    # in-memory store and log one `graph_store_degraded` line. Browser: http://localhost:7474
+    image: neo4j:5-community
+    container_name: jarvis-neo4j
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-jarvis-neo4j}
+      # Sized for a laptop that also runs Ollama: a run's graph is hundreds of nodes, not millions.
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 512m
+      NEO4J_server_memory_pagecache_size: 256m
+    ports:
+      - "${NEO4J_HTTP_PORT:-7474}:7474"
+      - "${NEO4J_BOLT_PORT:-7687}:7687"
+    volumes:
+      - neo4j-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
   ollama:
     profiles: ["ollama", "full"]
     image: ollama/ollama:latest
@@ -80,3 +104,4 @@ services:
 volumes:
   pgdata:
   ollama-data:
+  neo4j-data:

@@ -1,6 +1,6 @@
 # The knowledge layer
 
-**Phase:** 28 (2026-10-03). Neo4j storage is Phase 29, the pipeline wiring Phase 30, the API Phase 31.
+**Phase:** 28 (2026-10-03); Neo4j storage Phase 29 (ADR-010). Pipeline wiring is Phase 30, the API Phase 31.
 **Code:** `app/intelligence/knowledge/`, contracts in `app/schemas/knowledge.py`, prompt
 `.agent/prompts/knowledge.md`, policy `agent.yaml:knowledge`
 **Ported from:** Member 3's knowledge-graph service (`jarvis-member3/`). Every feature, its
@@ -130,3 +130,42 @@ and never read back into a run by default.
 Experiment 005 (`logs/experiment-log.md`): Member 3's own sample, `qwen3:4b`, two runs. Both found
 the planted Shipment 4821 arrival-date conflict with both citations (40-47 s, 7 calls, 0 failed
 chunks, 0 ungrounded claims). Both also produced one false conflict from a misread.
+
+## Where it is stored (Phase 29, ADR-010)
+
+`GRAPH_STORE=neo4j` (default) or `memory`. `app/integrations/graph_store.py:open_knowledge_base`
+writes the run's snapshot to Neo4j in **one transaction** and returns a `Neo4jKnowledgeBase`, or
+returns an `InMemoryKnowledgeBase` when Neo4j is off, unreachable (probed once per process, logged
+once) or a write fails. Neo4j never fails a run.
+
+The `KnowledgeBase` protocol is **async**, because the Neo4j driver is. Both stores implement it, and
+`tests/unit/test_knowledge_stores.py` runs one suite against both.
+
+**Graph model.** Every node carries `run_id`, and composite uniqueness constraints hold
+`(run_id, id)` unique per label:
+
+```
+(:Run {run_id, stats})-[:HAS_DOCUMENT]->(:Document {run_id, document_id})
+(:Entity {run_id, entity_id, seq, name, key, type, aliases, alias_keys, sources})
+    -[:MENTIONED_IN {source}]->(:Document)
+    -[:RELATES {relationship_id, seq, predicate, source}]->(:Entity)
+    -[:HAS_CLAIM]->(:Claim {run_id, claim_id, seq, attribute, value, source, line, quote, grounded})
+                     -[:CITED_IN {source}]->(:Document)
+    -[:HAS_CONFLICT]->(:Conflict {run_id, conflict_id, seq, attribute, kind, sides})
+(:Claim)-[:SIDE_OF {value}]->(:Conflict)
+(:Claim)-[:CONFLICTS_WITH {conflict_id, attribute, kind}]->(:Claim)
+```
+
+**Cypher does** storage, listing, lookup by id and by normalised name, and the neighbourhood (a
+variable-length `RELATES` path). **Shared Python does** timeline order, search scores, entity ranking
+and the investigation aggregate, on data read from either store, so the two cannot disagree.
+
+**Look at a run in the Neo4j Browser** (<http://localhost:7474>, user `neo4j`, password from
+`NEO4J_PASSWORD`):
+
+```cypher
+MATCH (n {run_id: 'run_00000000a3a3'})-[r]-(m {run_id: 'run_00000000a3a3'}) RETURN n, r, m
+```
+
+`run_00000000a3a3` is Member 3's sample, extracted live and kept in the local database on
+2026-10-03.

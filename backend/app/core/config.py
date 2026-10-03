@@ -42,6 +42,17 @@ class PlanningPolicyName(StrEnum):
     NAIVE = "naive"
 
 
+class GraphStoreName(StrEnum):
+    """Where a run's knowledge graph is kept (Phase 29, ADR-010).
+
+    `neo4j` is the default since Docker became available; `memory` is the fallback, and the store
+    a run uses when Neo4j cannot be reached. Both answer every knowledge query identically.
+    """
+
+    NEO4J = "neo4j"
+    MEMORY = "memory"
+
+
 class VerificationProviderName(StrEnum):
     BASELINE = "baseline"
     REMOTE = "remote"
@@ -116,6 +127,15 @@ class Settings(BaseSettings):
     knowledge_base_url: str = ""
     verification_base_url: str = ""
     integration_timeout_s: float = 30.0
+
+    # --- Knowledge graph store (Phase 29) ---
+    graph_store: GraphStoreName = GraphStoreName.NEO4J
+    neo4j_uri: str = "bolt://localhost:7687"
+    neo4j_user: str = "neo4j"
+    # The local development default, matching docker-compose, as the Postgres URL above does.
+    # Real deployments set NEO4J_PASSWORD; nothing outside a developer machine should use this.
+    neo4j_password: str = "jarvis-neo4j"  # noqa: S105
+    neo4j_database: str = "neo4j"
 
     @field_validator("log_level")
     @classmethod

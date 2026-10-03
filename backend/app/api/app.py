@@ -21,6 +21,7 @@ from app.api.registry import reset_registry
 from app.api.v1 import router as v1_router
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.integrations.graph_store import close_graph_store
 from app.llm import get_provider
 from app.schemas.common import JarvisModel
 
@@ -52,6 +53,8 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     # them, which is what should happen: a half-finished run has no consumer after the
     # process that was streaming it is gone.
     reset_registry()
+    # The Neo4j driver belongs to this event loop; close it with the loop (Phase 29).
+    await close_graph_store()
     log.info("api_stopped")
 
 
