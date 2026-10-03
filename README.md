@@ -139,7 +139,7 @@ charts the committed evaluation reports.
 
 ```bash
 cd backend
-pytest tests -m "not llm"      # 749 tests, no model needed
+pytest tests -m "not llm"      # 798 tests, no model needed
 ```
 
 ---

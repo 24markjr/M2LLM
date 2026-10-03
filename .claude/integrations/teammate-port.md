@@ -77,17 +77,17 @@ the reason).
 
 | ID | Feature | Original (file) | JARVIS location | Status |
 |---|---|---|---|---|
-| K1 | LLM extraction of entities, relationships, claims | `extractor.py` | `app/intelligence/knowledge/extraction.py`, prompt `.agent/prompts/knowledge.md` | TODO |
-| K2 | Entity resolution by case-insensitive name | `db.py:find_or_create_entity`, `resolve.py` | `app/intelligence/knowledge/store.py` | TODO |
-| K3 | Relationship linking, unknown endpoints skipped | `resolve.py` | `store.py` | TODO |
-| K4 | Claim storage with source document + page | `resolve.py`, `db.py` | `store.py`, `app/schemas/knowledge.py` | TODO |
-| K5 | Knowledge graph, N-hop neighbourhood | `graph.py` (NetworkX) | `app/intelligence/knowledge/graph.py` | TODO |
-| K6 | Contradiction detection by (entity, attribute) | `contradictions.py` | `app/intelligence/knowledge/conflicts.py` | TODO |
-| K7 | Timeline with before/after/same labels | `timeline.py:build_timeline` | `app/intelligence/knowledge/timeline.py` | TODO |
-| K8 | Compare two claims temporally | `timeline.py:compare_events` | `timeline.py` | TODO |
-| K9 | Hybrid search with explainable score | `retrieval.py` | `app/intelligence/knowledge/search.py` | TODO |
-| K10 | Investigation aggregate for one entity | `main.py:/investigation/{name}` | `app/intelligence/knowledge/base.py` | TODO |
-| K11 | Evidence lookup for a claim | `main.py:/evidence/{claim_id}` | `base.py` | TODO |
+| K1 | LLM extraction of entities, relationships, claims | `extractor.py` | `app/intelligence/knowledge/extraction.py`, prompt `.agent/prompts/knowledge.md` | CHANGED. Through `LLMProvider`; values and entity names grounded (A6); CSV without a model (A7); names carried across chunks (A8); bounded |
+| K2 | Entity resolution by case-insensitive name | `db.py:find_or_create_entity`, `resolve.py` | `app/intelligence/knowledge/store.py` | CHANGED. Wider name normalisation; unextracted entities created, not stored as raw names |
+| K3 | Relationship linking, unknown endpoints skipped | `resolve.py` | `store.py` | CHANGED. Endpoints resolve across the run, not the chunk; skips counted |
+| K4 | Claim storage with source document + page | `resolve.py`, `db.py` | `store.py`, `app/schemas/knowledge.py` | CHANGED. Tool-style citations; identical claims stored once; per run, not global |
+| K5 | Knowledge graph, N-hop neighbourhood | `graph.py` (NetworkX) | `app/intelligence/knowledge/graph.py` | DONE in memory (BFS, no NetworkX); Neo4j in Phase 29 |
+| K6 | Contradiction detection by (entity, attribute) | `contradictions.py` | `app/intelligence/knowledge/conflicts.py` | CHANGED. Values compared by kind (date, number, text); grounded claims only |
+| K7 | Timeline with before/after/same labels | `timeline.py:build_timeline` | `app/intelligence/knowledge/timeline.py` | CHANGED. No invented year (inferred for ordering, flagged); date-valued claims included |
+| K8 | Compare two claims temporally | `timeline.py:compare_events` | `timeline.py` | CHANGED. Same labels; different precision is `UNKNOWN` |
+| K9 | Hybrid search with explainable score | `retrieval.py` | `app/intelligence/knowledge/search.py` | CHANGED. Same score and reasons; no longer returns every claim |
+| K10 | Investigation aggregate for one entity | `main.py:/investigation/{name}` | `app/intelligence/knowledge/base.py` | DONE in memory; exact match ranked first |
+| K11 | Evidence lookup for a claim | `main.py:/evidence/{claim_id}` | `base.py` | DONE in memory |
 | K12 | REST API (14 endpoints) | `main.py` | `app/api/v1/knowledge.py` | TODO |
 | K13 | Browser dashboard | `dashboard.html` | Mission Control `#/knowledge` | TODO |
 | K14 | Sample data (7 chunks) and loader | `sample_data.json`, `load_sample.py` | `.agent/fixtures/documents/shipment_*.txt`, evaluation scenario | TODO |
@@ -394,3 +394,37 @@ Member 4's `detection_rate` (correct/total) and, beside it, attack recall, false
 category misses, and exits non-zero on any misclassified case.
 
 Full mechanism: `../architecture/security.md`.
+
+### Phase 28 — knowledge core (2026-10-03)
+
+Mechanism and data model: [`../architecture/knowledge-layer.md`](../architecture/knowledge-layer.md).
+Live acceptance run: Experiment 005 in `../logs/experiment-log.md`.
+
+**What was kept from Member 3:** the three concepts (entity, relationship, claim); resolution by
+name; skipping relationships with unknown ends; grouping conflicts by (entity, attribute) and never
+picking a side; the timeline labels and the compare results; the search score and its reasons; the
+undirected neighbourhood.
+
+**What changed, and why.** Each change traces to a defect in the original or an invariant here:
+
+| Change | Original behaviour | Evidence |
+|---|---|---|
+| Model via `LLMProvider`, versioned prompt, constrained output | `requests` to a hard-coded `qwen2.5:7b` | invariant 1 |
+| Claim values grounded on their line | anything the model returned was stored | A6; unit tests |
+| Entity names grounded | same | Exp 005: "Shipment 482:1", and five names echoed from the known list |
+| CSV without a model | CSV went to the model as text | A7 |
+| Known names in the next prompt | each chunk extracted cold | A8 |
+| Identical claims stored once | duplicates stored | Exp 005 run 1 |
+| Conflicts compare by kind | lower-cased strings | "30 April 2026" vs "2026-04-30" conflicted |
+| No forced year 2026 | `dt.replace(year=2026)` on every date | unit test with a 2025 date |
+| Search adds the source point only after a match | every claim matched | unit test |
+| One knowledge base per run | one global SQLite file | unit test: two runs share nothing |
+| Sequential ids | `uuid4` | reproducible runs |
+
+**Storage now, Neo4j next.** `InMemoryKnowledgeBase` implements the `KnowledgeBase` protocol, which
+the Phase 29 Neo4j store will implement too. K5, K10 and K11 work in memory already, because search
+and the investigation aggregate need them.
+
+**Known limit, measured.** A value that is on its line but misread ("according to security logs"
+read as `received_by`) passes grounding and makes a false conflict. Conflicts are inputs to
+reasoning and verification, never findings by themselves.

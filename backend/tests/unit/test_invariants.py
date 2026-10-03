@@ -138,6 +138,13 @@ def test_every_loop_ceiling_is_configured_and_finite() -> None:
     for name, value in vars(bounds).items():
         assert value is not None, f"{name} has no ceiling"
 
+    # The knowledge layer's extraction loop: one model call per chunk (Phase 28).
+    from app.core.agent_config import get_knowledge_policy
+
+    knowledge = get_knowledge_policy()
+    assert knowledge.max_chunks >= 1, "knowledge extraction calls"
+    assert knowledge.max_claims >= 1, "claims a run's knowledge base may hold"
+
 
 def test_the_structured_output_repair_loop_is_bounded() -> None:
     """The repair loop re-prompts on a schema violation. Unbounded, a model that never
@@ -281,3 +288,9 @@ def test_the_agent_bounds_never_exceed_settings() -> None:
     assert bounds.max_task_retries <= settings.max_task_retries
     assert bounds.max_plan_tasks <= settings.max_plan_tasks
     assert bounds.max_tool_calls_per_run <= settings.max_tool_calls_per_run
+
+    from app.core.agent_config import get_knowledge_policy
+
+    knowledge = get_knowledge_policy()
+    assert knowledge.max_chunks <= settings.max_knowledge_chunks
+    assert knowledge.max_claims <= settings.max_knowledge_claims

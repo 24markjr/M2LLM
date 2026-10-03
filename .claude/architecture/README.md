@@ -17,6 +17,7 @@ code is a guess, and one written after the code is a record.
 | `integrations.md` | Provider protocols; the frontend contract | 12, 15, 22 |
 | `verification.md` | The verifier contract and its four implementations | 15, 26 |
 | `security.md` | Untrusted document content: scanning, wrapping, what stops an injection | 27 |
+| `knowledge-layer.md` | Entities, relationships, claims; grounding, resolution, conflicts, timeline, search | 28 |
 
 ## What belongs in an architecture document
 

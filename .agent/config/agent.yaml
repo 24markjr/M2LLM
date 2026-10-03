@@ -127,6 +127,19 @@ verification:
     support: 0.4     # relevant evidence at or above this confirms the claim
     conflict: 0.5    # a conflict is only believed on evidence at least this close to the claim
 
+# --- Knowledge layer (Phase 28) --------------------------------------------------
+# Member 3's knowledge graph, ported: entities, relationships and claims extracted per run, then
+# conflicts, a timeline and search over them. See .claude/architecture/knowledge-layer.md.
+knowledge:
+  enabled: true
+  # Lines are grouped into chunks of at most this many characters; one model call per chunk.
+  chunk_chars: 3000
+  max_chunks: 12        # clamped to Settings.max_knowledge_chunks; the rest are counted, not sent
+  max_claims: 400       # clamped to Settings.max_knowledge_claims
+  # Entity names and attribute names already seen in the run, passed to the next chunk's prompt
+  # so the same fact gets the same attribute name across documents (A8). Capped per list.
+  max_known_terms: 40
+
 # --- Budget --------------------------------------------------------------------
 budget:
   max_tool_calls_per_run: 40       # clamped to Settings.max_tool_calls_per_run

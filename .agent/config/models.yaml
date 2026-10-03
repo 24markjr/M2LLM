@@ -76,6 +76,12 @@ roles:
     <<: *default
     max_tokens: 512
 
+  # Extracts entities, relationships and claims from one chunk of a document (Phase 28,
+  # Member 3's extractor). Many short items, so more room than a verdict and less than a report.
+  knowledge:
+    <<: *default
+    max_tokens: 1500
+
 embeddings:
   model: nomic-embed-text
   dimensions: 768      # must match the vector(768) column — see ADR-005

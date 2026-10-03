@@ -5,6 +5,37 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-03 - Phase 28: knowledge core (Member 3's knowledge graph, ported)
+
+### Added
+
+- `app/intelligence/knowledge/` - `extraction.py` (K1, A6-A8), `store.py` (K2-K4), `conflicts.py`
+  (K6), `timeline.py` (K7-K8), `graph.py` (K5, no NetworkX), `search.py` (K9), `base.py`
+  (`KnowledgeBase` protocol and `InMemoryKnowledgeBase`, K10-K11)
+- `.agent/prompts/knowledge.md` v1; `models.yaml` role `knowledge`
+- `agent.yaml:knowledge` policy, clamped to new `.env` ceilings `MAX_KNOWLEDGE_CHUNKS` (40) and
+  `MAX_KNOWLEDGE_CLAIMS` (2000); both added to the loop-ceiling invariant tests
+- `ExtractionStats` gains `claims_capped`, `entities_ungrounded`, `duplicate_claims`
+- `tests/unit/test_knowledge.py` - 49 tests
+- `.claude/architecture/knowledge-layer.md`; Experiment 005 in the experiment log
+
+### Measured
+
+- Member 3's own sample on `qwen3:4b`, two runs: the planted Shipment 4821 arrival-date conflict
+  (14 vs 16 September) found with both citations both times; 40-47 s, 7 calls, 0 failed chunks,
+  0 ungrounded claims
+- Grounding entity names dropped one mangled name and five names echoed from the known list
+- 798 tests, `mypy --strict` clean across 104 modules
+
+### Known Issues
+
+- A value that is on its line but misread passes grounding (Exp 005: "according to security logs"
+  read as `received_by`), producing one false conflict per run on the sample
+- Not yet used by missions: Phase 30 wires it in. Its settings must join the evaluation stamp then
+  (the BUG-017 rule)
+
+---
+
 ## 2026-10-03 - Phase 27: security (Member 4's injection guard, ported)
 
 ### Added

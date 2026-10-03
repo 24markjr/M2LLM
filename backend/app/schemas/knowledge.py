@@ -253,6 +253,14 @@ class ExtractionStats(JarvisModel):
     # Relationships whose subject or object was not an extracted entity, skipped as the
     # original skipped them.
     relationships_skipped: int = Field(default=0, ge=0)
+    # Claims past `knowledge.max_claims`, not kept. Counted so a capped knowledge base never
+    # looks complete.
+    claims_capped: int = Field(default=0, ge=0)
+    # Entity names the model returned that appear on no line of their chunk: invented, not read.
+    # Measured on Member 3's sample: "Shipment 482:1", from text that says "Shipment 4821".
+    entities_ungrounded: int = Field(default=0, ge=0)
+    # Identical claims (same entity, attribute, value and citation) stored once.
+    duplicate_claims: int = Field(default=0, ge=0)
 
 
 class KnowledgeSnapshot(JarvisModel):

@@ -40,4 +40,50 @@ cost and the scoring weights are wrong.
 
 ## Completed
 
-*(none yet — the harness lands in Phase 20)*
+### Experiment 005 — Knowledge extraction on Member 3's own sample (Phase 28 acceptance)
+
+*Numbered 005 because 003 (knowledge pass on/off) and 004 (`baseline` vs `composite` verifier) are
+reserved by the integration plan for Phase 34.*
+
+**Date:** 2026-10-03. **Model:** `qwen3:4b` via Ollama. **Prompt:** `knowledge` v1.
+**Input:** the 7 chunks of Member 3's `sample_data.json` (archived in
+`integrations/originals/member-3/`), one document each. **Question:** does the ported extractor
+find what Member 3's demo was built to find: Shipment 4821 arriving on 14 September in one report
+and 16 September in another?
+
+**Run 1** (entity grounding not yet applied)
+
+- 46.6 s, 7 model calls, 0 failed chunks, 16 claims, 0 ungrounded claims, 3 relationships skipped
+- **Found:** `Shipment 4821 / arrival_date`: `14 September` (`shipping_report_a.txt:r1`) vs
+  `16 September` (`shipping_report_b.txt:r1`), kind `DATE`
+- Also: `received_by`: `Rahul Sharma` vs `security logs`. **A misread.** Report B says the
+  arrival came "according to security logs", and the model read that as the receiver. The value
+  is on the line, so grounding cannot catch it
+- Also: `was_present_at`: `Arjun Verma` vs `Rahul Sharma`, both from the witness statement. That
+  is the discrepancy Member 3 planted, under a poor attribute name
+- **Defects seen:** an entity "Shipment 482:1", which appears in no text, and the same claim
+  stored twice from one line
+
+**Fixes from run 1:** entity names are grounded like claim values (a name on no line of its chunk
+is counted as `entities_ungrounded` and not created), and identical claims are stored once.
+
+**Run 2**
+
+- 40.5 s, 7 calls, 0 failed, 17 claims, 0 ungrounded claims, 6 entity names dropped as ungrounded
+- **Found:** the same arrival-date conflict, both sources
+- The witness discrepancy now comes out as `Mumbai warehouse / manager_on_duty`: `Arjun Verma` vs
+  `Rahul Sharma`
+- The `received_by` misread persists, now as `Rahul Sharma` vs `Mumbai facility`
+- **The six dropped names were checked one by one.** One was the mangled "Shipment 482:1". The
+  other five were **names the model echoed from the known-entities list** (feature A8) into chunks
+  that never mention them, such as "Rahul Sharma" in shipping report B. Grounding is what makes
+  A8 safe to use
+- `investigate("Shipment 4821")`: 3 source documents, 4 claims, 2 conflicts, network of 2
+- Timeline: 14 Sep (arrival A), 14 Sep (`SAME_TIME_AS`), 16 Sep (`AFTER`), 20 Sep
+- Search "Rahul warehouse": top hit `present_at = Mumbai warehouse`, score 5, with reasons
+  "direct entity match, keyword match: warehouse, has source document"
+
+**Conclusion.** The acceptance criterion holds: the planted contradiction is found, with both
+citations, on both runs. The knowledge layer is no better than its extraction, though. One false
+conflict per run came from a misread the grounding check cannot see. Its conflicts are therefore
+inputs to reasoning and verification (Phase 30), never findings by themselves.

@@ -53,6 +53,8 @@ def test_every_loop_has_a_ceiling(clean_env: None) -> None:
         "max_parallel_tasks": s.max_parallel_tasks,
         "max_tool_calls_per_run": s.max_tool_calls_per_run,
         "max_plan_tasks": s.max_plan_tasks,
+        "max_knowledge_chunks": s.max_knowledge_chunks,
+        "max_knowledge_claims": s.max_knowledge_claims,
     }
     for name, value in ceilings.items():
         assert value > 0, f"{name} must be a positive ceiling"

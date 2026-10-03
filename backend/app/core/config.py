@@ -99,6 +99,10 @@ class Settings(BaseSettings):
     # time, so admitting more runs than this does not make them finish sooner - it makes
     # all of them slower and the queue invisible.
     max_concurrent_runs: int = Field(default=2, ge=1, le=32)
+    # Knowledge layer (Phase 28). Each chunk is one model call, so this bounds the extraction
+    # loop; claims bound the memory a run's knowledge base can take.
+    max_knowledge_chunks: int = Field(default=40, ge=1, le=500)
+    max_knowledge_claims: int = Field(default=2000, ge=1, le=100_000)
 
     # --- Tracing ---
     trace_to_file: bool = False

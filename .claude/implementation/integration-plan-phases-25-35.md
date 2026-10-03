@@ -87,7 +87,7 @@ Two rules this plan adds, both following from the teammates' code:
 | 25 | Groundwork: bug fixes, shared temporal parser | — | S | — | **DONE** 2026-10-03 |
 | 26 | Trust layer: lexical and composite verification, trust benchmark | T1–T6, T13–T16 | M | 25 | **DONE** 2026-10-03 |
 | 27 | Security: injection scanning and safe prompts | T7–T9 | S | 25 | **DONE** 2026-10-03 |
-| 28 | Knowledge core: extraction, resolution, conflicts, timeline, search | K1–K4, K6–K9 | L | 25 | TODO |
+| 28 | Knowledge core: extraction, resolution, conflicts, timeline, search | K1–K4, K6–K9 | L | 25 | **DONE** 2026-10-03 |
 | 29 | Neo4j graph store | K5, K10, K11 | L | 28 | TODO |
 | 30 | Knowledge in the mission pipeline | — | M | 29 | TODO |
 | 31 | Knowledge API | K12 | M | 30 | TODO |

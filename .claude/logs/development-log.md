@@ -6,6 +6,43 @@ and what is still broken.
 
 ---
 
+# 2026-10-03 - Phase 28: knowledge core
+
+## What was done
+
+Ported Member 3's extractor, resolver, contradiction detector, timeline, hybrid search and graph
+neighbourhood into `app/intelligence/knowledge/`, per run and through `LLMProvider`. The plan's
+file split was kept except that `base.py` holds the query protocol, and K5/K10/K11 work in memory
+now because search and investigation need them. Phase 29 adds the Neo4j side of the same protocol.
+
+## The acceptance run, and what it changed
+
+Member 3's own sample through the extractor on `qwen3:4b` (Experiment 005) found the planted
+arrival-date conflict on the first run, and showed two defects the unit tests had not: an
+invented entity name, and duplicate claims. Both were fixed (entity grounding, claim dedup) and the
+run repeated. The second run dropped six entity names. Each was checked rather than accepted: five
+were names the model echoed from the known-entities list (A8) into chunks that never mention them.
+That is a side effect of A8, and grounding is what contains it.
+
+One false conflict per run remains: a misread value that really is on its line. Recorded as the
+knowledge layer's measured limit. Its conflicts feed reasoning and are never findings alone.
+
+## Decisions
+
+- Grounding applies to entity names as well as claim values. A name on no line was written, not
+  read.
+- Relationship endpoints resolve across the run, not the chunk (Member 3 dropped an entity named in
+  one paragraph and related in the next).
+- Timeline events are grounded claims only. Ungrounded values are kept on the claim list and
+  excluded from every analysis.
+
+## Verification
+
+- `pytest tests -m "not llm"` -> **798 passed** (the ceiling checks were added to existing tests)
+- `mypy --strict` clean (104 modules), `ruff` clean
+
+---
+
 # 2026-10-03 - Phase 27: security
 
 ## What was done

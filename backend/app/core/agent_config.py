@@ -257,3 +257,38 @@ def get_lexical_thresholds() -> LexicalThresholds:
     """
     raw = load_yaml("agent.yaml").get("verification", {}).get("lexical", {})
     return LexicalThresholds.model_validate(raw)
+
+
+# --- agent.yaml: knowledge (Phase 28) --------------------------------------------
+
+
+class KnowledgePolicy(JarvisModel):
+    """`agent.yaml:knowledge`, after clamping its ceilings against `Settings`."""
+
+    enabled: bool = True
+    chunk_chars: int = Field(default=3000, ge=200)
+    # One model call per chunk: this bounds the extraction loop (invariant 7).
+    max_chunks: int = Field(ge=1)
+    max_claims: int = Field(ge=1)
+    max_known_terms: int = Field(default=40, ge=0)
+
+
+@lru_cache
+def get_knowledge_policy() -> KnowledgePolicy:
+    raw = load_yaml("agent.yaml").get("knowledge", {})
+    settings = get_settings()
+    return KnowledgePolicy(
+        enabled=bool(raw.get("enabled", True)),
+        chunk_chars=int(raw.get("chunk_chars", 3000)),
+        max_chunks=clamp(
+            int(raw.get("max_chunks", settings.max_knowledge_chunks)),
+            settings.max_knowledge_chunks,
+            name="knowledge.max_chunks",
+        ),
+        max_claims=clamp(
+            int(raw.get("max_claims", settings.max_knowledge_claims)),
+            settings.max_knowledge_claims,
+            name="knowledge.max_claims",
+        ),
+        max_known_terms=int(raw.get("max_known_terms", 40)),
+    )
