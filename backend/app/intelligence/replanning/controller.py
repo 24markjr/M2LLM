@@ -82,31 +82,106 @@ class ReplanResult(JarvisModel):
         return sum(f.confidence.value for f in self.findings) / len(self.findings)
 
 
-def evidence_from_observations(observations: list[Observation]) -> list[Evidence]:
+# How much of a page a page-level citation carries when no tool recorded which lines on it
+# mattered. A page of dense text is ~3 kB; the verifier needs the passage, not the chapter.
+MAX_PAGE_EVIDENCE_CHARS = 1200
+
+
+def evidence_from_observations(
+    observations: list[Observation],
+    documents: dict[str, str] | None = None,
+    page_starts: dict[str, list[int]] | None = None,
+) -> list[Evidence]:
     """Build the evidence pool that gap detection and verification read.
 
-    One item per source locator, carrying the observation's content. This is what makes
+    One item per source locator, carrying **the text at that locator**. This is what makes
     element-level support checkable: without the text behind a locator, a gap detector can
-    only see that a citation exists, not whether it says what the claim says it says.
+    only see that a citation exists, and a verifier can only see that something was cited.
+
+    BUG-015. This used to carry `observation.content`, which the execution engine writes as a
+    count ("11 date(s)", "3 matching passage(s)"). Independent verification was comparing every
+    claim against a tool summary and never saw the line it cited. The unit tests did not catch it
+    because their fixture observations had real text as their content, a shape no real run
+    produces. And a page locator (`report.pdf:p3`) was re-keyed as a row (`:r3`), so a finding
+    citing a PDF page looked up text under a key that did not exist and got nothing.
+
+    With `documents`, the text is read from the document itself. Without them (callers that
+    hold no documents), it falls back to the observation content, which was the old behaviour.
     """
     evidence: list[Evidence] = []
     for index, observation in enumerate(observations, start=1):
         for offset, source in enumerate(observation.sources):
             document, _, position = source.rpartition(":")
-            row = position[1:] if position[:1] in {"r", "p", "c"} else position
+            kind = position[:1] if position[:1] in {"r", "p", "c"} else "r"
+            number = position[1:] if position[:1] in {"r", "p", "c"} else position
+            value = int(number) if number.isdigit() else None
+            text = _text_at(documents, page_starts, observation, document, kind, value)
             evidence.append(
                 Evidence(
                     evidence_id=f"E-{index:03d}{offset:02d}",
                     locator=SourceLocator(
                         document_id=document or source,
                         document_name=document or source,
-                        row=int(row) if row.isdigit() else None,
+                        page=value if kind == "p" and value else None,
+                        row=value if kind == "r" else None,
+                        char_start=value if kind == "c" else None,
                     ),
-                    content=f"{source}: {observation.content}",
+                    content=f"{source}: {text or observation.content}",
                     retrieved_by_task_id=observation.task_id,
                 )
             )
     return evidence
+
+
+def _text_at(
+    documents: dict[str, str] | None,
+    page_starts: dict[str, list[int]] | None,
+    observation: Observation,
+    document: str,
+    kind: str,
+    value: int | None,
+) -> str:
+    """The source text a locator points at, or "" when it cannot be read."""
+    if not documents or document not in documents or value is None:
+        return ""
+    lines = documents[document].splitlines()
+
+    if kind == "r":
+        return lines[value - 1].strip() if 1 <= value <= len(lines) else ""
+
+    if kind == "p":
+        starts = (page_starts or {}).get(document, [])
+        if not 1 <= value <= len(starts):
+            return ""
+        first = starts[value - 1]
+        last = starts[value] - 1 if value < len(starts) else len(lines)
+        # Prefer the lines a tool actually matched on this page: they are the passage the
+        # citation is about. The whole page is the fallback, capped.
+        matched = [
+            lines[line - 1].strip()
+            for line in _matched_lines(observation)
+            if first <= line <= last and 1 <= line <= len(lines)
+        ]
+        if matched:
+            return " | ".join(dict.fromkeys(matched))[:MAX_PAGE_EVIDENCE_CHARS]
+        page = " ".join(line.strip() for line in lines[first:last] if line.strip())
+        return page[:MAX_PAGE_EVIDENCE_CHARS]
+
+    return ""
+
+
+def _matched_lines(observation: Observation) -> list[int]:
+    """Line numbers a tool recorded in its structured output, in order."""
+    found: list[int] = []
+    for key in ("extractions", "passages"):
+        items = observation.structured.get(key)
+        if not isinstance(items, list):
+            continue
+        for item in items:
+            line = item.get("line") if isinstance(item, dict) else None
+            if isinstance(line, int):
+                found.append(line)
+    return found
 
 
 def evidence_text_map(evidence: list[Evidence]) -> dict[str, str]:
@@ -144,11 +219,17 @@ class ReplanningController:
         self._max_tool_calls = bounds.max_tool_calls_per_run
         self._detector = EvidenceGapDetector()
         self._policy = get_settings().planning_policy
+        # The run's documents, so the evidence pool carries the text a locator points at rather
+        # than a tool's summary of it (BUG-015). Set at the start of `run`.
+        self._documents: dict[str, str] = {}
+        self._page_starts: dict[str, list[int]] = {}
 
     async def run(
         self, objective: Objective, observations: list[Observation], ctx: ToolContext
     ) -> ReplanResult:
         result = ReplanResult(observations=list(observations))
+        self._documents = ctx.documents
+        self._page_starts = ctx.page_starts
 
         findings = await self._reason_and_verify(objective, result.observations)
         result.findings = findings
@@ -229,7 +310,7 @@ class ReplanningController:
         findings = await self._reasoner.derive_findings(
             objective, observations, emit=self._emit, intent=self._intent
         )
-        text = evidence_text_map(evidence_from_observations(observations))
+        text = evidence_text_map(self._evidence(observations))
 
         await self._event(EventType.VERIFICATION_STARTED, {"findings": len(findings)})
         for finding in findings:
@@ -241,13 +322,16 @@ class ReplanningController:
     def _detect(
         self, findings: list[Finding], observations: list[Observation]
     ) -> list[EvidenceGap]:
-        evidence = evidence_from_observations(observations)
+        evidence = self._evidence(observations)
         gaps: list[EvidenceGap] = []
         for finding in findings:
             found = self._detector.detect(finding, evidence)
             finding.gaps = found
             gaps.extend(found)
         return gaps
+
+    def _evidence(self, observations: list[Observation]) -> list[Evidence]:
+        return evidence_from_observations(observations, self._documents, self._page_starts)
 
     async def _insert_tasks(
         self, gaps: list[EvidenceGap], iteration: int, result: ReplanResult

@@ -27,6 +27,7 @@ from pydantic import Field
 from app.core.config import Settings, get_settings
 from app.core.logging import get_logger
 from app.schemas.common import JarvisModel
+from app.schemas.trust import LexicalThresholds
 
 log = get_logger(__name__)
 
@@ -242,3 +243,17 @@ def reset_config_cache() -> None:
     """Drop cached configs. Used by tests that vary the environment."""
     get_models_config.cache_clear()
     get_agent_bounds.cache_clear()
+
+
+# --- agent.yaml: verification.lexical (Phase 26) ---------------------------------
+
+
+@lru_cache
+def get_lexical_thresholds() -> LexicalThresholds:
+    """Member 4's three verifier thresholds, from `agent.yaml:verification.lexical`.
+
+    Validated as unit floats. A threshold outside [0, 1] fails loudly here rather than making
+    every claim relevant, or none.
+    """
+    raw = load_yaml("agent.yaml").get("verification", {}).get("lexical", {})
+    return LexicalThresholds.model_validate(raw)

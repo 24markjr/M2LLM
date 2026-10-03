@@ -40,3 +40,9 @@ Thumbs.db
 pgdata/
 ollama-data/
 *.log
+
+# --- Teammate source, extracted for porting (ADR-009) ---
+# Archived verbatim in .claude/integrations/originals/. The extracted folders carry a
+# macOS venv and SQLite files and must never be committed.
+jarvis-member3/
+mem4/

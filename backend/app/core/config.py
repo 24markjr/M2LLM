@@ -45,6 +45,11 @@ class PlanningPolicyName(StrEnum):
 class VerificationProviderName(StrEnum):
     BASELINE = "baseline"
     REMOTE = "remote"
+    # Member 4's verifier, ported (Phase 26): TF-IDF relevance and a shared-identifier conflict
+    # rule. Deterministic, offline, no model call.
+    LEXICAL = "lexical"
+    # The configured model verifier and the lexical one together. See CompositeVerifier.
+    COMPOSITE = "composite"
 
 
 class Settings(BaseSettings):

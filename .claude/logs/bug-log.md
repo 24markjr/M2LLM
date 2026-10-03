@@ -596,3 +596,86 @@ Reasoning v4, relevance v3.
 Two prompts, each sensible alone, describing incompatible behaviour. Nothing in the type system or
 the test suite could catch that — only a scenario could, and only a *second* negative scenario did.
 One negative case was a single point of failure for the most important check in the suite.
+
+---
+
+## BUG-015 — Verification never saw the line a finding cited
+
+**Found:** 2026-10-03, while scanning Member 4's verifier for the port (Phase 25)
+**Severity:** High. Every verification verdict since Phase 15 was made against the wrong text
+**Status:** Fixed (`controller.py:evidence_from_observations`)
+
+**Symptom**
+
+Member 4's verifier scores a claim against evidence *text*, so before wiring it in, the text
+JARVIS's own verifier receives was printed for real tool output on the Aurora fixtures:
+
+```
+aurora_project_report.txt:r10  =>  'aurora_project_report.txt:r10: 11 date(s)'
+aurora_project_report.txt:r12  =>  'aurora_project_report.txt:r12: 11 date(s)'
+aurora_project_report.pdf:r1   =>  'aurora_project_report.pdf:p1: 3 matching passage(s)'
+```
+
+The line at `r10` is "The approved baseline completion date is 30 April 2026." The verifier was
+told "11 date(s)". The gap detector reads the same pool, so element-level support was being
+checked against counts as well.
+
+**Cause**
+
+Two defects in one function.
+
+1. `evidence_from_observations` built each evidence item's content from `observation.content`. The
+   execution engine writes that as a **summary of the tool result** (`_summarize`: "N date(s)",
+   "N matching passage(s)"), never the text at a locator. The docstring said the pool carried "the
+   observation's content" and that this made support checkable. Both halves were true separately
+   and false together.
+2. Page locators were re-keyed as rows. `report.pdf:p1` became `SourceLocator(row=1)`, whose
+   `as_ref()` is `report.pdf:r1`. A finding citing `report.pdf:p1` looked up a key that did not
+   exist and its verifier received an empty string, which is `INCONCLUSIVE` by construction. This
+   may be part of why `aurora_pdf_timeline` has never produced a verified finding.
+
+**Why the tests did not catch it**
+
+The fixture observations in `test_replanning.py` have real text as their `content`
+(`"target completion 2026-04-30"`). No real run produces that shape: `content` is always a count.
+The test checked a shape the production code never sees, so it passed while the behaviour it
+guarded was broken. Same family as BUG-013: correct in the unit, wrong in the assembled pipeline.
+
+**Fix**
+
+`evidence_from_observations(observations, documents, page_starts)` reads the text at each locator
+from the documents themselves: the line for `:rN`; for `:pN` the lines a tool matched on that
+page, else the page text, both capped at 1,200 characters. Page locators stay pages. The
+replanning controller passes the run's documents. Without documents it falls back to the old
+behaviour, so no caller breaks.
+
+Four tests use observations shaped the way the execution engine writes them.
+
+**Measured effect**
+
+Recorded in the Phase 25 entry of `development-log.md` against the previous baseline
+`20260925T115350`.
+
+---
+
+## BUG-016 — A locator's detail could come from another document
+
+**Found:** 2026-10-03, designing the knowledge tool's output (Phase 25)
+**Severity:** Medium. Latent until one tool returns items from several documents
+**Status:** Fixed (`reasoning/engine.py:_detail_for`)
+
+**Cause**
+
+`_detail_for` attaches the extracted value to each locator in the reasoning prompt, so the model
+sees `report.txt:r8  30 April 2026` rather than a bare reference. It matched items on `line` only.
+When one observation carries items from two documents with something on the same line number,
+`finance.txt:r8` was shown with `report.txt` line 8's value. The model then read one document's
+figure beside another document's citation.
+
+Rare with the existing tools. Certain with the knowledge tool (Phase 30), which returns claims from
+every document in one observation.
+
+**Fix**
+
+Match `document_id` as well as `line`. Items without a `document_id` still match on line alone, so
+existing tool output is unaffected. Two tests.

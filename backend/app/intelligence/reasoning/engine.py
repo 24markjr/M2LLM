@@ -430,7 +430,7 @@ def _detail_for(observation: Observation, source: str) -> str:
     what they contain - which is exactly how unresolvable citations get produced.
     """
     structured = observation.structured
-    row = source.rpartition(":r")[2]
+    document, _, row = source.rpartition(":r")
     if not row.isdigit():
         return ""
     line = int(row)
@@ -439,10 +439,16 @@ def _detail_for(observation: Observation, source: str) -> str:
         items = structured.get(key)
         if not isinstance(items, list):
             continue
+        # BUG-016: match the document as well as the line. Matching the line alone attached
+        # report.txt line 8's value to finance.txt:r8 whenever one tool returned items from both,
+        # so the model read one document's figure beside another's citation. Items that carry no
+        # document_id still match by line, as before.
         values = [
             str(item.get("value") or item.get("text", ""))
             for item in items
-            if isinstance(item, dict) and item.get("line") == line
+            if isinstance(item, dict)
+            and item.get("line") == line
+            and item.get("document_id", document) == document
         ]
         if values:
             return "  " + " | ".join(v[:120] for v in values[:3])

@@ -1,0 +1,22 @@
+[
+  {"document_id": "doc_a", "source_document": "shipping_report_a.pdf", "page": 4,
+   "content": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma."},
+
+  {"document_id": "doc_b", "source_document": "shipping_report_b.pdf", "page": 7,
+   "content": "Shipment 4821 arrived on 16 September at the Mumbai facility, according to security logs."},
+
+  {"document_id": "doc_c", "source_document": "employee_statement.pdf", "page": 1,
+   "content": "Rahul Sharma works for ABC Logistics and was present at the Mumbai warehouse on 14 September."},
+
+  {"document_id": "doc_d", "source_document": "security_report.pdf", "page": 2,
+   "content": "CCTV footage confirms Rahul Sharma entered the Mumbai warehouse at 10:15 AM on 14 September and left at 11:40 AM."},
+
+  {"document_id": "doc_e", "source_document": "invoice_9012.pdf", "page": 1,
+   "content": "Invoice 9012 for Shipment 9012 was issued by ABC Logistics to XYZ Traders on 18 September. Total amount recorded as accurate and undisputed."},
+
+  {"document_id": "doc_f", "source_document": "delivery_confirmation.pdf", "page": 1,
+   "content": "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya Menon. No discrepancies were reported."},
+
+  {"document_id": "doc_g", "source_document": "witness_statement.pdf", "page": 1,
+   "content": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma."}
+]

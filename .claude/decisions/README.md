@@ -21,3 +21,4 @@ reader looking for something that was never written.
 | ADR-006 | Task graph as the execution model | Accepted |
 | ADR-007 | *never written* - see above | - |
 | ADR-008 | Server-sent events, not WebSocket | Accepted |
+| ADR-009 | Port Members 3 and 4 into the backend, not call them as services | Accepted |

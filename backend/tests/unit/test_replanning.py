@@ -120,6 +120,65 @@ def test_the_text_map_is_keyed_by_locator() -> None:
     assert "2026-04-30" in text["report.txt:r1"]
 
 
+# --- BUG-015: the evidence pool carries the cited text, not a tool's summary ----
+
+
+def _real_observation(sources: list[str], structured: dict[str, object]) -> Observation:
+    """An observation shaped the way the execution engine writes one: content is a count."""
+    return Observation(
+        task_id="task_001",
+        task_type="extract_timeline",
+        content="2 date(s)",
+        structured=structured,
+        sources=sources,
+    )
+
+
+def test_evidence_text_is_the_cited_line_not_the_tool_summary() -> None:
+    """The verifier compared every claim against "2 date(s)" for three weeks.
+
+    The fixtures above give observations real text as their content, which no real run does,
+    and that is how the defect survived a suite written to catch exactly this.
+    """
+    observation = _real_observation(["finance.txt:r1"], {})
+    text = evidence_text_map(evidence_from_observations([observation], DOCS))
+
+    assert text["finance.txt:r1"] == "finance.txt:r1: Delivery completed 2026-05-14."
+    assert "date(s)" not in text["finance.txt:r1"]
+
+
+def test_a_page_locator_stays_a_page_and_carries_the_matched_lines() -> None:
+    """`report.pdf:p2` used to be re-keyed as `:r2`, so a finding citing it found no text."""
+    pdf = "--- page 1 ---\nIntro only.\n--- page 2 ---\nCompletion 30 April 2026.\nOther line."
+    observation = _real_observation(
+        ["report.pdf:p2"],
+        {"extractions": [{"document_id": "report.pdf", "line": 4, "value": "30 April 2026"}]},
+    )
+    evidence = evidence_from_observations(
+        [observation], {"report.pdf": pdf}, {"report.pdf": [1, 3]}
+    )
+
+    assert evidence[0].locator.as_ref() == "report.pdf:p2"
+    assert evidence[0].content == "report.pdf:p2: Completion 30 April 2026."
+
+
+def test_a_page_with_no_matched_line_carries_the_page_text_capped() -> None:
+    pdf = "--- page 1 ---\n" + "word " * 1000
+    observation = _real_observation(["report.pdf:p1"], {})
+    evidence = evidence_from_observations([observation], {"report.pdf": pdf}, {"report.pdf": [1]})
+
+    body = evidence[0].content.split(": ", 1)[1]
+    assert body.startswith("word word")
+    assert len(body) <= 1200
+
+
+def test_an_unreadable_locator_falls_back_to_the_observation_content() -> None:
+    """A locator past the end of the document is kept, with what the tool said about it."""
+    observation = _real_observation(["finance.txt:r99"], {})
+    text = evidence_text_map(evidence_from_observations([observation], DOCS))
+    assert text["finance.txt:r99"] == "finance.txt:r99: 2 date(s)"
+
+
 # --- termination: the loop always stops, and says why --------------------------
 
 

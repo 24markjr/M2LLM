@@ -78,6 +78,16 @@ class VerificationRequest(JarvisModel):
     context_hints: dict[str, str] = Field(default_factory=dict)
 
 
+class VerifierOpinion(JarvisModel):
+    """What one verifier said, when several were consulted for one verdict.
+
+    Recorded so disagreement between verifiers is measurable rather than resolved out of sight.
+    """
+
+    verifier: NonEmptyStr
+    status: VerificationStatus
+
+
 class VerificationResult(JarvisModel):
     """The verifier's verdict."""
 
@@ -91,6 +101,8 @@ class VerificationResult(JarvisModel):
     # Verification is never silently skipped.
     degraded: bool = False
     degraded_reason: str = ""
+    # Every verifier consulted, when more than one was (the composite verifier). Empty otherwise.
+    opinions: list[VerifierOpinion] = Field(default_factory=list)
     verified_at: datetime = Field(default_factory=utcnow)
 
     @model_validator(mode="after")

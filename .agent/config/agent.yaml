@@ -120,6 +120,12 @@ verification:
     - PARTIALLY_SUPPORTED
     - UNSUPPORTED
     - CONTRADICTED
+  # Member 4's lexical verifier (Phase 26), used when VERIFICATION_PROVIDER is `lexical` or
+  # `composite`. Their three thresholds, unchanged. See .claude/integrations/teammate-port.md T3.
+  lexical:
+    relevance: 0.2   # below this, evidence is not about the claim at all
+    support: 0.4     # relevant evidence at or above this confirms the claim
+    conflict: 0.5    # a conflict is only believed on evidence at least this close to the claim
 
 # --- Budget --------------------------------------------------------------------
 budget:

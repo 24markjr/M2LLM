@@ -22,8 +22,10 @@ from typing import Protocol, runtime_checkable
 import httpx
 from pydantic import Field
 
+from app.core.agent_config import get_lexical_thresholds
 from app.core.config import VerificationProviderName, get_settings
 from app.core.logging import get_logger
+from app.intelligence.trust.lexical import verify_claim
 from app.llm.errors import StructuredOutputError
 from app.llm.prompts import get_prompt_library
 from app.llm.provider import LLMProvider
@@ -31,12 +33,14 @@ from app.llm.structured import generate_structured
 from app.schemas.common import JarvisModel, Severity
 from app.schemas.event import EventType
 from app.schemas.finding import Finding
+from app.schemas.trust import EvidenceText, LexicalThresholds, LexicalVerdict, TrustStatus
 from app.schemas.verification import (
     IssueType,
     VerificationIssue,
     VerificationRequest,
     VerificationResult,
     VerificationStatus,
+    VerifierOpinion,
 )
 
 log = get_logger(__name__)
@@ -233,10 +237,196 @@ class RemoteVerifier:
             )
 
 
+class LexicalVerifier:
+    """Member 4's verifier as a `VerificationProvider` (Phase 26).
+
+    The decision itself is `app/intelligence/trust/lexical.py`, ported from Member 4's
+    `trust/verifier.py`: TF-IDF relevance, and a contradiction only when claim and evidence share
+    an identifying number and disagree on a date or time. This class is the adapter, and the only
+    place Member 4's status vocabulary meets JARVIS's:
+
+    | Member 4 | JARVIS | issue |
+    |---|---|---|
+    | SUPPORTED | SUPPORTED | - |
+    | CONTRADICTED | CONTRADICTED | SOURCE_CONFLICT, naming the source and the reason |
+    | UNSUPPORTED | UNSUPPORTED | EVIDENCE_MISMATCH |
+    | INSUFFICIENT_EVIDENCE | INCONCLUSIVE | NO_EVIDENCE - never a pass |
+
+    Same independence as the baseline: it sees the claim and the cited text, nothing else.
+    """
+
+    name = "lexical"
+
+    def __init__(self, thresholds: LexicalThresholds | None = None) -> None:
+        self._thresholds = thresholds or get_lexical_thresholds()
+
+    async def verify(self, request: VerificationRequest) -> VerificationResult:
+        resolved = [r for r in request.evidence if r.is_resolved]
+        if not resolved:
+            return VerificationResult(
+                status=VerificationStatus.UNSUPPORTED,
+                confidence=1.0,
+                verifier=self.name,
+                issues=[
+                    VerificationIssue(
+                        issue_type=IssueType.NO_EVIDENCE,
+                        description="the claim cites no evidence that could be resolved",
+                        severity=Severity.HIGH,
+                    )
+                ],
+            )
+
+        pool = [
+            EvidenceText(source=ref, content=_without_ref(ref, text))
+            for ref, text in request.evidence_content.items()
+            if _without_ref(ref, text).strip()
+        ]
+        if not pool:
+            return VerificationResult(
+                status=VerificationStatus.INCONCLUSIVE,
+                confidence=0.0,
+                verifier=self.name,
+                issues=[
+                    VerificationIssue(
+                        issue_type=IssueType.NO_EVIDENCE,
+                        description="the cited sources resolved but carry no readable content",
+                        severity=Severity.HIGH,
+                    )
+                ],
+            )
+
+        verdict = verify_claim(request.claim, pool, self._thresholds)
+        return lexical_result(verdict, documents={r.locator.document_id for r in resolved})
+
+
+def _without_ref(ref: str, text: str) -> str:
+    """Evidence text arrives as "doc.txt:r10: <line>". The locator is not evidence.
+
+    Left in, the document name and `r10` would count as matching terms in the TF-IDF score
+    against any claim that names the document.
+    """
+    prefix = f"{ref}: "
+    return text[len(prefix) :] if text.startswith(prefix) else text
+
+
+def lexical_result(verdict: LexicalVerdict, *, documents: set[str]) -> VerificationResult:
+    """Map Member 4's verdict onto JARVIS's, attaching the issue the replanning loop acts on."""
+    # Confidence in the verdict, derived as the baseline derives it: from how many distinct
+    # documents backed it. The TF-IDF score is not used. It is a similarity, not a calibrated
+    # probability, and confidence in this project is computed, never asserted.
+    confidence = min(1.0, 0.6 + 0.2 * len(documents))
+
+    if verdict.status is TrustStatus.SUPPORTED:
+        return VerificationResult(
+            status=VerificationStatus.SUPPORTED, confidence=confidence, verifier="lexical"
+        )
+    if verdict.status is TrustStatus.CONTRADICTED:
+        return VerificationResult(
+            status=VerificationStatus.CONTRADICTED,
+            confidence=confidence,
+            verifier="lexical",
+            issues=[
+                VerificationIssue(
+                    issue_type=IssueType.SOURCE_CONFLICT,
+                    description=verdict.reasoning,
+                    severity=Severity.HIGH,
+                    element=", ".join(verdict.contradicting),
+                )
+            ],
+        )
+    if verdict.status is TrustStatus.UNSUPPORTED:
+        return VerificationResult(
+            status=VerificationStatus.UNSUPPORTED,
+            confidence=confidence,
+            verifier="lexical",
+            issues=[
+                VerificationIssue(
+                    issue_type=IssueType.EVIDENCE_MISMATCH,
+                    description=verdict.reasoning,
+                )
+            ],
+        )
+    # INSUFFICIENT_EVIDENCE, and PARTIALLY_SUPPORTED which a single claim never receives.
+    return VerificationResult(
+        status=VerificationStatus.INCONCLUSIVE,
+        confidence=0.0,
+        verifier="lexical",
+        issues=[
+            VerificationIssue(
+                issue_type=IssueType.NO_EVIDENCE,
+                description=verdict.reasoning,
+                severity=Severity.HIGH,
+            )
+        ],
+    )
+
+
+class CompositeVerifier:
+    """A model verifier and the lexical verifier, each doing what it is good at (Phase 26).
+
+    The lexical check is precise on one thing: a shared identifier with a different date or time
+    is a contradiction, and it does not need to understand a sentence to see it. The model reads
+    meaning. Neither alone is enough, and averaging them would be worse than either.
+
+    Resolution, in order:
+
+    1. Lexical says CONTRADICTED and the model does not: **CONTRADICTED**. The rule needs a
+       shared identifier, disjoint dates or times, and relevance >= 0.5.
+    2. The model could not reach a verdict (INCONCLUSIVE) and lexical can: the lexical verdict,
+       marked **degraded** with the reason. A weaker check that is used is never a silent one.
+    3. Otherwise the model's verdict. A lexical SUPPORTED never overrides a model rejection:
+       word overlap is not meaning.
+
+    Both opinions are recorded on the result, so how often they disagree can be measured.
+    """
+
+    name = "composite"
+
+    def __init__(self, primary: VerificationProvider, lexical: LexicalVerifier) -> None:
+        self._primary = primary
+        self._lexical = lexical
+
+    async def verify(self, request: VerificationRequest) -> VerificationResult:
+        model = await self._primary.verify(request)
+        lexical = await self._lexical.verify(request)
+        opinions = [
+            VerifierOpinion(verifier=model.verifier, status=model.status),
+            VerifierOpinion(verifier=lexical.verifier, status=lexical.status),
+        ]
+
+        if (
+            lexical.status is VerificationStatus.CONTRADICTED
+            and model.status is not VerificationStatus.CONTRADICTED
+        ):
+            chosen = lexical.model_copy(update={"issues": [*lexical.issues, *model.issues]})
+        elif model.status is VerificationStatus.INCONCLUSIVE and lexical.status in {
+            VerificationStatus.SUPPORTED,
+            VerificationStatus.UNSUPPORTED,
+        }:
+            chosen = lexical.model_copy(
+                update={
+                    "degraded": True,
+                    "degraded_reason": (
+                        f"the {model.verifier} verifier reached no verdict; "
+                        "the lexical verdict was used"
+                    ),
+                }
+            )
+        else:
+            chosen = model
+
+        return chosen.model_copy(update={"verifier": self.name, "opinions": opinions})
+
+
 def build_verification_provider(llm: LLMProvider) -> VerificationProvider:
     """The configured verifier."""
     settings = get_settings()
     baseline = BaselineVerifier(llm)
+
+    if settings.verification_provider is VerificationProviderName.LEXICAL:
+        return LexicalVerifier()
+    if settings.verification_provider is VerificationProviderName.COMPOSITE:
+        return CompositeVerifier(baseline, LexicalVerifier())
 
     if settings.verification_provider is VerificationProviderName.REMOTE:
         if settings.verification_base_url:
@@ -272,6 +462,8 @@ async def verify_finding(
                     "verifier": result.verifier,
                     "degraded": result.degraded,
                     "issues": [i.issue_type.value for i in result.issues],
+                    # Every verifier consulted, so composite disagreement is measurable.
+                    "opinions": {o.verifier: o.status.value for o in result.opinions},
                 },
                 finding_id=finding.finding_id,
             )

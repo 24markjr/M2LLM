@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>JARVIS Knowledge Layer</title>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<style>
+  body { font-family: -apple-system, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f7f7f8; color: #1a1a1a; }
+  h1 { font-size: 22px; }
+  .searchbar { display: flex; gap: 8px; margin: 20px 0; }
+  input { flex: 1; padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; }
+  button { padding: 10px 18px; border: none; border-radius: 8px; background: #1a1a1a; color: white; cursor: pointer; font-size: 14px; }
+  .btn-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .btn-secondary { background: #b33; }
+  .btn-tertiary { background: #2a6f97; }
+  .card { background: white; border-radius: 10px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .card h2 { font-size: 15px; margin: 0 0 10px 0; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+  .entity-name { font-size: 20px; font-weight: 600; }
+  .tag { display: inline-block; font-size: 11px; background: #eee; padding: 2px 8px; border-radius: 12px; margin-left: 8px; color: #666; }
+  .edge { padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+  .edge:last-child { border-bottom: none; }
+  .predicate { color: #888; font-style: italic; }
+  .source { font-size: 12px; color: #999; }
+  .claim-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+  .contradiction { background: #fff3f0; border-left: 4px solid #d9534f; border-radius: 6px; padding: 14px; margin-bottom: 12px; }
+  .contradiction h3 { margin: 0 0 8px 0; font-size: 14px; color: #b33; }
+  .claim-option { padding: 6px 0; font-size: 14px; }
+  .empty { color: #999; font-size: 14px; }
+  .loading { color: #999; }
+  #graphCanvas { height: 420px; background: white; border-radius: 10px; }
+  .result-row { padding: 12px 0; border-bottom: 1px solid #eee; }
+  .result-row:last-child { border-bottom: none; }
+  .result-top { display: flex; justify-content: space-between; align-items: center; }
+  .score-badge { background: #2a6f97; color: white; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 12px; }
+  .explanation { font-size: 12px; color: #888; margin-top: 4px; }
+  .explanation .reason { background: #f0f0f0; padding: 1px 6px; border-radius: 8px; margin-right: 4px; display: inline-block; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<h1>JARVIS Knowledge Layer</h1>
+
+<div class="searchbar">
+  <input id="searchInput" placeholder="Search an entity, e.g. Rahul, Shipment 4821, Priya" />
+  <button onclick="investigate()">Investigate</button>
+</div>
+
+<div class="searchbar">
+  <input id="hybridInput" placeholder="Hybrid search, e.g. Rahul warehouse" />
+  <button class="btn-tertiary" onclick="hybridSearch()">Search</button>
+</div>
+
+<div class="btn-row">
+  <button class="btn-secondary" onclick="showAllContradictions()">Show All Contradictions</button>
+</div>
+
+<div id="results"></div>
+
+<script>
+const API = "http://127.0.0.1:8000";
+
+async function investigate() {
+  const name = document.getElementById("searchInput").value.trim();
+  const results = document.getElementById("results");
+  if (!name) return;
+  results.innerHTML = '<p class="loading">Searching...</p>';
+
+  try {
+    const res = await fetch(`${API}/investigation/${encodeURIComponent(name)}`);
+    const data = await res.json();
+
+    if (data.error) {
+      results.innerHTML = `<p class="empty">No entity found matching "${name}"</p>`;
+      return;
+    }
+
+    let html = "";
+
+    // Entity card
+    html += `<div class="card">
+      <h2>Entity</h2>
+      <div class="entity-name">${data.entity.name} <span class="tag">${data.entity.type}</span></div>
+    </div>`;
+
+    // Documents
+    html += `<div class="card"><h2>Mentioned In</h2>`;
+    if (data.documents.length === 0) {
+      html += `<p class="empty">No documents found</p>`;
+    } else {
+      const uniqueDocs = [...new Set(data.documents.map(d => d.source_document))];
+      html += uniqueDocs.map(d => `<span class="tag">${d}</span>`).join(" ");
+    }
+    html += `</div>`;
+
+    // Contradictions FIRST — most important
+    html += `<div class="card"><h2>Contradictions</h2>`;
+    if (data.contradictions.length === 0) {
+      html += `<p class="empty">No contradictions found</p>`;
+    } else {
+      data.contradictions.forEach(c => {
+        html += `<div class="contradiction">
+          <h3>⚠ Conflict on "${c.attribute}"</h3>
+          ${c.conflicting_claims.map(cc => `<div class="claim-option">• <b>${cc.value}</b> — <span class="source">${cc.source}, page ${cc.page}</span></div>`).join("")}
+        </div>`;
+      });
+    }
+    html += `</div>`;
+
+    // Network
+    html += `<div class="card"><h2>Connections</h2>`;
+    if (data.network.edges.length === 0) {
+      html += `<p class="empty">No connections found</p>`;
+    } else {
+      const nodeMap = {};
+      data.network.nodes.forEach(n => nodeMap[n.entity_id] = n.name);
+      data.network.edges.forEach(e => {
+        html += `<div class="edge">
+          <b>${nodeMap[e.from] || e.from}</b> <span class="predicate">${e.predicate}</span> <b>${nodeMap[e.to] || e.to}</b>
+          <div class="source">${e.source}, page ${e.page}</div>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+
+    // Graph visualization
+    html += `<div class="card"><h2>Knowledge Graph</h2><div id="graphCanvas"></div></div>`;
+
+    // Timeline
+    html += `<div class="card"><h2>Timeline</h2><div id="timelineBlock"><p class="loading">Loading...</p></div></div>`;
+
+    // Claims
+    html += `<div class="card"><h2>Claims</h2>`;
+    if (data.claims.length === 0) {
+      html += `<p class="empty">No claims found</p>`;
+    } else {
+      data.claims.forEach(c => {
+        html += `<div class="claim-row">
+          <span>${c.attribute}: <b>${c.value}</b></span>
+          <span class="source">${c.source_document}, page ${c.source_page}</span>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+
+    results.innerHTML = html;
+    drawGraph(data.network);
+    loadTimeline(data.entity.entity_id);
+  } catch (err) {
+    results.innerHTML = `<p class="empty">Error: could not reach API. Is uvicorn running?</p>`;
+  }
+}
+
+function drawGraph(network) {
+  const container = document.getElementById("graphCanvas");
+  if (!container || network.nodes.length === 0) return;
+
+  const nodes = new vis.DataSet(network.nodes.map(n => ({
+    id: n.entity_id,
+    label: n.name,
+    color: n.type === "SHIPMENT" ? "#ffb27a" :
+           n.type === "PERSON" ? "#7ac4ff" :
+           n.type === "ORG" ? "#a97aff" :
+           n.type === "LOCATION" ? "#7affa0" :
+           n.type === "DATE" ? "#ff7a9c" : "#cccccc"
+  })));
+
+  const edges = new vis.DataSet(network.edges.map(e => ({
+    from: e.from, to: e.to, label: e.predicate, arrows: "to",
+    font: { size: 10, align: "middle" }, color: "#999"
+  })));
+
+  new vis.Network(container, { nodes, edges }, {
+    nodes: { shape: "dot", size: 16, font: { size: 13 } },
+    edges: { smooth: { type: "curvedCW", roundness: 0.15 } },
+    physics: { stabilization: true }
+  });
+}
+
+async function loadTimeline(entityId) {
+  const block = document.getElementById("timelineBlock");
+  if (!block) return;
+  try {
+    const res = await fetch(`${API}/timeline`);
+    const allEvents = await res.json();
+    const events = allEvents.filter(e => e.entity === entityId);
+
+    if (events.length === 0) {
+      block.innerHTML = `<p class="empty">No dated events found</p>`;
+      return;
+    }
+
+    let html = "";
+    events.forEach((e, i) => {
+      const relationLabel = e.relation_to_previous
+        ? `<span class="tag">${e.relation_to_previous.replace(/_/g, " ")}</span>`
+        : "";
+      html += `<div class="edge">
+        <b>${e.attribute}: ${e.value}</b> ${relationLabel}
+        <div class="source">${e.source}, page ${e.page}</div>
+      </div>`;
+    });
+    block.innerHTML = html;
+  } catch (err) {
+    block.innerHTML = `<p class="empty">Could not load timeline</p>`;
+  }
+}
+
+async function hybridSearch() {
+  const query = document.getElementById("hybridInput").value.trim();
+  const results = document.getElementById("results");
+  if (!query) return;
+  results.innerHTML = '<p class="loading">Searching...</p>';
+
+  try {
+    const res = await fetch(`${API}/search?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+
+    let html = `<div class="card"><h2>Hybrid Search Results for "${query}"</h2>`;
+    if (data.length === 0) {
+      html += `<p class="empty">No matching results</p>`;
+    } else {
+      data.forEach(r => {
+        const c = r.claim;
+        html += `<div class="result-row">
+          <div class="result-top">
+            <span><b>${c.entity}</b> — ${c.attribute}: <b>${c.value}</b></span>
+            <span class="score-badge">score ${r.score}</span>
+          </div>
+          <div class="source">${c.source_document}, page ${c.source_page}</div>
+          <div class="explanation">${r.explanation.map(e => `<span class="reason">${e}</span>`).join("")}</div>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+    results.innerHTML = html;
+  } catch (err) {
+    results.innerHTML = `<p class="empty">Error: could not reach API. Is uvicorn running?</p>`;
+  }
+}
+
+async function showAllContradictions() {
+  const results = document.getElementById("results");
+  results.innerHTML = '<p class="loading">Loading...</p>';
+  try {
+    const res = await fetch(`${API}/contradictions`);
+    const data = await res.json();
+    let html = `<div class="card"><h2>All Contradictions</h2>`;
+    if (data.length === 0) {
+      html += `<p class="empty">No contradictions found</p>`;
+    } else {
+      data.forEach(c => {
+        html += `<div class="contradiction">
+          <h3>⚠ ${c.entity} — Conflict on "${c.attribute}"</h3>
+          ${c.conflicting_claims.map(cc => `<div class="claim-option">• <b>${cc.value}</b> — <span class="source">${cc.source}, page ${cc.page}</span></div>`).join("")}
+        </div>`;
+      });
+    }
+    html += `</div>`;
+    results.innerHTML = html;
+  } catch (err) {
+    results.innerHTML = `<p class="empty">Error: could not reach API. Is uvicorn running?</p>`;
+  }
+}
+
+document.getElementById("searchInput").addEventListener("keypress", e => {
+  if (e.key === "Enter") investigate();
+});
+document.getElementById("hybridInput").addEventListener("keypress", e => {
+  if (e.key === "Enter") hybridSearch();
+});
+</script>
+
+</body>
+</html>

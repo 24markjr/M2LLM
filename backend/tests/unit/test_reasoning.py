@@ -15,6 +15,7 @@ from app.core.events import EventBus, MemoryEventSink, RunEventEmitter
 from app.intelligence.reasoning.engine import (
     EvidenceBinder,
     ReasoningEngine,
+    _detail_for,
     parse_locator,
     source_agreement,
 )
@@ -316,3 +317,41 @@ def test_the_observation_budget_is_not_the_generation_budget() -> None:
         "the prompt must be allowed to carry more than the model is allowed to write back"
     )
     assert observation_budget >= 6000, "6000 is compact()'s own default; do not go under it"
+
+
+# --- BUG-016: a locator's detail comes from its own document ---------------------
+
+
+def test_detail_matches_the_document_as_well_as_the_line() -> None:
+    """Two documents, one item each on line 8. Each locator gets its own document's value.
+
+    Matching on the line alone put report.txt's figure beside finance.txt's citation, which
+    is exactly the shape the knowledge tool produces: one tool, items from every document.
+    """
+    observation = Observation(
+        task_id="task_001",
+        task_type="extract_claims",
+        content="2 claim(s)",
+        structured={
+            "extractions": [
+                {"document_id": "report.txt", "line": 8, "value": "30 April 2026"},
+                {"document_id": "finance.txt", "line": 8, "value": "14 May 2026"},
+            ]
+        },
+        sources=["report.txt:r8", "finance.txt:r8"],
+    )
+
+    assert "30 April 2026" in _detail_for(observation, "report.txt:r8")
+    assert "14 May 2026" not in _detail_for(observation, "report.txt:r8")
+    assert "14 May 2026" in _detail_for(observation, "finance.txt:r8")
+
+
+def test_detail_still_matches_items_that_carry_no_document() -> None:
+    observation = Observation(
+        task_id="task_001",
+        task_type="retrieve_evidence",
+        content="1 matching passage(s)",
+        structured={"passages": [{"line": 3, "text": "Total spend 450,000."}]},
+        sources=["finance.txt:r3"],
+    )
+    assert "450,000" in _detail_for(observation, "finance.txt:r3")

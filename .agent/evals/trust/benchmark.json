@@ -1,0 +1,422 @@
+[
+  {
+    "case_id": "BENCH-008",
+    "question": "When was shipment 1008 processed and by whom?",
+    "claim_text": "Shipment 1008 was processed at 14:30 PM by Rahul Sharma representing Meridian Supply Co.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-000",
+    "question": "When was shipment 1000 processed and by whom?",
+    "claim_text": "Shipment 1000 was processed at 17:30 PM by Karan Mehta representing ABC Logistics.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-022",
+    "question": "When was shipment 1022 processed and by whom?",
+    "claim_text": "Shipment 1022 was processed at 14:00 PM by Sana Iyer representing Meridian Supply Co.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-INSUFF-011",
+    "question": "What was the salary of Unlisted Person 11 in shipment 90011?",
+    "claim_text": "Unlisted Person 11 received a salary related to shipment 90011.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-028",
+    "question": "When was shipment 1028 processed and by whom?",
+    "claim_text": "Shipment 1028 was processed at 6:15 AM by Aman Verma representing Zenith Traders.",
+    "expected_status": "CONTRADICTED",
+    "category": "contradiction"
+  },
+  {
+    "case_id": "BENCH-INSUFF-013",
+    "question": "What was the salary of Unlisted Person 13 in shipment 90013?",
+    "claim_text": "Unlisted Person 13 received a salary related to shipment 90013.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-INSUFF-003",
+    "question": "What was the salary of Unlisted Person 3 in shipment 90003?",
+    "claim_text": "Unlisted Person 3 received a salary related to shipment 90003.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-006",
+    "question": "When was shipment 1006 processed and by whom?",
+    "claim_text": "Shipment 1006 was processed at 12:00 PM by Aman Verma representing ABC Logistics.",
+    "expected_status": "CONTRADICTED",
+    "category": "contradiction"
+  },
+  {
+    "case_id": "BENCH-017",
+    "question": "When was shipment 1017 processed and by whom?",
+    "claim_text": "Shipment 1017 was processed at 12:40 PM by Aman Verma representing Orion Freight.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-025",
+    "question": "When was shipment 1025 processed and by whom?",
+    "claim_text": "Shipment 1025 was processed at 14:00 PM by Karan Mehta representing Zenith Traders.",
+    "expected_status": "CONTRADICTED",
+    "category": "contradiction"
+  },
+  {
+    "case_id": "BENCH-INSUFF-000",
+    "question": "What was the salary of Unlisted Person 0 in shipment 90000?",
+    "claim_text": "Unlisted Person 0 received a salary related to shipment 90000.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-015",
+    "question": "When was shipment 1015 processed and by whom?",
+    "claim_text": "Shipment 1015 was processed at 9:00 AM by Karan Mehta representing Zenith Traders.",
+    "expected_status": "CONTRADICTED",
+    "category": "contradiction"
+  },
+  {
+    "case_id": "BENCH-024",
+    "question": "When was shipment 1024 processed and by whom?",
+    "claim_text": "Shipment 1024 was processed at 13:00 PM by Aman Verma representing Meridian Supply Co.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-INSUFF-012",
+    "question": "What was the salary of Unlisted Person 12 in shipment 90012?",
+    "claim_text": "Unlisted Person 12 received a salary related to shipment 90012.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-014",
+    "question": "When was shipment 1014 processed and by whom?",
+    "claim_text": "Shipment 1014 was processed at 20:45 PM by Sana Iyer representing Meridian Supply Co.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-036",
+    "question": "When was shipment 1036 processed and by whom?",
+    "claim_text": "Shipment 1036 was processed at 16:40 PM by Rahul Sharma representing Orion Freight.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-016",
+    "question": "When was shipment 1016 processed and by whom?",
+    "claim_text": "Shipment 1016 was processed at 9:45 AM by Sana Iyer representing Zenith Traders.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-INSUFF-008",
+    "question": "What was the salary of Unlisted Person 8 in shipment 90008?",
+    "claim_text": "Unlisted Person 8 received a salary related to shipment 90008.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-029",
+    "question": "When was shipment 1029 processed and by whom?",
+    "claim_text": "Shipment 1029 was processed at 19:00 PM by Rahul Sharma representing ABC Logistics.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-001",
+    "question": "When was shipment 1001 processed and by whom?",
+    "claim_text": "Shipment 1001 was processed at 16:45 PM by Priya Nair representing Orion Freight.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-039",
+    "question": "When was shipment 1039 processed and by whom?",
+    "claim_text": "Shipment 1039 was processed at 19:00 PM by Sana Iyer representing Meridian Supply Co.",
+    "expected_status": "CONTRADICTED",
+    "category": "contradiction"
+  },
+  {
+    "case_id": "BENCH-023",
+    "question": "When was shipment 1023 processed and by whom?",
+    "claim_text": "Shipment 1023 was processed at 18:30 PM by Karan Mehta representing ABC Logistics.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-026",
+    "question": "When was shipment 1026 processed and by whom?",
+    "claim_text": "Shipment 1026 was processed at 11:15 AM by Aman Verma representing Orion Freight.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-INSUFF-009",
+    "question": "What was the salary of Unlisted Person 9 in shipment 90009?",
+    "claim_text": "Unlisted Person 9 received a salary related to shipment 90009.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-INSUFF-015",
+    "question": "What was the salary of Unlisted Person 15 in shipment 90015?",
+    "claim_text": "Unlisted Person 15 received a salary related to shipment 90015.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-INSUFF-016",
+    "question": "What was the salary of Unlisted Person 16 in shipment 90016?",
+    "claim_text": "Unlisted Person 16 received a salary related to shipment 90016.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-007",
+    "question": "When was shipment 1007 processed and by whom?",
+    "claim_text": "Shipment 1007 was processed at 17:40 PM by Aman Verma representing Zenith Traders.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-INSUFF-019",
+    "question": "What was the salary of Unlisted Person 19 in shipment 90019?",
+    "claim_text": "Unlisted Person 19 received a salary related to shipment 90019.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-021",
+    "question": "When was shipment 1021 processed and by whom?",
+    "claim_text": "Shipment 1021 was processed at 15:00 PM by Priya Nair representing Orion Freight.",
+    "expected_status": "CONTRADICTED",
+    "category": "contradiction"
+  },
+  {
+    "case_id": "BENCH-002",
+    "question": "When was shipment 1002 processed and by whom?",
+    "claim_text": "Shipment 1002 was processed at 6:00 AM by Devika Rao representing Meridian Supply Co.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-019",
+    "question": "When was shipment 1019 processed and by whom?",
+    "claim_text": "Shipment 1019 was processed at 11:15 AM by Aman Verma representing Meridian Supply Co.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-004",
+    "question": "When was shipment 1004 processed and by whom?",
+    "claim_text": "Shipment 1004 was processed at 18:00 PM by Priya Nair representing Meridian Supply Co.",
+    "expected_status": "CONTRADICTED",
+    "category": "contradiction"
+  },
+  {
+    "case_id": "BENCH-011",
+    "question": "When was shipment 1011 processed and by whom?",
+    "claim_text": "Shipment 1011 was processed at 16:30 PM by Sana Iyer representing Zenith Traders.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-005",
+    "question": "When was shipment 1005 processed and by whom?",
+    "claim_text": "Shipment 1005 was processed at 10:15 AM by Karan Mehta representing Meridian Supply Co.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-038",
+    "question": "When was shipment 1038 processed and by whom?",
+    "claim_text": "Shipment 1038 was processed at 16:40 PM by Priya Nair representing ABC Logistics.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-INSUFF-001",
+    "question": "What was the salary of Unlisted Person 1 in shipment 90001?",
+    "claim_text": "Unlisted Person 1 received a salary related to shipment 90001.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-010",
+    "question": "When was shipment 1010 processed and by whom?",
+    "claim_text": "Shipment 1010 was processed at 7:15 AM by Karan Mehta representing Orion Freight.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-033",
+    "question": "When was shipment 1033 processed and by whom?",
+    "claim_text": "Shipment 1033 was processed at 9:15 AM by Devika Rao representing Meridian Supply Co.",
+    "expected_status": "CONTRADICTED",
+    "category": "contradiction"
+  },
+  {
+    "case_id": "BENCH-032",
+    "question": "When was shipment 1032 processed and by whom?",
+    "claim_text": "Shipment 1032 was processed at 12:30 PM by Karan Mehta representing Orion Freight.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-030",
+    "question": "When was shipment 1030 processed and by whom?",
+    "claim_text": "Shipment 1030 was processed at 14:15 PM by Priya Nair representing Orion Freight.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-INSUFF-017",
+    "question": "What was the salary of Unlisted Person 17 in shipment 90017?",
+    "claim_text": "Unlisted Person 17 received a salary related to shipment 90017.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-INSUFF-014",
+    "question": "What was the salary of Unlisted Person 14 in shipment 90014?",
+    "claim_text": "Unlisted Person 14 received a salary related to shipment 90014.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-INSUFF-018",
+    "question": "What was the salary of Unlisted Person 18 in shipment 90018?",
+    "claim_text": "Unlisted Person 18 received a salary related to shipment 90018.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-020",
+    "question": "When was shipment 1020 processed and by whom?",
+    "claim_text": "Shipment 1020 was processed at 18:00 PM by Devika Rao representing Meridian Supply Co.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-INSUFF-007",
+    "question": "What was the salary of Unlisted Person 7 in shipment 90007?",
+    "claim_text": "Unlisted Person 7 received a salary related to shipment 90007.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-034",
+    "question": "When was shipment 1034 processed and by whom?",
+    "claim_text": "Shipment 1034 was processed at 15:15 PM by Aman Verma representing ABC Logistics.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-037",
+    "question": "When was shipment 1037 processed and by whom?",
+    "claim_text": "Shipment 1037 was processed at 9:40 AM by Devika Rao representing Orion Freight.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-003",
+    "question": "When was shipment 1003 processed and by whom?",
+    "claim_text": "Shipment 1003 was processed at 17:45 PM by Priya Nair representing ABC Logistics.",
+    "expected_status": "CONTRADICTED",
+    "category": "contradiction"
+  },
+  {
+    "case_id": "BENCH-013",
+    "question": "When was shipment 1013 processed and by whom?",
+    "claim_text": "Shipment 1013 was processed at 14:15 PM by Karan Mehta representing ABC Logistics.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-018",
+    "question": "When was shipment 1018 processed and by whom?",
+    "claim_text": "Shipment 1018 was processed at 17:45 PM by Aman Verma representing Orion Freight.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-012",
+    "question": "When was shipment 1012 processed and by whom?",
+    "claim_text": "Shipment 1012 was processed at 16:30 PM by Aman Verma representing Zenith Traders.",
+    "expected_status": "CONTRADICTED",
+    "category": "contradiction"
+  },
+  {
+    "case_id": "BENCH-009",
+    "question": "When was shipment 1009 processed and by whom?",
+    "claim_text": "Shipment 1009 was processed at 17:00 PM by Devika Rao representing Zenith Traders.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-031",
+    "question": "When was shipment 1031 processed and by whom?",
+    "claim_text": "Shipment 1031 was processed at 20:45 PM by Devika Rao representing Meridian Supply Co.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-INSUFF-005",
+    "question": "What was the salary of Unlisted Person 5 in shipment 90005?",
+    "claim_text": "Unlisted Person 5 received a salary related to shipment 90005.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-INSUFF-002",
+    "question": "What was the salary of Unlisted Person 2 in shipment 90002?",
+    "claim_text": "Unlisted Person 2 received a salary related to shipment 90002.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-035",
+    "question": "When was shipment 1035 processed and by whom?",
+    "claim_text": "Shipment 1035 was processed at 7:00 AM by Rahul Sharma representing ABC Logistics.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  },
+  {
+    "case_id": "BENCH-INSUFF-010",
+    "question": "What was the salary of Unlisted Person 10 in shipment 90010?",
+    "claim_text": "Unlisted Person 10 received a salary related to shipment 90010.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-INSUFF-006",
+    "question": "What was the salary of Unlisted Person 6 in shipment 90006?",
+    "claim_text": "Unlisted Person 6 received a salary related to shipment 90006.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-INSUFF-004",
+    "question": "What was the salary of Unlisted Person 4 in shipment 90004?",
+    "claim_text": "Unlisted Person 4 received a salary related to shipment 90004.",
+    "expected_status": "INSUFFICIENT_EVIDENCE",
+    "category": "insufficient_evidence"
+  },
+  {
+    "case_id": "BENCH-027",
+    "question": "When was shipment 1027 processed and by whom?",
+    "claim_text": "Shipment 1027 was processed at 13:00 PM by Devika Rao representing ABC Logistics.",
+    "expected_status": "SUPPORTED",
+    "category": "supported"
+  }
+]
