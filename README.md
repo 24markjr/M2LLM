@@ -139,7 +139,7 @@ charts the committed evaluation reports.
 
 ```bash
 cd backend
-pytest tests -m "not llm"      # 581 tests, no model needed
+pytest tests -m "not llm"      # 699 tests, no model needed
 ```
 
 ---
@@ -166,7 +166,7 @@ repository is hand-written** — a report carries the model, prompt versions and
 two reports produced with different stamps are refused as incomparable rather than quietly
 compared.
 
-The current baseline is `20260925T115350-qwen3-4b-all`. Its headline numbers:
+The current baseline is `20261003T092851-qwen3-4b-all`. Its headline numbers:
 
 | Metric | Value | |
 |---|---|---|
@@ -174,9 +174,9 @@ The current baseline is `20260925T115350-qwen3-4b-all`. Its headline numbers:
 | `unsupported_claim_rate` | 0.000 | the hallucination proxy |
 | `tool_selection_accuracy` | 1.000 | |
 | `dependency_correctness` | 0.848 | |
-| `replanning_success` | 0.787 | gaps closed within the iteration ceiling |
+| `replanning_success` | 1.000 | gaps closed within the iteration ceiling - vacuous here, see below |
 | `intent_accuracy` | 0.628 | |
-| `task_efficiency` | 1.756 | tasks ÷ minimal sufficient tasks — lower is better |
+| `task_efficiency` | 1.447 | tasks ÷ minimal sufficient tasks — lower is better |
 | `plan_validity` | 0.625 | plans passing with **zero** repairs |
 
 Two of those deserve their explanation rather than a chart.
@@ -185,8 +185,18 @@ Two of those deserve their explanation rather than a chart.
 they can execute. That is the planner needing help, and the metric says so instead of hiding it.
 The repairs are recorded on the plan, so a repaired plan never counts as clean.
 
-**`verification_success` is 0.750, and 1.000 would be a worry rather than a win.** A verifier that
-approved everything would score perfectly and be worthless.
+**`verification_success` is now 1.000, and that is being treated as a worry, not a win.** A
+verifier that approved everything would score perfectly and be worthless. It rose from 0.750 when
+BUG-015 was fixed: until 2026-10-03 the verifier was handed a tool's summary ("11 date(s)") instead
+of the line a finding cited, so it rejected findings for the wrong reason. Reading real text, it now
+passes them, and an audit of every pass found most correct and at least one wrong: a claim whose
+decisive date appears in none of its cited evidence. That is BUG-018. The composite verifier's
+specifics check (Phase 26) catches exactly that case, and whether it becomes the default is decided
+by measurement in Phase 34.
+
+**`replanning_success` at 1.000 is vacuous.** With every finding verified, no evidence gaps were
+detected, so the metric is 0 of 0 gaps closed. It says nothing about the replanning loop on this
+baseline.
 
 ### The open defect, stated plainly
 
@@ -207,9 +217,10 @@ Two changes did it, and neither was asking the model more firmly:
   was established. This was a contradiction between two of my own prompts, and the second negative
   scenario is what exposed it.
 
-**What remains:** two positive scenarios produce **no findings where claims are planted**
-(`aurora_contradiction`, `aurora_pdf_timeline`). The build fails on that, and the threshold has not
-been moved.
+**What remains:** one positive scenario produces **no findings where claims are planted**
+(`aurora_pdf_timeline`). The build fails on that, and the threshold has not been moved.
+`aurora_contradiction` used to fail the same way, and since BUG-015 it reports the planted
+contradiction, citing both documents.
 
 That trade is worth understanding rather than glossing. Before these fixes the contradiction
 scenario reported four findings — three of them restatements, counted as successes by every metric.

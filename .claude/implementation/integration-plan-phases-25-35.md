@@ -66,6 +66,7 @@ Two rules this plan adds, both following from the teammates' code:
 | A12 | **Trust and security benchmarks inside the evaluation harness**, stamped like the agent reports | Their benchmark becomes a regression gate instead of a script | 26, 27, 34 |
 | A13 | **Three new mission scenarios** from Member 3's shipment sample, including a negative case and an injection case | The current suite has never seen this domain | 34 |
 | A14 | **Cross-investigation graph** in Neo4j memory: the same entity across past runs | The one thing Neo4j does that the per-run graph cannot | 33 |
+| A15 | **Specifics check** in the composite verifier: every date and figure a claim states must appear in its cited evidence | Added 2026-10-03 after the Phase 25 audit found the model verifier approving a claim whose decisive date was in none of its evidence (BUG-018) | 26 |
 
 ---
 
@@ -81,19 +82,19 @@ Two rules this plan adds, both following from the teammates' code:
                                               34 Evaluation & hardening ── 35 Documentation & handover
 ```
 
-| # | Phase | Ports | Size | Depends on |
-|---|---|---|---|---|
-| 25 | Groundwork: bug fixes, shared temporal parser | — | S | — |
-| 26 | Trust layer: lexical and composite verification, trust benchmark | T1–T6, T13–T16 | M | 25 |
-| 27 | Security: injection scanning and safe prompts | T7–T9 | S | 25 |
-| 28 | Knowledge core: extraction, resolution, conflicts, timeline, search | K1–K4, K6–K9 | L | 25 |
-| 29 | Neo4j graph store | K5, K10, K11 | L | 28 |
-| 30 | Knowledge in the mission pipeline | — | M | 29 |
-| 31 | Knowledge API | K12 | M | 30 |
-| 32 | 3D knowledge graph explorer | K13 | L | 31 |
-| 33 | Memory: working, episodic, semantic | T10–T12 | M | 29, 31 |
-| 34 | Evaluation and hardening | K14 | M | 26–33 |
-| 35 | Documentation and handover | — | S | 34 |
+| # | Phase | Ports | Size | Depends on | Status |
+|---|---|---|---|---|---|
+| 25 | Groundwork: bug fixes, shared temporal parser | — | S | — | **DONE** 2026-10-03 |
+| 26 | Trust layer: lexical and composite verification, trust benchmark | T1–T6, T13–T16 | M | 25 | **DONE** 2026-10-03 |
+| 27 | Security: injection scanning and safe prompts | T7–T9 | S | 25 | TODO |
+| 28 | Knowledge core: extraction, resolution, conflicts, timeline, search | K1–K4, K6–K9 | L | 25 | TODO |
+| 29 | Neo4j graph store | K5, K10, K11 | L | 28 | TODO |
+| 30 | Knowledge in the mission pipeline | — | M | 29 | TODO |
+| 31 | Knowledge API | K12 | M | 30 | TODO |
+| 32 | 3D knowledge graph explorer | K13 | L | 31 | TODO |
+| 33 | Memory: working, episodic, semantic | T10–T12 | M | 29, 31 | TODO |
+| 34 | Evaluation and hardening | K14 | M | 26–33 | TODO |
+| 35 | Documentation and handover | — | S | 34 | TODO |
 
 **Minimum viable integration**, if time runs short: 25, 26, 28, 30, 34. That delivers verified
 cross-document contradictions in the agent's own findings, which is what the open defect needs.

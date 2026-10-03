@@ -3,7 +3,7 @@
 **Scope:** understanding user intent, planning tasks, selecting tools, and reasoning across all
 gathered information.
 **Repository:** [github.com/24markjr/M2LLM](https://github.com/24markjr/M2LLM)
-**Baseline for every number below:** `.agent/evals/reports/20260925T115350-qwen3-4b-all.json` (8 scenarios)
+**Baseline for every number below:** `.agent/evals/reports/20261003T092851-qwen3-4b-all.json` (8 scenarios)
 (`qwen3:4b`, prompt versions `intent=2 planner=2 reasoning=4 relevance=3 verification=1`)
 
 ---
@@ -39,15 +39,15 @@ Everything else in the design follows from taking that seriously.
 | **Task planning** — a validated DAG, with deterministic repair and bounded re-prompting | [`intelligence/planner/`](../backend/app/intelligence/planner/) | `plan_validity` **0.625**, `dependency_correctness` **0.848** |
 | **Tool selection** — capability filter → schema compatibility → model tiebreak only on a tie | [`intelligence/router/engine.py`](../backend/app/intelligence/router/engine.py) | `tool_selection_accuracy` **1.000** |
 | **Reasoning over evidence** — claims bound to real locators, classification and confidence recomputed | [`intelligence/reasoning/engine.py`](../backend/app/intelligence/reasoning/engine.py) | `evidence_coverage` **1.000**, `unsupported_claim_rate` **0.000** |
-| **Evidence gap detection** — deterministic, naming the specific absent element | [`intelligence/evidence_gap/detector.py`](../backend/app/intelligence/evidence_gap/detector.py) | `replanning_success` **0.787** |
-| **Adaptive replanning** — the graph is edited while it runs, bounded, every stop reasoned | [`intelligence/replanning/controller.py`](../backend/app/intelligence/replanning/controller.py) | `task_efficiency` **1.756** |
+| **Evidence gap detection** — deterministic, naming the specific absent element | [`intelligence/evidence_gap/detector.py`](../backend/app/intelligence/evidence_gap/detector.py) | `replanning_success` **1.000** (vacuous: no gaps on this baseline) |
+| **Adaptive replanning** — the graph is edited while it runs, bounded, every stop reasoned | [`intelligence/replanning/controller.py`](../backend/app/intelligence/replanning/controller.py) | `task_efficiency` **1.447** |
 | **Measurement** — ten metrics computed from real runs | [`app/evaluation/`](../backend/app/evaluation/) | reports in [`.agent/evals/reports/`](../.agent/evals/reports/) |
 
 Supporting: concurrent execution by dependency wave, an append-only event log from which a run is
 fully reconstructable, a FastAPI + SSE surface, and a React operations console that streams a run
 live and can replay a recorded one.
 
-**581 tests**, `mypy --strict` clean across 83 modules, 82% coverage (90–100% on
+**699 tests**, `mypy --strict` clean across 95 modules, 86% coverage (90–100% on
 `intelligence/**` and `schemas/**`).
 
 ---
@@ -162,7 +162,7 @@ reachable from exactly one package,
 
 ```bash
 python -m app.cli health                      # the engine answers
-pytest tests -m "not llm"                     # 581 tests, no model needed, ~18s
+pytest tests -m "not llm"                     # 699 tests, no model needed, ~15s
 pytest tests/unit/test_llm_isolation.py -v    # invariant 1, proven by parsing the source
 pytest tests/unit/test_invariants.py -v       # the whole "must not do" list
 pytest tests/unit/test_adversarial.py -v      # injection, corrupt input, zero-finding runs

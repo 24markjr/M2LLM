@@ -6,6 +6,54 @@ and what is still broken.
 
 ---
 
+# 2026-10-03 - Phases 25 and 26: integrating Members 3 and 4
+
+## What was done
+
+**Scanned both teammates' code end to end** (Member 3 `jarvis-member3/`, Member 4
+`mem4/MajorP/Mem-4/`), ran their own code from a scratch copy, and recorded the results before
+changing anything: Member 4's benchmark 60/60 with scikit-learn and 46/60 without; their verifier
+missing every date conflict; their own contradiction demo returning SUPPORTED. Archived both
+verbatim and wrote the feature inventory (`integrations/teammate-port.md`), ADR-009 and the
+eleven-phase plan. The owner answered D1-D6: Neo4j as default store, both graph uses, keep the
+written code, one commit per phase, measure before changing defaults, keep all add-ons.
+
+**Phase 25.** BUG-015 was found by printing what the verifier receives for real tool output.
+Fixed with BUG-016 and the shared temporal parser.
+
+**Phase 26.** Ported Member 4's verifier with scikit-learn parity (4.4e-16), the answer
+evaluator, the benchmark (byte-identical generator) and two new verification providers. Found
+BUG-017 preparing Exp-004.
+
+## Measurements, including the ones that went wrong
+
+- **The first post-fix evaluation ran at 104.7 s per scenario**, `aurora_timeline_only` at 646 s.
+  Re-run alone it took 24.6 s, and the full suite re-run gave 26.0 s. The first run overlapped
+  Docker Desktop starting and local scratch work; the cause was not proven, and that report was
+  discarded rather than committed.
+- **`verification_success` 1.000** was audited claim by claim (BUG-018) rather than reported.
+  The audit led to A15. A re-run with `composite` did not reproduce the bad claim, because model
+  output varies, so A15 is pinned by a unit test and awaits Exp-004.
+- `replanning_success` 1.000 is 0 of 0 gaps. It is recorded as vacuous in the README.
+
+## Process notes
+
+- **Git Bash's `grep` hides `\r`**, so early line-ending checks were wrong. `git ls-files --eol`
+  is the reliable one. Edits made with `Path.write_text` converted some files to CRLF wholesale.
+  Edits now preserve each file's existing ending. The repo was already mixed before this work.
+- **The owner commits and pushes between steps.** Phase 27 code started early ended up in
+  `ab928d2` with one invariant test failing (EventType 37 -> 38). Fixed forward in the Phase 26
+  close-out. **From now on: one phase, fully closed, then stop and report.**
+
+## Verification
+
+- `pytest tests -m "not llm"` -> **699 passed**, 0 skipped (Postgres up: integration tests ran)
+- `mypy --strict app` -> clean, 95 files; `ruff check` / `ruff format --check` -> clean
+- `check_documented_metrics.py` -> all 16 quoted figures match the new baseline
+- `python -m app.cli eval-trust` -> 60/60
+
+---
+
 ## 2026-09-23
 
 ### 10:45 IST — Phases 4 & 5: LLM abstraction and the event bus

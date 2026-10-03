@@ -5,6 +5,67 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-03 - Phases 25 and 26: groundwork and the trust layer (Members 3 and 4 integration)
+
+Commits `8b04be4`, `ab928d2` (made by the owner, covering Phases 25-26 and early Phase 27 code) and
+the Phase 26 close-out commit. Plan: `implementation/integration-plan-phases-25-35.md`. Decision:
+ADR-009. Every ported feature: `integrations/teammate-port.md`.
+
+### Added
+
+- `.claude/integrations/originals/` - Members 3 and 4's source, archived verbatim before their
+  extracted folders are deleted
+- `.claude/integrations/teammate-port.md` - feature inventory K1-K14, T1-T17, original behaviour,
+  every deviation and its measured effect
+- `ADR-009` - port both teammates in-process rather than call them as services
+- `app/intelligence/temporal.py` - one date, time, identifier and figure parser for the knowledge
+  layer and the verifier. No invented year; times compared by minute; years in dates are not ids
+- `app/schemas/knowledge.py`, `app/schemas/trust.py` - typed contracts for both ports
+- `app/intelligence/trust/` - Member 4's verifier: `tfidf.py` (scikit-learn parity, no
+  dependency), `lexical.py`, `answer.py`, plus `specifics.py` (A15, not from Member 4)
+- `LexicalVerifier`, `CompositeVerifier` - `VERIFICATION_PROVIDER=lexical|composite`
+- `VerificationResult.opinions` - every verifier consulted, recorded on the result and the event
+- `agent.yaml:verification.lexical` - Member 4's thresholds 0.2 / 0.4 / 0.5
+- `python -m app.cli eval-trust` and `app/evaluation/trust.py` - Member 4's benchmark,
+  generator byte-identical from seed 42; data in `.agent/evals/trust/`
+- Tests: `test_temporal.py`, `test_trust.py`, plus BUG-015 and BUG-016 cases
+
+### Fixed
+
+- **BUG-015** - verification and gap detection read a tool's summary ("11 date(s)") instead of the
+  cited line, and PDF page citations resolved to nothing
+- **BUG-016** - a locator's detail in the reasoning prompt could come from another document
+- **BUG-017** - evaluation reports did not record which verifier ran
+
+### Measured
+
+New baseline `20261003T092851-qwen3-4b-all`, against `20260925T115350`:
+
+| Metric | Before | After |
+|---|---|---|
+| `verification_success` | 0.750 | 1.000 (audited: see BUG-018) |
+| `replanning_success` | 0.787 | 1.000 (vacuous: 0 gaps) |
+| `task_efficiency` | 1.756 | 1.447 |
+| `latency_s` | 25.8 | 26.0 |
+| `aurora_contradiction` | 0 findings, failing | 1 finding, both documents cited, passing |
+| `unsupported_claim_rate` | 0.000 | 0.000 |
+
+Trust benchmark: 60/60, hallucination rate 0.000, 1.2 ms per case. 699 tests, `mypy --strict`
+clean across 95 modules, 86% coverage.
+
+### Known Issues
+
+- **BUG-018** - the model verifier is lenient on real text. A15 mitigates in `composite`; the
+  default stays `baseline` until Exp-004
+- `aurora_pdf_timeline` still produces no findings; CI's evaluation gate stays red on it
+- Verification model calls do not emit `LLM_CALL_COMPLETED`, so `llm_calls` undercounts
+- The repository has mixed line endings (CRLF and LF); a `.gitattributes` normalisation is pending
+  the owner's decision
+- Phase 27 code (`app/security/`, `INJECTION_DETECTED`, the mission scan) landed in `ab928d2`
+  before Phase 27 was tested or documented. It is closed in Phase 27
+
+---
+
 ## 2026-09-23 - Phase 6: Intent engine
 
 ### Added

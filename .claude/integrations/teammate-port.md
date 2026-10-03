@@ -343,6 +343,11 @@ the model reaches no verdict, and otherwise defers to the model. Both opinions a
 every result (`VerificationResult.opinions`) and in the event payload. **The default stays
 `baseline`** until Exp-004 (Phase 34) measures `composite` on the full suite. That is decision D5.
 
+**The specifics check (A15), not from Member 4.** Added to `CompositeVerifier` as rule 4 after the
+Phase 25 audit (BUG-018): a `SUPPORTED` claim stating a date or figure that none of its cited
+evidence contains becomes `PARTIALLY_SUPPORTED`. It lives in its own module,
+`app/intelligence/trust/specifics.py`, so `lexical.py` stays a faithful port.
+
 **Confidence.** The TF-IDF score is not used as verdict confidence. It is a similarity, not a
 calibrated probability. Verdict confidence uses the baseline's derivation from the number of
 distinct documents.

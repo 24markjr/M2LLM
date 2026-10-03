@@ -711,3 +711,49 @@ The same one as `_TOLERANCES` (BUG-011) and `created_by_revision` (BUG-013): a m
 correct for the configurations that existed when it was written, and silently incomplete for the
 first new one. A new setting that changes behaviour needs to be added to the stamp in the same
 change. This is now noted in `.claude/testing/agent-evaluation.md`.
+
+---
+
+## BUG-018 — The model verifier approved a claim whose decisive date its evidence does not contain
+
+**Found:** 2026-10-03, auditing the Phase 25 baseline (`verification_success` 0.750 -> 1.000)
+**Severity:** Medium. A wrong finding reported as verified
+**Status:** Mitigated by the composite verifier's specifics check (A15); default unchanged until
+Exp-004
+
+**Symptom**
+
+The evaluation harness flagged `verification_success` as "improved beyond tolerance; check the
+measurement before celebrating". Every verified finding was printed beside the text its verifier
+saw. Most were right. One was not:
+
+```
+claim:     ... but the project report states it closes on 28 April 2026
+verdict:   SUPPORTED
+evidence:  [UNRESOLVED] milestone_report.txt:r10
+           [RESOLVED]   project_report.txt:r10  "The target completion date is 2026-04-30."
+```
+
+The only resolved evidence says 30 April. The claim attributes 28 April to that same document.
+A second, milder case: "the project milestones include ... 20 April 2026", where 20 April is the
+report's own date line, not a milestone.
+
+**Cause**
+
+Not a code defect. The model verifier (`qwen3:4b`, verification prompt v1) is lenient when it
+reads real text. BUG-015 hid this: before the fix it read tool summaries and rejected findings for
+the wrong reason, which kept `verification_success` at a plausible-looking 0.750.
+
+**Mitigation (A15)**
+
+`app/intelligence/trust/specifics.py`: every date and every figure of three or more digits that a
+claim states must appear in its cited evidence, dates compared as compatible dates and figures by
+value. `CompositeVerifier` applies it as rule 4: a `SUPPORTED` verdict with an ungrounded specific
+becomes `PARTIALLY_SUPPORTED`, with an `OVERSTATED_CLAIM` issue naming the value. That is
+actionable, so the replanning loop can go and look for it. Deterministic, no model call. The audit
+claim above is a unit test.
+
+**Not yet demonstrated live.** On the re-run with `VERIFICATION_PROVIDER=composite` the model did
+not produce that claim again (its output varies run to run), so the rule had nothing to catch.
+Its effect across the suite is Exp-004 (Phase 34). It does not catch the second case. "Includes
+20 April 2026" is grounded, and only a reading of meaning shows it is wrong.
