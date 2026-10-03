@@ -6,6 +6,34 @@ and what is still broken.
 
 ---
 
+# 2026-10-03 - Phase 27: security
+
+## What was done
+
+Closed the Phase 27 code that had landed early in `ab928d2`: tests, the case suite, the API and UI
+surface, the prompt wrapping, docs. Found two of the four injection strings already in
+`test_adversarial.py` undetected by Member 4's patterns, so five patterns were added in a separate
+list and every fixture document was checked for false positives (none).
+
+## The measurement that mattered
+
+The post-change evaluation failed a negative case that had passed all day. Rather than revert the
+prompt change on suspicion, it was A/B tested: the failing scenario ran 5 times on the code before
+Phase 27 (in a git worktree at `83479d3`) and 5 times on the new code. Identical, 5/5 both, and the
+Phase 25 commit fails the same way now. The cause is the model session, not the change (BUG-019).
+The README's "fixed" claim about confabulation is rewritten.
+
+Lesson: an evaluation run that changes an outcome needs a repeat before it is attributed to the
+code. That cost ten minutes here, against reverting a correct security change.
+
+## Verification
+
+- `pytest tests -m "not llm"` -> **749 passed**
+- `mypy --strict` clean, `ruff` clean, `npm run build` clean, OpenAPI regenerated
+- `eval-trust` -> 60/60 and 27/27; `check_documented_metrics` -> all quoted figures match
+
+---
+
 # 2026-10-03 - Phases 25 and 26: integrating Members 3 and 4
 
 ## What was done

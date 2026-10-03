@@ -38,6 +38,7 @@ from app.schemas.execution import Observation
 from app.schemas.finding import Confidence, Finding, FindingClassification
 from app.schemas.intent import Intent, Operation
 from app.schemas.objective import Objective
+from app.security.injection import wrap_untrusted
 
 log = get_logger(__name__)
 
@@ -381,9 +382,11 @@ class ReasoningEngine:
     async def _ask_model(
         self, objective: Objective, observations: list[Observation], emit: object | None
     ) -> CandidateFindings:
+        # Observations quote document text, so they go in one <document> block: the prompt marks
+        # them as data, and a document cannot end the block early (Phase 27).
         prompt = self._prompts.get("reasoning").render(
             objective=objective.text,
-            observations=self._describe(observations),
+            observations=wrap_untrusted("task observations", self._describe(observations)),
         )
         try:
             return await generate_structured(

@@ -102,9 +102,9 @@ the reason).
 | T4 | Entity-aware conflict rule (shared ID, disjoint times) | `trust/verifier.py:_conflicts` | `lexical.py` | CHANGED. Adds disjoint dates; times compared by minute; years in dates are not ids |
 | T5 | Answer-level hallucination evaluation | `trust/hallucination_evaluator.py` | `app/intelligence/trust/answer.py` | DONE. Logic unchanged |
 | T6 | Verifier as a JARVIS `VerificationProvider` | (none; the seam is Member 1's) | `app/integrations/verification.py` | DONE. `LexicalVerifier` and `CompositeVerifier`; `VERIFICATION_PROVIDER=lexical|composite` |
-| T7 | Prompt-injection scanner, 5 categories, severity | `security/injection_guard.py` | `app/security/injection.py` | TODO |
-| T8 | Safe prompt construction (`<document>` wrapping) | `security/injection_guard.py` | `app/security/injection.py` | TODO |
-| T9 | 14-case adversarial security suite | `security/security_test_suite.py` | `.agent/evals/security/injection_cases.yaml` + tests | TODO |
+| T7 | Prompt-injection scanner, 5 categories, severity | `security/injection_guard.py` | `app/security/injection.py` | CHANGED. Original 21 patterns and severity rule verbatim (tested against the archive); 5 JARVIS patterns added separately; scanned on every mission and upload, flag never drops |
+| T8 | Safe prompt construction (`<document>` wrapping) | `security/injection_guard.py` | `app/security/injection.py` | CHANGED. Wrapper escapes `</document>`; used in the verification (v2) and reasoning (v5) prompts |
+| T9 | 14-case adversarial security suite | `security/security_test_suite.py` | `.agent/evals/security/injection_cases.yaml`, `app/evaluation/security.py` | DONE. Their 14 cases verbatim plus 13; 27/27, run by `eval-trust` |
 | T10 | Working memory | `memory/working_memory.py` | `app/memory/working.py` | TODO |
 | T11 | Episodic memory (Q&A log, archived investigations, keyword search) | `memory/episodic_memory.py` (SQLite) | `app/memory/` | TODO |
 | T12 | Semantic memory (subject-predicate-object facts) | `memory/semantic_memory.py` (SQLite) | `app/memory/` | TODO |
@@ -365,3 +365,32 @@ demonstrates conflict detection. Run against their own current code (2026-10-03)
 because "The incident occurred at 11:40 AM" has no identifier to share. The port behaves
 identically, and a test pins that, with a working variant (a shared shipment id) beside it.
 Worth telling Member 4.
+
+### Phase 27 — security (2026-10-03)
+
+**Scanner (T7).** Member 4's five categories and 21 patterns are kept verbatim, and a test compares
+them against the archived original file rather than a copy. Five patterns are added in a separate
+`JARVIS_PATTERNS` list, each for a measured miss: two attacks already in this repository's
+adversarial suite went undetected by the originals (a `<|im_start|>system` chat-template spoof, and
+"Note to the AI reading this: ..."), and three target JARVIS's own surfaces (closing the
+`<document>` wrapper, findings-shaped JSON, a message addressed to the assistant). Measured on the
+27-case suite: originals 22/27, with additions 27/27, no false positives on the clean cases or any
+of the 14 fixture documents.
+
+**Where it runs.** Every mission scans every document before the first model call
+(`INJECTION_DETECTED`, ordered before `INTENT_CREATED`), and every upload returns its scan.
+**A flagged document is still read.** Dropping on a match would let anyone delete evidence by
+quoting an attack phrase. The report states the flag as a limitation, and Mission Control shows it.
+
+**Wrapping (T8).** `wrap_untrusted` now neutralises a closing `</document>` inside content (the
+original let a document end its own block) and a `"` in a source name. Used for each cited text in
+the verification prompt (v1 → v2) and for the observations in the reasoning prompt (v4 → v5).
+Their effect on the agent suite is in the Phase 27 development-log entry.
+
+**Suite (T9).** `.agent/evals/security/injection_cases.yaml`: Member 4's 14 cases verbatim, the
+4 strings `test_adversarial.py` used, 3 JARVIS-surface attacks, and 6 realistic clean texts that
+talk about instructions, AI and security without addressing the model. `eval-trust` reports
+Member 4's `detection_rate` (correct/total) and, beside it, attack recall, false-positive rate and
+category misses, and exits non-zero on any misclassified case.
+
+Full mechanism: `../architecture/security.md`.

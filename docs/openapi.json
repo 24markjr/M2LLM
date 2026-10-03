@@ -689,6 +689,43 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "InjectionScan": {
+        "additionalProperties": false,
+        "description": "What a scan of one untrusted text found.\n\nA hit is not a verdict that the document is malicious. A security report quoting an attack\nmatches too. Hits are reported and the content is still read, as data, because dropping a\ndocument on a pattern match would let an attacker delete evidence by quoting a phrase.",
+        "properties": {
+          "hits": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Hits",
+            "type": "object"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/InjectionSeverity",
+            "default": "NONE"
+          },
+          "source": {
+            "default": "",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "title": "InjectionScan",
+        "type": "object"
+      },
+      "InjectionSeverity": {
+        "description": "Member 4's severity levels, unchanged.",
+        "enum": [
+          "NONE",
+          "MEDIUM",
+          "HIGH"
+        ],
+        "title": "InjectionSeverity",
+        "type": "string"
+      },
       "IssueType": {
         "enum": [
           "NO_EVIDENCE",
@@ -862,6 +899,13 @@
           "run_id": {
             "title": "Run Id",
             "type": "string"
+          },
+          "security_flags": {
+            "items": {
+              "$ref": "#/components/schemas/InjectionScan"
+            },
+            "title": "Security Flags",
+            "type": "array"
           },
           "stage": {
             "$ref": "#/components/schemas/Stage"
@@ -1336,6 +1380,9 @@
             "title": "Document Id",
             "type": "string"
           },
+          "injection": {
+            "$ref": "#/components/schemas/InjectionScan"
+          },
           "kind": {
             "title": "Kind",
             "type": "string"
@@ -1460,6 +1507,13 @@
             "title": "Issues",
             "type": "array"
           },
+          "opinions": {
+            "items": {
+              "$ref": "#/components/schemas/VerifierOpinion"
+            },
+            "title": "Opinions",
+            "type": "array"
+          },
           "status": {
             "$ref": "#/components/schemas/VerificationStatus"
           },
@@ -1491,6 +1545,26 @@
         ],
         "title": "VerificationStatus",
         "type": "string"
+      },
+      "VerifierOpinion": {
+        "additionalProperties": false,
+        "description": "What one verifier said, when several were consulted for one verdict.\n\nRecorded so disagreement between verifiers is measurable rather than resolved out of sight.",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/VerificationStatus"
+          },
+          "verifier": {
+            "minLength": 1,
+            "title": "Verifier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "verifier",
+          "status"
+        ],
+        "title": "VerifierOpinion",
+        "type": "object"
       }
     }
   },

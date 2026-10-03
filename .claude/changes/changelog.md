@@ -5,6 +5,43 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-03 - Phase 27: security (Member 4's injection guard, ported)
+
+### Added
+
+- `app/security/injection.py` - Member 4's 21 patterns and severity rule, verbatim (tested against
+  the archived original), plus 5 `JARVIS_PATTERNS` for measured misses
+- Every mission scans every document before the first model call: `INJECTION_DETECTED` (EventType
+  37 -> 38), `MissionResult.security`, a report `Limitation`. **A flagged document is still read**
+- `POST /api/v1/documents` returns `injection`; `GET /missions/{id}` returns `security_flags`;
+  Mission Control shows them (optional field, so pre-Phase-27 recordings still replay)
+- `.agent/evals/security/injection_cases.yaml` - 27 cases: Member 4's 14, the 4 adversarial
+  strings, 3 attacks on JARVIS's own surfaces, 6 realistic clean texts
+- `app/evaluation/security.py`, run by `eval-trust` beside the trust benchmark, as Member 4 ran it
+- `.claude/architecture/security.md`
+- `tests/unit/test_security.py` - 50 tests, including a full mission over an injected document
+
+### Changed
+
+- Verification prompt v1 -> v2 and reasoning prompt v4 -> v5: document text in escaped
+  `<document>` blocks. The wrapper can no longer be closed from inside
+
+### Measured
+
+- Injection suite: Member 4's patterns 22/27, with additions **27/27**, 0 false positives on clean
+  cases and on all 14 fixture documents
+- Agent suite, `20261003T095400`: no metric moved except latency (26.0 -> 30.3 s). The prompt change
+  was A/B tested on the failing negative case, 5 runs each: identical
+- 749 tests
+
+### Known Issues
+
+- **BUG-019** - `aurora_no_contradiction` confabulates one finding in the current model session,
+  with the same code that passed it earlier the same day. CI's evaluation gate now fails on it as
+  well as on `aurora_pdf_timeline`
+
+---
+
 ## 2026-10-03 - Phases 25 and 26: groundwork and the trust layer (Members 3 and 4 integration)
 
 Commits `8b04be4`, `ab928d2` (made by the owner, covering Phases 25-26 and early Phase 27 code) and

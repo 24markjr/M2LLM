@@ -70,6 +70,18 @@ export interface MissionDetail extends MissionSummary {
   error_message: string;
   clarification_question: string;
   has_report: boolean;
+  /** Documents flagged by the prompt-injection scan (Phase 27). Each was still read, as data.
+   *  Optional: recordings made before Phase 27 do not carry it. */
+  security_flags?: InjectionScan[];
+}
+
+export type InjectionSeverity = "NONE" | "MEDIUM" | "HIGH";
+
+export interface InjectionScan {
+  source: string;
+  /** category -> the phrases that matched */
+  hits: Record<string, string[]>;
+  severity: InjectionSeverity;
 }
 
 export interface TaskNode {

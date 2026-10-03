@@ -58,6 +58,11 @@ shown without its verification state is a claim overstated.
 that only learns a file was *accepted* still does not know whether it will contribute
 anything — a scanned PDF with no text layer uploads perfectly and yields nothing.
 
+Since Phase 27 it also returns `injection`, the prompt-injection scan of the parsed text
+(`source`, `hits`, `severity`). A flag is a warning, never a rejection: the file is accepted and
+will be read as data. `GET /missions/{id}` carries the same scans for a mission's documents as
+`security_flags`. See `../architecture/security.md`.
+
 ## The error contract
 
 Every 4xx and 5xx has the same body, and always a code:

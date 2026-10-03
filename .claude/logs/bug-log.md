@@ -757,3 +757,53 @@ claim above is a unit test.
 not produce that claim again (its output varies run to run), so the rule had nothing to catch.
 Its effect across the suite is Exp-004 (Phase 34). It does not catch the second case. "Includes
 20 April 2026" is grounded, and only a reading of meaning shows it is wrong.
+
+---
+
+## BUG-019 — The negative case confabulates again, and the code did not change
+
+**Found:** 2026-10-03, Phase 27 evaluation run `20261003T095400`
+**Severity:** High. A finding invented where the correct answer is none (the BUG-005 failure)
+**Status:** Open. Measured and attributed; not fixed
+
+**Symptom**
+
+`aurora_no_contradiction`, whose correct answer is no findings, produced:
+
+> The Aurora project report states 30 April 2026 as the approved completion date in two different
+> places (r10 and r15), but does not state a single approved completion date.
+
+Two lines that agree, presented as a conflict. Both citations resolve, so `evidence_coverage` and
+`unsupported_claim_rate` are clean, the comparative rule is satisfied (two locators), and the
+baseline verifier passed it. Only the negative-case check catches it.
+
+**Attribution (the Phase 27 prompt change was suspected and ruled out)**
+
+| Code | Prompts | Runs | Findings |
+|---|---|---|---|
+| `83479d3` (before Phase 27) | reasoning v4, verification v1, no wrapping | 5 | 1, 1, 1, 1, 1 |
+| Phase 27 working tree | reasoning v5, verification v2, wrapped | 5 | 1, 1, 1, 1, 1 |
+| `8b04be4` (Phase 25) | as `83479d3` | 2 | 1, 1 |
+| `8b04be4`-equivalent, 09:29 the same day | the same | 1 (evaluation run) | 0 |
+
+At 09:29 the model wrote a different claim ("states two different completion dates"), which the
+relevance gate discarded. From 10:00 on, the same code and prompts give this claim every time.
+**The model's output is deterministic within a session and differs between sessions.** Temperature
+is 0 and the seed is fixed, but Ollama unloads an idle model and reloads it, and the output did not
+survive that. Nothing in the repository changed what the model produced.
+
+**What it means**
+
+- The README's "Fixed: the agent no longer invents findings" was true of one model state. It is
+  rewritten.
+- One evaluation run is one sample of a distribution whose spread is not known. This was carried
+  debt ("eight scenarios cannot separate variance from regression"). It is now a measured fact,
+  and the cheapest mitigation is to run each scenario several times and report the spread (Phase 34).
+
+**Why no rule was added here**
+
+The obvious rule, "a comparative finding whose cited specifics all agree is not a conflict",
+would also discard `helix_budget_unapproved`'s real finding: 450,000 in the financial report and
+450000 marked unapproved in the budget, which are agreeing figures that make a correct finding. The
+relevance gate and the knowledge layer's explicit conflict pairs (Phase 30) are where this belongs,
+and they are measured there.

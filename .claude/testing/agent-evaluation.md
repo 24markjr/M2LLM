@@ -160,6 +160,7 @@ second.
 | Gate | exits non-zero on any false confidence |
 | Stamp | thresholds and a hash of the dataset |
 | Current | 60/60, hallucination rate 0.000, ~1.2 ms per case |
+| Security suite | 27 injection cases run alongside (Phase 27): Member 4's `detection_rate` plus attack recall and false-positive rate; 27/27 |
 
 **Read the 100% correctly.** The benchmark was generated to exercise exactly the conflict rule the
 verifier implements: clock times on a shared shipment id. A perfect score shows the code does what

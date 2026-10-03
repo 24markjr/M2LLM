@@ -139,7 +139,7 @@ charts the committed evaluation reports.
 
 ```bash
 cd backend
-pytest tests -m "not llm"      # 699 tests, no model needed
+pytest tests -m "not llm"      # 749 tests, no model needed
 ```
 
 ---
@@ -166,7 +166,7 @@ repository is hand-written** — a report carries the model, prompt versions and
 two reports produced with different stamps are refused as incomparable rather than quietly
 compared.
 
-The current baseline is `20261003T092851-qwen3-4b-all`. Its headline numbers:
+The current baseline is `20261003T095400-qwen3-4b-all`. Its headline numbers:
 
 | Metric | Value | |
 |---|---|---|
@@ -200,12 +200,22 @@ baseline.
 
 ### The open defect, stated plainly
 
-**Fixed: the agent no longer invents findings.** Both negative scenarios — one asking whether a
-consistent report contradicts itself, one asking the same of a budget CSV — produce **zero
-findings**, which is the correct answer. `unsupported_claim_rate` is 0.000 and
-`evidence_coverage` is 1.000.
+**Mostly fixed, and not reliably: the agent sometimes invents a finding on a negative case.** The
+two negative scenarios ask whether a consistent report, and a consistent budget CSV, contradict
+themselves; the correct answer to both is no finding. For two weeks of runs both produced none. On
+2026-10-03 one produced this, five times out of five:
 
-Two changes did it, and neither was asking the model more firmly:
+> *The Aurora project report states 30 April 2026 as the approved completion date in two different
+> places (r10 and r15), but does not state a single approved completion date.*
+
+Two agreeing lines presented as a conflict, cited correctly and passed by the verifier. The **same
+code** passed that scenario an hour earlier, when the model wrote a different claim that the
+relevance gate discarded. Nothing in the repository changed what the model produces: its output is
+stable within a session and differs between them. Measured, not assumed: BUG-019 in the bug log.
+`unsupported_claim_rate` stays 0.000, because the claim's citations are real. That metric cannot
+see this failure, and the negative-case check is what catches it.
+
+Two changes reduced it, and neither was asking the model more firmly:
 
 - A structural rule: **a claim of conflict must cite both sides.** When the intent requires a
   comparative operation, a claim fully supported by a single locator restates a source rather than

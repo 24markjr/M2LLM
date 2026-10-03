@@ -15,11 +15,14 @@ import asyncio
 from pathlib import Path
 
 from fastapi import APIRouter, UploadFile, status
+from pydantic import Field
 
 from app.api.errors import ApiError
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.schemas.common import JarvisModel
+from app.schemas.trust import InjectionScan
+from app.security.injection import scan
 from app.tools.loader import DocumentLoadError, load_document
 
 log = get_logger(__name__)
@@ -40,6 +43,9 @@ class UploadedDocument(JarvisModel):
     bytes: int
     summary: str = ""
     truncated: bool = False
+    # The prompt-injection scan of what was parsed (Phase 27). A flag is a warning shown before a
+    # mission starts, never a rejection: the document is still accepted and read as data.
+    injection: InjectionScan = Field(default_factory=InjectionScan)
 
 
 @router.post("", response_model=list[UploadedDocument], status_code=status.HTTP_201_CREATED)
@@ -95,6 +101,7 @@ async def upload_documents(files: list[UploadFile]) -> list[UploadedDocument]:
                 bytes=written,
                 summary=document.summary,
                 truncated=document.truncated,
+                injection=scan(document.text, source=name),
             )
         )
 

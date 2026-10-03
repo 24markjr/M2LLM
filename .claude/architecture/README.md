@@ -15,6 +15,8 @@ code is a guess, and one written after the code is a record.
 | `reasoning-engine.md` | Evidence binding, classification, computed confidence, gaps | 13, 14 |
 | `verification-loop.md` | Independent verification and the closed replanning loop | 15, 16 |
 | `integrations.md` | Provider protocols; the frontend contract | 12, 15, 22 |
+| `verification.md` | The verifier contract and its four implementations | 15, 26 |
+| `security.md` | Untrusted document content: scanning, wrapping, what stops an injection | 27 |
 
 ## What belongs in an architecture document
 

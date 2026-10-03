@@ -537,6 +537,17 @@ def run_eval_trust(*, write: bool) -> int:
         f"({report.false_confidence}/{report.risky_cases} risky cases marked SUPPORTED)"
     )
     print(f"  avg_latency_ms        {report.avg_latency_ms:.2f}")
+    security = report.security
+    if security is not None:
+        print(
+            f"  injection detection   {security.detection_rate:.3f}  "
+            f"(recall {security.attack_recall:.3f}, false positives "
+            f"{security.false_positive_rate:.3f}, {security.cases} cases)"
+        )
+        for miss in security.failures:
+            print(
+                f"  ! security {miss.id}: expected flag={miss.expected_flag}, got {miss.categories}"
+            )
     for category, accuracy in report.category_accuracy.items():
         print(f"    {category:<24} {accuracy:.3f}")
     for failure in report.failures[:10]:
@@ -546,9 +557,11 @@ def run_eval_trust(*, write: bool) -> int:
         print()
         print(f"report written to {md_path}")
     print(RULE)
-    # The gate is false confidence, as in the original's dashboard: a risky claim marked
-    # SUPPORTED is the failure that matters. Accuracy alone is reported, not gated.
-    return 1 if report.false_confidence else 0
+    # Two gates. False confidence, as in the original's dashboard: a risky claim marked SUPPORTED is
+    # the failure that matters; accuracy alone is reported, not gated. And any security case
+    # misclassified: a missed attack or a flagged clean document.
+    security_failed = report.security is not None and bool(report.security.failures)
+    return 1 if report.false_confidence or security_failed else 0
 
 
 async def run_health() -> int:

@@ -45,6 +45,7 @@ from pydantic import Field
 
 from app.core.agent_config import get_lexical_thresholds
 from app.core.config import get_settings
+from app.evaluation.security import SecurityReport, run_security_suite
 from app.intelligence.trust.lexical import verify_claim
 from app.schemas.common import JarvisModel, UnitFloat, utcnow
 from app.schemas.trust import EvidenceText, LexicalThresholds, TrustStatus
@@ -229,8 +230,9 @@ class TrustReport(JarvisModel):
     false_confidence: int
     category_accuracy: dict[str, float] = Field(default_factory=dict)
     avg_latency_ms: float = Field(ge=0.0)
-    # Filled by Phase 27, when the security suite runs alongside.
+    # Member 4's injection detection rate, from the security suite run alongside (Phase 27).
     injection_detection_rate: UnitFloat | None = None
+    security: SecurityReport | None = None
     results: list[TrustCaseResult] = Field(default_factory=list)
 
     @property
@@ -288,7 +290,11 @@ def run_trust_benchmark(
     totals = Counter(r.category for r in results)
     correct = Counter(r.category for r in results if r.correct)
 
+    security = run_security_suite()
+
     return TrustReport(
+        injection_detection_rate=security.detection_rate,
+        security=security,
         thresholds=limits,
         dataset_hash=dataset_hash(directory),
         cases=len(results),
@@ -324,8 +330,19 @@ def render_markdown(report: TrustReport) -> str:
     ]
     if report.injection_detection_rate is not None:
         lines.append(f"| injection_detection_rate | {report.injection_detection_rate:.3f} |")
+    if report.security is not None:
+        lines += [
+            f"| injection attack_recall | {report.security.attack_recall:.3f} |",
+            f"| injection false_positive_rate | {report.security.false_positive_rate:.3f} |",
+        ]
     lines += ["", "| Category | Accuracy |", "|---|---|"]
     lines += [f"| {c} | {a:.3f} |" for c, a in report.category_accuracy.items()]
+    if report.security is not None and report.security.failures:
+        lines += ["", "## Security suite failures", ""]
+        lines += [
+            f"- `{r.id}` ({r.source}) expected flag={r.expected_flag}, got {r.categories or 'none'}"
+            for r in report.security.failures
+        ]
     if report.failures:
         lines += ["", "## Failures", ""]
         lines += [

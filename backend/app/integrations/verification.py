@@ -43,6 +43,7 @@ from app.schemas.verification import (
     VerificationStatus,
     VerifierOpinion,
 )
+from app.security.injection import wrap_untrusted
 
 log = get_logger(__name__)
 
@@ -139,10 +140,11 @@ class BaselineVerifier:
                 ],
             )
 
-        evidence_text = "\n".join(
-            f"[{ref}] {text}" for ref, text in request.evidence_content.items() if text.strip()
-        )
-        if not evidence_text.strip():
+        readable = {item.source: item.content for item in evidence_pool(request)}
+        # Each cited text in its own <document> block, so the prompt marks it as data and a
+        # document cannot close its block from inside (Phase 27, Member 4's wrap_untrusted).
+        evidence_text = "\n\n".join(wrap_untrusted(ref, text) for ref, text in readable.items())
+        if not readable:
             return VerificationResult(
                 status=VerificationStatus.INCONCLUSIVE,
                 confidence=0.0,

@@ -94,12 +94,18 @@ at a call site would be invisible to all three.
 | Adaptive loop | `EVIDENCE_GAP_DETECTED`, `EVIDENCE_GAP_RESOLVED`, `REPLAN_STARTED`, `REPLAN_COMPLETED` |
 | Output | `SYNTHESIS_STARTED`, `SYNTHESIS_COMPLETED` |
 | Instrumentation | `LLM_CALL_COMPLETED`, `BUDGET_WARNING` |
+| Security | `INJECTION_DETECTED` (Phase 27) |
 
 `PHASE_EVENTS` marks the subset that advances the UI's phase tracker.
 
 Two events exist specifically so that degradation is never invisible:
 `VERIFICATION_DEGRADED` (the remote verifier was unavailable and baseline was used) and
 `BUDGET_WARNING`. A run that quietly did less than it appeared to should say so.
+
+`INJECTION_DETECTED` (Phase 27) is emitted once per flagged document, **before** `INTENT_CREATED`,
+so a flag is on the record before any model has read the text. Payload: `document`, `severity`
+(`MEDIUM` | `HIGH`), `categories`, and `matches` (category to matched phrases, at most five each).
+The document is still read, as data. See `../architecture/security.md`.
 
 ---
 

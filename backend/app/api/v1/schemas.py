@@ -17,6 +17,7 @@ from app.orchestration.mission import MissionStatus, Stage
 from app.schemas.common import JarvisModel
 from app.schemas.finding import Finding
 from app.schemas.task import TaskStatus, TaskType
+from app.schemas.trust import InjectionScan
 
 
 class CreateMissionRequest(JarvisModel):
@@ -52,6 +53,8 @@ class MissionDetail(MissionSummary):
     error_message: str = ""
     clarification_question: str = ""
     has_report: bool = False
+    # Documents flagged by the prompt-injection scan (Phase 27). Each was still read, as data.
+    security_flags: list[InjectionScan] = Field(default_factory=list)
 
 
 class TaskNode(JarvisModel):

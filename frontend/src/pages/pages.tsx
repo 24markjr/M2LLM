@@ -297,6 +297,27 @@ export function MissionViewPanels({ view }: { view: MissionView }) {
             </div>
           ) : null}
 
+          {/* A flag is a warning, never a rejection: the document was still investigated, as
+              data. Severity is stated in words, not colour alone. */}
+          {(mission.security_flags ?? []).length > 0 ? (
+            <div className="notice warn">
+              <strong>
+                Possible prompt injection in {(mission.security_flags ?? []).length} document(s).
+              </strong>
+              <ul>
+                {(mission.security_flags ?? []).map((flag) => (
+                  <li key={flag.source} className="mono">
+                    {flag.source}: {flag.severity} ({Object.keys(flag.hits).join(", ")})
+                  </li>
+                ))}
+              </ul>
+              <div className="hint">
+                The text was read as data under investigation and never followed as an
+                instruction.
+              </div>
+            </div>
+          ) : null}
+
           {mission.status === "FAILED" ? (
             <div className="notice error">
               <strong>

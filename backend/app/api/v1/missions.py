@@ -284,6 +284,7 @@ def _detail(record: MissionRecord) -> MissionDetail:
             else ""
         ),
         has_report=bool(result and result.report),
+        security_flags=list(result.security) if result else [],
     )
 
 

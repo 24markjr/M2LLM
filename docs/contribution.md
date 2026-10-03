@@ -3,7 +3,7 @@
 **Scope:** understanding user intent, planning tasks, selecting tools, and reasoning across all
 gathered information.
 **Repository:** [github.com/24markjr/M2LLM](https://github.com/24markjr/M2LLM)
-**Baseline for every number below:** `.agent/evals/reports/20261003T092851-qwen3-4b-all.json` (8 scenarios)
+**Baseline for every number below:** `.agent/evals/reports/20261003T095400-qwen3-4b-all.json` (8 scenarios)
 (`qwen3:4b`, prompt versions `intent=2 planner=2 reasoning=4 relevance=3 verification=1`)
 
 ---
@@ -47,7 +47,7 @@ Supporting: concurrent execution by dependency wave, an append-only event log fr
 fully reconstructable, a FastAPI + SSE surface, and a React operations console that streams a run
 live and can replay a recorded one.
 
-**699 tests**, `mypy --strict` clean across 95 modules, 86% coverage (90–100% on
+**749 tests**, `mypy --strict` clean across 96 modules, 87% coverage (90–100% on
 `intelligence/**` and `schemas/**`).
 
 ---
@@ -162,7 +162,7 @@ reachable from exactly one package,
 
 ```bash
 python -m app.cli health                      # the engine answers
-pytest tests -m "not llm"                     # 699 tests, no model needed, ~15s
+pytest tests -m "not llm"                     # 749 tests, no model needed, ~15s
 pytest tests/unit/test_llm_isolation.py -v    # invariant 1, proven by parsing the source
 pytest tests/unit/test_invariants.py -v       # the whole "must not do" list
 pytest tests/unit/test_adversarial.py -v      # injection, corrupt input, zero-finding runs
