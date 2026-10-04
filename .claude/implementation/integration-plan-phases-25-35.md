@@ -92,7 +92,7 @@ Two rules this plan adds, both following from the teammates' code:
 | 30 | Knowledge in the mission pipeline | — | M | 29 | **DONE** 2026-10-04 |
 | 31 | Knowledge API | K12 | M | 30 | **DONE** 2026-10-04 |
 | 32 | 3D knowledge graph explorer | K13 | L | 31 | **DONE** 2026-10-04 |
-| 33 | Memory: working, episodic, semantic | T10–T12 | M | 29, 31 | TODO |
+| 33 | Memory: working, episodic, semantic | T10–T12 | M | 29, 31 | **DONE** 2026-10-05 |
 | 34 | Evaluation and hardening | K14 | M | 26–33 | TODO |
 | 35 | Documentation and handover | — | S | 34 | TODO |
 
@@ -644,6 +644,13 @@ Sharma" shows up as one known entity seen in both runs, with its facts and their
 **Documents:** `teammate-port.md` T10–T12; new `.claude/architecture/memory.md` (the tiers, why
 memory never feeds back, why there is no confidence float); the migration noted in
 `.claude/api/schemas.md`; changelog.
+
+**As built (2026-10-05).** Done. Departures, each explained in the development log: working memory
+is `distill.working_snapshot` rather than `working.py`; with Neo4j down, semantic memory is off for
+the run rather than falling back to Postgres (the store is chosen by configuration); facts are
+returned through `FactView` because `support_count` is a property; and the "done when" was shown
+on Aurora with "Project Aurora" (the shipment fixtures with Rahul Sharma arrive in Phase 34), with
+Rahul Sharma's case covered by the integration test.
 
 ---
 

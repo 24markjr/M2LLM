@@ -287,3 +287,20 @@ function addTo(map: Map<string, Set<string>>, key: string, value: string): void 
   if (set) set.add(value);
   else map.set(key, new Set([value]));
 }
+
+// --- memory across missions (Phase 33) --------------------------------------------------------
+
+/**
+ * What the pop-up says about an entity's past, from the missions memory saw it in.
+ *
+ * `runs` is null when memory could not answer (off, or unreachable): then nothing is said, because
+ * "first seen here" would be a claim memory did not make. An entity memory has no record of
+ * (`runs` empty) is new to memory.
+ */
+export function recallText(runs: readonly string[] | null, current: string | null): string {
+  if (runs === null) return "";
+  const earlier = runs.filter((run) => run !== current).length;
+  if (earlier === 0) return current ? "first seen in this mission" : "not seen in any stored mission";
+  const missions = earlier === 1 ? "mission" : "missions";
+  return current ? `seen in ${earlier} earlier ${missions}` : `seen in ${earlier} stored ${missions}`;
+}

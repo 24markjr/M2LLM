@@ -335,3 +335,96 @@ class DocumentChunk(Base):
     )
 
     document: Mapped[Document] = relationship(back_populates="chunks")
+
+
+# --- memory across investigations (Phase 33) -------------------------------------------------
+#
+# Member 4's episodic and semantic memory, in Postgres. Each row references the run it came from,
+# with a cascade, so deleting a run removes what it contributed to memory. Semantic facts live here
+# only when the graph store is in memory; with Neo4j they live there (ADR-010, decision D2).
+
+
+class MemoryInvestigation(Base):
+    """A finished run's working-memory snapshot, archived (Member 4's `investigations`)."""
+
+    __tablename__ = "memory_investigations"
+
+    run_id: Mapped[str] = mapped_column(
+        String(32), ForeignKey("agent_runs.id", ondelete="CASCADE"), primary_key=True
+    )
+    objective: Mapped[str] = mapped_column(Text, nullable=False)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class MemoryEpisode(Base):
+    """One finding of one run (Member 4's `episodic_memory` row: question, answer, sources)."""
+
+    __tablename__ = "memory_episodes"
+
+    episode_id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    run_id: Mapped[str] = mapped_column(
+        String(32), ForeignKey("agent_runs.id", ondelete="CASCADE"), index=True
+    )
+    objective: Mapped[str] = mapped_column(Text, nullable=False)
+    claim: Mapped[str] = mapped_column(Text, nullable=False)
+    sources: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    verification_status: Mapped[str] = mapped_column(String(32), default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, index=True
+    )
+
+
+class MemoryEntity(Base):
+    """An entity known across runs, keyed by its normalised name."""
+
+    __tablename__ = "memory_entities"
+
+    key: Mapped[str] = mapped_column(String(255), primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    entity_types: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    aliases: Mapped[list[str]] = mapped_column(JsonType, default=list)
+
+
+class MemoryEntityRun(Base):
+    """That an entity was seen in a run."""
+
+    __tablename__ = "memory_entity_runs"
+
+    key: Mapped[str] = mapped_column(
+        String(255), ForeignKey("memory_entities.key", ondelete="CASCADE"), primary_key=True
+    )
+    run_id: Mapped[str] = mapped_column(
+        String(32), ForeignKey("agent_runs.id", ondelete="CASCADE"), primary_key=True
+    )
+
+
+class MemoryFact(Base):
+    """A subject-predicate-object fact. No confidence column: see `MemoryFactSupport`."""
+
+    __tablename__ = "memory_facts"
+    __table_args__ = (Index("ix_memory_facts_subject_predicate", "subject_key", "predicate"),)
+
+    fact_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    subject: Mapped[str] = mapped_column(String(255), nullable=False)
+    subject_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    predicate: Mapped[str] = mapped_column(String(255), nullable=False)
+    object: Mapped[str] = mapped_column(Text, nullable=False)
+    # The object's normalised form: an entity key for a relation, so "facts about X" finds X as
+    # the object too.
+    object_key: Mapped[str] = mapped_column(Text, nullable=False, index=True)
+
+
+class MemoryFactSupport(Base):
+    """One run's citation of a fact. A fact's support count is the number of these rows."""
+
+    __tablename__ = "memory_fact_support"
+
+    fact_id: Mapped[str] = mapped_column(
+        String(32), ForeignKey("memory_facts.fact_id", ondelete="CASCADE"), primary_key=True
+    )
+    run_id: Mapped[str] = mapped_column(
+        String(32), ForeignKey("agent_runs.id", ondelete="CASCADE"), primary_key=True
+    )
+    source: Mapped[str] = mapped_column(String(255), primary_key=True)

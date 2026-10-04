@@ -20,6 +20,7 @@ import {
   listOrder,
   parentsToExpand,
   particlesOf,
+  recallText,
   searchEntities,
   shapeOf,
   shortLabel,
@@ -199,5 +200,23 @@ describe("search, keyboard list, drawing", () => {
     expect(initialMode(false, true)).toBe("3d");
     expect(initialMode(true, true)).toBe("2d");
     expect(initialMode(false, false)).toBe("2d");
+  });
+});
+
+describe("memory across missions in the pop-up", () => {
+  it("counts earlier missions, not this one", () => {
+    expect(recallText(["run_a", "run_b", "run_c"], "run_c")).toBe("seen in 2 earlier missions");
+    expect(recallText(["run_a", "run_c"], "run_c")).toBe("seen in 1 earlier mission");
+    expect(recallText(["run_c"], "run_c")).toBe("first seen in this mission");
+    expect(recallText([], "run_c")).toBe("first seen in this mission");
+  });
+
+  it("says nothing when memory could not answer", () => {
+    expect(recallText(null, "run_c")).toBe("");
+  });
+
+  it("without a mission (analyze), counts every stored mission", () => {
+    expect(recallText(["run_a"], null)).toBe("seen in 1 stored mission");
+    expect(recallText([], null)).toBe("not seen in any stored mission");
   });
 });

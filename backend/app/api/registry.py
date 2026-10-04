@@ -30,6 +30,7 @@ from app.core.events import (
 )
 from app.core.logging import get_logger
 from app.database.event_sink import DatabaseEventSink
+from app.memory.service import record_run
 from app.orchestration.mission import MissionResult, MissionStatus, Stage, run_mission
 from app.schemas.common import RunId, new_run_id, utcnow
 from app.schemas.event import ExecutionEvent
@@ -217,6 +218,17 @@ class MissionRegistry:
                 # row is marked finished.
                 await self._database.flush()
             await record_finished(record)
+            # Memory last: its episodes reference the run row just written (Phase 33). Written
+            # once the run is over and never read back into one.
+            if record.result is not None:
+                await _record_memory(record.result, record.started_at)
+
+
+async def _record_memory(result: MissionResult, started_at: datetime | None) -> None:
+    try:
+        await record_run(result, started_at=started_at)
+    except Exception:  # the boundary: memory must never fail a run
+        log.exception("memory_record_failed", run_id=result.run_id)
 
 
 class _HistorySink:

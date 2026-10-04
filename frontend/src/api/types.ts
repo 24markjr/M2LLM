@@ -405,3 +405,63 @@ export interface AnalyzeResponse {
   graph: KnowledgeGraphView;
   excluded: string[];
 }
+
+// --- memory across investigations (Phase 33) ------------------------------------------------
+
+export interface MemoryStatus {
+  episodic: boolean;
+  /** "neo4j" or "postgres"; empty when the store holding facts is unreachable. */
+  semantic_store: string;
+}
+
+export interface Episode {
+  episode_id: string;
+  run_id: string;
+  objective: string;
+  claim: string;
+  sources: string[];
+  verification_status: string;
+  created_at: string;
+}
+
+export interface WorkingMemorySnapshot {
+  investigation_id: string;
+  objective: string;
+  plan_steps: string[];
+  evidence_count: number;
+  hypotheses: string[];
+  findings: string[];
+  started_at: string | null;
+}
+
+export interface InvestigationMemory {
+  investigation: { run_id: string; objective: string; snapshot: WorkingMemorySnapshot; archived_at: string };
+  episodes: Episode[];
+}
+
+export type FactKind = "ATTRIBUTE" | "RELATION";
+
+/** No confidence: support says which runs asserted the fact, and from which lines. */
+export interface Fact {
+  fact_id: string;
+  kind: FactKind;
+  subject: string;
+  predicate: string;
+  object: string;
+  support: { run_id: string; source: string }[];
+  support_count: number;
+  runs: string[];
+}
+
+export interface KnownEntity {
+  key: string;
+  name: string;
+  entity_types: EntityType[];
+  aliases: string[];
+  runs: string[];
+}
+
+export interface EntityMemory {
+  entity: KnownEntity;
+  facts: Fact[];
+}

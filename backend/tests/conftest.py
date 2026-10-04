@@ -5,6 +5,11 @@ without this, a test that runs a comparative mission would store its knowledge g
 Neo4j a developer has running. That happened once, on 2026-10-03, and left five test runs in the
 local database. Tests that exercise Neo4j (`test_knowledge_stores.py`) set the store themselves,
 and clean up what they write.
+
+**Unit tests never write to a real Postgres either** (Phase 33). Run persistence probes for a
+database, and with Docker up a unit test's mission would be stored - and, since Phase 33, its
+episodes and facts would appear in the developer's memory. Only tests marked `integration` see
+the database; they create what they need and remove it.
 """
 
 from __future__ import annotations
@@ -13,6 +18,7 @@ from collections.abc import Iterator
 
 import pytest
 
+from app.api import persistence
 from app.core.config import GraphStoreName, get_settings
 from app.integrations import graph_store
 
@@ -23,3 +29,11 @@ def _knowledge_graphs_stay_in_memory(monkeypatch: pytest.MonkeyPatch) -> Iterato
     graph_store.reset_graph_store_probe()
     yield
     graph_store.reset_graph_store_probe()
+
+
+@pytest.fixture(autouse=True)
+def _unit_tests_have_no_database(request: pytest.FixtureRequest) -> Iterator[None]:
+    if request.node.get_closest_marker("integration") is None:
+        persistence._available = False
+    yield
+    persistence.reset_persistence_probe()

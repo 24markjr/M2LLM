@@ -54,6 +54,8 @@ Strictly acyclic. `common` imports nothing from the package; `result` sits at th
 | `event.py` | `ExecutionEvent`, `EventType`, `ExecutionTrace` | The run timeline — see `events.md` |
 | `execution.py` | `ExecutionState`, `RunStatus`, `RunPhase`, `Observation`, `Budget` | Everything the agent knows |
 | `result.py` | `FinalReport`, `ReportSection`, `AgentResult`, `Limitation` | What a human reads |
+| `knowledge.py` | `KnowledgeSnapshot`, `KnowledgeEntity`, `KnowledgeClaim`, `ClaimConflict`, graph views | A run's knowledge base (Phases 28-31; row added in Phase 33) |
+| `memory.py` | `WorkingMemorySnapshot`, `Episode`, `Fact`, `KnownEntity`, `FactView`, `EntityMemoryView` | Memory across missions (Phase 33) - see `architecture/memory.md` |
 
 ---
 
@@ -171,3 +173,13 @@ encode the invariants as executable assertions:
 - `test_json_round_trip_is_lossless`
 
 A future change that quietly breaks one of these fails here rather than in a demo.
+
+## Migrations
+
+| Revision | Phase | Adds |
+|---|---|---|
+| `c5c5db1c59db` | 3 | The initial schema: runs, tasks, findings, evidence, verifications, gaps, events, documents |
+| `7ae22a602a58` | 33 | `memory_investigations`, `memory_episodes`, `memory_entities`, `memory_entity_runs`, `memory_facts`, `memory_fact_support`. Every row references its run with `ON DELETE CASCADE`. No confidence column: a fact's support is its rows in `memory_fact_support` |
+
+Apply with `cd backend && alembic upgrade head`; the revision downgrades cleanly (checked
+2026-10-05: upgrade, downgrade, upgrade).

@@ -227,6 +227,13 @@ Start a mission and open the graph while it runs to show it growing as the agent
 
 `#/knowledge` does the same over documents with no mission (Member 3's original use).
 
+**Then memory (Phase 33).** Run the same mission twice, hover the main entity in the second
+run's graph: *"seen in 1 earlier mission"*. Open **Memory**, look the entity up: the facts the
+verified findings cited, each with its support count and the lines behind it. The line to say:
+*memory holds only what passed verification, says how many times it was seen instead of how sure
+it is, and is never fed back into a mission.* If a fact shows support 1 where you expected 2,
+that is the model naming an attribute differently between runs - memory does not guess synonyms.
+
 ---
 
 ## The uncomfortable slide — show it before they find it

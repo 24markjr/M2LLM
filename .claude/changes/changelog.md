@@ -5,6 +5,54 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-05 - Phase 33: memory across missions
+
+### Added
+
+- `app/memory/` - Member 4's three tiers (T10-T12), see `.claude/architecture/memory.md`:
+  - `distill.py` - pure: the working-memory snapshot, one episode per finding, known entities,
+    and facts from claims and relationships **cited by a verified finding** only
+  - `episodic.py` - Postgres episodes and archived investigations; `ILIKE` search, newest first
+  - `semantic.py` - the `SemanticMemory` protocol and its Postgres store
+  - `service.py` - `record_run`, contained; the store chosen by configuration
+- `neo4j_store.py:Neo4jSemanticMemory` - `(:KnownEntity)-[:ASSERTS]->(:Fact)-[:ABOUT]->(:KnownEntity)`,
+  shared across runs, with uniqueness constraints
+- `app/schemas/memory.py` - `WorkingMemorySnapshot`, `Episode`, `ArchivedInvestigation`, `Fact`
+  (with `support`, no confidence), `KnownEntity`, `EntityMemory`, and the API views `FactView`,
+  `EntityMemoryView`
+- Migration `7ae22a602a58`: six `memory_*` tables, each row cascading from its run
+- `app/api/v1/memory.py` - `GET /memory`, `/memory/episodes`, `/memory/investigations/{run_id}`,
+  `/memory/facts`, `/memory/entities/{name}`; 503 `MEMORY_UNAVAILABLE`, 404 `MEMORY_NOT_FOUND`
+- Mission Control: `#/memory` (episode search, entity across missions with facts and support), and
+  "seen in N earlier missions" in the graph explorer's pop-up and panel (`recallText`, tested)
+- Tests: `test_memory_distill.py` (10), `test_memory_boundary.py` (2), `test_api_memory.py` (9),
+  `tests/integration/test_memory.py` (15, both stores), 3 Vitest
+- `docs/openapi.json` regenerated: 31 -> 36 paths; `docs/screenshots/phase33-*.png`
+
+### Changed
+
+- Memory is recorded when a mission finishes, after its run row (`registry._run`)
+- `tests/conftest.py`: unit tests see no database, so a unit test's mission is never stored in a
+  developer's Postgres or memory; only `integration` tests reach it, and they clean up
+
+### Fixed (during the phase)
+
+- `Fact.support_count` was first a `@computed_field`; a fact then failed to re-validate its own
+  JSON (schemas.md, decision 5). Now a property, returned through `FactView`; round-trip tested
+- `neo4j_store.py` briefly imported two sorting helpers from `app.memory`, a path from run code into
+  memory; the helpers moved to `app/schemas/memory.py`, and the boundary test now covers
+  `integrations`
+
+### Known Issues
+
+- Facts merge across runs only when the model names the attribute the same way: the same line gave
+  `latest_completion_date` in one run and `latest_completion_milestone` in another. Not merged on
+  purpose (no synonym guessing); a low support count can mean "phrased differently"
+- Memory is written only for missions run through the API (the CLI stores no run rows)
+- No API to forget a run's memory yet (the stores support it; tests use it)
+
+---
+
 ## 2026-10-04 - Phase 32: the 3D knowledge graph explorer
 
 ### Added

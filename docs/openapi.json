@@ -52,6 +52,34 @@
         "title": "AnalyzeResponse",
         "type": "object"
       },
+      "ArchivedInvestigation": {
+        "additionalProperties": false,
+        "properties": {
+          "archived_at": {
+            "format": "date-time",
+            "title": "Archived At",
+            "type": "string"
+          },
+          "objective": {
+            "title": "Objective",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/WorkingMemorySnapshot"
+          }
+        },
+        "required": [
+          "run_id",
+          "objective",
+          "snapshot"
+        ],
+        "title": "ArchivedInvestigation",
+        "type": "object"
+      },
       "Body_upload_documents_api_v1_documents_post": {
         "properties": {
           "files": {
@@ -382,6 +410,27 @@
         "title": "EntityInvestigation",
         "type": "object"
       },
+      "EntityMemoryView": {
+        "additionalProperties": false,
+        "description": "`EntityMemory` as the API returns it.",
+        "properties": {
+          "entity": {
+            "$ref": "#/components/schemas/KnownEntity"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/FactView"
+            },
+            "title": "Facts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "entity"
+        ],
+        "title": "EntityMemoryView",
+        "type": "object"
+      },
       "EntityNetwork": {
         "additionalProperties": false,
         "description": "The neighbourhood of one entity, within `depth` hops in either direction.",
@@ -431,6 +480,53 @@
         ],
         "title": "EntityType",
         "type": "string"
+      },
+      "Episode": {
+        "additionalProperties": false,
+        "description": "One finding of one run, as Member 4 logged one question and answer.\n\nEvery finding is logged with its verification status, rejected ones included: a memory of\nonly what passed would make past investigations look better than they were.",
+        "properties": {
+          "claim": {
+            "title": "Claim",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "episode_id": {
+            "title": "Episode Id",
+            "type": "string"
+          },
+          "objective": {
+            "title": "Objective",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "verification_status": {
+            "default": "",
+            "title": "Verification Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "episode_id",
+          "run_id",
+          "objective",
+          "claim"
+        ],
+        "title": "Episode",
+        "type": "object"
       },
       "EventPage": {
         "additionalProperties": false,
@@ -777,6 +873,88 @@
           }
         },
         "title": "ExtractionStats",
+        "type": "object"
+      },
+      "FactKind": {
+        "enum": [
+          "ATTRIBUTE",
+          "RELATION"
+        ],
+        "title": "FactKind",
+        "type": "string"
+      },
+      "FactSupport": {
+        "additionalProperties": false,
+        "description": "One run's citation of a fact: which investigation, and which line it read it from.",
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "source"
+        ],
+        "title": "FactSupport",
+        "type": "object"
+      },
+      "FactView": {
+        "additionalProperties": false,
+        "description": "A fact as the API returns it, with its support count and runs as plain fields.",
+        "properties": {
+          "fact_id": {
+            "title": "Fact Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/FactKind"
+          },
+          "object": {
+            "title": "Object",
+            "type": "string"
+          },
+          "predicate": {
+            "title": "Predicate",
+            "type": "string"
+          },
+          "runs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Runs",
+            "type": "array"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          },
+          "support": {
+            "items": {
+              "$ref": "#/components/schemas/FactSupport"
+            },
+            "title": "Support",
+            "type": "array"
+          },
+          "support_count": {
+            "minimum": 0.0,
+            "title": "Support Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fact_id",
+          "kind",
+          "subject",
+          "predicate",
+          "object",
+          "support_count"
+        ],
+        "title": "FactView",
         "type": "object"
       },
       "FinalReport": {
@@ -1267,6 +1445,26 @@
         "title": "InjectionSeverity",
         "type": "string"
       },
+      "InvestigationMemory": {
+        "additionalProperties": false,
+        "properties": {
+          "episodes": {
+            "items": {
+              "$ref": "#/components/schemas/Episode"
+            },
+            "title": "Episodes",
+            "type": "array"
+          },
+          "investigation": {
+            "$ref": "#/components/schemas/ArchivedInvestigation"
+          }
+        },
+        "required": [
+          "investigation"
+        ],
+        "title": "InvestigationMemory",
+        "type": "object"
+      },
       "IssueType": {
         "enum": [
           "NO_EVIDENCE",
@@ -1572,6 +1770,47 @@
         "title": "KnowledgeSummary",
         "type": "object"
       },
+      "KnownEntity": {
+        "additionalProperties": false,
+        "description": "An entity as seen across investigations, merged by normalised name.",
+        "properties": {
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Aliases",
+            "type": "array"
+          },
+          "entity_types": {
+            "items": {
+              "$ref": "#/components/schemas/EntityType"
+            },
+            "title": "Entity Types",
+            "type": "array"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "runs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "name"
+        ],
+        "title": "KnownEntity",
+        "type": "object"
+      },
       "Limitation": {
         "additionalProperties": false,
         "description": "Something that constrains how much the report can be trusted.\n\nGenerated from run facts \u2014 skipped tasks, unresolved gaps, degraded verification,\nexhausted budget \u2014 not from the model's sense of modesty.",
@@ -1591,6 +1830,25 @@
           "description"
         ],
         "title": "Limitation",
+        "type": "object"
+      },
+      "MemoryStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "episodic": {
+            "title": "Episodic",
+            "type": "boolean"
+          },
+          "semantic_store": {
+            "default": "",
+            "title": "Semantic Store",
+            "type": "string"
+          }
+        },
+        "required": [
+          "episodic"
+        ],
+        "title": "MemoryStatus",
         "type": "object"
       },
       "MetricPoint": {
@@ -2700,6 +2958,65 @@
         ],
         "title": "VerifierOpinion",
         "type": "object"
+      },
+      "WorkingMemorySnapshot": {
+        "additionalProperties": false,
+        "description": "What a run had in mind when it finished: Member 4's `snapshot()`, read off the result.\n\nMember 4 reduced evidence to a count in the snapshot; so does this.",
+        "properties": {
+          "evidence_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Evidence Count",
+            "type": "integer"
+          },
+          "findings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "hypotheses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hypotheses",
+            "type": "array"
+          },
+          "investigation_id": {
+            "title": "Investigation Id",
+            "type": "string"
+          },
+          "objective": {
+            "title": "Objective",
+            "type": "string"
+          },
+          "plan_steps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Plan Steps",
+            "type": "array"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          }
+        },
+        "required": [
+          "investigation_id",
+          "objective"
+        ],
+        "title": "WorkingMemorySnapshot",
+        "type": "object"
       }
     }
   },
@@ -2847,6 +3164,254 @@
         "summary": "Analyze",
         "tags": [
           "knowledge"
+        ]
+      }
+    },
+    "/api/v1/memory": {
+      "get": {
+        "operationId": "memory_status_api_v1_memory_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Memory Status",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/memory/entities/{name}": {
+      "get": {
+        "description": "An entity as seen across investigations, with the facts known about it.",
+        "operationId": "entity_api_v1_memory_entities__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityMemoryView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Entity",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/memory/episodes": {
+      "get": {
+        "description": "Episodes whose objective or claim contains `q`, newest first.",
+        "operationId": "episodes_api_v1_memory_episodes_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 5,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Episode"
+                  },
+                  "title": "Response Episodes Api V1 Memory Episodes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Episodes",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/memory/facts": {
+      "get": {
+        "description": "Facts by exact subject and predicate (normalised), best supported first.",
+        "operationId": "facts_api_v1_memory_facts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "subject",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Subject"
+            }
+          },
+          {
+            "in": "query",
+            "name": "predicate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Predicate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FactView"
+                  },
+                  "title": "Response Facts Api V1 Memory Facts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Facts",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/memory/investigations/{run_id}": {
+      "get": {
+        "operationId": "investigation_api_v1_memory_investigations__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestigationMemory"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Investigation",
+        "tags": [
+          "memory"
         ]
       }
     },

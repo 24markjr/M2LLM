@@ -45,7 +45,7 @@ from neo4j import AsyncDriver, AsyncGraphDatabase, AsyncManagedTransaction
 from app.core.logging import get_logger
 from app.intelligence.knowledge.base import clamp_depth, investigate, rank_matches
 from app.intelligence.knowledge.search import hybrid_search
-from app.intelligence.knowledge.store import normalize_name
+from app.intelligence.knowledge.store import normalize_attribute, normalize_name
 from app.intelligence.knowledge.timeline import build_timeline, compare_claims
 from app.schemas.finding import Finding
 from app.schemas.knowledge import (
@@ -54,6 +54,7 @@ from app.schemas.knowledge import (
     ConflictSide,
     EntityInvestigation,
     EntityNetwork,
+    EntityType,
     ExtractionStats,
     KnowledgeClaim,
     KnowledgeEntity,
@@ -63,6 +64,15 @@ from app.schemas.knowledge import (
     NetworkNode,
     SearchHit,
     TimelineEvent,
+)
+from app.schemas.memory import (
+    EntityMemory,
+    Fact,
+    FactKind,
+    FactSupport,
+    KnownEntity,
+    clamp_limit,
+    order_facts,
 )
 
 log = get_logger(__name__)
@@ -80,6 +90,10 @@ SCHEMA = (
     "CREATE CONSTRAINT jarvis_conflict IF NOT EXISTS "
     "FOR (n:Conflict) REQUIRE (n.run_id, n.conflict_id) IS UNIQUE",
     "CREATE INDEX jarvis_entity_key IF NOT EXISTS FOR (n:Entity) ON (n.run_id, n.key)",
+    # Memory across runs (Phase 33). Not scoped by run: these are the one place runs meet.
+    "CREATE CONSTRAINT jarvis_known_entity IF NOT EXISTS "
+    "FOR (n:KnownEntity) REQUIRE n.key IS UNIQUE",
+    "CREATE CONSTRAINT jarvis_fact IF NOT EXISTS FOR (n:Fact) REQUIRE n.fact_id IS UNIQUE",
 )
 
 # Labels a run's graph is made of. Deleting a run removes exactly these, scoped by run_id.
@@ -177,6 +191,19 @@ class Neo4jGraphStore:
 
     def base(self, run_id: str) -> Neo4jKnowledgeBase:
         return Neo4jKnowledgeBase(self, run_id)
+
+    def semantic_memory(self) -> Neo4jSemanticMemory:
+        return Neo4jSemanticMemory(self)
+
+    async def write(self, query: str, **params: Any) -> None:
+        """One write transaction, for callers whose write is a single statement."""
+        await self.ensure_schema()
+
+        async def work(tx: AsyncManagedTransaction) -> None:
+            await tx.run(query, params)
+
+        async with self._driver.session(database=self._database) as session:
+            await session.execute_write(work)
 
     async def load(self, run_id: str) -> KnowledgeSnapshot | None:
         """A run's whole knowledge base, read back. None if the run was never written."""
@@ -506,3 +533,164 @@ class Neo4jKnowledgeBase:
             await self.claims(),
             depth=clamp_depth(depth),
         )
+
+
+# --- semantic memory across runs (Phase 33) ---------------------------------------------------
+#
+#     (:KnownEntity {key, name, types, aliases, runs})
+#     (:Fact {fact_id, kind, subject, subject_key, predicate, object, object_key, support})
+#     (:KnownEntity)-[:ASSERTS]->(:Fact)-[:ABOUT]->(:KnownEntity)      ABOUT for relations only
+#
+# Unlike a run's graph, these nodes are shared by every run: that is what makes "Rahul Sharma
+# across past investigations" one node. `support` is a list of "run_id<TAB>source" strings, merged
+# without duplicates, so recording a run twice changes nothing.
+
+_SUPPORT_SEPARATOR = "\t"
+
+_RECORD_ENTITIES = """
+UNWIND $entities AS e
+MERGE (k:KnownEntity {key: e.key})
+  ON CREATE SET k.name = e.name, k.types = [], k.aliases = [], k.runs = []
+SET k.types = [t IN k.types WHERE NOT t IN e.types] + e.types,
+    k.aliases = [a IN k.aliases WHERE NOT a IN e.aliases] + e.aliases,
+    k.runs = [r IN k.runs WHERE NOT r IN e.runs] + e.runs
+"""
+
+_RECORD_FACTS = """
+UNWIND $facts AS f
+MERGE (fact:Fact {fact_id: f.fact_id})
+  ON CREATE SET fact.kind = f.kind, fact.subject = f.subject, fact.subject_key = f.subject_key,
+                fact.predicate = f.predicate, fact.object = f.object,
+                fact.object_key = f.object_key, fact.support = []
+SET fact.support = [s IN fact.support WHERE NOT s IN f.support] + f.support
+MERGE (s:KnownEntity {key: f.subject_key})
+  ON CREATE SET s.name = f.subject, s.types = [], s.aliases = [], s.runs = []
+MERGE (s)-[:ASSERTS]->(fact)
+WITH fact, f WHERE f.kind = 'RELATION'
+MERGE (o:KnownEntity {key: f.object_key})
+  ON CREATE SET o.name = f.object, o.types = [], o.aliases = [], o.runs = []
+MERGE (fact)-[:ABOUT]->(o)
+"""
+
+# Each step aggregates before the next, so an empty match never stops the steps after it.
+_FORGET = """
+OPTIONAL MATCH (k:KnownEntity) WHERE $r IN k.runs
+SET k.runs = [x IN k.runs WHERE x <> $r]
+WITH count(k) AS entities
+OPTIONAL MATCH (f:Fact) WHERE any(s IN f.support WHERE s STARTS WITH $prefix)
+SET f.support = [s IN f.support WHERE NOT s STARTS WITH $prefix]
+WITH count(f) AS facts
+OPTIONAL MATCH (f:Fact) WHERE size(f.support) = 0
+DETACH DELETE f
+WITH count(f) AS removed
+OPTIONAL MATCH (k:KnownEntity) WHERE size(k.runs) = 0 AND NOT (k)-[:ASSERTS]->(:Fact)
+DETACH DELETE k
+"""
+
+_FACT_FIELDS = (
+    "f.fact_id AS fact_id, f.kind AS kind, f.subject AS subject, f.subject_key AS subject_key, "
+    "f.predicate AS predicate, f.object AS object, f.object_key AS object_key, "
+    "f.support AS support"
+)
+
+
+class Neo4jSemanticMemory:
+    """Semantic memory in Neo4j: one graph of known entities and facts, shared by every run."""
+
+    name = "neo4j"
+
+    def __init__(self, store: Neo4jGraphStore) -> None:
+        self._store = store
+
+    async def record(self, entities: list[KnownEntity], facts: list[Fact]) -> None:
+        await self._store.write(
+            _RECORD_ENTITIES,
+            entities=[
+                {
+                    "key": e.key,
+                    "name": e.name,
+                    "types": [t.value for t in e.entity_types],
+                    "aliases": sorted(set(e.aliases)),
+                    "runs": list(e.runs),
+                }
+                for e in entities
+            ],
+        )
+        await self._store.write(
+            _RECORD_FACTS,
+            facts=[
+                {
+                    "fact_id": f.fact_id,
+                    "kind": f.kind.value,
+                    "subject": f.subject,
+                    "subject_key": f.subject_key,
+                    "predicate": f.predicate,
+                    "object": f.object,
+                    "object_key": f.object_key,
+                    "support": sorted(
+                        {f"{s.run_id}{_SUPPORT_SEPARATOR}{s.source}" for s in f.support}
+                    ),
+                }
+                for f in facts
+            ],
+        )
+
+    async def entity(self, name: str) -> EntityMemory | None:
+        key = normalize_name(name)
+        if not key:
+            return None
+        rows = await self._store.read(
+            "MATCH (k:KnownEntity {key: $key}) "
+            "RETURN k.key AS key, k.name AS name, k.types AS types, k.aliases AS aliases, "
+            "k.runs AS runs",
+            key=key,
+        )
+        if not rows:
+            return None
+        row = rows[0]
+        facts = await self._store.read(
+            "MATCH (f:Fact) WHERE f.subject_key = $key "
+            "OR (f.kind = 'RELATION' AND f.object_key = $key) "
+            f"RETURN {_FACT_FIELDS}",
+            key=key,
+        )
+        entity = KnownEntity(
+            key=row["key"],
+            name=row["name"],
+            entity_types=[EntityType(t) for t in row["types"] or []],
+            aliases=sorted(row["aliases"] or []),
+            runs=sorted(row["runs"] or []),
+        )
+        return EntityMemory(entity=entity, facts=order_facts([_memory_fact(r) for r in facts]))
+
+    async def facts(
+        self, subject: str | None = None, predicate: str | None = None, limit: int = 50
+    ) -> list[Fact]:
+        rows = await self._store.read(
+            "MATCH (f:Fact) WHERE ($subject IS NULL OR f.subject_key = $subject) "
+            "AND ($predicate IS NULL OR f.predicate = $predicate) "
+            f"RETURN {_FACT_FIELDS}",
+            subject=normalize_name(subject) if subject else None,
+            predicate=normalize_attribute(predicate) if predicate else None,
+        )
+        return order_facts([_memory_fact(r) for r in rows])[: clamp_limit(limit)]
+
+    async def forget(self, run_id: str) -> None:
+        await self._store.write(_FORGET, r=run_id, prefix=f"{run_id}{_SUPPORT_SEPARATOR}")
+
+
+def _memory_fact(row: dict[str, Any]) -> Fact:
+    support = []
+    for item in row["support"] or []:
+        run_id, _, source = str(item).partition(_SUPPORT_SEPARATOR)
+        support.append(FactSupport(run_id=run_id, source=source))
+    return Fact(
+        fact_id=row["fact_id"],
+        kind=FactKind(row["kind"]),
+        subject=row["subject"],
+        subject_key=row["subject_key"],
+        predicate=row["predicate"],
+        object=row["object"],
+        object_key=row["object_key"],
+        support=support,
+    )

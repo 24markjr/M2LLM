@@ -27,6 +27,7 @@ import {
   initialMode,
   listOrder,
   parentsToExpand,
+  recallText,
   searchEntities,
   visibleGraph,
 } from "./model";
@@ -70,6 +71,10 @@ export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
   const details = useRef(new Map<string, NodeDetail>());
   const [detail, setDetail] = useState<NodeDetail | null>(null);
   const [hoverDetail, setHoverDetail] = useState<NodeDetail | null>(null);
+  // Missions memory has seen an entity in, by name (Phase 33). null: memory could not answer.
+  const recalled = useRef(new Map<string, string[] | null>());
+  const [hoverRecall, setHoverRecall] = useState<string[] | null>(null);
+  const [selectedRecall, setSelectedRecall] = useState<string[] | null>(null);
 
   // --- loading, and live growth while the mission runs --------------------------------------
   const load = useCallback(async () => {
@@ -143,13 +148,40 @@ export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
 
   useEffect(() => {
     setHoverDetail(null);
+    setHoverRecall(null);
     if (!hover) return;
     let current = true;
     void fetchDetail(hover.node.id).then((d) => current && setHoverDetail(d));
+    if (hover.node.kind === "ENTITY") void fetchRecall(hover.node.label).then((r) => current && setHoverRecall(r));
     return () => {
       current = false;
     };
   }, [hover, fetchDetail]);
+
+  // The keyboard path gets the same: the selected entity's past, in its panel.
+  useEffect(() => {
+    setSelectedRecall(null);
+    const node = selected && view ? view.nodes.find((n) => n.id === selected) : undefined;
+    if (node?.kind !== "ENTITY") return;
+    let current = true;
+    void fetchRecall(node.label).then((r) => current && setSelectedRecall(r));
+    return () => {
+      current = false;
+    };
+  }, [selected, view]);
+
+  /** Fetched once per name. A 404 means memory has no record (new); any other failure, unknown. */
+  async function fetchRecall(name: string): Promise<string[] | null> {
+    if (recalled.current.has(name)) return recalled.current.get(name) ?? null;
+    let runs: string[] | null;
+    try {
+      runs = (await api.getEntityMemory(name)).entity.runs;
+    } catch (exc: unknown) {
+      runs = exc instanceof ApiError && exc.code === "MEMORY_NOT_FOUND" ? [] : null;
+    }
+    recalled.current.set(name, runs);
+    return runs;
+  }
 
   useEffect(() => {
     setDetail(null);
@@ -365,7 +397,15 @@ export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
             onDoubleClick={(node) => node.kind === "ENTITY" && toggleExpand(node.id)}
             onBackground={clear}
           />
-          {hover ? <NodeTooltip node={hover.node} detail={hoverDetail} x={hover.x} y={hover.y} /> : null}
+          {hover ? (
+            <NodeTooltip
+              node={hover.node}
+              detail={hoverDetail}
+              recall={recallText(hoverRecall, runId)}
+              x={hover.x}
+              y={hover.y}
+            />
+          ) : null}
           <Legend />
           <div className="stage-hint dim mono">
             hover: details · click: light up related · double-click an entity: unfold its claims · Esc: clear
@@ -392,6 +432,7 @@ export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
           {selected ? (
             <NodePanel
               detail={detail}
+              recall={recallText(selectedRecall, runId)}
               node={graph.nodes.find((n) => n.id === selected) ?? view.nodes.find((n) => n.id === selected) ?? null}
               expanded={expanded.has(selected)}
               onToggle={() => toggleExpand(selected)}
@@ -452,7 +493,19 @@ export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
 
 const GLYPH: Record<GraphNode["kind"], string> = { ENTITY: "●", CLAIM: "■", DOCUMENT: "◆", FINDING: "▲" };
 
-function NodeTooltip({ node, detail, x, y }: { node: GraphNode; detail: NodeDetail | null; x: number; y: number }) {
+function NodeTooltip({
+  node,
+  detail,
+  recall,
+  x,
+  y,
+}: {
+  node: GraphNode;
+  detail: NodeDetail | null;
+  recall: string;
+  x: number;
+  y: number;
+}) {
   return (
     <div className="node-tooltip" style={{ left: x + 14, top: y + 14 }} role="tooltip">
       <div className="tooltip-head">
@@ -469,6 +522,7 @@ function NodeTooltip({ node, detail, x, y }: { node: GraphNode; detail: NodeDeta
           </div>
           {detail?.entity?.aliases.length ? <div className="dim">also: {detail.entity.aliases.join(", ")}</div> : null}
           {detail ? <div className="dim">in: {detail.documents.join(", ")}</div> : null}
+          {recall ? <div className="memory-note">{recall}</div> : null}
         </>
       ) : null}
       {node.kind === "CLAIM" ? (
@@ -492,12 +546,14 @@ function NodeTooltip({ node, detail, x, y }: { node: GraphNode; detail: NodeDeta
 function NodePanel({
   node,
   detail,
+  recall,
   expanded,
   onToggle,
   onClear,
 }: {
   node: GraphNode | null;
   detail: NodeDetail | null;
+  recall: string;
   expanded: boolean;
   onToggle: () => void;
   onClear: () => void;
@@ -514,6 +570,11 @@ function NodePanel({
           {node.kind === "ENTITY" ? <button onClick={onToggle}>{expanded ? "Collapse" : "Expand"}</button> : null}
           <button onClick={onClear}>Clear</button>
         </div>
+        {node.kind === "ENTITY" && recall ? (
+          <div className="memory-note">
+            {recall} · <a href="#/memory">memory</a>
+          </div>
+        ) : null}
         {detail?.claims.length ? (
           <>
             <h3>Claims</h3>

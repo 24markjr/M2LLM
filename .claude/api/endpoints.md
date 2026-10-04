@@ -47,6 +47,7 @@ kept current while the run proceeds.
 | GET | `/api/v1/missions/{id}/knowledge...` | The mission's knowledge base; see **Knowledge** below (Phase 31) |
 | GET | `/api/v1/missions/{id}/findings/{finding_id}/trail` | The subgraph a finding rests on |
 | POST | `/api/v1/knowledge/analyze` | Documents in, a knowledge base out, no mission, nothing stored |
+| GET | `/api/v1/memory...` | Memory across missions; see **Memory** below (Phase 33) |
 | GET | `/health` | Reports the model, not just a status |
 
 ### Findings are returned whole
@@ -179,3 +180,25 @@ graph has no finding nodes.
 **`analyze` waits for extraction** (one model call per chunk) and is capped at 10 documents.
 It stores nothing. A knowledge base with no mission has no run to belong to, and storing it would
 bring back the global store the port removed.
+
+## Memory (Phase 33)
+
+Member 4's episodic and semantic memory, read-only, for people. Written when a mission finishes;
+never read by a running mission. Code: `app/api/v1/memory.py`; design: `architecture/memory.md`.
+
+| Method | Path | Returns | Member 4's original |
+|---|---|---|---|
+| GET | `/api/v1/memory` | `MemoryStatus`: `episodic` (bool), `semantic_store` (`neo4j`, `postgres` or empty) | (new) |
+| GET | `/api/v1/memory/episodes?q=&limit=` | `Episode`s whose objective or claim contains `q`, newest first; `limit` 1-50, default 5 | `EpisodicMemory.search(keyword, limit=5)` |
+| GET | `/api/v1/memory/investigations/{run_id}` | `InvestigationMemory`: the archived working-memory snapshot and the run's episodes | `archive_investigation` (read back) |
+| GET | `/api/v1/memory/facts?subject=&predicate=&limit=` | `FactView`s by normalised subject and predicate, best supported first; `limit` 1-200 | `SemanticMemory.query(subject, predicate)` |
+| GET | `/api/v1/memory/entities/{name}` | `EntityMemoryView`: the entity across missions (`runs`) and its facts, as subject or as a relation's object | (new) |
+
+A fact has **no confidence**: `support` lists the (run, source line) pairs that asserted it, and
+`support_count` counts them. Only lines cited by a verified finding become facts; every finding,
+whatever its status, is an episode.
+
+| Code | Status | When |
+|---|---|---|
+| `MEMORY_UNAVAILABLE` | 503 | the tier's store is unreachable (`details.tier` is `episodic` or `semantic`) |
+| `MEMORY_NOT_FOUND` | 404 | no archived investigation for the run, or no known entity by that name |

@@ -17,6 +17,7 @@ import {
   NewMission,
   ReplayPage,
 } from "./pages/pages";
+import { MemoryPage } from "./pages/MemoryPage";
 
 // The knowledge graph pages pull in three.js (~600 kB). Loaded only when opened (Phase 32).
 const KnowledgeExplorer = lazy(() => import("./components/graph3d/KnowledgeExplorer"));
@@ -28,6 +29,7 @@ type Route =
   | { name: "mission"; runId: string }
   | { name: "graph"; runId: string }
   | { name: "knowledge" }
+  | { name: "memory" }
   | { name: "replay" }
   | { name: "evaluation" };
 
@@ -35,6 +37,7 @@ function parse(hash: string): Route {
   const graph = /^#\/mission\/([\w-]+)\/graph$/.exec(hash);
   if (graph?.[1]) return { name: "graph", runId: graph[1] };
   if (hash === "#/knowledge") return { name: "knowledge" };
+  if (hash === "#/memory") return { name: "memory" };
   const match = /^#\/mission\/([\w-]+)$/.exec(hash);
   if (match?.[1]) return { name: "mission", runId: match[1] };
   if (hash === "#/new") return { name: "new" };
@@ -83,6 +86,9 @@ export default function App() {
           </a>
           <a className={route.name === "knowledge" ? "on" : ""} href="#/knowledge">
             Knowledge
+          </a>
+          <a className={route.name === "memory" ? "on" : ""} href="#/memory">
+            Memory
           </a>
         </nav>
         <div className="tagline">adaptive, evidence-driven investigation</div>
@@ -143,6 +149,8 @@ export default function App() {
           <AnalyzePage />
         </Suspense>
       ) : null}
+
+      {route.name === "memory" ? <MemoryPage /> : null}
     </div>
   );
 }

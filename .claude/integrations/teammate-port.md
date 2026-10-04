@@ -105,9 +105,9 @@ the reason).
 | T7 | Prompt-injection scanner, 5 categories, severity | `security/injection_guard.py` | `app/security/injection.py` | CHANGED. Original 21 patterns and severity rule verbatim (tested against the archive); 5 JARVIS patterns added separately; scanned on every mission and upload, flag never drops |
 | T8 | Safe prompt construction (`<document>` wrapping) | `security/injection_guard.py` | `app/security/injection.py` | CHANGED. Wrapper escapes `</document>`; used in the verification (v2) and reasoning (v5) prompts |
 | T9 | 14-case adversarial security suite | `security/security_test_suite.py` | `.agent/evals/security/injection_cases.yaml`, `app/evaluation/security.py` | DONE. Their 14 cases verbatim plus 13; 27/27, run by `eval-trust` |
-| T10 | Working memory | `memory/working_memory.py` | `app/memory/working.py` | TODO |
-| T11 | Episodic memory (Q&A log, archived investigations, keyword search) | `memory/episodic_memory.py` (SQLite) | `app/memory/` | TODO |
-| T12 | Semantic memory (subject-predicate-object facts) | `memory/semantic_memory.py` (SQLite) | `app/memory/` | TODO |
+| T10 | Working memory | `memory/working_memory.py` | `app/memory/distill.py:working_snapshot` | CHANGED. Derived from the finished `MissionResult`, not a second live state; archived with the run |
+| T11 | Episodic memory (Q&A log, archived investigations, keyword search) | `memory/episodic_memory.py` (SQLite) | `app/memory/episodic.py`; Postgres `memory_episodes`, `memory_investigations` | CHANGED. One episode per finding, every status kept; same `ILIKE` search, newest first, 5 by default, wildcards escaped |
+| T12 | Semantic memory (subject-predicate-object facts) | `memory/semantic_memory.py` (SQLite) | `app/memory/semantic.py`; `neo4j_store.py:Neo4jSemanticMemory` | CHANGED. Facts only from verified findings; `support` (runs and lines) instead of `confidence=1.0`; entities merged across runs; Neo4j or Postgres by configuration; never read back into a run |
 | T13 | Synthetic benchmark generator | `eval/generate_benchmark.py` | `app/evaluation/trust.py` | DONE. Byte-identical data from seed 42, checked by test |
 | T14 | Benchmark runner and dashboard | `eval/run_benchmark.py` | `python -m app.cli eval-trust` | CHANGED. Typed, stamped report; per-case episodic logging returns in Phase 33 |
 | T15 | Benchmark data (60 cases, 58 documents) | `eval/benchmark.json`, `eval/evidence_corpus.json` | `.agent/evals/trust/` | DONE. Copied verbatim |

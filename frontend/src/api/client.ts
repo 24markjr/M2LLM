@@ -25,6 +25,7 @@ import type {
   MissionSummary,
   TaskGraphResponse,
 } from "./types";
+import type { EntityMemory, Episode, Fact, InvestigationMemory, MemoryStatus } from "./types";
 
 const BASE = "/api/v1";
 
@@ -137,4 +138,22 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ documents }),
     }),
+
+  // --- memory (Phase 33) ---
+  getMemoryStatus: () => request<MemoryStatus>(`${BASE}/memory`),
+
+  searchEpisodes: (q: string, limit = 20) =>
+    request<Episode[]>(`${BASE}/memory/episodes?q=${encodeURIComponent(q)}&limit=${limit}`),
+
+  getInvestigationMemory: (runId: string) =>
+    request<InvestigationMemory>(`${BASE}/memory/investigations/${runId}`),
+
+  getFacts: (subject: string, predicate = "") =>
+    request<Fact[]>(
+      `${BASE}/memory/facts?subject=${encodeURIComponent(subject)}` +
+        (predicate ? `&predicate=${encodeURIComponent(predicate)}` : ""),
+    ),
+
+  getEntityMemory: (name: string) =>
+    request<EntityMemory>(`${BASE}/memory/entities/${encodeURIComponent(name)}`),
 };
