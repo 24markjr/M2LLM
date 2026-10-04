@@ -17,6 +17,7 @@ configuration nothing consumes.
 
 from __future__ import annotations
 
+from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -262,6 +263,14 @@ def get_lexical_thresholds() -> LexicalThresholds:
 # --- agent.yaml: knowledge (Phase 28) --------------------------------------------
 
 
+class CrossSourcePass(StrEnum):
+    """When the orchestrator adds the knowledge pass to a plan (Phase 30)."""
+
+    NEVER = "never"
+    COMPARATIVE = "comparative"
+    ALWAYS = "always"
+
+
 class KnowledgePolicy(JarvisModel):
     """`agent.yaml:knowledge`, after clamping its ceilings against `Settings`."""
 
@@ -271,6 +280,7 @@ class KnowledgePolicy(JarvisModel):
     max_chunks: int = Field(ge=1)
     max_claims: int = Field(ge=1)
     max_known_terms: int = Field(default=40, ge=0)
+    cross_source_pass: CrossSourcePass = CrossSourcePass.COMPARATIVE
 
 
 @lru_cache
@@ -291,4 +301,5 @@ def get_knowledge_policy() -> KnowledgePolicy:
             name="knowledge.max_claims",
         ),
         max_known_terms=int(raw.get("max_known_terms", 40)),
+        cross_source_pass=CrossSourcePass(raw.get("cross_source_pass", "comparative")),
     )

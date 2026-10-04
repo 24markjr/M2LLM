@@ -226,6 +226,7 @@ class ReasoningEngine:
         emit: object | None = None,
         start_index: int = 0,
         intent: Intent | None = None,
+        page_starts: dict[str, list[int]] | None = None,
     ) -> list[Finding]:
         if not observations:
             return []
@@ -243,7 +244,7 @@ class ReasoningEngine:
 
         await self._event(emit, EventType.REASONING_STARTED, {"observations": len(bounded)})
 
-        candidates = await self._ask_model(objective, bounded, emit)
+        candidates = await self._ask_model(objective, bounded, emit, page_starts)
         candidates = await self._filter_irrelevant(objective, candidates, emit)
         comparative = requires_comparison(intent)
         binder = EvidenceBinder(observations)
@@ -380,13 +381,19 @@ class ReasoningEngine:
         return CandidateFindings(findings=kept)
 
     async def _ask_model(
-        self, objective: Objective, observations: list[Observation], emit: object | None
+        self,
+        objective: Objective,
+        observations: list[Observation],
+        emit: object | None,
+        page_starts: dict[str, list[int]] | None = None,
     ) -> CandidateFindings:
         # Observations quote document text, so they go in one <document> block: the prompt marks
         # them as data, and a document cannot end the block early (Phase 27).
         prompt = self._prompts.get("reasoning").render(
             objective=objective.text,
-            observations=wrap_untrusted("task observations", self._describe(observations)),
+            observations=wrap_untrusted(
+                "task observations", self._describe(observations, page_starts)
+            ),
         )
         try:
             return await generate_structured(
@@ -398,7 +405,9 @@ class ReasoningEngine:
             return CandidateFindings()
 
     @staticmethod
-    def _describe(observations: list[Observation]) -> str:
+    def _describe(
+        observations: list[Observation], page_starts: dict[str, list[int]] | None = None
+    ) -> str:
         """Render observations with their locators, so citations can be copied verbatim."""
         lines: list[str] = []
         for observation in observations:
@@ -406,7 +415,7 @@ class ReasoningEngine:
                 f"\n[{observation.task_id}] {observation.task_type}: {observation.content}"
             )
             for source in observation.sources:
-                detail = _detail_for(observation, source)
+                detail = _detail_for(observation, source, page_starts)
                 lines.append(f"  - {source}{detail}")
         return "\n".join(lines)
 
@@ -426,18 +435,45 @@ class ReasoningEngine:
         await emitter(event_type, payload=payload, finding_id=finding_id)
 
 
-def _detail_for(observation: Observation, source: str) -> str:
-    """Attach the extracted value to a locator where the tool recorded one.
+# Values attached to one citation. A line holds a few; a PDF page can hold dozens, and the
+# observation budget is shared by every citation in the run.
+MAX_LINE_DETAILS = 3
+MAX_PAGE_DETAILS = 8
 
-    Without this the model sees a list of line references with no content and has to guess
-    what they contain - which is exactly how unresolvable citations get produced.
+
+def _detail_for(
+    observation: Observation, source: str, page_starts: dict[str, list[int]] | None = None
+) -> str:
+    """Attach the extracted values to a locator where the tool recorded them.
+
+    Without this the model sees a list of references with no content and has to guess what they
+    contain - which is exactly how unresolvable citations get produced.
+
+    BUG-020: this only understood line citations (`report.txt:r12`). Tools cite a PDF by page
+    (`report.pdf:p1`), so for a PDF the reasoning prompt carried the page reference and **none** of
+    the values found on it: five dates extracted from the Aurora PDF reached the model as
+    `aurora_project_report.pdf:p1` and nothing else. With nothing to state, the model wrote a
+    sentence about the task, the relevance gate discarded it, and `aurora_pdf_timeline` reported no
+    findings in every evaluation run since it was added. A page citation now carries the values the
+    tool found on that page, located with the document's page boundaries.
     """
-    structured = observation.structured
-    document, _, row = source.rpartition(":r")
-    if not row.isdigit():
+    document, _, position = source.rpartition(":")
+    kind, number = position[:1], position[1:]
+    if kind not in {"r", "p"} or not number.isdigit():
         return ""
-    line = int(row)
+    target = int(number)
 
+    if kind == "r":
+        first, last, limit = target, target, MAX_LINE_DETAILS
+    else:
+        starts = (page_starts or {}).get(document, [])
+        if not 1 <= target <= len(starts):
+            return ""
+        first = starts[target - 1]
+        last = starts[target] - 1 if target < len(starts) else 10**9
+        limit = MAX_PAGE_DETAILS
+
+    structured = observation.structured
     for key in ("extractions", "passages"):
         items = structured.get(key)
         if not isinstance(items, list):
@@ -450,9 +486,11 @@ def _detail_for(observation: Observation, source: str) -> str:
             str(item.get("value") or item.get("text", ""))
             for item in items
             if isinstance(item, dict)
-            and item.get("line") == line
+            and isinstance(item.get("line"), int)
+            and first <= item["line"] <= last
             and item.get("document_id", document) == document
         ]
         if values:
-            return "  " + " | ".join(v[:120] for v in values[:3])
+            unique = list(dict.fromkeys(values))
+            return "  " + " | ".join(v[:120] for v in unique[:limit])
     return ""

@@ -437,3 +437,17 @@ the neighbourhood traversal are Cypher. One test suite runs against Neo4j and th
 A live extraction of Member 3's sample answered identically from both, and is kept in the local
 database as `run_00000000a3a3` for browsing. A contradiction is an edge (`CONFLICTS_WITH`) between
 the claims on its two sides, which Member 3's graph never had: there, a claim was not a node.
+
+### Phase 30 — knowledge in the pipeline (2026-10-04)
+
+`extract_entities` and `extract_claims` route to the `knowledge_graph` tool, and the orchestrator
+adds a knowledge pass for comparative objectives. Member 3's knowledge base is now built inside a
+mission, stored in Neo4j, and handed to reasoning as conflict pairs with both citations. Findings
+are recorded in the graph as `CITES` edges.
+
+**What it showed about Member 3's design.** His contradiction rule is same entity, same attribute,
+different values. His sample data is built of exactly that. JARVIS's fixtures plant planned-vs-actual
+contradictions, which compare different attributes and which the rule cannot see. On them the
+knowledge layer extracted 31 claims and paired none. Neither design is wrong; they answer
+different questions. Experiment 003 in Phase 34 measures it on shipment scenarios built from his
+sample. See the experiment log.

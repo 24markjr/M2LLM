@@ -16,7 +16,11 @@ from pathlib import Path
 
 import yaml
 
-from app.core.agent_config import get_lexical_thresholds, get_models_config
+from app.core.agent_config import (
+    get_knowledge_policy,
+    get_lexical_thresholds,
+    get_models_config,
+)
 from app.core.config import get_settings
 from app.core.events import EventBus, MemoryEventSink, RunEventEmitter
 from app.core.logging import get_logger
@@ -195,6 +199,9 @@ async def run_suite(suite: str = "all") -> EvalReport:
                 # check would have compared two different systems as one.
                 "verification_provider": settings.verification_provider.value,
                 "lexical_thresholds": get_lexical_thresholds().model_dump(),
+                # Phase 30: the knowledge layer changes what reasoning reads, so its policy is part
+                # of what a report measured (the BUG-017 rule).
+                "knowledge": get_knowledge_policy().model_dump(mode="json"),
             }
         ),
     )

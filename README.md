@@ -145,7 +145,7 @@ charts the committed evaluation reports.
 
 ```bash
 cd backend
-pytest tests -m "not llm"      # 829 tests, no model needed
+pytest tests -m "not llm"      # 846 tests, no model needed
 ```
 
 ---
@@ -172,7 +172,7 @@ repository is hand-written** — a report carries the model, prompt versions and
 two reports produced with different stamps are refused as incomparable rather than quietly
 compared.
 
-The current baseline is `20261003T095400-qwen3-4b-all`. Its headline numbers:
+The current baseline is `20261004T172506-qwen3-4b-all`. Its headline numbers:
 
 | Metric | Value | |
 |---|---|---|
@@ -182,7 +182,7 @@ The current baseline is `20261003T095400-qwen3-4b-all`. Its headline numbers:
 | `dependency_correctness` | 0.848 | |
 | `replanning_success` | 1.000 | gaps closed within the iteration ceiling - vacuous here, see below |
 | `intent_accuracy` | 0.628 | |
-| `task_efficiency` | 1.447 | tasks ÷ minimal sufficient tasks — lower is better |
+| `task_efficiency` | 1.654 | tasks ÷ minimal sufficient tasks — lower is better |
 | `plan_validity` | 0.625 | plans passing with **zero** repairs |
 
 Two of those deserve their explanation rather than a chart.
@@ -233,10 +233,12 @@ Two changes reduced it, and neither was asking the model more firmly:
   was established. This was a contradiction between two of my own prompts, and the second negative
   scenario is what exposed it.
 
-**What remains:** one positive scenario produces **no findings where claims are planted**
-(`aurora_pdf_timeline`). The build fails on that, and the threshold has not been moved.
-`aurora_contradiction` used to fail the same way, and since BUG-015 it reports the planted
-contradiction, citing both documents.
+**Every positive scenario now reports its planted findings.** `aurora_contradiction` finds both
+planted contradictions (completion date and budget), each citing both documents, since BUG-015
+let the verifier read the cited lines. `aurora_pdf_timeline` failed in every run until BUG-020:
+for a PDF the reasoning model was shown page references with no content, so it had nothing to
+state. **What remains is the negative case above** (BUG-019), and the build fails on it. The
+threshold has not been moved.
 
 That trade is worth understanding rather than glossing. Before these fixes the contradiction
 scenario reported four findings — three of them restatements, counted as successes by every metric.
@@ -322,5 +324,7 @@ never blocked, and **no member's implementation is ever imported directly**. See
 
 ## Status
 
-Phases 0–24 built. CI is red on `main`, deliberately: the evaluation gate fails on the
-under-reporting described above, and the gate has not been weakened to make it green.
+Phases 0–24 built, and Phases 25–30 of the Members 3 and 4 integration
+([plan](.claude/implementation/integration-plan-phases-25-35.md)). CI is red on `main`,
+deliberately: the evaluation gate fails on the negative-case confabulation described above
+(BUG-019), and the gate has not been weakened to make it green.

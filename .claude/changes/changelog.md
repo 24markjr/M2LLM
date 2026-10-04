@@ -5,6 +5,45 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-04 - Phase 30: the knowledge layer inside a mission
+
+### Added
+
+- `ToolCapability.KNOWLEDGE_GRAPH`; `extract_entities` / `extract_claims` route to it (they used a
+  date-and-amount regex)
+- `app/tools/knowledge.py` - `knowledge_graph`: conflicts first, each side on its own line naming
+  the other with its citation; `mode: conflicts|all`; regex fallback when no knowledge base exists
+- The knowledge pass (A5): `agent.yaml:knowledge.cross_source_pass` (`never | comparative | always`)
+- `MissionResult.knowledge`, `knowledge_store`, `knowledge_pass_task_id`; `ToolContext.knowledge`
+- `KNOWLEDGE_EXTRACTED` (EventType 38 -> 39)
+- Neo4j: `(:Finding)-[:CITES]->(:Claim|:Document)` after verification (`record_findings`)
+- Evaluation stamp includes the knowledge policy (the BUG-017 rule)
+- `tests/conftest.py`: tests never write to a real Neo4j by default
+- `tests/unit/test_knowledge_pipeline.py` (13), BUG-020 tests (3), a finding-edge test
+
+### Fixed
+
+- **BUG-020** - for a PDF the reasoning model saw page references and no content.
+  `aurora_pdf_timeline` 0 -> 2 findings
+
+### Measured
+
+- New baseline `20261004T172506`: **every positive scenario passes**. The one threshold failure is
+  the negative case (BUG-019)
+- Knowledge pass off vs on, same session: no positive result changed; +13 s and one task per run.
+  The cause is understood: Member 3's rule is same-attribute, and the fixtures' contradictions are
+  planned-vs-actual. Experiment 003 (preliminary)
+- 846 tests, `mypy --strict` clean (107 modules)
+
+### Known Issues
+
+- BUG-019 still fails CI. The composite verifier's specifics check would catch this session's
+  version ("31 January 2026" is not in its cited line), and Exp-004 in Phase 34 decides the default
+- Five test runs were written into the local Neo4j by unit tests before `tests/conftest.py`; they
+  were removed
+
+---
+
 ## 2026-10-03 - Phase 29: Neo4j knowledge graph store
 
 ### Added

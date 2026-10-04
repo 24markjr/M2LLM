@@ -169,3 +169,48 @@ MATCH (n {run_id: 'run_00000000a3a3'})-[r]-(m {run_id: 'run_00000000a3a3'}) RETU
 
 `run_00000000a3a3` is Member 3's sample, extracted live and kept in the local database on
 2026-10-03.
+
+## In a mission (Phase 30)
+
+```
+intent -> plan (validated) -> [knowledge pass added?] -> [knowledge built?] -> execute -> reason ...
+```
+
+1. **The knowledge pass (A5).** After the plan validates, the orchestrator adds one
+   `extract_claims` task with `mode: conflicts` when `agent.yaml:knowledge.cross_source_pass` says
+   to: `never`, `comparative` (the default: when the intent requires a comparison, the same test
+   the reasoning engine uses for its two-sides rule), or `always`. It is not added when the plan
+   already has a task that reads the knowledge base. It takes the next free task number, is
+   recorded with `TASK_CREATED` (`origin: knowledge_pass`), and because it is added after
+   validation, `plan_validity` still measures the planner alone.
+2. **Building.** If any task in the graph routes to `KNOWLEDGE_GRAPH`, the run's knowledge base is
+   extracted once, before execution, stored through `open_knowledge_base` (Neo4j or memory), put on
+   `MissionResult.knowledge`, and announced with `KNOWLEDGE_EXTRACTED`. A plan that never asks for
+   entities or claims costs no extraction calls.
+3. **The tool.** `extract_entities` and `extract_claims` route to `KNOWLEDGE_GRAPH`, served only by
+   `knowledge_graph`, so routing is deterministic. It reads the snapshot from `ToolContext` and
+   returns each side of each conflict as its own item, on the cited line, naming the other side:
+
+   ```
+   finance.txt:r12  Project Aurora.completion_date = 14 May 2026
+                    [conflicts with report.txt:r10 = 30 April 2026]
+   ```
+
+   `mode: all` adds the other grounded claims, capped at 30. Ungrounded claims are never returned.
+   With no knowledge base the tool falls back to the regex extraction these task types used before,
+   and says so.
+4. **Reasoning is unchanged.** It still has to state the finding, and the binder, the comparative
+   rule, the relevance gate and verification still judge it. The knowledge layer supplies the
+   pairing. It does not supply the conclusion.
+5. **Findings are recorded in the graph.** With the knowledge base in Neo4j, each finding becomes a
+   `(:Finding)` node that `CITES` the claims and documents behind its resolved citations, which is
+   what the 3D view lights up when a finding is clicked.
+
+### Measured in a mission (Phase 30)
+
+On this repository's 8 scenarios the knowledge pass changed no positive result. It costs about 13 s
+per run and one task. **Member 3's conflict rule finds same-attribute contradictions** (two reports
+giving one shipment two arrival dates), and **cannot express planned-vs-actual ones** ("approved
+completion 30 April" vs "latest milestone 14 May", "approved budget" vs "total spend"). Those are
+the kind the Aurora and Helix fixtures plant. Experiment 003 (preliminary) has the numbers. The
+full comparison is on the shipment scenarios in Phase 34.

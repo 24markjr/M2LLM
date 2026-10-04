@@ -807,3 +807,54 @@ would also discard `helix_budget_unapproved`'s real finding: 450,000 in the fina
 450000 marked unapproved in the budget, which are agreeing figures that make a correct finding. The
 relevance gate and the knowledge layer's explicit conflict pairs (Phase 30) are where this belongs,
 and they are measured there.
+
+---
+
+## BUG-020 — For a PDF, the reasoning model saw page references and no content
+
+**Found:** 2026-10-03, tracing why `aurora_pdf_timeline` fails (Phase 30)
+**Severity:** High. The only PDF scenario has reported no findings in every evaluation run
+**Status:** Fixed (`reasoning/engine.py:_detail_for`)
+
+**Symptom**
+
+`aurora_pdf_timeline` asks for the timeline in a PDF. Its only candidate finding, in every run, was
+"The project timeline and milestone dates are extracted from the Aurora project report." The
+relevance gate discarded it, correctly, and the scenario failed its planted-findings threshold.
+
+**Cause**
+
+The reasoning prompt attaches the extracted values to each citation (`_detail_for`), so the model
+reads `report.txt:r12  15 January 2026` rather than a bare reference. It parsed only line
+citations (`:rN`). Tools cite a PDF by page (`:pN`), so for a PDF it attached nothing. Printed for
+real tool output on the Aurora PDF:
+
+```
+[task_001] extract_timeline: 5 date(s)
+  - aurora_project_report.pdf:p1
+```
+
+Five dates were extracted, and none reached the model. With nothing to state, it described the task.
+
+**Why it was not caught**
+
+The same family as BUG-015: a unit tested on the shape its fixtures had (line citations), not the
+shape production gives it for a PDF. BUG-015 fixed the verifier's side of page citations. This is
+the reasoning side of the same gap, and it survived because nothing printed the reasoning prompt
+for a PDF until Phase 30 went looking for why this scenario fails.
+
+**Fix**
+
+A page citation carries the values the tool found on that page, up to eight, located with the
+document's page boundaries. The replanning controller already held these since BUG-015 and now
+passes them to the reasoning engine. After the fix the same probe prints
+`aurora_project_report.pdf:p1  20 April 2026 | 30 April 2026 | 31 January 2026 | 31 March 2026`.
+Three tests.
+
+**Measured effect**
+
+`aurora_pdf_timeline`: 0 findings in every run since it was added, then **2 findings** in both arms
+of the Phase 30 experiment, citing the PDF page. Audited: the dates are the ones on the page. One
+overstatement remains, which also appears in the text version: the report's own date (20 April) is
+listed as a milestone. Both arms passing shows that this fix, not the knowledge pass, is what moved
+the scenario.

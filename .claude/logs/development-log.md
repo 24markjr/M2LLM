@@ -6,6 +6,49 @@ and what is still broken.
 
 ---
 
+# 2026-10-03/04 - Phase 30: knowledge in the pipeline
+
+## What was done
+
+The knowledge tool, the re-routing of entity and claim tasks, the knowledge pass, building the
+knowledge base before execution, findings as graph edges, and the knowledge policy in the
+evaluation stamp. Session interrupted overnight and resumed from the PDF probe.
+
+## The measurement, and what it overturned
+
+The phase was meant to fix the two scenarios keeping CI red, with the knowledge pass as the means.
+Measured off vs on in one model session, it fixed neither. Rather than tune it, both failures were
+traced:
+
+- `aurora_pdf_timeline` is not a comparison, so the pass never ran there. Printing the reasoning
+  prompt showed the cause: for a PDF it carried `aurora_project_report.pdf:p1` and none of the five
+  dates on that page (**BUG-020**). Fixed. The scenario passes in both arms.
+- On `aurora_contradiction` the knowledge layer paired no conflicts. Its claims showed why: Aurora's
+  contradictions are planned vs actual, across two attributes, and Member 3's rule compares one
+  attribute. Smaller chunks were tried (300/600/3000 chars) and rejected: slower, more invented
+  values, still no pairs.
+
+So the first claim of this phase ("the knowledge pass closes the recall gap") did not survive
+measurement, and the gap was closed by a bug fix found while checking it. The pass stays on
+`comparative` for the 3D view's sake, with its cost stated, until Experiment 003 on same-attribute
+scenarios.
+
+## Also
+
+- Unit tests wrote five runs into the local Neo4j because `GRAPH_STORE` defaults to `neo4j`. Fixed
+  with `tests/conftest.py`, and the runs were deleted.
+- Docker was down on day two, so the database and Neo4j tests skipped locally (40). They ran green
+  in Phase 29 with the services up, and CI runs them with services.
+
+## Verification
+
+- `pytest tests -m "not llm"` -> **846 collected: 806 passed, 40 skipped** (the database and Neo4j
+  tests, with Docker down; they passed with services up in Phase 29 and run in CI)
+- `mypy --strict` clean (107 modules), `ruff` clean, documented figures checked against the new
+  baseline
+
+---
+
 # 2026-10-03 - Phase 29: Neo4j
 
 ## What was done

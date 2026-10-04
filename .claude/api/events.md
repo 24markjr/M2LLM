@@ -95,6 +95,7 @@ at a call site would be invisible to all three.
 | Output | `SYNTHESIS_STARTED`, `SYNTHESIS_COMPLETED` |
 | Instrumentation | `LLM_CALL_COMPLETED`, `BUDGET_WARNING` |
 | Security | `INJECTION_DETECTED` (Phase 27) |
+| Knowledge | `KNOWLEDGE_EXTRACTED` (Phase 30) |
 
 `PHASE_EVENTS` marks the subset that advances the UI's phase tracker.
 
@@ -174,3 +175,9 @@ no gaps.
 
 Sink failures are isolated: a failing sink must never kill a run. Losing a trace file is an
 inconvenience; losing the investigation is not acceptable.
+
+`KNOWLEDGE_EXTRACTED` (Phase 30) is emitted once, before execution, when the run's knowledge base was
+built. Payload: `store` (`neo4j` or `memory`), `entities`, `relationships`, `claims`,
+`ungrounded_claims`, `conflicts`, `chunks`, `chunks_skipped`, `failed_chunks`, `llm_calls`. The
+orchestrator's knowledge pass emits `TASK_CREATED` with `origin: knowledge_pass`. See
+`../architecture/knowledge-layer.md`.

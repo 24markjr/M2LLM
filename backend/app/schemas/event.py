@@ -101,6 +101,10 @@ class EventType(StrEnum):
     # still read, as data; this records that it was flagged, by which patterns, and how severely.
     INJECTION_DETECTED = "INJECTION_DETECTED"
 
+    # Knowledge (Phase 30). The run's knowledge base was built: counts of entities, claims,
+    # ungrounded claims, conflicts, chunks and model calls, and which store holds it.
+    KNOWLEDGE_EXTRACTED = "KNOWLEDGE_EXTRACTED"
+
 
 # Payload keys stripped before persistence. This is the enforcement point for invariant #3:
 # a component may put raw model output in a payload for local debugging, and it will not

@@ -18,6 +18,8 @@ database).
     (:Entity)-[:HAS_CLAIM]->(:Claim)-[:CITED_IN {source}]->(:Document)
     (:Entity)-[:HAS_CONFLICT]->(:Conflict)<-[:SIDE_OF {value}]-(:Claim)
     (:Claim)-[:CONFLICTS_WITH {conflict_id, attribute, kind}]->(:Claim)
+    (:Finding {run_id, finding_id, seq, claim, classification, status})
+        -[:CITES {source}]->(:Claim | :Document)                      (Phase 30)
 
 `seq` keeps the order a run produced things in, so a Neo4j read returns the same sequence as the
 in-memory store. `key` and `alias_keys` are the normalised names entity lookup matches on.
@@ -45,6 +47,7 @@ from app.intelligence.knowledge.base import clamp_depth, investigate, rank_match
 from app.intelligence.knowledge.search import hybrid_search
 from app.intelligence.knowledge.store import normalize_name
 from app.intelligence.knowledge.timeline import build_timeline, compare_claims
+from app.schemas.finding import Finding
 from app.schemas.knowledge import (
     ClaimComparison,
     ClaimConflict,
@@ -80,7 +83,7 @@ SCHEMA = (
 )
 
 # Labels a run's graph is made of. Deleting a run removes exactly these, scoped by run_id.
-RUN_LABELS = ("Run", "Document", "Entity", "Claim", "Conflict")
+RUN_LABELS = ("Run", "Document", "Entity", "Claim", "Conflict", "Finding")
 
 
 def _document_of(source: str) -> str:
@@ -136,6 +139,27 @@ class Neo4jGraphStore:
             conflicts=len(snapshot.conflicts),
         )
 
+    async def save_findings(self, run_id: str, findings: list[Finding]) -> None:
+        """Record which claims and documents each finding cites (Phase 30).
+
+        A finding `CITES` every claim whose citation it resolved, and the document of each resolved
+        citation. Unresolved citations get no edge: they point at nothing a tool produced.
+        Replaces any findings already recorded for the run.
+        """
+        rows = [
+            {
+                "finding_id": f.finding_id,
+                "seq": i,
+                "claim": f.claim,
+                "classification": f.classification.value,
+                "status": f.verification.status.value if f.verification else "",
+                "sources": [ref.as_ref() for ref in f.evidence if ref.is_resolved],
+            }
+            for i, f in enumerate(findings)
+        ]
+        async with self._driver.session(database=self._database) as session:
+            await session.execute_write(_write_findings, run_id, rows)
+
     async def delete(self, run_id: str) -> None:
         async with self._driver.session(database=self._database) as session:
             await session.execute_write(_delete_run, run_id)
@@ -167,6 +191,26 @@ class Neo4jGraphStore:
             conflicts=await base.conflicts(),
             stats=ExtractionStats.model_validate_json(rows[0]["stats"]),
         )
+
+
+async def _write_findings(
+    tx: AsyncManagedTransaction, run_id: str, rows: list[dict[str, Any]]
+) -> None:
+    await tx.run("MATCH (f:Finding {run_id: $r}) DETACH DELETE f", r=run_id)
+    await tx.run(
+        "UNWIND $rows AS row "
+        "CREATE (f:Finding {run_id: $r, finding_id: row.finding_id, seq: row.seq, "
+        "claim: row.claim, classification: row.classification, status: row.status}) "
+        "WITH f, row UNWIND row.sources AS source "
+        "OPTIONAL MATCH (c:Claim {run_id: $r, source: source}) "
+        "OPTIONAL MATCH (d:Document {run_id: $r, document_id: split(source, ':')[0]}) "
+        "FOREACH (_ IN CASE WHEN c IS NULL THEN [] ELSE [1] END | "
+        "  MERGE (f)-[:CITES {source: source}]->(c)) "
+        "FOREACH (_ IN CASE WHEN d IS NULL THEN [] ELSE [1] END | "
+        "  MERGE (f)-[:CITES {source: source}]->(d))",
+        r=run_id,
+        rows=rows,
+    )
 
 
 async def _delete_run(tx: AsyncManagedTransaction, run_id: str) -> None:

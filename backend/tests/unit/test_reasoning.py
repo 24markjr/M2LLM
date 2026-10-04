@@ -355,3 +355,43 @@ def test_detail_still_matches_items_that_carry_no_document() -> None:
         sources=["finance.txt:r3"],
     )
     assert "450,000" in _detail_for(observation, "finance.txt:r3")
+
+
+# --- BUG-020: a page citation carries the values found on that page ---------------
+
+
+def _pdf_observation() -> Observation:
+    return Observation(
+        task_id="task_001",
+        task_type="extract_timeline",
+        content="3 date(s)",
+        structured={
+            "extractions": [
+                {"document_id": "report.pdf", "line": 2, "value": "20 April 2026"},
+                {"document_id": "report.pdf", "line": 4, "value": "30 April 2026"},
+                {"document_id": "report.pdf", "line": 8, "value": "14 May 2026"},
+            ]
+        },
+        sources=["report.pdf:p1", "report.pdf:p2"],
+    )
+
+
+def test_a_page_citation_shows_the_values_on_that_page_only() -> None:
+    """For a PDF the model used to see `report.pdf:p1` and nothing else, so it had nothing to state
+    and `aurora_pdf_timeline` never produced a finding."""
+    pages = {"report.pdf": [1, 6]}  # page 1 is lines 1-5, page 2 starts at line 6
+    first = _detail_for(_pdf_observation(), "report.pdf:p1", pages)
+    second = _detail_for(_pdf_observation(), "report.pdf:p2", pages)
+    assert "20 April 2026" in first and "30 April 2026" in first
+    assert "14 May 2026" not in first
+    assert second.strip() == "14 May 2026"
+
+
+def test_a_page_citation_without_page_boundaries_attaches_nothing() -> None:
+    assert _detail_for(_pdf_observation(), "report.pdf:p1") == ""
+    assert _detail_for(_pdf_observation(), "report.pdf:p9", {"report.pdf": [1, 6]}) == ""
+
+
+def test_the_rendered_observations_carry_page_values() -> None:
+    rendered = ReasoningEngine._describe([_pdf_observation()], {"report.pdf": [1, 6]})
+    assert "report.pdf:p1  20 April 2026 | 30 April 2026" in rendered

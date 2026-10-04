@@ -41,6 +41,8 @@ class ToolCapability(StrEnum):
     CONTEXT_RETRIEVAL = "CONTEXT_RETRIEVAL"
     KNOWLEDGE_SEARCH = "KNOWLEDGE_SEARCH"
     VERIFICATION = "VERIFICATION"
+    # The run's knowledge base: claims, entities and the conflicts between sources (Phase 30).
+    KNOWLEDGE_GRAPH = "KNOWLEDGE_GRAPH"
 
 
 class ToolDefinition(JarvisModel):

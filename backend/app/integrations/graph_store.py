@@ -22,6 +22,7 @@ from app.core.config import GraphStoreName, get_settings
 from app.core.logging import get_logger
 from app.integrations.neo4j_store import Neo4jGraphStore
 from app.intelligence.knowledge.base import InMemoryKnowledgeBase, KnowledgeBase
+from app.schemas.finding import Finding
 from app.schemas.knowledge import KnowledgeSnapshot
 
 log = get_logger(__name__)
@@ -77,6 +78,17 @@ async def open_knowledge_base(run_id: str, snapshot: KnowledgeSnapshot) -> Knowl
         log.exception("graph_store_write_failed", run_id=run_id)
         return InMemoryKnowledgeBase(snapshot)
     return store.base(run_id)
+
+
+async def record_findings(run_id: str, findings: list[Finding]) -> None:
+    """Record a run's findings and what they cite, when its graph is in Neo4j. Never raises."""
+    store = await get_graph_store()
+    if store is None:
+        return
+    try:
+        await store.save_findings(run_id, findings)
+    except Exception:  # the boundary: the graph store must never fail a run
+        log.exception("graph_store_findings_failed", run_id=run_id)
 
 
 async def close_graph_store() -> None:

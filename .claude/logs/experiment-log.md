@@ -93,3 +93,46 @@ inputs to reasoning and verification (Phase 30), never findings by themselves.
 `investigate("Shipment 4821")` all compared equal between the Neo4j store and the in-memory store.
 Neo4j held 1 run, 6 documents, 14 entities, 16 claims, 3 conflicts and 3 `CONFLICTS_WITH` edges.
 The arrival-date conflict was found again, so it held across three runs.
+
+### Experiment 003 (preliminary, Phase 30) — the knowledge pass, off vs on
+
+**Date:** 2026-10-03/04. **Model:** `qwen3:4b`. The full 8-scenario suite twice, back to back in one
+model session (BUG-019: output differs between sessions), with `knowledge.cross_source_pass`
+`never` and then `comparative`. Run before and after BUG-020.
+
+**Before BUG-020** (the PDF fix):
+
+| | `never` | `comparative` |
+|---|---|---|
+| `aurora_contradiction` | 1, passes | 1, passes |
+| `aurora_pdf_timeline` | 0, fails | 0, fails |
+| `aurora_no_contradiction` (negative) | 1 invented | 1 invented, a different one |
+| latency | 15.6 s | 28.5 s |
+
+**After BUG-020** (`comparative` is baseline `20261004T172506`):
+
+| | `never` | `comparative` |
+|---|---|---|
+| `aurora_contradiction` | 2, passes | 2, passes |
+| `aurora_pdf_timeline` | **2, passes** | **2, passes** |
+| `aurora_no_contradiction` (negative) | 1 invented | 1 invented, a different one |
+| `helix_evidence_gap` | 0 | 1 |
+| task_efficiency | 1.447 | 1.654 |
+| latency | 25.0 s | 37.9 s |
+
+**Why the pass did not move anything here.** On `aurora_contradiction` the knowledge layer extracted
+31 claims and paired **no** conflicts. Both of Aurora's planted contradictions compare *different*
+attributes: "approved baseline completion 30 April" against "latest completion milestone 14 May"
+(planned vs actual), and "total spend 450,000" against "approved budget 380,000" (spend vs budget).
+Member 3's rule flags the **same** attribute with different values, which is what his shipment
+sample contains, and it cannot express a planned-vs-actual contradiction by design. Reasoning found
+both contradictions itself once it could read the evidence (BUG-015, BUG-020).
+
+**Chunk size was tried and rejected.** On the two Aurora text documents: 3000 chars gave 23.8 s, 6
+relevant claims, 0 ungrounded; 600 chars gave 36.4 s, 8 claims, 3 ungrounded; 300 chars gave 66.4 s,
+22 claims, 8 ungrounded, and nonsense such as `approved_budget = Q2 2026`. 3000 stays.
+
+**Decision.** `cross_source_pass` stays `comparative` for now: it is what gives comparative missions a
+knowledge graph for the Phase 31-32 API and 3D view. The decision on recall is deferred to the full
+Experiment 003 in Phase 34, on the shipment scenarios, whose contradictions are same-attribute.
+The cost is stated: about +13 s per run and one task.

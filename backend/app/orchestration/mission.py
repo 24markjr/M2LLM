@@ -27,27 +27,32 @@ from enum import StrEnum
 
 from pydantic import Field
 
+from app.core.agent_config import CrossSourcePass, get_knowledge_policy
 from app.core.logging import get_logger
+from app.integrations.graph_store import open_knowledge_base, record_findings
 from app.integrations.verification import build_verification_provider
 from app.intelligence.execution.engine import ExecutionEngine
 from app.intelligence.graph.task_graph import TaskGraph
 from app.intelligence.intent.engine import IntentEngine
+from app.intelligence.knowledge.extraction import KnowledgeExtractor
 from app.intelligence.planner.engine import PlanInvalidError, Planner
-from app.intelligence.reasoning.engine import ReasoningEngine
+from app.intelligence.reasoning.engine import ReasoningEngine, requires_comparison
 from app.intelligence.replanning.controller import ReplanningController
 from app.intelligence.router.engine import ToolRouter
 from app.intelligence.synthesis.engine import SynthesisEngine
 from app.llm.provider import LLMProvider
-from app.schemas.common import JarvisModel, RunId
+from app.schemas.common import JarvisModel, RunId, task_id
 from app.schemas.event import EventType
 from app.schemas.evidence import EvidenceGap
 from app.schemas.execution import Observation, TerminationReason
 from app.schemas.finding import Finding
 from app.schemas.intent import Intent
+from app.schemas.knowledge import KnowledgeSnapshot
 from app.schemas.objective import Objective
 from app.schemas.plan import Plan, PlanRevision
 from app.schemas.result import ExecutionSummary, FinalReport
-from app.schemas.task import TaskStatus
+from app.schemas.task import Task, TaskStatus, TaskType
+from app.schemas.tool import ToolCapability
 from app.schemas.trust import InjectionScan
 from app.security.injection import scan
 from app.tools.base import ToolContext, build_default_registry
@@ -114,6 +119,13 @@ class MissionResult(JarvisModel):
     # Documents whose text resembles a prompt injection (Phase 27). Flagged, never dropped: each
     # was still read as data, and the report says so.
     security: list[InjectionScan] = Field(default_factory=list)
+
+    # The run's knowledge base, when the plan needed one (Phase 30), and where it is held:
+    # "neo4j", "memory", or "" when none was built.
+    knowledge: KnowledgeSnapshot | None = None
+    knowledge_store: str = ""
+    # The task the orchestrator added so reasoning sees conflicting claim pairs (A5), if any.
+    knowledge_pass_task_id: str | None = None
 
     # Why the run did not complete. A code the client can branch on, plus a message a
     # person can read - never a raw exception string.
@@ -199,6 +211,13 @@ async def run_mission(
             page_starts=page_starts or {},
         )
 
+        # The knowledge layer (Phases 28-30). Built only when the graph has a task that reads
+        # it, so a plan that never asks for entities or claims costs no extraction calls.
+        result.knowledge_pass_task_id = await _add_knowledge_pass(graph, result.intent, emitter)
+        if _needs_knowledge(graph):
+            await _build_knowledge(result, documents, page_starts or {}, provider, emitter)
+            ctx = ctx.model_copy(update={"knowledge": result.knowledge})
+
         await _advance(result, Stage.EXECUTING, on_stage)
         router = ToolRouter(registry, provider)
         result.observations = await ExecutionEngine(graph, registry, router, emit=emitter).run(ctx)
@@ -236,6 +255,11 @@ async def run_mission(
         # to show it.
         result.plan = result.plan.model_copy(update={"tasks": graph.tasks})
 
+        # Which claims each finding rests on, as edges in the stored graph (Phase 30). What
+        # the 3D view lights up when a finding is clicked. Never fails the run.
+        if result.knowledge_store == "neo4j":
+            await record_findings(result.run_id, result.findings)
+
         if synthesize:
             await _advance(result, Stage.SYNTHESIZING, on_stage)
             result.report = await SynthesisEngine(provider).synthesize(
@@ -271,6 +295,84 @@ async def run_mission(
         log.exception("mission_failed", run_id=result.run_id)
         await _finish(result, emitter, on_stage, EventType.RUN_FAILED)
         return result
+
+
+def _needs_knowledge(graph: TaskGraph) -> bool:
+    return get_knowledge_policy().enabled and any(
+        task.required_capability is ToolCapability.KNOWLEDGE_GRAPH for task in graph.tasks
+    )
+
+
+async def _add_knowledge_pass(
+    graph: TaskGraph, intent: Intent | None, emitter: object
+) -> str | None:
+    """Add one task that hands reasoning the conflicting claim pairs (A5), when policy says to.
+
+    Added after validation, so `plan_validity` measures the planner alone and the planner is not
+    credited with a task it did not plan. Not added when the plan already reads the knowledge base.
+    Recorded with a `TASK_CREATED` event whose payload says where it came from.
+    """
+    policy = get_knowledge_policy()
+    if not policy.enabled or policy.cross_source_pass is CrossSourcePass.NEVER:
+        return None
+    if policy.cross_source_pass is CrossSourcePass.COMPARATIVE and not requires_comparison(intent):
+        return None
+    if _needs_knowledge(graph):
+        return None
+
+    # The next free number, not the task count: a plan's ids can have gaps.
+    numbers = [int(t.task_id.split("_")[1]) for t in graph.tasks]
+    task = Task(
+        task_id=task_id(max(numbers, default=0) + 1),
+        task_type=TaskType.EXTRACT_CLAIMS,
+        description=(
+            "Knowledge pass: extract claims from every document and pair the values that "
+            "disagree across sources (added by the orchestrator, not the planner)"
+        ),
+        inputs={"mode": "conflicts"},
+    )
+    graph.insert_task(task)
+    await _emit(
+        emitter,
+        EventType.TASK_CREATED,
+        {
+            "origin": "knowledge_pass",
+            "task_type": task.task_type.value,
+            "reason": "the objective asks for a comparison",
+        },
+        task_id=task.task_id,
+    )
+    return task.task_id
+
+
+async def _build_knowledge(
+    result: MissionResult,
+    documents: dict[str, str],
+    page_starts: dict[str, list[int]],
+    provider: LLMProvider,
+    emitter: object,
+) -> None:
+    snapshot = await KnowledgeExtractor(provider).build(documents, page_starts, emit=emitter)
+    base = await open_knowledge_base(result.run_id, snapshot)
+    result.knowledge = snapshot
+    result.knowledge_store = base.store
+    stats = snapshot.stats
+    await _emit(
+        emitter,
+        EventType.KNOWLEDGE_EXTRACTED,
+        {
+            "store": base.store,
+            "entities": len(snapshot.entities),
+            "relationships": len(snapshot.relationships),
+            "claims": len(snapshot.claims),
+            "ungrounded_claims": stats.ungrounded_claims,
+            "conflicts": len(snapshot.conflicts),
+            "chunks": stats.chunks,
+            "chunks_skipped": stats.chunks_skipped,
+            "failed_chunks": stats.failed_chunks,
+            "llm_calls": stats.llm_calls,
+        },
+    )
 
 
 async def _scan_documents(documents: dict[str, str], emitter: object) -> list[InjectionScan]:
@@ -344,8 +446,17 @@ async def _finish(
     await _advance(result, Stage.DONE, on_stage)
 
 
-async def _emit(emitter: object, event_type: EventType, payload: dict[str, object]) -> None:
+async def _emit(
+    emitter: object,
+    event_type: EventType,
+    payload: dict[str, object],
+    *,
+    task_id: str | None = None,
+) -> None:
     emit = getattr(emitter, "emit", None)
     if emit is None:
         return
-    await emit(event_type, payload=payload)
+    if task_id is None:
+        await emit(event_type, payload=payload)
+    else:
+        await emit(event_type, payload=payload, task_id=task_id)

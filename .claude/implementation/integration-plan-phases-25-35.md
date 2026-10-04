@@ -89,7 +89,7 @@ Two rules this plan adds, both following from the teammates' code:
 | 27 | Security: injection scanning and safe prompts | T7–T9 | S | 25 | **DONE** 2026-10-03 |
 | 28 | Knowledge core: extraction, resolution, conflicts, timeline, search | K1–K4, K6–K9 | L | 25 | **DONE** 2026-10-03 |
 | 29 | Neo4j graph store | K5, K10, K11 | L | 28 | **DONE** 2026-10-03 |
-| 30 | Knowledge in the mission pipeline | — | M | 29 | TODO |
+| 30 | Knowledge in the mission pipeline | — | M | 29 | **DONE** 2026-10-04 |
 | 31 | Knowledge API | K12 | M | 30 | TODO |
 | 32 | 3D knowledge graph explorer | K13 | L | 31 | TODO |
 | 33 | Memory: working, episodic, semantic | T10–T12 | M | 29, 31 | TODO |

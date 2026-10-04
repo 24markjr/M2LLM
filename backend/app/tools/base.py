@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from app.core.logging import get_logger
 from app.schemas.common import CostHint, FailureClass, JarvisModel
+from app.schemas.knowledge import KnowledgeSnapshot
 from app.schemas.tool import ToolCall, ToolCapability, ToolDefinition, ToolError, ToolResult
 
 log = get_logger(__name__)
@@ -36,6 +37,9 @@ class ToolContext(JarvisModel):
     # a line, which is the difference between a citation a reader can check and one they
     # cannot.
     page_starts: dict[str, list[int]] = Field(default_factory=dict)
+    # The run's knowledge base, when one was built (Phase 30). Data, not a connection: a tool
+    # reads what the run already extracted and never reaches a store or a model itself.
+    knowledge: KnowledgeSnapshot | None = None
 
 
 class Tool(ABC):
@@ -144,8 +148,9 @@ class ToolRegistry:
 def build_default_registry() -> ToolRegistry:
     """The standard tool set. Imported lazily to keep this module dependency-free."""
     from app.tools.builtin import DEFAULT_TOOLS
+    from app.tools.knowledge import KnowledgeGraphTool
 
     registry = ToolRegistry()
-    for tool in DEFAULT_TOOLS:
+    for tool in [*DEFAULT_TOOLS, KnowledgeGraphTool()]:
         registry.register(tool)
     return registry

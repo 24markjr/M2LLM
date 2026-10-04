@@ -308,7 +308,11 @@ class ReplanningController:
         self, objective: Objective, observations: list[Observation]
     ) -> list[Finding]:
         findings = await self._reasoner.derive_findings(
-            objective, observations, emit=self._emit, intent=self._intent
+            objective,
+            observations,
+            emit=self._emit,
+            intent=self._intent,
+            page_starts=self._page_starts,
         )
         text = evidence_text_map(self._evidence(observations))
 

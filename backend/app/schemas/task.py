@@ -58,8 +58,10 @@ TASK_CAPABILITY: dict[TaskType, ToolCapability] = {
     TaskType.EXTRACT_TIMELINE: ToolCapability.DOCUMENT_EXTRACT,
     TaskType.EXTRACT_BUDGET: ToolCapability.DOCUMENT_EXTRACT,
     TaskType.EXTRACT_MILESTONES: ToolCapability.DOCUMENT_EXTRACT,
-    TaskType.EXTRACT_ENTITIES: ToolCapability.DOCUMENT_EXTRACT,
-    TaskType.EXTRACT_CLAIMS: ToolCapability.DOCUMENT_EXTRACT,
+    # Entities and claims are what the knowledge layer extracts (Phase 30). Until then these
+    # routed to a date-and-amount regex, which extracts neither.
+    TaskType.EXTRACT_ENTITIES: ToolCapability.KNOWLEDGE_GRAPH,
+    TaskType.EXTRACT_CLAIMS: ToolCapability.KNOWLEDGE_GRAPH,
     TaskType.NORMALIZE_DATES: ToolCapability.COMPUTATION,
     TaskType.NORMALIZE_VALUES: ToolCapability.COMPUTATION,
     TaskType.COMPARE_SOURCES: ToolCapability.DOCUMENT_SEARCH,

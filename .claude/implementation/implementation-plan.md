@@ -61,7 +61,7 @@ place to read the state of the build.*
 | 22 | Live execution visualization | `DONE` | Replay (demo insurance), evaluation dashboard, animated replan insertion |
 | 23 | Test hardening & CI | `DONE`, gate red (verified) | 581 tests, invariant + adversarial suites, GitHub Actions. `eval-regression` correctly fails on the baseline's confabulation - see testing-strategy.md |
 | 24 | Documentation & demo package | `DONE`, 2 caveats | README rewritten, six-demo script, contribution statement, changelog current. 4 of 6 demos have a recorded fallback; a clean clone has not been tested from scratch |
-| 25-35 | Integration of Members 3 and 4 | `IN PROGRESS` (25-29 done) | Phase-by-phase plan in [`integration-plan-phases-25-35.md`](integration-plan-phases-25-35.md): trust layer, security, knowledge core, Neo4j, pipeline wiring, knowledge API, 3D graph explorer, memory, evaluation, handover. Approved 2026-10-03 (D1-D6 answered) |
+| 25-35 | Integration of Members 3 and 4 | `IN PROGRESS` (25-30 done) | Phase-by-phase plan in [`integration-plan-phases-25-35.md`](integration-plan-phases-25-35.md): trust layer, security, knowledge core, Neo4j, pipeline wiring, knowledge API, 3D graph explorer, memory, evaluation, handover. Approved 2026-10-03 (D1-D6 answered) |
 
 **Carried debt**
 

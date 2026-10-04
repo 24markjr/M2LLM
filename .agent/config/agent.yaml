@@ -139,6 +139,11 @@ knowledge:
   # Entity names and attribute names already seen in the run, passed to the next chunk's prompt
   # so the same fact gets the same attribute name across documents (A8). Capped per list.
   max_known_terms: 40
+  # The knowledge pass (Phase 30, A5): for an objective that asks for a comparison, add one task
+  # that hands reasoning the conflicting claim pairs, each with both citations. A 4B model rarely
+  # pairs claims across documents by itself (BUG-005/012); this does the pairing for it.
+  #   never | comparative | always
+  cross_source_pass: comparative
 
 # --- Budget --------------------------------------------------------------------
 budget:

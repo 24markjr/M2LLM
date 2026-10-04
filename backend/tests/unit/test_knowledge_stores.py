@@ -13,7 +13,7 @@ on whether a container was up.
 from __future__ import annotations
 
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 
 import pytest
 
@@ -310,9 +310,9 @@ async def test_a_conflict_is_an_edge_between_its_claims() -> None:
 
 
 @pytest.fixture
-def fresh_probe() -> AsyncIterator[None]:
+def fresh_probe() -> Iterator[None]:
     graph_store.reset_graph_store_probe()
-    yield  # type: ignore[misc]
+    yield
     graph_store.reset_graph_store_probe()
 
 
@@ -371,3 +371,43 @@ async def test_a_reachable_neo4j_holds_the_run(
         await live.delete(run_id)
     finally:
         await graph_store.close_graph_store()
+
+
+async def test_a_finding_cites_the_claims_and_documents_it_rests_on() -> None:
+    """Phase 30: what the 3D view lights up when a finding is clicked. Unresolved citations get
+    no edge, because they point at nothing a tool produced."""
+    from app.schemas.common import SourceLocator
+    from app.schemas.evidence import EvidenceRef, ResolutionStatus
+    from app.schemas.finding import Finding
+
+    def ref(doc: str, row: int, resolved: bool = True) -> EvidenceRef:
+        return EvidenceRef(
+            locator=SourceLocator(document_id=doc, document_name=doc, row=row),
+            resolution=ResolutionStatus.RESOLVED if resolved else ResolutionStatus.UNRESOLVED,
+        )
+
+    finding = Finding(
+        finding_id="F-001",
+        claim="The reports give 14 and 16 September.",
+        evidence=[ref("a.txt", 1), ref("b.txt", 1), ref("z.txt", 9, resolved=False)],
+    )
+    store = await _neo4j()
+    run_id = f"run_{uuid.uuid4().hex[:12]}"
+    try:
+        await store.save(run_id, SNAPSHOT)
+        await store.save_findings(run_id, [finding])
+        await store.save_findings(run_id, [finding])  # replaces, never duplicates
+        rows = await store.read(
+            "MATCH (f:Finding {run_id: $r})-[c:CITES]->(n) "
+            "RETURN labels(n)[0] AS label, c.source AS source ORDER BY label, source",
+            r=run_id,
+        )
+        assert rows == [
+            {"label": "Claim", "source": "a.txt:r1"},
+            {"label": "Claim", "source": "b.txt:r1"},
+            {"label": "Document", "source": "a.txt:r1"},
+            {"label": "Document", "source": "b.txt:r1"},
+        ]
+    finally:
+        await store.delete(run_id)
+        await store.close()
