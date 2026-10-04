@@ -5,6 +5,32 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-04 - Phase 31: the knowledge API
+
+### Added
+
+- `app/api/v1/knowledge.py` - Member 3's 14 endpoints per mission, plus `knowledge` (summary),
+  `knowledge/graph`, `knowledge/nodes/{id}`, `findings/{id}/trail`, and `POST knowledge/analyze`
+- `app/intelligence/knowledge/view.py` - the graph view (entities, claims as sub-nodes, documents,
+  findings; `CONFLICTS_WITH` and `CITES` links), node detail, finding trail; works on either store
+- `app/schemas/knowledge.py` - `GraphNode`, `GraphLink`, `KnowledgeGraphView`, `NodeDetail`,
+  `FindingTrail`
+- `MissionDetail.knowledge_store`, `knowledge_entities`, `knowledge_claims`, `knowledge_conflicts`
+  (optional in the frontend types, for old recordings)
+- `tests/unit/test_api_knowledge.py` - 22 tests, two against live Neo4j
+- `docs/openapi.json` regenerated: 16 -> 31 paths
+
+### Changed
+
+- A mission whose knowledge is in Neo4j is answered after an API restart
+
+### Measured
+
+- 868 tests, all passing with Docker up (none skipped); `mypy --strict` clean (109 modules); 88%
+  coverage, 99% on the new route and view modules
+
+---
+
 ## 2026-10-04 - Phase 30: the knowledge layer inside a mission
 
 ### Added

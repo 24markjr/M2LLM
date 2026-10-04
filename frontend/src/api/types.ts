@@ -73,6 +73,12 @@ export interface MissionDetail extends MissionSummary {
   /** Documents flagged by the prompt-injection scan (Phase 27). Each was still read, as data.
    *  Optional: recordings made before Phase 27 do not carry it. */
   security_flags?: InjectionScan[];
+  /** The mission's knowledge base (Phase 31): "neo4j", "memory", or "" when none was built.
+   *  Optional: recordings made before Phase 31 do not carry these. */
+  knowledge_store?: string;
+  knowledge_entities?: number;
+  knowledge_claims?: number;
+  knowledge_conflicts?: number;
 }
 
 export type InjectionSeverity = "NONE" | "MEDIUM" | "HIGH";

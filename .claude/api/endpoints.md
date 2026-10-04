@@ -44,6 +44,9 @@ kept current while the run proceeds.
 | POST | `/api/v1/missions/{id}/cancel` | `202`; cancellation is cooperative |
 | GET | `/api/v1/missions/{id}/stream` | SSE. See [ADR-008](../decisions/ADR-008-sse-over-websocket.md) |
 | POST | `/api/v1/documents` | Multipart upload; returns the **parse result**, not an ack |
+| GET | `/api/v1/missions/{id}/knowledge...` | The mission's knowledge base; see **Knowledge** below (Phase 31) |
+| GET | `/api/v1/missions/{id}/findings/{finding_id}/trail` | The subgraph a finding rests on |
+| POST | `/api/v1/knowledge/analyze` | Documents in, a knowledge base out, no mission, nothing stored |
 | GET | `/health` | Reports the model, not just a status |
 
 ### Findings are returned whole
@@ -129,3 +132,50 @@ call or model call boundary — and keeps what it had already established. A can
 investigation still reports the findings it reached.
 
 `{"cancelling": false}` means the mission had already finished.
+
+## Knowledge (Phase 31)
+
+Member 3's API, per mission, plus what the 3D explorer needs. `...` is
+`/api/v1/missions/{run_id}`. Code: `app/api/v1/knowledge.py`; views: `app/intelligence/knowledge/view.py`.
+
+| Method | Path | Returns | Member 3's original |
+|---|---|---|---|
+| GET | `.../knowledge` | `KnowledgeSummary`: store, counts, extraction stats, the knowledge-pass task | (new) |
+| GET | `.../knowledge/entities?name=` | entities; with `name`, ranked matches | `/entities`, `/find_entity?name=` |
+| GET | `.../knowledge/entities/{entity_id}/network?depth=` | `EntityNetwork`, depth 0-4 | `/entity/{id}/network` |
+| GET | `.../knowledge/relationships?entity_id=` | relationships | `/relationships`, `/relationships/{id}` |
+| GET | `.../knowledge/claims?entity_id=&grounded=` | claims | `/claims` |
+| GET | `.../knowledge/claims/{claim_id}` | one claim, with citation and quoted line | `/evidence/{claim_id}` |
+| GET | `.../knowledge/conflicts?entity_id=` | conflicts, every side cited | `/contradictions` |
+| GET | `.../knowledge/timeline?entity_id=` | ordered events | `/timeline`, `/entity/{id}/timeline` |
+| GET | `.../knowledge/timeline/compare?claim_a=&claim_b=` | `ClaimComparison` | `/timeline/compare` |
+| GET | `.../knowledge/investigation?name=` | `EntityInvestigation` | `/investigation/{name}` |
+| GET | `.../knowledge/search?q=&depth=` | `SearchHit`s with reasons | `/search` |
+| GET | `.../knowledge/graph?focus=&depth=` | `KnowledgeGraphView`: nodes and links | (new, for the 3D view) |
+| GET | `.../knowledge/nodes/{node_id}` | `NodeDetail` for the hover pop-up | (new) |
+| GET | `.../findings/{finding_id}/trail` | `FindingTrail` | (new, A9) |
+| POST | `/api/v1/knowledge/analyze` | `AnalyzeResponse`: snapshot, timeline, graph | `/ingest` |
+
+**Node ids** are self-describing: `ENT-004` (entity), `CLM-012` (claim, `parent` = its entity),
+`DOC:report.pdf` (document), `F-001` (finding). **Link kinds:** `RELATES`, `HAS_CLAIM`, `CITED_IN`,
+`MENTIONED_IN`, `CONFLICTS_WITH` (between the first claim of each pair of sides), `CITES` (finding to
+claim and document).
+
+**Errors** are the typed envelope, never Member 3's `{"error": ...}` with a 200:
+
+| Code | Status | When |
+|---|---|---|
+| `MISSION_NOT_FOUND` | 404 | no such mission in the registry, and none in Neo4j |
+| `MISSION_NOT_FINISHED` | 409 | the mission is running and has no knowledge base yet: retry |
+| `KNOWLEDGE_NOT_BUILT` | 404 | the mission finished and its plan never needed one |
+| `ENTITY_NOT_FOUND`, `CLAIM_NOT_FOUND`, `NODE_NOT_FOUND`, `FINDING_NOT_FOUND` | 404 | unknown id |
+| `NO_READABLE_DOCUMENTS` | 422 | `analyze` could read none of the documents |
+| `KNOWLEDGE_DISABLED` | 409 | `agent.yaml:knowledge.enabled` is false |
+
+**After an API restart** the in-memory registry is empty, but a mission whose knowledge is in Neo4j
+is still answered from Neo4j. Its findings live in the registry, so its trail is unavailable and its
+graph has no finding nodes.
+
+**`analyze` waits for extraction** (one model call per chunk) and is capped at 10 documents.
+It stores nothing. A knowledge base with no mission has no run to belong to, and storing it would
+bring back the global store the port removed.

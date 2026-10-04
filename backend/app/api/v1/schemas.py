@@ -55,6 +55,12 @@ class MissionDetail(MissionSummary):
     has_report: bool = False
     # Documents flagged by the prompt-injection scan (Phase 27). Each was still read, as data.
     security_flags: list[InjectionScan] = Field(default_factory=list)
+    # The mission's knowledge base, when one was built (Phase 31): where it is held and how
+    # big it is. Empty `knowledge_store` means none was built. Details: /knowledge routes.
+    knowledge_store: str = ""
+    knowledge_entities: int = 0
+    knowledge_claims: int = 0
+    knowledge_conflicts: int = 0
 
 
 class TaskNode(JarvisModel):

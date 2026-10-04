@@ -47,7 +47,7 @@ Supporting: concurrent execution by dependency wave, an append-only event log fr
 fully reconstructable, a FastAPI + SSE surface, and a React operations console that streams a run
 live and can replay a recorded one.
 
-**846 tests**, `mypy --strict` clean across 107 modules, 88% coverage (90–100% on
+**868 tests**, `mypy --strict` clean across 109 modules, 88% coverage (90–100% on
 `intelligence/**` and `schemas/**`).
 
 ---
@@ -162,7 +162,7 @@ reachable from exactly one package,
 
 ```bash
 python -m app.cli health                      # the engine answers
-pytest tests -m "not llm"                     # 846 tests, no model needed, ~15s
+pytest tests -m "not llm"                     # 868 tests, no model needed, ~20s
 pytest tests/unit/test_llm_isolation.py -v    # invariant 1, proven by parsing the source
 pytest tests/unit/test_invariants.py -v       # the whole "must not do" list
 pytest tests/unit/test_adversarial.py -v      # injection, corrupt input, zero-finding runs

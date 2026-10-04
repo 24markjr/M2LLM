@@ -6,6 +6,38 @@ and what is still broken.
 
 ---
 
+# 2026-10-04 - Phase 31: the knowledge API
+
+## What was done
+
+Member 3's REST surface, per mission, with typed errors, and the three views the 3D explorer needs.
+The views are built from the `KnowledgeBase` protocol, so they are store-agnostic and tested on
+both stores.
+
+## Decisions
+
+- **Running vs finished.** A running mission without a knowledge base yet answers 409 (retry), and
+  a finished one 404 (`KNOWLEDGE_NOT_BUILT`), matching how the report route distinguishes "not yet"
+  from "not at all".
+- **`analyze` stores nothing.** Storing a mission-less knowledge base would recreate Member 3's global
+  store.
+- **Restart behaviour.** Knowledge in Neo4j survives an API restart and is served. Findings do not
+  (they live in the registry), so trails and finding nodes are unavailable then. Stated in the
+  endpoint reference rather than hidden.
+
+## Checked
+
+- Seven non-test runs found in Neo4j. Rerunning the knowledge tests left the count unchanged (8
+  before, 8 after), so they are not leaks: they are the Phase 30 evaluation missions, stored as
+  designed. The clearing query is in `architecture/knowledge-layer.md`.
+
+## Verification
+
+- `pytest tests -m "not llm"` -> **868 passed**, none skipped (Docker up)
+- `mypy --strict` clean (109 modules), `ruff` clean, `npm run build` clean, OpenAPI regenerated
+
+---
+
 # 2026-10-03/04 - Phase 30: knowledge in the pipeline
 
 ## What was done

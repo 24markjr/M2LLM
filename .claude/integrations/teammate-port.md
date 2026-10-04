@@ -88,7 +88,7 @@ the reason).
 | K9 | Hybrid search with explainable score | `retrieval.py` | `app/intelligence/knowledge/search.py` | CHANGED. Same score and reasons; no longer returns every claim |
 | K10 | Investigation aggregate for one entity | `main.py:/investigation/{name}` | `app/intelligence/knowledge/base.py` | DONE. One shared aggregate over either store |
 | K11 | Evidence lookup for a claim | `main.py:/evidence/{claim_id}` | `base.py`; `neo4j_store.py` | DONE on both stores |
-| K12 | REST API (14 endpoints) | `main.py` | `app/api/v1/knowledge.py` | TODO |
+| K12 | REST API (14 endpoints) | `main.py` | `app/api/v1/knowledge.py` | CHANGED. All 14 endpoints per mission, typed errors, CORS on the allow-list; plus graph, node detail, finding trail; `analyze` replaces `/ingest` and stores nothing |
 | K13 | Browser dashboard | `dashboard.html` | Mission Control `#/knowledge` | TODO |
 | K14 | Sample data (7 chunks) and loader | `sample_data.json`, `load_sample.py` | `.agent/fixtures/documents/shipment_*.txt`, evaluation scenario | TODO |
 
@@ -451,3 +451,13 @@ contradictions, which compare different attributes and which the rule cannot see
 knowledge layer extracted 31 claims and paired none. Neither design is wrong; they answer
 different questions. Experiment 003 in Phase 34 measures it on shipment scenarios built from his
 sample. See the experiment log.
+
+### Phase 31 — knowledge API (2026-10-04)
+
+Every one of Member 3's endpoints, per mission instead of over one global database
+(`../api/endpoints.md`, **Knowledge**). The table there maps each original route to its new one.
+Deliberate differences: unknown ids are typed 404s, not `{"error": ...}` with a 200; CORS stays on
+the allow-list, not `*`; `/ingest` became `POST /api/v1/knowledge/analyze`, which returns a knowledge
+base and stores nothing. Added for the 3D view: the graph as nodes and links (claims as sub-nodes of
+their entity), a detail record per node for the hover pop-up, and a finding's trail. A mission whose
+graph is in Neo4j is still answered after the API restarts.

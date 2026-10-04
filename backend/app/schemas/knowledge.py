@@ -275,3 +275,86 @@ class KnowledgeSnapshot(JarvisModel):
     claims: list[KnowledgeClaim] = Field(default_factory=list)
     conflicts: list[ClaimConflict] = Field(default_factory=list)
     stats: ExtractionStats = Field(default_factory=ExtractionStats)
+
+
+# --- views over a run's knowledge (Phase 31) ---------------------------------------------------
+#
+# Shapes for the knowledge API and the 3D explorer (Phase 32). They describe the same data as the
+# snapshot, as nodes and links, so a client can draw it without knowing the domain model.
+
+
+class GraphNodeKind(StrEnum):
+    ENTITY = "ENTITY"
+    CLAIM = "CLAIM"
+    DOCUMENT = "DOCUMENT"
+    FINDING = "FINDING"
+
+
+class GraphLinkKind(StrEnum):
+    RELATES = "RELATES"
+    HAS_CLAIM = "HAS_CLAIM"
+    CITED_IN = "CITED_IN"
+    MENTIONED_IN = "MENTIONED_IN"
+    CONFLICTS_WITH = "CONFLICTS_WITH"
+    CITES = "CITES"
+
+
+class GraphNode(JarvisModel):
+    """One node. Entities are parents; their claims and documents are sub-nodes (`parent`)."""
+
+    id: NonEmptyStr
+    kind: GraphNodeKind
+    label: NonEmptyStr
+    entity_type: EntityType | None = None
+    # The entity a claim belongs to: what "expand" reveals under an entity in the 3D view.
+    parent: str | None = None
+    claim_count: int = Field(default=0, ge=0)
+    conflict_count: int = Field(default=0, ge=0)
+    grounded: bool = True
+    # A claim's citation, a finding's verification status.
+    source: str = ""
+    status: str = ""
+
+
+class GraphLink(JarvisModel):
+    source: NonEmptyStr
+    target: NonEmptyStr
+    kind: GraphLinkKind
+    label: str = ""
+
+
+class KnowledgeGraphView(JarvisModel):
+    run_id: str
+    store: str
+    focus: str | None = None
+    depth: int = Field(default=0, ge=0)
+    nodes: list[GraphNode] = Field(default_factory=list)
+    links: list[GraphLink] = Field(default_factory=list)
+
+
+class NodeDetail(JarvisModel):
+    """Everything the hover pop-up and the side panel show for one node."""
+
+    node: GraphNode
+    entity: KnowledgeEntity | None = None
+    claims: list[KnowledgeClaim] = Field(default_factory=list)
+    conflicts: list[ClaimConflict] = Field(default_factory=list)
+    relationships: list[KnowledgeRelationship] = Field(default_factory=list)
+    documents: list[str] = Field(default_factory=list)
+    entities: list[KnowledgeEntity] = Field(default_factory=list)
+    # A finding's claim text and verification status, when the node is a finding.
+    finding_claim: str = ""
+    finding_status: str = ""
+
+
+class FindingTrail(JarvisModel):
+    """The subgraph a finding rests on: what lights up when a finding is clicked (A9)."""
+
+    finding_id: NonEmptyStr
+    claim: str
+    status: str = ""
+    node_ids: list[str] = Field(default_factory=list)
+    links: list[GraphLink] = Field(default_factory=list)
+    # Citations that matched no claim in the knowledge base: cited lines the knowledge layer did
+    # not extract a claim from. Reported, not hidden.
+    unmatched_sources: list[str] = Field(default_factory=list)

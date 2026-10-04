@@ -214,3 +214,18 @@ giving one shipment two arrival dates), and **cannot express planned-vs-actual o
 completion 30 April" vs "latest milestone 14 May", "approved budget" vs "total spend"). Those are
 the kind the Aurora and Helix fixtures plant. Experiment 003 (preliminary) has the numbers. The
 full comparison is on the shipment scenarios in Phase 34.
+
+## Over HTTP (Phase 31)
+
+Every query above, per mission, at `/api/v1/missions/{run_id}/knowledge/...`, plus three views built
+by `app/intelligence/knowledge/view.py` for the 3D explorer: the graph as nodes and links, a detail
+record per node, and a finding's trail. They are built from the `KnowledgeBase` protocol, so they
+read identically from Neo4j and memory. Reference: `../api/endpoints.md`, **Knowledge**.
+
+**Missions keep their graphs in Neo4j.** Every mission with a knowledge base writes one, including
+evaluation runs: the Phase 30 comparative run left seven in the local database. They are real runs
+and browsable. To clear everything except the Member 3 sample:
+
+```cypher
+MATCH (n) WHERE n.run_id IS NOT NULL AND n.run_id <> 'run_00000000a3a3' DETACH DELETE n
+```

@@ -1,6 +1,57 @@
 {
   "components": {
     "schemas": {
+      "AnalyzeRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "documents": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Documents",
+            "type": "array"
+          }
+        },
+        "required": [
+          "documents"
+        ],
+        "title": "AnalyzeRequest",
+        "type": "object"
+      },
+      "AnalyzeResponse": {
+        "additionalProperties": false,
+        "description": "A knowledge base built from documents alone. Nothing is stored.",
+        "properties": {
+          "excluded": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Excluded",
+            "type": "array"
+          },
+          "graph": {
+            "$ref": "#/components/schemas/KnowledgeGraphView"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/KnowledgeSnapshot"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineEvent"
+            },
+            "title": "Timeline",
+            "type": "array"
+          }
+        },
+        "required": [
+          "snapshot",
+          "graph"
+        ],
+        "title": "AnalyzeResponse",
+        "type": "object"
+      },
       "Body_upload_documents_api_v1_documents_post": {
         "properties": {
           "files": {
@@ -41,6 +92,99 @@
         "title": "CancelResponse",
         "type": "object"
       },
+      "ClaimComparison": {
+        "additionalProperties": false,
+        "description": "The temporal order of two claims.",
+        "properties": {
+          "claim_a": {
+            "$ref": "#/components/schemas/KnowledgeClaim"
+          },
+          "claim_b": {
+            "$ref": "#/components/schemas/KnowledgeClaim"
+          },
+          "date_a": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PartialDate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "date_b": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PartialDate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          },
+          "relation": {
+            "$ref": "#/components/schemas/ClaimOrder"
+          }
+        },
+        "required": [
+          "claim_a",
+          "claim_b",
+          "relation"
+        ],
+        "title": "ClaimComparison",
+        "type": "object"
+      },
+      "ClaimConflict": {
+        "additionalProperties": false,
+        "description": "Two or more sources asserting different values for the same attribute of one entity.\n\nLike the original, it never decides which side is right. It surfaces the disagreement with\nevery citation, and judging it is the reasoning engine's and the verifier's job.",
+        "properties": {
+          "attribute": {
+            "minLength": 1,
+            "title": "Attribute",
+            "type": "string"
+          },
+          "conflict_id": {
+            "minLength": 1,
+            "title": "Conflict Id",
+            "type": "string"
+          },
+          "entity_id": {
+            "minLength": 1,
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "entity_name": {
+            "minLength": 1,
+            "title": "Entity Name",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ConflictKind"
+          },
+          "sides": {
+            "items": {
+              "$ref": "#/components/schemas/ConflictSide"
+            },
+            "title": "Sides",
+            "type": "array"
+          }
+        },
+        "required": [
+          "conflict_id",
+          "entity_id",
+          "entity_name",
+          "attribute",
+          "kind",
+          "sides"
+        ],
+        "title": "ClaimConflict",
+        "type": "object"
+      },
       "ClaimElement": {
         "additionalProperties": false,
         "description": "One verifiable part of a claim.\n\nDecomposition is what makes gaps specific. \"The project slipped two weeks against the\napproved baseline\" contains a duration, a baseline and a comparison; checking support\nper element is how the system can say *which* part is unsupported rather than shrugging\nat the whole claim.",
@@ -74,6 +218,17 @@
         ],
         "title": "ClaimElement",
         "type": "object"
+      },
+      "ClaimOrder": {
+        "description": "The original's `/timeline/compare` result labels, unchanged.",
+        "enum": [
+          "A_BEFORE_B",
+          "A_AFTER_B",
+          "SAME_TIME",
+          "UNKNOWN"
+        ],
+        "title": "ClaimOrder",
+        "type": "string"
       },
       "Confidence": {
         "additionalProperties": false,
@@ -120,6 +275,50 @@
         "title": "Confidence",
         "type": "object"
       },
+      "ConflictKind": {
+        "description": "How the conflicting values were compared. Reported so a reader knows what \"differ\" meant.",
+        "enum": [
+          "DATE",
+          "NUMBER",
+          "TEXT"
+        ],
+        "title": "ConflictKind",
+        "type": "string"
+      },
+      "ConflictSide": {
+        "additionalProperties": false,
+        "description": "One of the disagreeing values, with every claim and citation that asserts it.",
+        "properties": {
+          "claim_ids": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Claim Ids",
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Sources",
+            "type": "array"
+          },
+          "value": {
+            "minLength": 1,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "claim_ids",
+          "sources"
+        ],
+        "title": "ConflictSide",
+        "type": "object"
+      },
       "CreateMissionRequest": {
         "additionalProperties": false,
         "properties": {
@@ -143,6 +342,95 @@
         ],
         "title": "CreateMissionRequest",
         "type": "object"
+      },
+      "EntityInvestigation": {
+        "additionalProperties": false,
+        "description": "Everything known about one entity, in one response.\n\nThe original `/investigation/{name}` endpoint, which its README called the main one.",
+        "properties": {
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeClaim"
+            },
+            "title": "Claims",
+            "type": "array"
+          },
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimConflict"
+            },
+            "title": "Conflicts",
+            "type": "array"
+          },
+          "entity": {
+            "$ref": "#/components/schemas/KnowledgeEntity"
+          },
+          "network": {
+            "$ref": "#/components/schemas/EntityNetwork"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "entity",
+          "network"
+        ],
+        "title": "EntityInvestigation",
+        "type": "object"
+      },
+      "EntityNetwork": {
+        "additionalProperties": false,
+        "description": "The neighbourhood of one entity, within `depth` hops in either direction.",
+        "properties": {
+          "center_id": {
+            "minLength": 1,
+            "title": "Center Id",
+            "type": "string"
+          },
+          "depth": {
+            "minimum": 0.0,
+            "title": "Depth",
+            "type": "integer"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/NetworkEdge"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/NetworkNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "center_id",
+          "depth"
+        ],
+        "title": "EntityNetwork",
+        "type": "object"
+      },
+      "EntityType": {
+        "description": "The original's six extraction types, plus OTHER for anything the model labels freely.",
+        "enum": [
+          "PERSON",
+          "ORG",
+          "LOCATION",
+          "DATE",
+          "PRODUCT",
+          "SHIPMENT",
+          "OTHER"
+        ],
+        "title": "EntityType",
+        "type": "string"
       },
       "EventPage": {
         "additionalProperties": false,
@@ -411,6 +699,86 @@
         "title": "ExecutionSummary",
         "type": "object"
       },
+      "ExtractionStats": {
+        "additionalProperties": false,
+        "description": "What building the knowledge base cost and what it could not do.\n\nCounted, so a knowledge base built from half the documents can never look complete.",
+        "properties": {
+          "chunks": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Chunks",
+            "type": "integer"
+          },
+          "chunks_skipped": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Chunks Skipped",
+            "type": "integer"
+          },
+          "claims": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Claims",
+            "type": "integer"
+          },
+          "claims_capped": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Claims Capped",
+            "type": "integer"
+          },
+          "documents": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Documents",
+            "type": "integer"
+          },
+          "duplicate_claims": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Duplicate Claims",
+            "type": "integer"
+          },
+          "entities_ungrounded": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Entities Ungrounded",
+            "type": "integer"
+          },
+          "failed_chunks": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Failed Chunks",
+            "type": "integer"
+          },
+          "llm_calls": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Llm Calls",
+            "type": "integer"
+          },
+          "relationships_skipped": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Relationships Skipped",
+            "type": "integer"
+          },
+          "tabular_rows": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Tabular Rows",
+            "type": "integer"
+          },
+          "ungrounded_claims": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Ungrounded Claims",
+            "type": "integer"
+          }
+        },
+        "title": "ExtractionStats",
+        "type": "object"
+      },
       "FinalReport": {
         "additionalProperties": false,
         "description": "The structured investigation report.",
@@ -579,6 +947,53 @@
         "title": "FindingClassification",
         "type": "string"
       },
+      "FindingTrail": {
+        "additionalProperties": false,
+        "description": "The subgraph a finding rests on: what lights up when a finding is clicked (A9).",
+        "properties": {
+          "claim": {
+            "title": "Claim",
+            "type": "string"
+          },
+          "finding_id": {
+            "minLength": 1,
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/GraphLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "node_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Node Ids",
+            "type": "array"
+          },
+          "status": {
+            "default": "",
+            "title": "Status",
+            "type": "string"
+          },
+          "unmatched_sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unmatched Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "finding_id",
+          "claim"
+        ],
+        "title": "FindingTrail",
+        "type": "object"
+      },
       "FindingsResponse": {
         "additionalProperties": false,
         "properties": {
@@ -645,6 +1060,132 @@
           "STALE_SOURCE"
         ],
         "title": "GapType",
+        "type": "string"
+      },
+      "GraphLink": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/GraphLinkKind"
+          },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          },
+          "source": {
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "minLength": 1,
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "kind"
+        ],
+        "title": "GraphLink",
+        "type": "object"
+      },
+      "GraphLinkKind": {
+        "enum": [
+          "RELATES",
+          "HAS_CLAIM",
+          "CITED_IN",
+          "MENTIONED_IN",
+          "CONFLICTS_WITH",
+          "CITES"
+        ],
+        "title": "GraphLinkKind",
+        "type": "string"
+      },
+      "GraphNode": {
+        "additionalProperties": false,
+        "description": "One node. Entities are parents; their claims and documents are sub-nodes (`parent`).",
+        "properties": {
+          "claim_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Claim Count",
+            "type": "integer"
+          },
+          "conflict_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Conflict Count",
+            "type": "integer"
+          },
+          "entity_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EntityType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "grounded": {
+            "default": true,
+            "title": "Grounded",
+            "type": "boolean"
+          },
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/GraphNodeKind"
+          },
+          "label": {
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent"
+          },
+          "source": {
+            "default": "",
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "default": "",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "label"
+        ],
+        "title": "GraphNode",
+        "type": "object"
+      },
+      "GraphNodeKind": {
+        "enum": [
+          "ENTITY",
+          "CLAIM",
+          "DOCUMENT",
+          "FINDING"
+        ],
+        "title": "GraphNodeKind",
         "type": "string"
       },
       "HTTPValidationError": {
@@ -739,6 +1280,297 @@
         ],
         "title": "IssueType",
         "type": "string"
+      },
+      "KnowledgeClaim": {
+        "additionalProperties": false,
+        "description": "One source's assertion of one attribute value about one entity.",
+        "properties": {
+          "attribute": {
+            "minLength": 1,
+            "title": "Attribute",
+            "type": "string"
+          },
+          "claim_id": {
+            "minLength": 1,
+            "title": "Claim Id",
+            "type": "string"
+          },
+          "document_id": {
+            "minLength": 1,
+            "title": "Document Id",
+            "type": "string"
+          },
+          "entity_id": {
+            "minLength": 1,
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "grounded": {
+            "default": true,
+            "title": "Grounded",
+            "type": "boolean"
+          },
+          "line": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line"
+          },
+          "quote": {
+            "default": "",
+            "title": "Quote",
+            "type": "string"
+          },
+          "source": {
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          },
+          "value": {
+            "minLength": 1,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "claim_id",
+          "entity_id",
+          "attribute",
+          "value",
+          "source",
+          "document_id"
+        ],
+        "title": "KnowledgeClaim",
+        "type": "object"
+      },
+      "KnowledgeEntity": {
+        "additionalProperties": false,
+        "description": "One real-world thing, resolved across every document that mentions it.",
+        "properties": {
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Aliases",
+            "type": "array"
+          },
+          "entity_id": {
+            "minLength": 1,
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "entity_type": {
+            "$ref": "#/components/schemas/EntityType",
+            "default": "OTHER"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "entity_id",
+          "name"
+        ],
+        "title": "KnowledgeEntity",
+        "type": "object"
+      },
+      "KnowledgeGraphView": {
+        "additionalProperties": false,
+        "properties": {
+          "depth": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Depth",
+            "type": "integer"
+          },
+          "focus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Focus"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/GraphLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "store": {
+            "title": "Store",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "store"
+        ],
+        "title": "KnowledgeGraphView",
+        "type": "object"
+      },
+      "KnowledgeRelationship": {
+        "additionalProperties": false,
+        "description": "`subject --predicate--> object`, between two resolved entities.",
+        "properties": {
+          "object_id": {
+            "minLength": 1,
+            "title": "Object Id",
+            "type": "string"
+          },
+          "predicate": {
+            "minLength": 1,
+            "title": "Predicate",
+            "type": "string"
+          },
+          "relationship_id": {
+            "minLength": 1,
+            "title": "Relationship Id",
+            "type": "string"
+          },
+          "source": {
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          },
+          "subject_id": {
+            "minLength": 1,
+            "title": "Subject Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "relationship_id",
+          "subject_id",
+          "predicate",
+          "object_id",
+          "source"
+        ],
+        "title": "KnowledgeRelationship",
+        "type": "object"
+      },
+      "KnowledgeSnapshot": {
+        "additionalProperties": false,
+        "description": "A run's knowledge base. Built once per run and never shared between runs.\n\nThe original kept one SQLite file for every ingest ever made, so a later investigation saw\nan earlier one's contradictions. Here the snapshot belongs to the run that built it.",
+        "properties": {
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeClaim"
+            },
+            "title": "Claims",
+            "type": "array"
+          },
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimConflict"
+            },
+            "title": "Conflicts",
+            "type": "array"
+          },
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeEntity"
+            },
+            "title": "Entities",
+            "type": "array"
+          },
+          "relationships": {
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeRelationship"
+            },
+            "title": "Relationships",
+            "type": "array"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/ExtractionStats"
+          }
+        },
+        "title": "KnowledgeSnapshot",
+        "type": "object"
+      },
+      "KnowledgeSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "claims": {
+            "title": "Claims",
+            "type": "integer"
+          },
+          "conflicts": {
+            "title": "Conflicts",
+            "type": "integer"
+          },
+          "entities": {
+            "title": "Entities",
+            "type": "integer"
+          },
+          "knowledge_pass_task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Knowledge Pass Task Id"
+          },
+          "relationships": {
+            "title": "Relationships",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/ExtractionStats"
+          },
+          "store": {
+            "title": "Store",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "store",
+          "entities",
+          "relationships",
+          "claims",
+          "conflicts",
+          "stats"
+        ],
+        "title": "KnowledgeSummary",
+        "type": "object"
       },
       "Limitation": {
         "additionalProperties": false,
@@ -879,6 +1711,26 @@
             "default": false,
             "title": "Has Report",
             "type": "boolean"
+          },
+          "knowledge_claims": {
+            "default": 0,
+            "title": "Knowledge Claims",
+            "type": "integer"
+          },
+          "knowledge_conflicts": {
+            "default": 0,
+            "title": "Knowledge Conflicts",
+            "type": "integer"
+          },
+          "knowledge_entities": {
+            "default": 0,
+            "title": "Knowledge Entities",
+            "type": "integer"
+          },
+          "knowledge_store": {
+            "default": "",
+            "title": "Knowledge Store",
+            "type": "string"
           },
           "objective": {
             "title": "Objective",
@@ -1024,6 +1876,176 @@
         "title": "MissionSummary",
         "type": "object"
       },
+      "NetworkEdge": {
+        "additionalProperties": false,
+        "properties": {
+          "from_id": {
+            "minLength": 1,
+            "title": "From Id",
+            "type": "string"
+          },
+          "predicate": {
+            "minLength": 1,
+            "title": "Predicate",
+            "type": "string"
+          },
+          "source": {
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          },
+          "to_id": {
+            "minLength": 1,
+            "title": "To Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_id",
+          "to_id",
+          "predicate",
+          "source"
+        ],
+        "title": "NetworkEdge",
+        "type": "object"
+      },
+      "NetworkNode": {
+        "additionalProperties": false,
+        "properties": {
+          "entity_id": {
+            "minLength": 1,
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "entity_type": {
+            "$ref": "#/components/schemas/EntityType"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity_id",
+          "name",
+          "entity_type"
+        ],
+        "title": "NetworkNode",
+        "type": "object"
+      },
+      "NodeDetail": {
+        "additionalProperties": false,
+        "description": "Everything the hover pop-up and the side panel show for one node.",
+        "properties": {
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeClaim"
+            },
+            "title": "Claims",
+            "type": "array"
+          },
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimConflict"
+            },
+            "title": "Conflicts",
+            "type": "array"
+          },
+          "documents": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeEntity"
+            },
+            "title": "Entities",
+            "type": "array"
+          },
+          "entity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/KnowledgeEntity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finding_claim": {
+            "default": "",
+            "title": "Finding Claim",
+            "type": "string"
+          },
+          "finding_status": {
+            "default": "",
+            "title": "Finding Status",
+            "type": "string"
+          },
+          "node": {
+            "$ref": "#/components/schemas/GraphNode"
+          },
+          "relationships": {
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeRelationship"
+            },
+            "title": "Relationships",
+            "type": "array"
+          }
+        },
+        "required": [
+          "node"
+        ],
+        "title": "NodeDetail",
+        "type": "object"
+      },
+      "PartialDate": {
+        "additionalProperties": false,
+        "description": "A calendar date that may be missing its year or its day.\n\nThe original parsed with `strptime` and then forced every result to 2026 - including dates\nthat carried their own year, so \"14 September 2025\" became 2026. A partial date keeps what\nthe source actually said, and comparison treats an unknown field as unknown.",
+        "properties": {
+          "day": {
+            "anyOf": [
+              {
+                "maximum": 31.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Day"
+          },
+          "month": {
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "Month",
+            "type": "integer"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "maximum": 9999.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          }
+        },
+        "required": [
+          "month"
+        ],
+        "title": "PartialDate",
+        "type": "object"
+      },
       "RecordingSummary": {
         "additionalProperties": false,
         "properties": {
@@ -1126,6 +2148,38 @@
         ],
         "title": "ResolutionStatus",
         "type": "string"
+      },
+      "SearchHit": {
+        "additionalProperties": false,
+        "description": "A claim ranked by the original's explainable score. Every point has a reason.",
+        "properties": {
+          "claim": {
+            "$ref": "#/components/schemas/KnowledgeClaim"
+          },
+          "entity_name": {
+            "default": "",
+            "title": "Entity Name",
+            "type": "string"
+          },
+          "explanation": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Explanation",
+            "type": "array"
+          },
+          "score": {
+            "minimum": 1.0,
+            "title": "Score",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "claim",
+          "score"
+        ],
+        "title": "SearchHit",
+        "type": "object"
       },
       "SectionKind": {
         "description": "The report's fixed structure. Order here is presentation order.",
@@ -1367,6 +2421,87 @@
           "synthesize"
         ],
         "title": "TaskType",
+        "type": "string"
+      },
+      "TimelineEvent": {
+        "additionalProperties": false,
+        "description": "A dated claim, placed in order.",
+        "properties": {
+          "attribute": {
+            "minLength": 1,
+            "title": "Attribute",
+            "type": "string"
+          },
+          "claim_id": {
+            "minLength": 1,
+            "title": "Claim Id",
+            "type": "string"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PartialDate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "entity_id": {
+            "minLength": 1,
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "entity_name": {
+            "minLength": 1,
+            "title": "Entity Name",
+            "type": "string"
+          },
+          "relation_to_previous": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TimelineRelation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          },
+          "value": {
+            "minLength": 1,
+            "title": "Value",
+            "type": "string"
+          },
+          "year_inferred": {
+            "default": false,
+            "title": "Year Inferred",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "claim_id",
+          "entity_id",
+          "entity_name",
+          "attribute",
+          "value",
+          "source"
+        ],
+        "title": "TimelineEvent",
+        "type": "object"
+      },
+      "TimelineRelation": {
+        "description": "The original's `relation_to_previous` labels, unchanged.",
+        "enum": [
+          "SAME_TIME_AS",
+          "AFTER",
+          "UNKNOWN"
+        ],
+        "title": "TimelineRelation",
         "type": "string"
       },
       "UploadedDocument": {
@@ -1673,6 +2808,48 @@
         ]
       }
     },
+    "/api/v1/knowledge/analyze": {
+      "post": {
+        "description": "Member 3's standalone use: documents in, a knowledge base out, nothing stored.\n\nThe request waits for extraction, one model call per chunk, which is why the number of\ndocuments is capped. Nothing is written to Neo4j: a knowledge base with no mission has no run\nto belong to, and storing it would bring back the global store the port removed.",
+        "operationId": "analyze_api_v1_knowledge_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyzeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analyze",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
     "/api/v1/missions": {
       "get": {
         "operationId": "list_missions_api_v1_missions_get",
@@ -1955,6 +3132,58 @@
         ]
       }
     },
+    "/api/v1/missions/{run_id}/findings/{finding_id}/trail": {
+      "get": {
+        "description": "The claims, documents and entities a finding rests on (A9).",
+        "operationId": "trail_api_v1_missions__run_id__findings__finding_id__trail_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "finding_id",
+            "required": true,
+            "schema": {
+              "title": "Finding Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindingTrail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Trail",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
     "/api/v1/missions/{run_id}/gaps": {
       "get": {
         "operationId": "get_gaps_api_v1_missions__run_id__gaps_get",
@@ -1998,6 +3227,785 @@
         "summary": "Get Gaps",
         "tags": [
           "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/knowledge": {
+      "get": {
+        "operationId": "summary_api_v1_missions__run_id__knowledge_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Summary",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/knowledge/claims": {
+      "get": {
+        "operationId": "claims_api_v1_missions__run_id__knowledge_claims_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entity_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "grounded",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grounded"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/KnowledgeClaim"
+                  },
+                  "title": "Response Claims Api V1 Missions  Run Id  Knowledge Claims Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Claims",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/knowledge/claims/{claim_id}": {
+      "get": {
+        "operationId": "claim_api_v1_missions__run_id__knowledge_claims__claim_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "claim_id",
+            "required": true,
+            "schema": {
+              "title": "Claim Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeClaim"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Claim",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/knowledge/conflicts": {
+      "get": {
+        "operationId": "conflicts_api_v1_missions__run_id__knowledge_conflicts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entity_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClaimConflict"
+                  },
+                  "title": "Response Conflicts Api V1 Missions  Run Id  Knowledge Conflicts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Conflicts",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/knowledge/entities": {
+      "get": {
+        "operationId": "entities_api_v1_missions__run_id__knowledge_entities_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/KnowledgeEntity"
+                  },
+                  "title": "Response Entities Api V1 Missions  Run Id  Knowledge Entities Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Entities",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/knowledge/entities/{entity_id}/network": {
+      "get": {
+        "operationId": "network_api_v1_missions__run_id__knowledge_entities__entity_id__network_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "entity_id",
+            "required": true,
+            "schema": {
+              "title": "Entity Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "depth",
+            "required": false,
+            "schema": {
+              "default": 2,
+              "maximum": 4,
+              "minimum": 0,
+              "title": "Depth",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityNetwork"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Network",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/knowledge/graph": {
+      "get": {
+        "description": "Nodes and links for the 3D explorer: everything, or `focus`'s neighbourhood.",
+        "operationId": "graph_api_v1_missions__run_id__knowledge_graph_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "focus",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Focus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "depth",
+            "required": false,
+            "schema": {
+              "default": 2,
+              "maximum": 4,
+              "minimum": 0,
+              "title": "Depth",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeGraphView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Graph",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/knowledge/investigation": {
+      "get": {
+        "operationId": "investigation_api_v1_missions__run_id__knowledge_investigation_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "minLength": 1,
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityInvestigation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Investigation",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/knowledge/nodes/{node_id}": {
+      "get": {
+        "description": "What the hover pop-up shows for one node.",
+        "operationId": "node_api_v1_missions__run_id__knowledge_nodes__node_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "node_id",
+            "required": true,
+            "schema": {
+              "title": "Node Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Node",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/knowledge/relationships": {
+      "get": {
+        "operationId": "relationships_api_v1_missions__run_id__knowledge_relationships_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entity_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/KnowledgeRelationship"
+                  },
+                  "title": "Response Relationships Api V1 Missions  Run Id  Knowledge Relationships Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Relationships",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/knowledge/search": {
+      "get": {
+        "operationId": "search_api_v1_missions__run_id__knowledge_search_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "minLength": 1,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "depth",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 4,
+              "minimum": 0,
+              "title": "Depth",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SearchHit"
+                  },
+                  "title": "Response Search Api V1 Missions  Run Id  Knowledge Search Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/knowledge/timeline": {
+      "get": {
+        "operationId": "timeline_api_v1_missions__run_id__knowledge_timeline_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entity_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TimelineEvent"
+                  },
+                  "title": "Response Timeline Api V1 Missions  Run Id  Knowledge Timeline Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Timeline",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/knowledge/timeline/compare": {
+      "get": {
+        "operationId": "compare_api_v1_missions__run_id__knowledge_timeline_compare_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "claim_a",
+            "required": true,
+            "schema": {
+              "title": "Claim A",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "claim_b",
+            "required": true,
+            "schema": {
+              "title": "Claim B",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimComparison"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Compare",
+        "tags": [
+          "knowledge"
         ]
       }
     },

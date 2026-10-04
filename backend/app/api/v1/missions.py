@@ -285,6 +285,10 @@ def _detail(record: MissionRecord) -> MissionDetail:
         ),
         has_report=bool(result and result.report),
         security_flags=list(result.security) if result else [],
+        knowledge_store=result.knowledge_store if result else "",
+        knowledge_entities=len(result.knowledge.entities) if result and result.knowledge else 0,
+        knowledge_claims=len(result.knowledge.claims) if result and result.knowledge else 0,
+        knowledge_conflicts=(len(result.knowledge.conflicts) if result and result.knowledge else 0),
     )
 
 
