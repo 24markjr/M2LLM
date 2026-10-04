@@ -206,6 +206,29 @@ citation leaves a claim that looks fully supported, which is the more dangerous 
 
 ---
 
+## Demo 7 — The knowledge graph
+
+**Shows:** what the agent read, as a graph it can be questioned through.
+
+Open a finished mission and press **Knowledge graph** (or go to `#/mission/{id}/graph`).
+
+1. **Hover** an entity: the pop-up gives its type, claim count, conflicts and the documents it
+   appears in.
+2. **Click** it: its claims (cubes), the documents they were read from (octahedra), the findings
+   citing them (tetrahedra) and its neighbours light up, and everything else fades. The panel
+   lists every claim with the line it was read from. Raise **depth** to reach further.
+3. **Click a finding** in the Findings list: exactly its evidence trail lights up. This is the
+   line to say aloud: *a finding is not text, it is a path to the lines that support it.*
+4. Tick **conflicts only**: what is left is where the documents disagree, the links drawn red with
+   moving particles and labelled.
+5. Press **2D view**: the same graph, same interactions. Reduced-motion users start here.
+
+Start a mission and open the graph while it runs to show it growing as the agent extracts.
+
+`#/knowledge` does the same over documents with no mission (Member 3's original use).
+
+---
+
 ## The uncomfortable slide — show it before they find it
 
 **Do this deliberately.** It is stronger coming from you.
@@ -294,7 +317,8 @@ Worth knowing before someone asks:
 - **The API does not persist runs.** The database layer exists and is tested; the registry wires
   only in-memory sinks, so a restart loses history.
 - **Three evaluation scenarios, not twenty.**
-- **No frontend test runner**, so the replay reconstruction has no unit test.
+- **The frontend's only unit tests are the knowledge explorer's** (Vitest, Phase 32); the replay
+  reconstruction still has none.
 - **CI is red.** Six of seven jobs pass, including the integration suite against a real
   Postgres. `eval-regression` fails on the evaluation baseline's positive-case blind spot -
   which is that job working, not broken.

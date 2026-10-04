@@ -6,6 +6,76 @@ and what is still broken.
 
 ---
 
+# 2026-10-04 - Phase 32: the 3D knowledge graph explorer
+
+## What was done
+
+The knowledge graph of a mission as an interactive 3D view (2D fallback), as the owner asked:
+entities as nodes with claims and documents as sub-nodes, clicking a node lights up everything
+related to it, hovering shows a pop-up, and clicking a finding lights up its evidence trail. Also
+Member 3's standalone "analyze documents" page. ADR-011 records the library choice.
+
+## Decisions
+
+- **Vanilla `3d-force-graph` in one wrapper, logic in a pure module.** The plan expected a React 19
+  peer conflict with `react-force-graph-3d`; checked, there is none (`react: *`). The reasons that
+  stand are in ADR-011: highlight without re-rendering every node through React, and one owner of
+  the WebGL lifecycle.
+- **Files differ from the plan.** One `model.ts` (pure functions) instead of a `useGraphModel.ts`
+  hook, because pure functions test without React; the tooltip, panel and controls stay in
+  `KnowledgeExplorer.tsx`, since each is under 60 lines and used once.
+- **Entity labels always shown**, not only on highlight as planned. A graph of unlabelled spheres
+  told nothing in the first screenshots.
+- **No entry animation for new nodes.** Positions of existing nodes are kept across refreshes
+  instead, which matters more: a graph that jumps on every SSE event cannot be read.
+- **Keyboard users get the side panel, not the pop-up.** It holds the same details and stays put.
+- **Replay mode does not rebuild the graph.** A recording holds the `KNOWLEDGE_EXTRACTED` event,
+  but not the knowledge base itself. Deferred; noted in the changelog's Known Issues.
+
+## Checked in a browser (screenshots in `docs/screenshots/`)
+
+Headless Chrome with software WebGL, against mission `run_ed5c2de70127` (Aurora, knowledge in
+Neo4j: 20 entities, 31 claims, 3 documents, 1 finding). Clicks and hovers were driven through the
+Chrome DevTools protocol, not just rendered.
+
+| Check | Result |
+|---|---|
+| Opens with entities only, framed, labelled | `phase32-3d-overview.png` |
+| Click "Project Aurora": its 8 claims, its document, the finding and related entities lit, 13 unrelated nodes faded, panel lists each claim with its line | Pass, 3D and 2D; `phase32-3d-click.png` |
+| Hover: pop-up with type, claim count, conflicts, documents | Pass; `phase32-2d-hover.png` |
+| Click finding F-001: exactly its trail lit (7 nodes) | Pass; `phase32-3d-trail.png` |
+| Reduced motion starts in 2D, same interactions | Pass |
+
+Not checked in the browser: a conflict link (this mission has no conflicts). It is covered by the
+unit tests, and the shipment scenario in Phase 34 will have one.
+
+## What the screenshots caught
+
+Each was a real defect, fixed and noted at the constant or function that fixes it:
+
+1. Graph off-centre: the canvas used the window size until the first resize callback.
+2. Graph tiny: loose entities repel far apart at the default charge (-30 -> -12).
+3. Graph framed far too close by `zoomToFit`: replaced in 3D by our own framing from node positions.
+4. **A click froze the page in 3D**: it rebuilt every mesh and label texture. The same click in 2D
+   worked, which separated logic from rendering. Nodes are now built once and restyled in place.
+5. **The trail put the camera inside the graph**: the finding node was new and had no position, so
+   the fly-to moved out from the origin. It now waits for a position and approaches along the
+   camera's line of sight.
+
+## Note on the session
+
+A cleanup command (`taskkill /IM chrome.exe` with a window-title filter) stopped every Chrome
+process on the machine, not only the headless one. Processes are now stopped by id only.
+
+## Verification
+
+- `npm test` -> **19 passed**; `tsc -b` clean; `npm run build` clean (main 260 kB, explorer chunk
+  1.5 MB / 416 kB gzipped, lazy)
+- `pytest` -> **876 passed** (868 without the model, plus 8 against the live model); backend
+  unchanged this phase
+
+---
+
 # 2026-10-04 - Phase 31: the knowledge API
 
 ## What was done

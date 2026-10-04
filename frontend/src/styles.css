@@ -1037,3 +1037,204 @@ table.metrics tbody tr:last-child td {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ------------------------------------------------------------------------------------------
+ * The knowledge graph explorer (Phase 32).
+ *
+ * The canvas takes the space; a side column holds the selected node, the findings and a list
+ * that mirrors the graph for keyboard and screen-reader use. Kind is shown by glyph and shape
+ * as well as colour, and a conflict is labelled, not only red.
+ * ------------------------------------------------------------------------------------------ */
+
+a.button {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid var(--line-bright);
+  border-radius: 4px;
+  background: var(--panel-raised);
+  color: var(--text);
+  font-size: 13px;
+}
+a.button:hover {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+.explorer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.explorer-controls input.search {
+  min-width: 220px;
+  padding: 6px 10px;
+  background: var(--panel);
+  border: 1px solid var(--line-bright);
+  border-radius: 4px;
+  color: var(--text);
+}
+.explorer-controls select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line-bright);
+  border-radius: 4px;
+  padding: 4px 6px;
+}
+.explorer-controls details.types {
+  position: relative;
+}
+.explorer-controls details.types[open] > label {
+  display: block;
+}
+
+.explorer-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 16px;
+}
+@media (max-width: 960px) {
+  .explorer-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.explorer-stage {
+  position: relative;
+  height: 72vh;
+  min-height: 420px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg);
+}
+.graph-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.node-tooltip {
+  position: absolute;
+  z-index: 5;
+  max-width: 320px;
+  padding: 10px 12px;
+  background: var(--panel-raised);
+  border: 1px solid var(--line-bright);
+  border-radius: 6px;
+  font-size: 12px;
+  pointer-events: none;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+.node-tooltip .tooltip-head {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+.node-tooltip .quote {
+  margin: 4px 0;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.legend {
+  position: absolute;
+  left: 10px;
+  bottom: 34px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.stage-hint {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  font-size: 11px;
+}
+
+.explorer-side .panel {
+  margin-bottom: 12px;
+}
+.explorer-side h3 {
+  margin: 10px 0 4px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.node-list,
+.finding-trails,
+.detail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.node-list {
+  max-height: 34vh;
+  overflow: auto;
+  font-size: 13px;
+}
+.node-list:focus {
+  outline: 1px solid var(--accent);
+}
+.node-list li {
+  padding: 3px 12px;
+  cursor: pointer;
+}
+.node-list li.kind-claim {
+  padding-left: 28px;
+  color: var(--text-dim);
+}
+.node-list li.on {
+  background: var(--accent-dim);
+  color: var(--text);
+}
+.node-list li.faded {
+  opacity: 0.4;
+}
+.finding-trails button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  padding: 8px 12px;
+}
+.finding-trails button.on {
+  background: var(--accent-dim);
+}
+.detail-list li {
+  padding: 2px 0;
+  font-size: 12px;
+}
+
+.tag {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.bad {
+  color: var(--bad);
+}
+.ok {
+  color: var(--ok);
+}
+
+.doc-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 4px 16px;
+  margin-bottom: 12px;
+}
+/* The global `input { width: 100% }` is for text fields; checkboxes keep their natural size. */
+.explorer-controls input[type="checkbox"],
+.doc-picker input[type="checkbox"] {
+  width: auto;
+}

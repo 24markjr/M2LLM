@@ -5,6 +5,52 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-04 - Phase 32: the 3D knowledge graph explorer
+
+### Added
+
+- `frontend/src/components/graph3d/` - the knowledge graph explorer (K13, ADR-011):
+  - `model.ts` - pure logic: visibility (entities first; claims, documents and citing findings
+    unfold under an entity), click highlight to depth 1-3, parents to unfold, filters, search,
+    keyboard order, shape/colour/size, `shortLabel`, 2D-or-3D at start
+  - `KnowledgeGraph3D.tsx` - the canvas: `3d-force-graph` (three.js) or `force-graph` (2D), one
+    instance per mode; nodes restyled in place on highlight; camera framing and fly-to
+  - `KnowledgeExplorer.tsx` - controls, hover pop-up, node panel, findings and evidence trail,
+    keyboard list, legend; refreshes on `KNOWLEDGE_EXTRACTED`, `FINDING_VERIFIED`,
+    `FINDING_REJECTED` and stream close
+  - `AnalyzePage.tsx` - `#/knowledge`, analyze documents without a mission
+- Routes `#/mission/{id}/graph` and `#/knowledge` (lazy-loaded), a "Knowledge" nav link, and a
+  "Knowledge graph" button on the mission page with its conflict count
+- API client and types for the Phase 31 knowledge endpoints
+- **Vitest**, the frontend's first test runner: `npm test`, 19 tests in `model.test.ts`
+- Dependencies: `3d-force-graph` 1.80.1, `force-graph` 1.52.0, `three` 0.186.1,
+  `three-spritetext` 1.10.0; dev: `@types/three`, `vitest` 5.0.3
+- ADR-011; demo 7 in `docs/demo-script.md`; `docs/screenshots/phase32-*.png`
+
+### Changed
+
+- `vite.config.ts`: `chunkSizeWarningLimit` 1600 kB - the explorer chunk is 1.5 MB (416 kB
+  gzipped) and loads only when the view opens; the main bundle is unchanged at 260 kB
+
+### Fixed (during the phase, found by screenshots)
+
+- Graph drawn off-centre (canvas sized to the window until the first resize callback)
+- Graph framed tiny, then far too close (`zoomToFit`): the 3D camera is now placed from the node
+  positions
+- Clicking a node in 3D froze the page under software WebGL: every click rebuilt every mesh and
+  label texture; nodes are now restyled in place
+- Opening a finding's trail put the camera inside the graph: the fly-to used the origin when the
+  target had no position yet
+
+### Known Issues
+
+- The graph is not rebuilt in replay mode (`#/replay`); deferred
+- Labels can still overlap where many claims sit close together; the side panel lists them in full
+- Verified on Aurora; the shipment scenario in the plan's "done when" arrives with its fixtures in
+  Phase 34
+
+---
+
 ## 2026-10-04 - Phase 31: the knowledge API
 
 ### Added

@@ -219,6 +219,11 @@ export function MissionDetailPage({ runId, onBack }: { runId: string; onBack: ()
       <div className="row" style={{ marginBottom: 20 }}>
         <button onClick={onBack}>&larr; Missions</button>
         <span className="spacer" />
+        {mission && (mission.knowledge_store || !done) ? (
+          <a className="button" href={`#/mission/${runId}/graph`}>
+            Knowledge graph{mission.knowledge_conflicts ? ` · ${mission.knowledge_conflicts} conflict(s)` : ""}
+          </a>
+        ) : null}
         {mission && !done ? (
           <button className="danger" onClick={live.cancel}>
             Cancel run

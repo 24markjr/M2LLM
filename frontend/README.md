@@ -25,6 +25,7 @@ reconnect behaves in development the way it will in production.
 ```bash
 npm run build       # tsc -b && vite build
 npm run typecheck   # tsc --noEmit
+npm test            # vitest run: the knowledge explorer's logic (Phase 32)
 ```
 
 ## What it shows
@@ -34,6 +35,8 @@ npm run typecheck   # tsc --noEmit
 | Mission list | Every run, newest first, with finding and gap counts |
 | New mission | Objective plus documents. Aurora fixtures are prefilled |
 | Mission detail | Phase tracker, task graph, findings, gaps, report, execution trace |
+| Knowledge graph (`#/mission/{id}/graph`) | The run's knowledge graph in 3D (or 2D): entities, with claims and documents as sub-nodes; click lights up what is related, hover shows a pop-up, a finding lights up its evidence trail. Grows live while the run extracts (Phase 32, ADR-011) |
+| Knowledge (`#/knowledge`) | Analyze documents without a mission: the same explorer over a graph that is not stored |
 
 The detail page subscribes to `GET /missions/{id}/stream` with `EventSource`, so the phase
 tracker and the trace move while the run is happening. When the stream closes the page refetches
@@ -67,7 +70,12 @@ Model deliberation is never rendered. The trace shows operational events only.
 
 ## Notes on the build
 
-**Dependencies are React and nothing else.** The implementation plan named Tailwind, React
+**Dependencies are React, plus the graph libraries for one view.** `3d-force-graph`, `force-graph`, `three` and
+`three-spritetext` are used only by the knowledge explorer, which is lazy-loaded, so they cost nothing
+until that view opens (ADR-011). The explorer's logic lives in `src/components/graph3d/model.ts` and is the
+one part of the console with unit tests (`model.test.ts`, Vitest).
+
+Otherwise the implementation plan named Tailwind, React
 Query, Zustand, Recharts and Framer Motion. None of them are here: hand-written CSS, `fetch`,
 `useState` and `EventSource` cover what this console does, and each library omitted is a
 toolchain that cannot break during a demo. Should the UI grow — a findings table that needs

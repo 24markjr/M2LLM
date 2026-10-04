@@ -91,7 +91,7 @@ Two rules this plan adds, both following from the teammates' code:
 | 29 | Neo4j graph store | K5, K10, K11 | L | 28 | **DONE** 2026-10-03 |
 | 30 | Knowledge in the mission pipeline | — | M | 29 | **DONE** 2026-10-04 |
 | 31 | Knowledge API | K12 | M | 30 | **DONE** 2026-10-04 |
-| 32 | 3D knowledge graph explorer | K13 | L | 31 | TODO |
+| 32 | 3D knowledge graph explorer | K13 | L | 31 | **DONE** 2026-10-04 |
 | 33 | Memory: working, episodic, semantic | T10–T12 | M | 29, 31 | TODO |
 | 34 | Evaluation and hardening | K14 | M | 26–33 | TODO |
 | 35 | Documentation and handover | — | S | 34 | TODO |
@@ -590,6 +590,13 @@ the same works in 2D with reduced motion.
 **Documents:** **ADR-011** (3D explorer: the library choice, why vanilla over the React wrapper,
 the accessibility rules); `frontend/README.md`; the demo script gains a graph demo; screenshots
 in the development log; changelog.
+
+**As built (2026-10-04).** Done, with these departures from the plan above, each explained in the
+development log: one pure module (`model.ts`) instead of `useGraphModel.ts`, and the tooltip, panel
+and controls inside `KnowledgeExplorer.tsx` rather than three files; entity labels always shown;
+no entry animation for new nodes (their positions are kept instead); keyboard users get the side
+panel rather than the hover pop-up; the graph is not rebuilt in replay mode (deferred); and the
+"done when" was checked on Aurora, because the shipment fixtures arrive in Phase 34.
 
 ---
 

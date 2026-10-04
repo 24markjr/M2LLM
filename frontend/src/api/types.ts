@@ -284,3 +284,124 @@ export interface MetricPoint {
 
 /** Whether higher or lower is better. Served by the API so the UI cannot hold a stale copy. */
 export type MetricDirections = Record<string, "higher" | "lower">;
+
+// --- The knowledge layer (Phases 28-31) ----------------------------------------------------
+
+export type EntityType = "PERSON" | "ORG" | "LOCATION" | "DATE" | "PRODUCT" | "SHIPMENT" | "OTHER";
+export type GraphNodeKind = "ENTITY" | "CLAIM" | "DOCUMENT" | "FINDING";
+export type GraphLinkKind =
+  | "RELATES"
+  | "HAS_CLAIM"
+  | "CITED_IN"
+  | "MENTIONED_IN"
+  | "CONFLICTS_WITH"
+  | "CITES";
+
+export interface GraphNode {
+  id: string;
+  kind: GraphNodeKind;
+  label: string;
+  entity_type: EntityType | null;
+  /** The entity a claim belongs to: claims are sub-nodes of their entity. */
+  parent: string | null;
+  claim_count: number;
+  conflict_count: number;
+  grounded: boolean;
+  source: string;
+  status: string;
+}
+
+export interface GraphLink {
+  source: string;
+  target: string;
+  kind: GraphLinkKind;
+  label: string;
+}
+
+export interface KnowledgeGraphView {
+  run_id: string;
+  store: string;
+  focus: string | null;
+  depth: number;
+  nodes: GraphNode[];
+  links: GraphLink[];
+}
+
+export interface KnowledgeEntity {
+  entity_id: string;
+  name: string;
+  entity_type: EntityType;
+  aliases: string[];
+  sources: string[];
+}
+
+export interface KnowledgeClaim {
+  claim_id: string;
+  entity_id: string;
+  attribute: string;
+  value: string;
+  source: string;
+  document_id: string;
+  line: number | null;
+  quote: string;
+  grounded: boolean;
+}
+
+export interface ConflictSide {
+  value: string;
+  claim_ids: string[];
+  sources: string[];
+}
+
+export interface ClaimConflict {
+  conflict_id: string;
+  entity_id: string;
+  entity_name: string;
+  attribute: string;
+  kind: "DATE" | "NUMBER" | "TEXT";
+  sides: ConflictSide[];
+}
+
+export interface KnowledgeRelationship {
+  relationship_id: string;
+  subject_id: string;
+  predicate: string;
+  object_id: string;
+  source: string;
+}
+
+export interface NodeDetail {
+  node: GraphNode;
+  entity: KnowledgeEntity | null;
+  claims: KnowledgeClaim[];
+  conflicts: ClaimConflict[];
+  relationships: KnowledgeRelationship[];
+  documents: string[];
+  entities: KnowledgeEntity[];
+  finding_claim: string;
+  finding_status: string;
+}
+
+export interface FindingTrail {
+  finding_id: string;
+  claim: string;
+  status: string;
+  node_ids: string[];
+  links: GraphLink[];
+  unmatched_sources: string[];
+}
+
+export interface KnowledgeSummary {
+  run_id: string;
+  store: string;
+  entities: number;
+  relationships: number;
+  claims: number;
+  conflicts: number;
+  knowledge_pass_task_id: string | null;
+}
+
+export interface AnalyzeResponse {
+  graph: KnowledgeGraphView;
+  excluded: string[];
+}

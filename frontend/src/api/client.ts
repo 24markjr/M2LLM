@@ -7,7 +7,12 @@
  */
 
 import type {
+  AnalyzeResponse,
   ApiErrorBody,
+  FindingTrail,
+  KnowledgeGraphView,
+  KnowledgeSummary,
+  NodeDetail,
   MetricDirections,
   MetricPoint,
   Recording,
@@ -110,4 +115,26 @@ export const api = {
   listEvalReports: () => request<MetricPoint[]>(`${BASE}/evaluation/reports`),
 
   getMetricDirections: () => request<MetricDirections>(`${BASE}/evaluation/directions`),
+
+  // --- the knowledge layer (Phase 31) -------------------------------------------------------
+
+  getKnowledgeSummary: (runId: string) =>
+    request<KnowledgeSummary>(`${BASE}/missions/${runId}/knowledge`),
+
+  getKnowledgeGraph: (runId: string) =>
+    request<KnowledgeGraphView>(`${BASE}/missions/${runId}/knowledge/graph`),
+
+  getKnowledgeNode: (runId: string, nodeId: string) =>
+    request<NodeDetail>(
+      `${BASE}/missions/${runId}/knowledge/nodes/${encodeURIComponent(nodeId)}`,
+    ),
+
+  getFindingTrail: (runId: string, findingId: string) =>
+    request<FindingTrail>(`${BASE}/missions/${runId}/findings/${findingId}/trail`),
+
+  analyzeDocuments: (documents: string[]) =>
+    request<AnalyzeResponse>(`${BASE}/knowledge/analyze`, {
+      method: "POST",
+      body: JSON.stringify({ documents }),
+    }),
 };

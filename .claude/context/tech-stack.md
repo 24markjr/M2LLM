@@ -50,6 +50,11 @@ Where a choice was contested, it has an ADR.
 | Client state | Zustand | The SSE stream is event-sourced into a single store |
 | Charts | Recharts | Evaluation dashboard — metric trends across eval reports |
 | Animation | Framer Motion | Task-graph state transitions; replan insertions must be *visibly* obvious |
+| Knowledge graph view *(Phase 32)* | `3d-force-graph` + `three` (3D), `force-graph` (2D), `three-spritetext` | Interactive 3D graph with a 2D fallback from the same data; lazy-loaded - see ADR-011 |
+| Tests *(Phase 32)* | Vitest | The explorer's pure logic (`model.ts`) |
+
+*As built, Styling through Animation above were not adopted: hand-written CSS, `fetch`, `useState`
+and `EventSource` instead - see `frontend/README.md`. The two Phase 32 rows are in use.*
 
 ## Tooling
 
