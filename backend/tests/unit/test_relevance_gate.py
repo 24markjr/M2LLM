@@ -307,3 +307,75 @@ async def test_a_dropped_restatement_is_recorded_with_its_reason() -> None:
     discarded = memory.of_type(EventType.FINDING_DISCARDED)
     assert len(discarded) == 1
     assert "two sides" in str(discarded[0].payload["reason"])
+
+
+# --- BUG-019: a conflict needs both of its values in evidence ---------------------------
+
+AURORA = [
+    Observation(
+        task_id="task_001",
+        task_type="extract_timeline",
+        content="5 date(s)",
+        sources=["aurora_project_report.txt:r10", "aurora_project_report.txt:r12"],
+    )
+]
+AURORA_TEXT = {
+    "aurora_project_report.txt:r10": "aurora_project_report.txt:r10: Approved baseline completion "
+    "date: 30 April 2026",
+    "aurora_project_report.txt:r12": "aurora_project_report.txt:r12: M1 completion: "
+    "15 January 2026",
+}
+# BUG-019's claim in the Phase 34 baseline: 31 January is on neither cited line.
+INVENTED = (
+    "The Aurora project report states two different completion dates: 30 April 2026 and "
+    "31 January 2026",
+    ["aurora_project_report.txt:r10", "aurora_project_report.txt:r12"],
+)
+CHECK = Objective(text="Does the report contradict itself on the approved completion date?")
+
+
+async def test_a_conflict_whose_second_value_is_in_no_cited_line_is_not_a_finding() -> None:
+    emitter, memory = _emitter()
+    engine = _engine([_findings(INVENTED)], [_verdicts((1, True))])
+
+    findings = await engine.derive_findings(
+        CHECK,
+        AURORA,
+        emit=emitter,
+        intent=_intent("detect_inconsistencies"),
+        evidence_text=AURORA_TEXT,
+    )
+
+    assert findings == []
+    (discarded,) = memory.of_type(EventType.FINDING_DISCARDED)
+    assert "31 January 2026" in str(discarded.payload["reason"])
+
+
+async def test_a_conflict_with_both_values_in_evidence_survives() -> None:
+    engine = _engine(
+        [
+            _findings(
+                (
+                    "The approved completion date of 30 April 2026 conflicts with M1 on "
+                    "15 January 2026",
+                    INVENTED[1],
+                )
+            )
+        ],
+        [_verdicts((1, True))],
+    )
+    findings = await engine.derive_findings(
+        CHECK, AURORA, intent=_intent("detect_inconsistencies"), evidence_text=AURORA_TEXT
+    )
+    assert len(findings) == 1
+
+
+async def test_the_rule_applies_only_to_comparisons_and_only_with_the_text() -> None:
+    """Not comparative: verification judges it. No text given: the rule cannot be applied."""
+    for intent, text in (
+        (_intent("extract_timeline"), AURORA_TEXT),
+        (_intent("detect_inconsistencies"), None),
+    ):
+        engine = _engine([_findings(INVENTED)], [_verdicts((1, True))])
+        findings = await engine.derive_findings(CHECK, AURORA, intent=intent, evidence_text=text)
+        assert len(findings) == 1

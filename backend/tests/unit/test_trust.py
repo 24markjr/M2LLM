@@ -453,3 +453,37 @@ async def test_composite_rule_4_leaves_a_grounded_claim_alone() -> None:
     composite = CompositeVerifier(_Fixed(VerificationStatus.SUPPORTED), LexicalVerifier())
     result = await composite.verify(_request(*_RIGHT_DATE))
     assert result.status is VerificationStatus.SUPPORTED
+
+
+# --- BUG-021: a value in the evidence, in the wrong role ----------------------------------
+
+
+def test_a_number_where_a_date_belongs_is_named() -> None:
+    from app.intelligence.trust.specifics import numbers_as_dates
+
+    assert numbers_as_dates("Shipment 9012 was delivered to XYZ Traders on 9012") == ["9012"]
+    assert numbers_as_dates("Invoice dated 4821 was paid") == ["4821"]
+    # Real dates, plausible years, and agents are not.
+    assert numbers_as_dates("delivered on 20 September by driver Priya Menon") == []
+    assert numbers_as_dates("closed on 2026-05-14") == []
+    assert numbers_as_dates("budgeted on 2026 figures") == []
+    assert numbers_as_dates("Shipment 9012 was delivered by 4821 Logistics") == []
+
+
+async def test_composite_rule_4_catches_the_shipment_number_read_as_a_date() -> None:
+    """BUG-021, verbatim: both verifiers passed it, because 9012 is on the cited line."""
+    composite = CompositeVerifier(_Fixed(VerificationStatus.SUPPORTED), LexicalVerifier())
+    result = await composite.verify(
+        _request(
+            "Shipment 9012 was delivered to XYZ Traders on 9012",
+            (
+                "shipment_delivery_confirmation.txt",
+                1,
+                "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya "
+                "Menon. No discrepancies were reported.",
+            ),
+        )
+    )
+    assert result.status is VerificationStatus.PARTIALLY_SUPPORTED
+    misread = [i for i in result.issues if i.issue_type is IssueType.DATE_AMBIGUITY]
+    assert misread and misread[0].element == "9012"

@@ -26,7 +26,7 @@ from app.core.agent_config import get_lexical_thresholds
 from app.core.config import VerificationProviderName, get_settings
 from app.core.logging import get_logger
 from app.intelligence.trust.lexical import verify_claim
-from app.intelligence.trust.specifics import ungrounded_specifics
+from app.intelligence.trust.specifics import numbers_as_dates, ungrounded_specifics
 from app.llm.errors import StructuredOutputError
 from app.llm.prompts import get_prompt_library
 from app.llm.provider import LLMProvider
@@ -427,23 +427,39 @@ class CompositeVerifier:
             chosen = model
 
         if chosen.status is VerificationStatus.SUPPORTED:
+            issues: list[VerificationIssue] = []
             missing = ungrounded_specifics(request.claim, evidence_pool(request))
             if missing:
+                issues.append(
+                    VerificationIssue(
+                        issue_type=IssueType.OVERSTATED_CLAIM,
+                        description=(
+                            "the claim states "
+                            + ", ".join(missing)
+                            + ", which none of its cited evidence contains"
+                        ),
+                        element=", ".join(missing),
+                    )
+                )
+            # BUG-021: a value can be in the evidence and still be in the wrong role.
+            misread = numbers_as_dates(request.claim)
+            if misread:
+                issues.append(
+                    VerificationIssue(
+                        issue_type=IssueType.DATE_AMBIGUITY,
+                        description=(
+                            "the claim gives "
+                            + ", ".join(misread)
+                            + " as a date, and a bare number of that size is not one"
+                        ),
+                        element=", ".join(misread),
+                    )
+                )
+            if issues:
                 chosen = chosen.model_copy(
                     update={
                         "status": VerificationStatus.PARTIALLY_SUPPORTED,
-                        "issues": [
-                            *chosen.issues,
-                            VerificationIssue(
-                                issue_type=IssueType.OVERSTATED_CLAIM,
-                                description=(
-                                    "the claim states "
-                                    + ", ".join(missing)
-                                    + ", which none of its cited evidence contains"
-                                ),
-                                element=", ".join(missing),
-                            ),
-                        ],
+                        "issues": [*chosen.issues, *issues],
                     }
                 )
 

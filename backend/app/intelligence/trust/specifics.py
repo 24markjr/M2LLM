@@ -18,8 +18,18 @@ match by value (`450,000` = `450000`).
 
 from __future__ import annotations
 
+import re
+
 from app.intelligence.temporal import find_dates, find_figures
 from app.schemas.trust import EvidenceText
+
+# A bare number of three or more digits right after a word that introduces a date. "On 2026-04-30"
+# does not match (the number runs on into the date), nor do "by driver" and "Shipment 9012".
+# "By" and "before" are left out: "delivered by 9012" is more often an agent than a date.
+_DATE_POSITION = re.compile(r"\b(?:on|dated|since|until)\s+(\d{3,})\b(?![.,/:-]?\d)", re.IGNORECASE)
+
+# A bare number after "on" can be a year ("on 2026, the budget..."). Outside this range it is not.
+_PLAUSIBLE_YEARS = range(1900, 2101)
 
 
 def ungrounded_specifics(claim: str, evidence: list[EvidenceText]) -> list[str]:
@@ -35,3 +45,16 @@ def ungrounded_specifics(claim: str, evidence: list[EvidenceText]) -> list[str]:
         if value not in pool_figures:
             missing.append(written)
     return list(dict.fromkeys(missing))
+
+
+def numbers_as_dates(claim: str) -> list[str]:
+    """Numbers a claim puts where a date belongs that cannot be dates (BUG-021).
+
+    "Shipment 9012 was delivered on 9012" took the shipment number for the date. Both verifiers
+    passed it, because `9012` does appear on the cited line, so `ungrounded_specifics` is satisfied.
+    The value is grounded; its role is not. This asks only the narrow question: does a word that
+    introduces a date ("on", "dated", "since", "until") precede a bare number that is no plausible
+    year? Like the rest of this module it reads no meaning, so it cannot see a wrong but valid date.
+    """
+    found = [m.group(1) for m in _DATE_POSITION.finditer(claim)]
+    return list(dict.fromkeys(n for n in found if int(n) not in _PLAUSIBLE_YEARS))

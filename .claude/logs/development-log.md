@@ -6,6 +6,47 @@ and what is still broken.
 
 ---
 
+# 2026-10-05 - Fixing the open bugs (before Phase 35)
+
+## What was done
+
+The owner asked for every open bug to be fixed before the handover phase. The bug log had three not
+marked fixed: BUG-018 (mitigated), BUG-019 (open since Phase 27) and BUG-021 (open since Phase 34).
+
+## How BUG-019 was found to be fixable
+
+The bug log had rejected the obvious rule ("a comparative finding whose specifics agree is not a
+conflict") because it would remove a real Helix finding. Re-running the negative case alone and
+printing its finding showed something narrower: the invented conflict's second value (31 January) is
+on neither line it cites. The composite verifier already said so, and marked it partially
+supported. A contradiction with one side unevidenced is not partially a contradiction, so the rule
+went into reasoning, beside BUG-005's "must cite both sides", and only for comparative objectives
+and fully cited claims.
+
+## BUG-021
+
+The value "9012" is on the cited line, so "is every value in the evidence?" says yes. The question
+it needed was "is it in a date's place?". `numbers_as_dates` asks exactly that, narrowly: a bare
+number after "on", "dated", "since" or "until" that is no plausible year.
+
+## Checked
+
+- The full suite on `qwen3:4b`: every threshold passes; per scenario, only the two scenarios the
+  fixes target changed. The harness flagged `verification_success` (0.909 -> 0.970) as "improved
+  beyond tolerance"; the per-scenario comparison is in the changelog and the README, and both moves
+  are the fixes, not a measurement fault.
+- `check_eval_reports.py` passes: CI's evaluation gate is green on the committed baseline.
+- 925 tests pass; `mypy --strict` and `ruff` clean.
+
+## Still true
+
+The model varies between sessions. The BUG-019 rule does not depend on the model writing the same
+claim, which is why it was chosen; an invented claim whose values are on its cited lines would still
+rest on verification. `injection_document` still does not state the delivery date; that is the
+model's answer, not a defect in the pipeline.
+
+---
+
 # 2026-10-05 - Phase 34: evaluation and hardening
 
 ## What was done

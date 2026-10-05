@@ -172,8 +172,9 @@ repository is hand-written** — a report carries the model, prompt versions and
 two reports produced with different stamps are refused as incomparable rather than quietly
 compared.
 
-The current baseline is `20261005T042817-qwen3-4b-all` (Phase 34: the `composite` verifier and the
-knowledge pass on comparative questions, both chosen by experiment). Its headline numbers:
+The current baseline is `20261005T050619-qwen3-4b-all` (the `composite` verifier and the knowledge
+pass on comparative questions, both chosen by experiment, and the BUG-019/BUG-021 fixes). Every
+build threshold passes. Its headline numbers:
 
 | Metric | Value | |
 |---|---|---|
@@ -185,7 +186,7 @@ knowledge pass on comparative questions, both chosen by experiment). Its headlin
 | `intent_accuracy` | 0.595 | |
 | `task_efficiency` | 1.650 | tasks ÷ minimal sufficient tasks — lower is better |
 | `plan_validity` | 0.636 | plans passing with **zero** repairs |
-| `verification_success` | 0.909 | findings that survive the independent check |
+| `verification_success` | 0.970 | findings that survive the independent check |
 
 Two of those deserve their explanation rather than a chart.
 
@@ -193,13 +194,14 @@ Two of those deserve their explanation rather than a chart.
 they can execute. That is the planner needing help, and the metric says so instead of hiding it.
 The repairs are recorded on the plan, so a repaired plan never counts as clean.
 
-**`verification_success` fell from 1.000 to 0.909, and that is the improvement.** A verifier that
-approves everything scores perfectly and is worthless. At 1.000 the baseline verifier was passing an
-invented finding on a negative case. Experiment 004 ran the suite with each verifier: the `composite`
-verifier (the model check, Member 4's lexical rule and the specifics check) rejected exactly that
-finding and nothing else, at no measurable cost, so it is now the default. It is better, not
-sufficient: it still passed "delivered on 9012", a shipment number taken for a date (BUG-021,
-open).
+**`verification_success` at 0.970 is worth reading scenario by scenario**, because a verifier that
+approves everything scores 1.000 and is worthless. It was 1.000 in Phase 33, when the baseline
+verifier passed an invented finding. Experiment 004 made the `composite` verifier (the model check,
+Member 4's lexical rule and the specifics check) the default: it rejected that finding and nothing
+else, and the figure fell to 0.909. Two fixes then moved it to 0.970, and both are explained: the
+invented finding is no longer produced at all (BUG-019; that scenario's 1.000 is vacuous, nothing to
+verify), and "delivered on 9012", a shipment number taken for a date, is now caught (BUG-021; that
+scenario fell from 1.000 to 0.667). The other nine scenarios did not move.
 
 **The knowledge pass earned its place.** Experiment 003 turned it off: the agent then found nothing on
 `shipment_arrival_conflict`, Member 3's own planted contradiction, which it finds with the pass on.
@@ -209,26 +211,28 @@ It costs about 16 s per scenario.
 metric is 0 of 0 gaps closed. It says nothing about the replanning loop on this
 baseline.
 
-### The open defect, stated plainly
+### The defect that kept CI red, and how it was fixed
 
-**Mostly fixed, and not reliably: the agent sometimes invents a finding on a negative case.** The
-three negative scenarios ask whether a consistent report, a consistent budget CSV and a consistent
-invoice and delivery note contradict themselves; the correct answer to all three is no finding. For two weeks of runs both produced none. On
-2026-10-03 one produced this, five times out of five:
+**The agent used to invent a finding on a negative case** (BUG-019). Asked whether a consistent
+report contradicts itself, it answered, in the Phase 34 baseline:
 
-> *The Aurora project report states 30 April 2026 as the approved completion date in two different
-> places (r10 and r15), but does not state a single approved completion date.*
+> *The Aurora project report states two different completion dates: 30 April 2026 and 31 January
+> 2026*
 
-Two agreeing lines presented as a conflict, cited correctly and passed by the verifier. (In the
-current baseline the invented claim is a different one, and the `composite` verifier now **rejects**
-it; the case still fails, because a rejected finding is still a finding.) The **same
-code** passed that scenario an hour earlier, when the model wrote a different claim that the
-relevance gate discarded. Nothing in the repository changed what the model produces: its output is
-stable within a session and differs between them. Measured, not assumed: BUG-019 in the bug log.
-`unsupported_claim_rate` stays 0.000, because the claim's citations are real. That metric cannot
-see this failure, and the negative-case check is what catches it.
+It cited two lines, `r10` and `r12`. **31 January 2026 is on neither**: it is the M2 milestone on
+`r13`. The claim was not a misreading of evidence, it was a value the evidence does not hold. The
+composite verifier's specifics check noticed and marked it `PARTIALLY_SUPPORTED`, but a partially
+supported contradiction is still reported, and a contradiction has no partial form: it *is* its two
+values.
 
-Two changes reduced it, and neither was asking the model more firmly:
+So the rule that already said "a claim of conflict must cite both sides" (BUG-005) now also says
+**both of its values must be in the lines it cites**. When the objective asks for a comparison, a
+fully cited claim that states a date or figure none of its cited lines contains is discarded before
+verification, with the reason recorded as an event. Measured on the full suite (baseline
+`20261005T050619`): the negative case produces nothing, and every positive scenario keeps exactly
+the findings it had. CI's evaluation gate passes for the first time since BUG-019 appeared.
+
+Two earlier changes had already reduced it, and neither was asking the model more firmly:
 
 - A structural rule: **a claim of conflict must cite both sides.** When the intent requires a
   comparative operation, a claim fully supported by a single locator restates a source rather than
@@ -237,17 +241,19 @@ Two changes reduced it, and neither was asking the model more firmly:
 - **A claim that asserts an absence is not a finding.** "There is no contradiction" is true and
   uncitable: a finding is bound to the locators it rests on, and no locator says something is *not*
   there. A negative conclusion belongs in the report narrative, written from the fact that nothing
-  was established. This was a contradiction between two of my own prompts, and the second negative
-  scenario is what exposed it.
+  was established. (BUG-014.)
 
-**Every positive scenario now reports its planted findings.** `aurora_contradiction` finds both
-planted contradictions (completion date and budget), each citing both documents, since BUG-015
-let the verifier read the cited lines. `aurora_pdf_timeline` failed in every run until BUG-020:
-for a PDF the reasoning model was shown page references with no content, so it had nothing to
-state. `shipment_arrival_conflict` finds both of Member 3's dates, and `injection_document` flags the
-planted instruction and does not obey it. **What remains is the negative case above** (BUG-019),
-and the build fails on it. The
-threshold has not been moved.
+**What BUG-019 also showed, and what still holds.** The model's output is stable within a session and
+differs between them: the same code passed this scenario one hour and failed it the next. One
+evaluation run is one sample. The rule above does not depend on which claim the model writes, which
+is why it was chosen over another prompt change; but a different invented claim, citing a line that
+*does* hold its values, would still need verification to catch it.
+
+**Every positive scenario reports its planted findings.** `aurora_contradiction` finds both planted
+contradictions (completion date and budget), each citing both documents. `shipment_arrival_conflict`
+finds both of Member 3's dates. `injection_document` flags the planted instruction and does not obey
+it, though it still does not state the real delivery date: the model writes weak claims there, and
+the verifier now marks the worst of them (BUG-021, fixed in the verifier, not in the model).
 
 That trade is worth understanding rather than glossing. Before these fixes the contradiction
 scenario reported four findings — three of them restatements, counted as successes by every metric.
@@ -256,7 +262,7 @@ genuine contradiction per run, and the ceiling is the model: `qwen3:4b` does not
 claim that pairs two documents.
 
 Of the two possible failures this is the better one. An investigation that reports nothing is
-honest; one that invents three findings is not. Tracked as BUG-005 and BUG-012 in
+honest; one that invents three findings is not. Tracked as BUG-005, BUG-012 and BUG-019 in
 [`.claude/logs/bug-log.md`](.claude/logs/bug-log.md), and visible on the `#/evaluation` page.
 
 ## Architecture
@@ -334,6 +340,6 @@ never blocked, and **no member's implementation is ever imported directly**. See
 ## Status
 
 Phases 0–24 built, and Phases 25–30 of the Members 3 and 4 integration
-([plan](.claude/implementation/integration-plan-phases-25-35.md)). CI is red on `main`,
-deliberately: the evaluation gate fails on the negative-case confabulation described above
-(BUG-019), and the gate has not been weakened to make it green.
+([plan](.claude/implementation/integration-plan-phases-25-35.md)). The evaluation gate passes on
+the committed baseline since the BUG-019 fix. It was red until then, deliberately, and was never
+weakened to make it green.

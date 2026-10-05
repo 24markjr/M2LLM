@@ -22,6 +22,7 @@ from pydantic import Field
 
 from app.core.agent_config import get_agent_bounds
 from app.core.logging import get_logger
+from app.intelligence.trust.specifics import numbers_as_dates, ungrounded_specifics
 from app.llm.errors import LLMError, StructuredOutputError
 from app.llm.prompts import get_prompt_library
 from app.llm.provider import LLMProvider
@@ -38,6 +39,7 @@ from app.schemas.execution import Observation
 from app.schemas.finding import Confidence, Finding, FindingClassification
 from app.schemas.intent import Intent, Operation
 from app.schemas.objective import Objective
+from app.schemas.trust import EvidenceText
 from app.security.injection import wrap_untrusted
 
 log = get_logger(__name__)
@@ -204,6 +206,21 @@ COMPARATIVE_OPERATIONS: frozenset[Operation] = frozenset(
 MIN_REFS_FOR_COMPARATIVE = 2
 
 
+def unevidenced_values(
+    claim: str, finding: Finding, evidence_text: dict[str, str] | None
+) -> list[str]:
+    """The dates and figures `claim` states that its own cited lines do not contain (BUG-019),
+    plus any bare number it gives as a date (BUG-021)."""
+    if evidence_text is None:
+        return []
+    cited = [
+        EvidenceText(source=ref.as_ref(), content=evidence_text.get(ref.as_ref(), ""))
+        for ref in finding.evidence
+        if ref.is_resolved
+    ]
+    return list(dict.fromkeys([*ungrounded_specifics(claim, cited), *numbers_as_dates(claim)]))
+
+
 def requires_comparison(intent: Intent | None) -> bool:
     """Whether this objective's answer is inherently comparative."""
     if intent is None:
@@ -227,7 +244,14 @@ class ReasoningEngine:
         start_index: int = 0,
         intent: Intent | None = None,
         page_starts: dict[str, list[int]] | None = None,
+        evidence_text: dict[str, str] | None = None,
     ) -> list[Finding]:
+        """Findings from observations, each bound to real evidence.
+
+        `evidence_text` maps a locator to the text at it (the controller builds it for the
+        verifier). With it, a comparative claim whose stated values are not all in its cited lines
+        is discarded (BUG-019); without it that rule is skipped and verification judges the claim.
+        """
         if not observations:
             return []
 
@@ -301,6 +325,35 @@ class ReasoningEngine:
                     },
                 )
                 log.info("restatement_discarded", claim=claim[:80])
+                continue
+
+            # A conflict is its two values. When the objective asks for a comparison and a fully
+            # cited claim states a date or figure none of its cited lines contains, there is no
+            # evidenced conflict, partial or otherwise (BUG-019: "30 April 2026 and 31 January 2026"
+            # citing two lines, neither of which holds 31 January). Fully cited only, as above: a
+            # claim with unresolved citations is kept, and verification rejects it visibly.
+            unevidenced = (
+                unevidenced_values(claim, finding, evidence_text)
+                if comparative
+                and evidence_text is not None
+                and finding.resolved_evidence_count == len(finding.evidence)
+                else []
+            )
+            if unevidenced:
+                await self._event(
+                    emit,
+                    EventType.FINDING_DISCARDED,
+                    {
+                        "claim": claim[:160],
+                        "reason": (
+                            "the objective asks for a comparison, and this claim states "
+                            + ", ".join(unevidenced)
+                            + ", which none of its cited lines contains: a conflict needs both "
+                            "of its values in evidence"
+                        ),
+                    },
+                )
+                log.info("unevidenced_conflict_discarded", claim=claim[:80], values=unevidenced)
                 continue
 
             findings.append(finding)

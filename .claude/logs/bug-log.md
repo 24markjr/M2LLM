@@ -718,8 +718,8 @@ change. This is now noted in `.claude/testing/agent-evaluation.md`.
 
 **Found:** 2026-10-03, auditing the Phase 25 baseline (`verification_success` 0.750 -> 1.000)
 **Severity:** Medium. A wrong finding reported as verified
-**Status:** Mitigated by the composite verifier's specifics check (A15); default unchanged until
-Exp-004
+**Status:** Fixed. The composite verifier's specifics check (A15) catches it, and became the default
+on 2026-10-05 by Experiment 004
 
 **Symptom**
 
@@ -764,7 +764,7 @@ Its effect across the suite is Exp-004 (Phase 34). It does not catch the second 
 
 **Found:** 2026-10-03, Phase 27 evaluation run `20261003T095400`
 **Severity:** High. A finding invented where the correct answer is none (the BUG-005 failure)
-**Status:** Open. Measured and attributed; not fixed
+**Status:** Fixed 2026-10-05 (`reasoning/engine.py:unevidenced_values`); see "The fix" below
 
 **Symptom**
 
@@ -807,6 +807,26 @@ would also discard `helix_budget_unapproved`'s real finding: 450,000 in the fina
 450000 marked unapproved in the budget, which are agreeing figures that make a correct finding. The
 relevance gate and the knowledge layer's explicit conflict pairs (Phase 30) are where this belongs,
 and they are measured there.
+
+
+**The fix (2026-10-05)**
+
+The rule rejected above ("a comparative finding whose cited specifics all agree") would have removed
+real findings. What the Phase 34 baseline showed was narrower and safe to rule on. Its invented claim,
+"two different completion dates: 30 April 2026 and 31 January 2026", cited `r10` and `r12`, and
+31 January is on neither (it is M2, on `r13`). The composite verifier saw it and marked the finding
+`PARTIALLY_SUPPORTED`, which still reports it. A contradiction has no partial form.
+
+So BUG-005's rule ("a claim of conflict must cite both sides") gained a second half: when the intent
+is comparative, a fully cited claim stating a date or figure that none of its cited lines contains is
+discarded before verification, with a `FINDING_DISCARDED` event giving the values. The line text is
+the same map the verifier reads (`controller.evidence_text_map`). Claims with unresolved citations
+are kept, as before. Tests: `test_relevance_gate.py`, three cases including this claim verbatim.
+
+Measured on the full suite (`20261005T050619`, against `20261005T042817`): `aurora_no_contradiction`
+1 finding -> 0; every other scenario the same findings; every threshold passes. The model still
+varies between sessions, so a future invented claim whose values *are* on its cited lines would pass
+this rule and rest on verification.
 
 ---
 
@@ -865,8 +885,7 @@ the scenario.
 
 **Found:** 2026-10-05, reading why `injection_document` never states the delivery date (Phase 34)
 **Severity:** High. A wrong claim reached the report marked SUPPORTED, by both verifiers
-**Status:** Open. Recorded, not fixed in Phase 34: changing verification would invalidate the
-experiments that chose the defaults
+**Status:** Fixed 2026-10-05 (`trust/specifics.py:numbers_as_dates`, composite rule 4)
 
 **Symptom**
 
@@ -903,6 +922,17 @@ kind. The Aurora and Helix lines put dates and amounts on their own.
 The specifics check could type a claim's specifics by role (`on <date>`, `INR <amount>`) with the
 shared temporal parser (Phase 25) and require the evidence to hold a value of the same type. That is
 a verifier change, to be measured like Experiment 004 before it becomes a default.
+
+**The fix (2026-10-05)**
+
+`numbers_as_dates`: a bare number of three or more digits right after "on", "dated", "since" or
+"until", and outside 1900-2100, is a number in a date's place. The composite verifier's rule 4
+reports it as a `DATE_AMBIGUITY` issue beside ungrounded specifics, and the claim becomes
+`PARTIALLY_SUPPORTED`; reasoning's comparative rule (BUG-019) treats it as an unevidenced value.
+Measured: `injection_document`'s "delivered ... on 9012" is no longer passed (that scenario's
+`verification_success` 1.000 -> 0.667). The scenario still does not state 20 September: that is the
+model's claim, not the verifier's judgement, and is recorded as a limitation, not a defect.
+
 
 ---
 

@@ -5,6 +5,33 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-05 - The open bugs: BUG-018, BUG-019, BUG-021 closed
+
+### Fixed
+
+- **BUG-019** (`reasoning/engine.py:unevidenced_values`): when the objective asks for a comparison,
+  a fully cited claim stating a date or figure none of its cited lines contains is discarded before
+  verification, with a `FINDING_DISCARDED` event naming the values. The negative case no longer
+  produces a finding
+- **BUG-021** (`trust/specifics.py:numbers_as_dates`): a bare number where a date belongs ("on
+  9012") is a `DATE_AMBIGUITY` issue in composite rule 4, and an unevidenced value in the rule above
+- **BUG-018**: closed; the specifics check that catches it became the default in Phase 34
+
+### Changed
+
+- `ReasoningEngine.derive_findings(evidence_text=...)`: the controller passes the line text it
+  already builds for the verifier
+
+### Measured
+
+- Baseline `20261005T050619`: **every build threshold passes**, the first time since BUG-019.
+  `aurora_no_contradiction` 1 finding -> 0; `injection_document` `verification_success`
+  1.000 -> 0.667 ("on 9012" caught); nine scenarios unchanged. Aggregate `verification_success`
+  0.909 -> 0.970, explained by those two
+- 925 tests (5 new)
+
+---
+
 ## 2026-10-05 - Phase 34: evaluation and hardening
 
 ### Added

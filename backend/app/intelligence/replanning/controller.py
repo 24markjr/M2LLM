@@ -307,14 +307,17 @@ class ReplanningController:
     async def _reason_and_verify(
         self, objective: Objective, observations: list[Observation]
     ) -> list[Finding]:
+        # The text at each locator, built once: verification reads it, and so does reasoning's
+        # rule that a conflict must evidence both of its values (BUG-019).
+        text = evidence_text_map(self._evidence(observations))
         findings = await self._reasoner.derive_findings(
             objective,
             observations,
             emit=self._emit,
             intent=self._intent,
             page_starts=self._page_starts,
+            evidence_text=text,
         )
-        text = evidence_text_map(self._evidence(observations))
 
         await self._event(EventType.VERIFICATION_STARTED, {"findings": len(findings)})
         for finding in findings:
