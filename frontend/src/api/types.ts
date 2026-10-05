@@ -531,6 +531,8 @@ export interface UploadedDocument {
   has_text: boolean;
   /** Why a file has no text yet, when it has none. */
   note: string;
+  /** For images, scans, video, audio (Phase 39): lines read, segments heard, lines seen and by which model. */
+  understood: string;
 }
 
 /** An earlier upload, offered again to a new mission. */

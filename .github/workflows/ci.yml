@@ -35,7 +35,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-      - run: pip install -e "backend[dev]"
+      - run: pip install -e "backend[dev,media]"
       - name: ruff check
         run: ruff check backend
       - name: ruff format --check
@@ -50,7 +50,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-      - run: pip install -e "backend[dev]"
+      - run: pip install -e "backend[dev,media]"
       - name: mypy --strict
         working-directory: backend
         run: mypy app
@@ -65,7 +65,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-      - run: pip install -e "backend[dev]"
+      - run: pip install -e "backend[dev,media]"
 
       # pytest-randomly reorders every run. A suite that only passes in one order has tests
       # leaking state into each other, and the seed is printed so a failure is reproducible.
@@ -129,7 +129,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-      - run: pip install -e "backend[dev]"
+      - run: pip install -e "backend[dev,media]"
 
       - name: alembic upgrade head
         working-directory: backend
@@ -180,7 +180,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-      - run: pip install -e "backend[dev]"
+      - run: pip install -e "backend[dev,media]"
 
       # The frontend's types come from this file, so a stale one means the UI is built against
       # a contract the API no longer serves.
@@ -222,7 +222,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-      - run: pip install -e "backend[dev]"
+      - run: pip install -e "backend[dev,media]"
 
       # What this does NOT do: run the agent. That needs a local model, and a runner has none.
       # It validates the committed reports and enforces the thresholds they already recorded,

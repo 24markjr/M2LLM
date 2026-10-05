@@ -85,3 +85,4 @@ code is a decision nobody can evaluate, defend, or safely revisit.
 | [009](decisions/ADR-009-port-teammates-in-process.md) | Port Members 3 and 4 into the backend, not call them as services | Accepted |
 | [010](decisions/ADR-010-neo4j-knowledge-graph.md) | Neo4j for the knowledge graph, optional, behind one protocol | Accepted |
 | [011](decisions/ADR-011-3d-knowledge-explorer.md) | The 3D knowledge explorer: vanilla 3d-force-graph, pure logic beside it | Accepted |
+| [012](decisions/ADR-012-seeing-and-hearing.md) | Seeing and hearing: read, seen and heard, kept apart | Accepted |

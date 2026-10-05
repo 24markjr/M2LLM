@@ -40,6 +40,12 @@ class CompletionRequest(JarvisModel):
     # JSON Schema injected into the prompt by `generate_structured`.
     schema_hint: str = ""
     stop: list[str] = Field(default_factory=list)
+    # Images for a vision model, base64-encoded (Phase 39). Never logged or persisted: the event
+    # for a model call carries counts and timings, not the request.
+    images: list[str] = Field(default_factory=list)
+    # The model for this call, when its role names one other than the provider's default. Only the
+    # `vision` role does: every other role keeps the configured model (OLLAMA_MODEL).
+    model: str = ""
 
 
 class CompletionResponse(JarvisModel):

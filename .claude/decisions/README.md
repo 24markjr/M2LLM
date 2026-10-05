@@ -24,3 +24,4 @@ reader looking for something that was never written.
 | ADR-009 | Port Members 3 and 4 into the backend, not call them as services | Accepted |
 | ADR-010 | Neo4j for the knowledge graph, optional, behind one protocol | Accepted |
 | ADR-011 | The knowledge graph explorer: vanilla 3d-force-graph, one wrapper, pure logic beside it | Accepted |
+| ADR-012 | Seeing and hearing: read, seen and heard, kept apart | Accepted |

@@ -43,6 +43,7 @@ from app.schemas.common import new_run_id
 from app.schemas.event import EventType
 from app.schemas.intent import Operation
 from app.schemas.objective import AttachedDocument, Objective, ObjectiveScope
+from app.tools.formats import prepare
 from app.tools.loader import load_documents
 
 log = get_logger(__name__)
@@ -134,7 +135,9 @@ async def run_scenario(expectation: ScenarioExpectation) -> ScenarioOutcome:
     sink = MemoryEventSink()
     emitter = RunEventEmitter(EventBus([sink]), new_run_id())
 
-    documents, loaded = load_documents([_resolve(d) for d in expectation.documents])
+    paths = [_resolve(d) for d in expectation.documents]
+    await prepare(paths, provider)  # images, scans, video, audio: understood once, cached
+    documents, loaded = load_documents(paths)
     page_starts = {d.document_id: d.page_starts for d in loaded if d.page_starts}
 
     objective = Objective(

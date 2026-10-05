@@ -990,3 +990,35 @@ been uploaded on this machine, so nothing leaked; with Phase 38's "Add files" it
 `git add -A` away.
 
 **Fix.** `.agent/uploads/` is ignored, with the reason beside it.
+
+---
+
+## BUG-025 — Speech recognition failed on every file: faster-whisper and PyAV 19 disagree
+
+**Found:** 2026-10-05, Phase 39's one live check
+**Severity:** High. No audio or video would ever have been heard
+**Status:** Fixed (`media._decode_audio`)
+
+**Symptom.** `TypeError: open() got an unexpected keyword argument 'metadata_errors'` from inside
+faster-whisper 1.2.1's own audio decoder, which passes PyAV an option PyAV 19 removed.
+
+**Why it was not caught.** The unit tests stub speech recognition (Whisper downloads a model), so the
+decoder never ran. Exactly what the one live check was for.
+
+**Fix.** Our code decodes the audio with PyAV (16 kHz, mono, float32, bounded) and hands Whisper the
+samples, which works with any PyAV. `test_audio_is_decoded_to_16khz_mono_for_speech_recognition`
+covers the decoder. After the fix: a 7-second spoken sentence transcribed in 2.4 s.
+
+---
+
+## BUG-026 — One failed vision call discarded everything read from a video
+
+**Found:** 2026-10-05, writing Phase 39's tests
+**Severity:** High. A video's on-screen text and speech lost because its images could not be described
+**Status:** Fixed (`media.see`)
+
+**Symptom.** With the vision prompt unavailable, a video's understanding recorded `read=1` and kept
+no lines: the exception escaped the frame loop before the timeline was assembled.
+
+**Fix.** `see()` treats any failure as "nothing seen" and logs it; what was read and heard is kept.
+`test_a_failing_vision_model_never_loses_what_was_read` holds it.

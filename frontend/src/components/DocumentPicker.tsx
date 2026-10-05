@@ -71,7 +71,7 @@ export function DocumentPicker({
           next[r.name] = {
             name: r.name,
             kind: r.kind,
-            detail: `${sizeLabel(r.bytes)} · ${r.summary}`,
+            detail: `${sizeLabel(r.bytes)} · ${r.understood || r.summary}`,
             injection: Object.keys(r.injection.hits).length > 0,
           };
         }
@@ -162,6 +162,11 @@ export function DocumentPicker({
         />
         <span>{busy ? "Uploading and reading." : "Add files - click, or drop them here"}</span>
         {formats.length ? <span className="dim">{formatsLine(formats)}</span> : null}
+        <span className="dim">
+          Images, scans, video and audio are understood on upload: text read, speech heard, and what
+          they show described by a vision model - marked as seen, a model&apos;s account, weaker
+          evidence than text that was read.
+        </span>
       </label>
 
       {/* --- typed or pasted context ------------------------------------------------------------- */}

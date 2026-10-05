@@ -6,6 +6,48 @@ and what is still broken.
 
 ---
 
+# 2026-10-05 - Phase 39: seeing and hearing
+
+## What the owner asked for
+
+*"Our AI needs to understand not only text but also the content itself."* Phase 39 had been OCR. It
+became three engines - read, seen, heard - and one rule that keeps the system's evidence rule true:
+what a vision model saw is marked `[seen]` and weighs less than anything read (ADR-012).
+
+## How it was built
+
+- **Engines installed locally:** `qwen2.5vl:3b` pulled into Ollama (3.2 GB, beside `qwen3:4b` on a
+  6 GB RTX 4050); RapidOCR, pypdfium2, faster-whisper (with PyAV) as the `backend[media]` extra.
+- **The model call stays behind `app/llm/`.** A request may carry images and name its model; only
+  the vision role does, through `models.yaml` and `VISION_MODEL`. Found on the way: `OLLAMA_MODEL`
+  overrides every role's model (for Experiment 001), so the vision role first resolved to `qwen3:4b`.
+- **Once per file, cached.** Parsing stays synchronous and model-free; `prepare()` understands files
+  before an upload, a mission, an analysis, the CLI or an evaluation reads them.
+
+## What the tests and the one live check found
+
+1. **BUG-026** (tests): a failed vision call discarded a video's read text. Fixed: seeing fails alone.
+2. **Unit tests reached the real vision model.** `LLM_PROVIDER=ollama` locally, and the upload test
+   understood an image through it. Media understanding is now off by default in tests (as the graph
+   store and the database already were); `test_media.py` turns it on with the echo provider.
+3. **BUG-025** (live): faster-whisper 1.2.1 cannot open files with PyAV 19. Fixed by decoding audio
+   ourselves.
+4. **Read and seen disagree, as expected.** On the delivery note OCR read the crate's number as
+   4881 and the vision model said 4821. Neither is infallible; that is why they are kept apart.
+
+| Live check | Result |
+|---|---|
+| Delivery-note image | 15.5 s; 5 lines read (`Shipment: 4821`, `Received: 14 September 2026, Mumbai warehouse`, `Signed: R. Sharma`), 10 lines seen |
+| 7-second spoken sentence | 2.4 s; "Shipment 48-21 arrived at the Mumbai Warehouse on 14 September. Rahul Sharma signed for it." |
+
+## Verification
+
+- 967 passed, none skipped, with Docker up (a first run while the containers were starting failed
+  122 database tests; the two runs after it passed in full)
+- mypy (119 modules), ruff, OpenAPI; Vitest 35, tsc, build
+
+---
+
 # 2026-10-05 - Phase 38: every file type, and adding files to a mission
 
 ## What was done

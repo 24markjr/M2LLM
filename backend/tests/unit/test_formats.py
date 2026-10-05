@@ -142,7 +142,8 @@ def test_an_image_is_described_and_says_it_has_no_text_yet(tmp_path: Path) -> No
     assert document.kind == "image" and document.parser == "pillow"
     assert "120 x 80 pixels" in document.text
     assert not document.has_text
-    assert "OCR" in document.text.splitlines()[-1]
+    # Understanding (OCR, the vision model) is off in unit tests; the line says so.
+    assert "MEDIA_UNDERSTANDING" in document.text.splitlines()[-1]
 
 
 def test_a_video_reads_its_transcript_when_one_sits_beside_it(tmp_path: Path) -> None:

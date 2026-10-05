@@ -13,8 +13,14 @@ use: a spreadsheet's sheets are its pages, so a citation can say which sheet.
 
 **A file with no text says so.** An image or a video is accepted and described (size, format,
 orientation; the sidecar transcript if there is one), and marked `has_text=False` until text is
-extracted from it: OCR for images and scans arrives in Phase 39. A mission excludes such a file and
-logs why, rather than treating a silent file as evidence that said nothing.
+extracted from it. A mission excludes such a file and logs why, rather than treating a silent file
+as evidence that said nothing.
+
+**Phase 39: content, not only text.** Images, scans, video and audio are *understood* - text read
+(OCR), content seen (a vision model, `[seen]` lines), speech heard (Whisper) - by
+`app/tools/media.py`,
+once per file, cached by its SHA-256. Parsing stays fast and makes no model call: it reads that
+cache. `prepare()` runs the understanding for files that have none yet.
 """
 
 from __future__ import annotations
@@ -24,6 +30,7 @@ import re
 from collections.abc import Callable
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 from app.schemas.common import JarvisModel
 from app.tools.loader import (
@@ -45,6 +52,7 @@ class FormatKind(StrEnum):
     SUBTITLES = "subtitles"
     IMAGE = "image"
     VIDEO = "video"
+    AUDIO = "audio"
 
 
 class FormatSpec(JarvisModel):
@@ -101,14 +109,24 @@ FORMATS: list[FormatSpec] = [
         extensions=[".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff", ".webp"],
         parser="pillow",
         yields_text=False,
-        becomes="its size, format and orientation; text needs OCR (Phase 39)",
+        becomes="the text in it (OCR) and what it shows (a vision model, marked as seen)",
     ),
     FormatSpec(
         kind=FormatKind.VIDEO,
         extensions=[".mp4", ".mov", ".m4v", ".mkv", ".webm", ".avi"],
         parser="video",
         yields_text=False,
-        becomes="its transcript when a subtitle file of the same name sits beside it",
+        becomes=(
+            "a timeline: speech (or a same-named subtitle file), on-screen text, and what sampled "
+            "frames show"
+        ),
+    ),
+    FormatSpec(
+        kind=FormatKind.AUDIO,
+        extensions=[".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac"],
+        parser="whisper",
+        yields_text=False,
+        becomes="what is said, one timed segment per line",
     ),
 ]
 
@@ -307,12 +325,20 @@ def load_image(path: Path) -> LoadedDocument:
             rotated = upright.size != image.size
     except Exception as exc:
         raise DocumentLoadError(f"could not read {path.name}: {type(exc).__name__}: {exc}") from exc
-    lines = [
+    header = [
         f"--- image: {path.name} ---",
         f"{fmt}, {width} x {height} pixels" + (" (EXIF orientation applied)" if rotated else ""),
-        "(no text extracted: reading text from images needs OCR, Phase 39)",
     ]
-    document = _bounded(path, lines, kind=FormatKind.IMAGE.value)
+    found = _understood(path)
+    if found is not None and found.lines:
+        from app.tools.media import describe
+
+        return _bounded(
+            path, [*header, f"({describe(found)})", *found.lines], kind=FormatKind.IMAGE.value
+        )
+    document = _bounded(
+        path, [*header, _not_yet(found, "its text and content")], kind=FormatKind.IMAGE.value
+    )
     return document.model_copy(update={"has_text": False})
 
 
@@ -320,20 +346,115 @@ _SIDECARS = (".srt", ".vtt")
 
 
 def load_video(path: Path) -> LoadedDocument:
-    """A video's text is its transcript. A subtitle file with the same name beside it is used."""
-    for suffix in _SIDECARS:
-        sidecar = path.with_suffix(suffix)
-        if sidecar.exists():
-            transcript = load_subtitles(sidecar)
-            lines = [f"--- video: {path.name}, transcript from {sidecar.name} ---", transcript.text]
-            return _bounded(path, lines, kind=FormatKind.VIDEO.value)
-    lines = [
-        f"--- video: {path.name}, {path.stat().st_size} bytes ---",
-        "(no text extracted: add a transcript as a subtitle file of the same name, "
-        f"{path.stem}.srt or {path.stem}.vtt; speech-to-text is not available)",
-    ]
+    """A video as a timeline: what is said, what is on screen, what sampled frames show.
+
+    A subtitle file with the same name beside it is a person's transcript and is preferred to speech
+    recognition; the frames' on-screen text and `[seen]` lines are kept beside it.
+    """
+    from app.schemas.evidence import is_seen_line
+
+    found = _understood(path)
+    sidecar = next((path.with_suffix(s) for s in _SIDECARS if path.with_suffix(s).exists()), None)
+    lines = [f"--- video: {path.name} ---"]
+    if sidecar is not None:
+        lines.append(f"(speech from the transcript {sidecar.name})")
+        lines.append(load_subtitles(sidecar).text)
+        if found is not None:
+            lines += [line for line in found.lines if "(on screen)" in line or is_seen_line(line)]
+        return _bounded(path, lines, kind=FormatKind.VIDEO.value)
+    if found is not None and found.lines:
+        from app.tools.media import describe
+
+        return _bounded(
+            path, [*lines, f"({describe(found)})", *found.lines], kind=FormatKind.VIDEO.value
+        )
+    lines.append(_not_yet(found, "its speech and content"))
+    lines.append(f"(or add a transcript as {path.stem}.srt or {path.stem}.vtt)")
     document = _bounded(path, lines, kind=FormatKind.VIDEO.value)
     return document.model_copy(update={"has_text": False})
+
+
+def load_audio(path: Path) -> LoadedDocument:
+    """What is said, one timed segment per line (Whisper, Phase 39)."""
+    found = _understood(path)
+    lines = [f"--- audio: {path.name} ---"]
+    if found is not None and found.lines:
+        from app.tools.media import describe
+
+        return _bounded(
+            path, [*lines, f"({describe(found)})", *found.lines], kind=FormatKind.AUDIO.value
+        )
+    document = _bounded(path, [*lines, _not_yet(found, "its speech")], kind=FormatKind.AUDIO.value)
+    return document.model_copy(update={"has_text": False})
+
+
+def load_pdf_with_ocr(path: Path) -> LoadedDocument:
+    """A PDF's text layer, with OCR'd text for the pages that have none (a scan)."""
+    document = load_pdf(path)
+    found = _understood(path)
+    if found is None or not found.pages:
+        return document
+    lines: list[str] = []
+    page_starts: list[int] = []
+    page = 0
+    for line in document.text.split("\n"):
+        if line.startswith("--- page ") and line.endswith(" ---"):
+            page = int(line.split()[2])
+            page_starts.append(len(lines) + 1)
+            lines.append(line)
+            if page in found.pages:
+                lines.append("(read by OCR: this page has no text layer)")
+                lines += found.pages[page]
+            continue
+        if page in found.pages and line == "(no extractable text on this page)":
+            continue
+        lines.append(line)
+    text = "\n".join(lines)
+    return document.model_copy(
+        update={"text": text, "line_count": text.count("\n") + 1, "page_starts": page_starts}
+    )
+
+
+def _understood(path: Path) -> Any:
+    """This file's cached understanding (Phase 39), or None when there is none or it is off."""
+    from app.core.config import get_settings
+    from app.tools.media import cached
+
+    if not get_settings().media_understanding:
+        return None
+    return cached(sha256_of(path))
+
+
+def _not_yet(found: Any, what: str) -> str:
+    from app.core.config import get_settings
+
+    if not get_settings().media_understanding:
+        return f"(no text: understanding {what} is turned off, MEDIA_UNDERSTANDING=false)"
+    if found is not None and found.notes:
+        return f"(no text: {found.notes[-1]})"
+    if found is not None:
+        return f"(no text: nothing was found in {what})"
+    return f"(no text yet: {what} not understood - it is on upload, or before a mission uses it)"
+
+
+async def prepare(paths: list[Path], provider: Any) -> None:
+    """Understand every image, scan, video and audio file in `paths` that has not been (Phase 39).
+
+    Called before a mission, an analysis or an upload reads its files. A file understood before is
+    read from the cache; one that cannot be understood is recorded as such and never fails the
+    caller.
+    """
+    from app.core.config import get_settings
+    from app.tools.media import understand
+
+    if not get_settings().media_understanding:
+        return
+    for path in paths:
+        spec = spec_for(path)
+        if spec is None or not path.exists():
+            continue
+        if spec.kind in {FormatKind.IMAGE, FormatKind.VIDEO, FormatKind.AUDIO, FormatKind.PDF}:
+            await understand(path, sha256_of(path), provider)
 
 
 _PARSERS: dict[FormatKind, Callable[[Path], LoadedDocument]] = {
@@ -341,8 +462,9 @@ _PARSERS: dict[FormatKind, Callable[[Path], LoadedDocument]] = {
     FormatKind.TABLE: load_text,
     FormatKind.SPREADSHEET: load_xlsx,
     FormatKind.WORD: load_docx,
-    FormatKind.PDF: load_pdf,
+    FormatKind.PDF: load_pdf_with_ocr,
     FormatKind.SUBTITLES: load_subtitles,
     FormatKind.IMAGE: load_image,
     FormatKind.VIDEO: load_video,
+    FormatKind.AUDIO: load_audio,
 }

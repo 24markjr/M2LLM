@@ -75,6 +75,13 @@ roles:
   evidence_gap:
     <<: *default
     max_tokens: 512
+  # Phase 39: what an image or a video frame shows. A separate local model, qwen2.5vl:3b
+  # (`ollama pull qwen2.5vl:3b`), named here so no engine names a model. Its output is recorded
+  # as a vision model's account (`[seen]` lines), weaker evidence than text that was read.
+  vision:
+    <<: *default
+    model: qwen2.5vl:3b
+    max_tokens: 700
 
   # Extracts entities, relationships and claims from one chunk of a document (Phase 28,
   # Member 3's extractor). Many short items, so more room than a verdict and less than a report.

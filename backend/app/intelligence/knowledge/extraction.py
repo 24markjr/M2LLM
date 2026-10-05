@@ -40,6 +40,7 @@ from app.llm.prompts import get_prompt_library
 from app.llm.provider import LLMProvider
 from app.llm.structured import generate_structured
 from app.schemas.common import JarvisModel
+from app.schemas.evidence import is_seen_line
 from app.schemas.knowledge import KnowledgeSnapshot
 from app.security.injection import wrap_untrusted
 from app.tools.loader import MAX_CSV_ROWS, source_ref
@@ -149,11 +150,20 @@ def ground(value: str, stated: int | None, chunk: Chunk) -> tuple[int, bool]:
     The stated line first; then the rest of the chunk. Not found: the stated line if it is in the
     chunk, else the chunk's first line, with `grounded=False`.
     """
-    if chunk.contains(stated) and value_on_line(value, chunk.text_of(stated or 0)):
+    # A line a vision model wrote (`[seen]`, Phase 39) is its account of an image, not source text,
+    # so a value found only there is not grounded: shown, and never used to detect a conflict.
+    if (
+        chunk.contains(stated)
+        and value_on_line(value, chunk.text_of(stated or 0))
+        and not is_seen_line(chunk.text_of(stated or 0))
+    ):
         return stated or chunk.first_line, True
     for number, text in chunk.lines:
-        if value_on_line(value, text):
+        if value_on_line(value, text) and not is_seen_line(text):
             return number, True
+    for number, text in chunk.lines:
+        if value_on_line(value, text):
+            return number, False
     return (stated if chunk.contains(stated) and stated else chunk.first_line), False
 
 

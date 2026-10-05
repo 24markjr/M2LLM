@@ -35,7 +35,8 @@ from app.llm import get_provider
 from app.orchestration.mission import MissionStatus
 from app.schemas.objective import AttachedDocument, DocumentKind, Objective, ObjectiveScope
 from app.schemas.result import FinalReport
-from app.tools.loader import load_by_name
+from app.tools.formats import prepare
+from app.tools.loader import load_by_name, resolve_document
 
 log = get_logger(__name__)
 router = APIRouter(prefix="/missions", tags=["missions"])
@@ -59,6 +60,9 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         )
 
+    # Images, scans, video and audio are understood before they are read (Phase 39): once per
+    # file, cached, so a file uploaded earlier costs nothing here.
+    await prepare([resolve_document(n) for n in body.documents], get_provider())
     documents, loaded = load_by_name(body.documents)
     missing = [name for name in body.documents if name not in documents]
     if body.documents and not documents:

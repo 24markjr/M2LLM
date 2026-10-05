@@ -19,6 +19,7 @@ code is a guess, and one written after the code is a record.
 | `security.md` | Untrusted document content: scanning, wrapping, what stops an injection | 27 |
 | `knowledge-layer.md` | Entities, relationships, claims; grounding, resolution, conflicts, timeline, search | 28 |
 | `memory.md` | Working, episodic and semantic memory across missions; why it never feeds a run | 33 |
+| `media.md` | Images, scans, video and audio: read (OCR), seen (vision model, weaker evidence), heard (speech) | 39 |
 
 ## What belongs in an architecture document
 

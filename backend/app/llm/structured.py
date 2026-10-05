@@ -157,6 +157,7 @@ async def generate_structured[T: BaseModel](
     system: str = "",
     max_repairs: int | None = None,
     emit: object | None = None,
+    images: list[str] | None = None,
 ) -> T:
     """Get a validated instance of `schema` from the model, repairing if needed.
 
@@ -185,6 +186,10 @@ async def generate_structured[T: BaseModel](
                 json_mode=params.format == "json",
                 think=params.think,
                 schema_hint=schema_json,
+                # A call with images goes to the model its role names (the vision model); every
+                # other call keeps the provider's configured model.
+                images=list(images or []),
+                model=params.model if images else "",
             )
         )
         last_text = response.text

@@ -92,11 +92,16 @@ def test_every_agent_role_has_a_model_assignment() -> None:
 
 
 def test_env_overrides_the_yaml_model(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Experiment 001 swaps models with an environment variable, so .env must win."""
+    """Experiment 001 swaps models with an environment variable, so .env must win.
+
+    The vision role (Phase 39) has its own variable, VISION_MODEL, which wins for it in the same
+    way: swapping the text model must not swap the model that reads images.
+    """
     config = get_models_config()
     settings = get_settings()
-    for params in config.roles.values():
-        assert params.model == settings.ollama_model
+    for name, params in config.roles.items():
+        expected = settings.vision_model if name == "vision" else settings.ollama_model
+        assert params.model == expected, name
 
 
 def test_embedding_dimensions_match_the_vector_column() -> None:

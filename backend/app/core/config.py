@@ -139,6 +139,23 @@ class Settings(BaseSettings):
     neo4j_password: str = "jarvis-neo4j"  # noqa: S105
     neo4j_database: str = "neo4j"
 
+    # --- Seeing and hearing (Phase 39) ---
+    # Read text in images and scans (OCR), describe what images and video frames show (the vision
+    # model named by `models.yaml:roles.vision`), and transcribe speech. Off: images and video are
+    # accepted and described by size only, as in Phase 38.
+    media_understanding: bool = True
+    # The vision model, for `models.yaml:roles.vision`; like OLLAMA_MODEL, the environment wins.
+    vision_model: str = "qwen2.5vl:3b"
+    # faster-whisper model size: tiny | base | small | medium. Runs on the CPU, so it never
+    # competes with Ollama for the GPU. Downloaded on first use.
+    whisper_model: str = "base"
+    # A video is seen through sampled frames: one every `video_frame_every_s` seconds, at most
+    # `max_video_frames` (invariant 7: every loop is bounded).
+    max_video_frames: int = 8
+    video_frame_every_s: float = 15.0
+    # Longest recording transcribed, in seconds.
+    max_media_seconds: int = 1800
+
     # --- Experiments (Phase 34) ---
     # Overrides `agent.yaml:knowledge.cross_source_pass` for one process, so an experiment arm is
     # an environment variable rather than an edit to a committed file. Empty: the YAML decides. The

@@ -154,3 +154,16 @@ class EvidenceGap(JarvisModel):
                 "replanning loop cannot be audited"
             )
         return self
+
+
+# --- what a vision model saw, as opposed to what was read (Phase 39) --------------------------
+#
+# A line a vision model wrote about an image or a video frame starts with this marker. It is a
+# model's account, not text from the source: the knowledge layer never treats a value found only on
+# such a line as grounded, and a finding whose evidence is only such lines is not fully supported.
+SEEN_MARKER = "[seen]"
+
+
+def is_seen_line(text: str) -> bool:
+    """Whether a line of document text is a vision model's description rather than source text."""
+    return SEEN_MARKER in text

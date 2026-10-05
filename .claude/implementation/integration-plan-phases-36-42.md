@@ -1,8 +1,8 @@
 # Integration plan — Phases 36–42: completing Members 2, 3 and 4
 
 **Status:** Drafted 2026-10-05 after an as-built review of the three teammates' reports against this
-codebase. Phases 36-38 done the same day. D7-D11 taken as recommended when the owner said to
-proceed with Phase 38 (to be overridden if wanted); D12 (speech-to-text) open for Phase 39.
+codebase. Phases 36-39 done the same day. D7-D11 taken as recommended when the owner said to
+proceed with Phase 38 (to be overridden if wanted). D8 and D12 settled by Phase 39 (ADR-012).
 
 **Why this plan exists.** Phases 25-35 ported Members 3 and 4. A review of their own build reports
 found what that left out: three of Member 3's dashboard views had an API but no screen, Member 4's
@@ -45,7 +45,7 @@ accounts for that.
 | 36 | Member 3's missing screens | Hybrid search, timeline, all contradictions, the investigate card - one workbench tied to the graph | M | - | **DONE** 2026-10-05 |
 | 37 | Member 4's answer evaluator, wired in | The final report checked sentence by sentence, deterministically | S | - | **DONE** 2026-10-05 |
 | 38 | Member 2 (A): formats, provenance, adding files | One parser per file type (Word, Excel, CSV, PDF, text, subtitles, images, video); provenance; New Mission adds files, typed context and earlier uploads | M | D7 | **DONE** 2026-10-05 |
-| 39 | Member 2 (B): OCR | Scanned PDFs and images; OCR'd text marked to the evidence; low confidence never makes a conflict | M-L | 38, D8 | TODO |
+| 39 | Seeing and hearing | Read (OCR: images, scans, frames), seen (a vision model, `[seen]` lines, weaker evidence), heard (speech-to-text: video, audio); cached once per file | L | 38 | **DONE** 2026-10-05 |
 | 40 | Member 2 (C): stored, workspace-scoped retrieval | pgvector with an in-memory fallback; `/context/ingest` and `/context/retrieve`; their 600/80 chunker beside ours, chosen by measurement | L | D9-D11 | TODO |
 | 41 | Evaluation and hardening | Three new scenarios (14), recall@k, Experiment 006 (chunking), repeated runs with spread, CI, invariants, a new baseline | M | 36-40 | TODO |
 | 42 | Documentation and handover | README, contribution (Member 2), port inventory, ADR-012 (OCR), ADR-013 (retrieval), demos, clean clone with and without OCR | S | 41 | TODO |
@@ -139,3 +139,31 @@ with stored retrieval).
 **Verified:** 19 new backend tests (every parser on generated files, the upload API, the BUG-023
 regression), 3 new Vitest tests; mypy, ruff, tsc, build. Docker was down: the 57 database tests
 skipped, none touching this phase.
+
+---
+
+### Phase 39 — Seeing and hearing (was: Member 2 (B), OCR)
+
+**What the owner asked for:** *"our AI needs to understand not only text but also the content
+itself."* So the phase grew from OCR to three ways of understanding a file, decided in ADR-012:
+
+- **Read** (OCR, RapidOCR with PaddleOCR's models): text in images, scanned PDF pages, video frames.
+- **Seen** (a local vision model, `qwen2.5vl:3b`, through `app/llm/`): what an image or frame shows,
+  as `[seen]` lines - an account, weaker evidence: never grounds a knowledge value, and a finding
+  resting only on it is `PARTIALLY_SUPPORTED` (`DESCRIBED_ONLY`).
+- **Heard** (faster-whisper, CPU): what is said in video and audio, timed. A person's transcript is
+  preferred when present.
+
+**D8 revised:** OCR as recommended, *and* a vision model - kept apart from what was read, which was
+the reason D8 had excluded one. **D12 answered:** speech-to-text added, local.
+
+**As built:** `app/tools/media.py` (the engines and the cache), `formats.prepare` (run before uploads,
+missions, analyses, CLI and evaluation read a file), the `vision` role and `VISION_MODEL`,
+`CompletionRequest.images`/`model`, `prompts/vision.md`, an audio format family, the
+`DESCRIBED_ONLY` rule, the grounding rule, the upload response's `understood` line, the optional
+`backend[media]` extra (CI installs it), media understanding off by default in tests.
+
+**Verified:** 14 new tests (real OCR on generated images, a scanned PDF, a generated video; the echo
+provider as the vision model; speech stubbed except the decoder); the full suite with Docker up, 967
+passed and none skipped; **one live check** with the real models (development log): a delivery note
+read and seen in 15.5 s, a spoken sentence heard in 2.4 s. The live check found BUG-025.

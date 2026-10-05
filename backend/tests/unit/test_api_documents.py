@@ -68,15 +68,40 @@ async def test_an_upload_reports_its_parser_hash_and_text() -> None:
     assert typed["kind"] == "text" and typed["has_text"]
 
 
-async def test_an_image_is_kept_but_marked_as_having_no_text_yet(_uploads_in_tmp: Path) -> None:
+async def test_with_understanding_off_an_image_is_kept_and_says_why(
+    _uploads_in_tmp: Path,
+) -> None:
     async with await _client() as client:
         response = await client.post(
             "/api/v1/documents", files=[("files", ("scan.png", _png_bytes()))]
         )
     (image,) = response.json()
     assert image["kind"] == "image" and not image["has_text"]
-    assert "OCR" in image["note"]
+    assert "MEDIA_UNDERSTANDING" in image["note"]
     assert (_uploads_in_tmp / "scan.png").exists()
+
+
+async def test_an_uploaded_image_is_understood_on_upload(
+    _uploads_in_tmp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Phase 39: the response says the image has text, because it was read and seen on upload."""
+    import json
+
+    from app.llm.echo import EchoProvider
+    from app.tools import media
+
+    vision = json.dumps({"kind": "photo", "summary": "A blank white card.", "observations": []})
+    monkeypatch.setattr(get_settings(), "media_understanding", True)
+    monkeypatch.setattr(media, "cache_dir", lambda: _uploads_in_tmp.parent / "media-cache")
+    monkeypatch.setattr(
+        documents_api, "get_provider", lambda: EchoProvider(responses={"vision": [vision]})
+    )
+    async with await _client() as client:
+        response = await client.post(
+            "/api/v1/documents", files=[("files", ("card.png", _png_bytes()))]
+        )
+    (image,) = response.json()
+    assert image["has_text"] and image["note"] == ""
 
 
 async def test_the_formats_list_is_what_the_picker_offers() -> None:

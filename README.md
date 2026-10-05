@@ -82,6 +82,7 @@ step here does not work, that is a bug in this file.
 ```bash
 ollama pull qwen3:4b
 ollama pull nomic-embed-text
+ollama pull qwen2.5vl:3b      # optional: sees what images and video frames show (Phase 39)
 ```
 
 `qwen3:4b` runs on a laptop. It is also a small model, and the numbers in
@@ -100,7 +101,11 @@ python -m venv .venv
 source .venv/bin/activate
 
 pip install -e "backend[dev]"
+pip install -e "backend[media]"   # optional: OCR, scanned PDFs, speech-to-text (Phase 39)
 ```
+
+Without the media extra and the vision model, images, scans, video and audio are still accepted and
+say what to install; text documents are unaffected.
 
 Optional, for stored runs, memory, and the knowledge graph in Neo4j
 ([ADR-010](.claude/decisions/ADR-010-neo4j-knowledge-graph.md)):
@@ -338,6 +343,7 @@ frontend/src/         React + TypeScript — Mission Control, the 3D knowledge e
 | **3D explorer** | The knowledge graph in Mission Control: nodes with sub-nodes, click to light up what is related, hover for details, a finding's evidence trail, 2D fallback | [ADR-011](.claude/decisions/ADR-011-3d-knowledge-explorer.md) |
 | **Verification** (Member 4) | The `composite` verifier, the default by experiment: the model check, Member 4's lexical rule, and a check that every date and figure a claim states is in its cited lines | [`verification.md`](.claude/architecture/verification.md) |
 | **Security** (Member 4) | Every document is scanned for prompt injection; a flag is reported, never used to drop evidence; untrusted text is wrapped in the prompts | [`security.md`](.claude/architecture/security.md) |
+| **Seeing and hearing** | Images, scans, video and audio are understood, not only stored: text **read** (OCR), speech **heard** (Whisper), and what they show **seen** by a local vision model - the last marked `[seen]` and weaker evidence than anything read | [ADR-012](.claude/decisions/ADR-012-seeing-and-hearing.md) |
 | **Memory** (Member 4) | Past missions' findings (every status) and facts (only from verified findings, with their support, no confidence). Written after a run; never read back into one | [`memory.md`](.claude/architecture/memory.md) |
 
 ### Invariants

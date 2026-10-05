@@ -143,7 +143,9 @@ def _apply_settings_overrides(config: ModelsConfig, settings: Settings) -> Model
     roles = {
         name: params.model_copy(
             update={
-                "model": settings.ollama_model,
+                # The vision role has its own model and its own variable (Phase 39): swapping
+                # the text model for an experiment must not swap the model that reads images.
+                "model": settings.vision_model if name == "vision" else settings.ollama_model,
                 "temperature": settings.llm_temperature
                 if params.temperature == 0.0
                 else params.temperature,

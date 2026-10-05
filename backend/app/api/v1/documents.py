@@ -26,10 +26,18 @@ from pydantic import Field
 from app.api.errors import ApiError
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.llm import get_provider
 from app.schemas.common import JarvisModel
 from app.schemas.trust import InjectionScan
 from app.security.injection import scan
-from app.tools.formats import FORMATS, FormatKind, FormatSpec, spec_for, supported_extensions
+from app.tools.formats import (
+    FORMATS,
+    FormatKind,
+    FormatSpec,
+    prepare,
+    spec_for,
+    supported_extensions,
+)
 from app.tools.loader import DocumentLoadError, load_document
 
 log = get_logger(__name__)
@@ -63,6 +71,9 @@ class UploadedDocument(JarvisModel):
     # from a mission's evidence until it has text. `note` says why.
     has_text: bool = True
     note: str = ""
+    # What an image, scan, video or audio file was understood to contain (Phase 39): lines read,
+    # spoken segments heard, lines seen and by which model. Empty for plain documents.
+    understood: str = ""
 
 
 class StoredDocument(JarvisModel):
@@ -108,6 +119,9 @@ async def upload_documents(files: list[UploadFile]) -> list[UploadedDocument]:
         limit = MAX_VIDEO_BYTES if spec and spec.kind is FormatKind.VIDEO else MAX_UPLOAD_BYTES
         written = await _write(upload, path, name, limit)
 
+        # Understand an image, scan, video or audio file now (Phase 39), so the response says what
+        # was read, seen and heard and a mission using it later waits for nothing.
+        await prepare([path], get_provider())
         try:
             document = load_document(path)
         except DocumentLoadError as exc:
@@ -134,6 +148,7 @@ async def upload_documents(files: list[UploadFile]) -> list[UploadedDocument]:
                 sha256=document.sha256,
                 has_text=document.has_text,
                 note="" if document.has_text else document.text.splitlines()[-1],
+                understood=_understood(document.sha256),
             )
         )
         log.info(
@@ -146,6 +161,13 @@ async def upload_documents(files: list[UploadFile]) -> list[UploadedDocument]:
         )
 
     return results
+
+
+def _understood(sha256: str) -> str:
+    from app.tools.media import cached, describe
+
+    found = cached(sha256) if get_settings().media_understanding else None
+    return describe(found) if found is not None and found.has_text else ""
 
 
 @router.get("/formats", response_model=list[FormatSpec])

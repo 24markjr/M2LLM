@@ -30,6 +30,8 @@ frontend/.vite/
 .agent/evals/reports/*.local.json
 # Files people upload to missions (Phase 38): theirs, never part of the repository.
 .agent/uploads/
+# What images, scans, video and audio were understood to contain (Phase 39): derived from them.
+.agent/media-cache/
 
 # --- Editors / OS ---
 .idea/

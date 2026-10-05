@@ -75,7 +75,7 @@ class OllamaProvider:
             prompt = f"{prompt}\n\nRespond with JSON only, no commentary and no code fences."
 
         body: dict[str, Any] = {
-            "model": self._model,
+            "model": request.model or self._model,
             "prompt": prompt,
             "stream": False,
             "options": options,
@@ -87,6 +87,8 @@ class OllamaProvider:
         }
         if request.system:
             body["system"] = request.system
+        if request.images:
+            body["images"] = request.images
         if schema is not None:
             body["format"] = schema
         elif request.json_mode:

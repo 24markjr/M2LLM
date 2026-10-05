@@ -1209,7 +1209,8 @@
           "pdf",
           "subtitles",
           "image",
-          "video"
+          "video",
+          "audio"
         ],
         "title": "FormatKind",
         "type": "string"
@@ -1532,7 +1533,8 @@
           "SOURCE_CONFLICT",
           "UNIT_MISMATCH",
           "DATE_AMBIGUITY",
-          "ARITHMETIC_ERROR"
+          "ARITHMETIC_ERROR",
+          "DESCRIBED_ONLY"
         ],
         "title": "IssueType",
         "type": "string"
@@ -2971,6 +2973,11 @@
             "default": false,
             "title": "Truncated",
             "type": "boolean"
+          },
+          "understood": {
+            "default": "",
+            "title": "Understood",
+            "type": "string"
           }
         },
         "required": [

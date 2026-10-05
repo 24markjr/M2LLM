@@ -35,6 +35,7 @@ from app.schemas.objective import AttachedDocument, DocumentKind, Objective, Obj
 from app.schemas.plan import Plan
 from app.schemas.task import TaskStatus
 from app.tools.base import build_default_registry
+from app.tools.formats import prepare
 from app.tools.loader import load_documents
 
 RULE = "-" * 78
@@ -179,6 +180,8 @@ async def run_investigate(text: str, docs: list[str], report_path: str = "") -> 
     objective = _build_objective(text, docs)
 
     _print_header("JARVIS - INVESTIGATION", emitter.run_id, provider.model_id, text, docs)
+    # Images, scans, video and audio are understood first (Phase 39), once per file, cached.
+    await prepare([_resolve(n) for n in docs], provider)
     _print_documents(docs)
 
     documents, page_starts = _load_documents(docs)

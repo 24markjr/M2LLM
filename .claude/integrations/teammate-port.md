@@ -503,8 +503,8 @@ D7: re-implemented in-process, as Members 3 and 4 were.
 | M5 | XLSX sheets to text | `parsers/` (pandas, openpyxl) | `formats.py:load_xlsx` (openpyxl) | CHANGED. Each sheet a page, so a citation names the sheet; bounded and said to be |
 | M6 | Images: orientation and dimensions | `parsers/` (Pillow) | `formats.py:load_image` | DONE, and marked as having no text until OCR |
 | M7 | Provenance: file hash, parser, OCR flag | `provenance/tracker.py` (JSONL) | `UploadedDocument.parser/sha256`, logged | CHANGED. In the upload response and the log; stored with retrieval in Phase 40 |
-| M8 | OCR (PaddleOCR) | `ocr/` | - | TODO, Phase 39 (D8) |
+| M8 | OCR (PaddleOCR) | `ocr/` | `app/tools/media.py:read_text` | CHANGED. PaddleOCR's models through RapidOCR; images, scanned PDF pages (rendered with pypdfium2) and video frames; low-confidence lines marked; cached per file (Phase 39) |
 | M9 | Normalisation, chunking (600/80) | `normalization/`, `chunking/` | - | TODO, Phase 40 (chunker chosen by measurement) |
 | M10 | Embeddings, Qdrant with in-memory fallback, workspace-scoped retrieval | `embeddings/`, `vectorstore/`, `retrieval/` | - | TODO, Phase 40 (pgvector, D9-D11) |
-| M11 | Vision-language interface | `vision/` (raises `NotImplementedError`) | - | NOT PORTED: theirs is unimplemented |
-| - | Video | (not in their build) | `formats.py:load_video` | ADDED. Text from a same-named subtitle file; speech-to-text is D12 |
+| M11 | Vision-language interface | `vision/` (raises `NotImplementedError`) | `app/tools/media.py:see`, the `vision` role | ADDED, since theirs was unimplemented: a local vision model (`qwen2.5vl:3b`) through `app/llm/`; its output marked `[seen]` and weaker than read text (ADR-012) |
+| - | Video, audio | (not in their build) | `formats.py`, `media.py` | ADDED. A timeline of speech (faster-whisper, or a person's transcript), on-screen text and what sampled frames show; audio as timed speech (Phase 39) |

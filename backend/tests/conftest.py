@@ -32,6 +32,18 @@ def _knowledge_graphs_stay_in_memory(monkeypatch: pytest.MonkeyPatch) -> Iterato
 
 
 @pytest.fixture(autouse=True)
+def _no_media_understanding_by_default(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """No test reaches the vision model or Whisper by accident (Phase 39).
+
+    Uploads and missions understand images, video and audio through the configured provider, which
+    on a developer machine is a real Ollama. Off here; `test_media.py` turns it on with the echo
+    provider and a temporary cache.
+    """
+    monkeypatch.setattr(get_settings(), "media_understanding", False)
+    yield
+
+
+@pytest.fixture(autouse=True)
 def _unit_tests_have_no_database(request: pytest.FixtureRequest) -> Iterator[None]:
     if request.node.get_closest_marker("integration") is None:
         persistence._available = False

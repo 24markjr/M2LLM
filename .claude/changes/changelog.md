@@ -5,6 +5,43 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-05 - Phase 39: seeing and hearing
+
+### Added
+
+- `app/tools/media.py`: images, scanned PDFs, video and audio understood, once per file, cached
+  by SHA-256 (`.agent/media-cache/`): text **read** (OCR, PaddleOCR's models via RapidOCR), speech
+  **heard** (faster-whisper, CPU), and what they show **seen** by a local vision model
+  (`qwen2.5vl:3b`, the new `vision` role) as `[seen]` lines
+- Video as a timeline (speech or a person's transcript, on-screen text, what sampled frames show;
+  at most 8 frames); an audio family (`.mp3 .wav .m4a .ogg .flac .aac`); OCR for PDF pages with no
+  text layer
+- `[seen]` is weaker evidence: never grounds a knowledge value; a finding resting only on it is
+  `PARTIALLY_SUPPORTED` with the new `DESCRIBED_ONLY` issue
+- `CompletionRequest.images` and `.model`; `VISION_MODEL`, `MEDIA_UNDERSTANDING`, `WHISPER_MODEL`
+  and frame/length bounds in settings; `prompts/vision.md` v1
+- Upload response: `understood` (lines read, segments heard, lines seen and by which model)
+- `backend[media]` optional extra; CI installs it
+- ADR-012; 14 tests (`test_media.py`), 2 updated in `test_api_documents.py`
+
+### Fixed
+
+- **BUG-025**: speech recognition failed on every file (faster-whisper vs PyAV 19); audio now
+  decoded by our code
+- **BUG-026**: one failed vision call discarded what had been read from a video
+
+### Changed
+
+- Tests never reach a real vision model: media understanding is off by default in tests
+
+### Measured (one live check)
+
+- A delivery-note image: 5 lines read, 10 seen, 15.5 s. OCR read the crate's "4821" as "4881"
+  where the vision model said "4821" - kept apart and labelled, as ADR-012 argues
+- A 7-second spoken sentence: transcribed in 2.4 s, "forty-eight twenty-one" heard as "48-21"
+
+---
+
 ## 2026-10-05 - Phase 38: every file type, and adding files to a mission
 
 ### Added

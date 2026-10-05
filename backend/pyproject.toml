@@ -30,6 +30,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Seeing and hearing (Phase 39): OCR (PaddleOCR's models through RapidOCR), scanned-PDF rendering,
+# and speech-to-text. Optional: without them images, scans, video and audio are accepted and
+# described by size, and say what to install. The vision model is reached through Ollama.
+media = [
+    "rapidocr-onnxruntime>=1.3",
+    "pypdfium2>=4.30",
+    "faster-whisper>=1.0",
+]
 dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",

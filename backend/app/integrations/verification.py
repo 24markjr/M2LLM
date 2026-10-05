@@ -33,6 +33,7 @@ from app.llm.provider import LLMProvider
 from app.llm.structured import generate_structured
 from app.schemas.common import JarvisModel, Severity
 from app.schemas.event import EventType
+from app.schemas.evidence import is_seen_line
 from app.schemas.finding import Finding
 from app.schemas.trust import EvidenceText, LexicalThresholds, LexicalVerdict, TrustStatus
 from app.schemas.verification import (
@@ -488,6 +489,39 @@ def build_verification_provider(llm: LLMProvider) -> VerificationProvider:
     return baseline
 
 
+def described_only(
+    finding: Finding, evidence_text: dict[str, str], result: VerificationResult
+) -> VerificationResult:
+    """A finding resting only on what a vision model saw is not fully supported (Phase 39).
+
+    Applied after whichever verifier ran. Text read from a document, a scan or a recording is
+    evidence; a vision model's description of an image (`[seen]` lines) is a model's account and can
+    be wrong. A claim whose every resolved citation is such a line keeps the verifier's reasoning,
+    but `SUPPORTED` becomes `PARTIALLY_SUPPORTED` with an issue saying why - actionable, so the loop
+    can look for text that confirms it.
+    """
+    if result.status is not VerificationStatus.SUPPORTED:
+        return result
+    cited = [evidence_text.get(ref.as_ref(), "") for ref in finding.evidence if ref.is_resolved]
+    if not cited or not all(is_seen_line(text) for text in cited):
+        return result
+    return result.model_copy(
+        update={
+            "status": VerificationStatus.PARTIALLY_SUPPORTED,
+            "issues": [
+                *result.issues,
+                VerificationIssue(
+                    issue_type=IssueType.DESCRIBED_ONLY,
+                    description=(
+                        "every cited line is a vision model's description of an image, not text "
+                        "read from a source; it needs confirming by something read"
+                    ),
+                ),
+            ],
+        }
+    )
+
+
 async def verify_finding(
     provider: VerificationProvider,
     finding: Finding,
@@ -496,7 +530,9 @@ async def verify_finding(
     emit: object | None = None,
 ) -> VerificationResult:
     """Verify one finding and attach the result to it."""
-    result = await provider.verify(build_request(finding, evidence_text))
+    result = described_only(
+        finding, evidence_text, await provider.verify(build_request(finding, evidence_text))
+    )
     finding.verification = result
 
     if emit is not None:
