@@ -23,6 +23,7 @@ from app.schemas.common import JarvisModel, NonEmptyStr, RunId, UnitFloat, utcno
 from app.schemas.evidence import EvidenceGap
 from app.schemas.execution import RunStatus, TerminationReason
 from app.schemas.finding import Finding
+from app.schemas.trust import TrustStatus
 
 
 class SectionKind(StrEnum):
@@ -81,6 +82,28 @@ class Limitation(JarvisModel):
     cause: str = ""
 
 
+class SentenceCheck(JarvisModel):
+    """One sentence of the model-written narrative, judged against the report's evidence."""
+
+    sentence: NonEmptyStr
+    status: TrustStatus
+    reasoning: str = ""
+    # Dates and figures the sentence states that no cited line contains, and numbers it puts where
+    # a date belongs (A15, BUG-021).
+    ungrounded: list[str] = Field(default_factory=list)
+
+
+class NarrativeCheck(JarvisModel):
+    """Member 4's answer evaluation of one narrative paragraph (Phase 37).
+
+    Reports, never rewrites: the paragraph stays as written, and this sits beside it.
+    """
+
+    section: SectionKind
+    overall: TrustStatus
+    sentences: list[SentenceCheck] = Field(default_factory=list)
+
+
 class FinalReport(JarvisModel):
     """The structured investigation report."""
 
@@ -98,6 +121,9 @@ class FinalReport(JarvisModel):
 
     # Mean computed confidence across verified findings.
     overall_confidence: UnitFloat = 0.0
+    # The model-written paragraphs checked sentence by sentence (Phase 37). Empty when there was no
+    # narrative, or no evidence text to check it against.
+    narrative_checks: list[NarrativeCheck] = Field(default_factory=list)
     generated_at: datetime = Field(default_factory=utcnow)
 
     @property

@@ -1379,3 +1379,19 @@ button.link:focus-visible {
 .investigate h3 .count {
   margin-left: 4px;
 }
+
+/* --- the report's narrative check (Phase 37) --------------------------------- */
+.narrative-check {
+  margin: -4px 0 12px;
+  font-size: 13px;
+}
+.narrative-check ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.narrative-check li {
+  margin-bottom: 4px;
+}
+.narrative-check a + a {
+  margin-left: 6px;
+}

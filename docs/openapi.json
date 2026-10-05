@@ -976,6 +976,13 @@
             "title": "Limitations",
             "type": "array"
           },
+          "narrative_checks": {
+            "items": {
+              "$ref": "#/components/schemas/NarrativeCheck"
+            },
+            "title": "Narrative Checks",
+            "type": "array"
+          },
           "objective": {
             "minLength": 1,
             "title": "Objective",
@@ -2134,6 +2141,31 @@
         "title": "MissionSummary",
         "type": "object"
       },
+      "NarrativeCheck": {
+        "additionalProperties": false,
+        "description": "Member 4's answer evaluation of one narrative paragraph (Phase 37).\n\nReports, never rewrites: the paragraph stays as written, and this sits beside it.",
+        "properties": {
+          "overall": {
+            "$ref": "#/components/schemas/TrustStatus"
+          },
+          "section": {
+            "$ref": "#/components/schemas/SectionKind"
+          },
+          "sentences": {
+            "items": {
+              "$ref": "#/components/schemas/SentenceCheck"
+            },
+            "title": "Sentences",
+            "type": "array"
+          }
+        },
+        "required": [
+          "section",
+          "overall"
+        ],
+        "title": "NarrativeCheck",
+        "type": "object"
+      },
       "NetworkEdge": {
         "additionalProperties": false,
         "properties": {
@@ -2457,6 +2489,38 @@
         "title": "SectionKind",
         "type": "string"
       },
+      "SentenceCheck": {
+        "additionalProperties": false,
+        "description": "One sentence of the model-written narrative, judged against the report's evidence.",
+        "properties": {
+          "reasoning": {
+            "default": "",
+            "title": "Reasoning",
+            "type": "string"
+          },
+          "sentence": {
+            "minLength": 1,
+            "title": "Sentence",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TrustStatus"
+          },
+          "ungrounded": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ungrounded",
+            "type": "array"
+          }
+        },
+        "required": [
+          "sentence",
+          "status"
+        ],
+        "title": "SentenceCheck",
+        "type": "object"
+      },
       "Severity": {
         "enum": [
           "INFO",
@@ -2760,6 +2824,18 @@
           "UNKNOWN"
         ],
         "title": "TimelineRelation",
+        "type": "string"
+      },
+      "TrustStatus": {
+        "description": "Member 4's `ClaimStatus`, unchanged.",
+        "enum": [
+          "SUPPORTED",
+          "CONTRADICTED",
+          "UNSUPPORTED",
+          "INSUFFICIENT_EVIDENCE",
+          "PARTIALLY_SUPPORTED"
+        ],
+        "title": "TrustStatus",
         "type": "string"
       },
       "UploadedDocument": {

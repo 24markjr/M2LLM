@@ -20,6 +20,7 @@ section is mandatory.
 from __future__ import annotations
 
 from app.core.logging import get_logger
+from app.intelligence.synthesis.grounding import check_narrative, evidence_for
 from app.llm.errors import StructuredOutputError
 from app.llm.prompts import get_prompt_library
 from app.llm.provider import LLMProvider
@@ -37,7 +38,7 @@ from app.schemas.result import (
     ReportSection,
     SectionKind,
 )
-from app.schemas.trust import InjectionScan
+from app.schemas.trust import InjectionScan, TrustStatus
 
 log = get_logger(__name__)
 
@@ -68,7 +69,10 @@ class SynthesisEngine:
         termination: TerminationReason | None = None,
         emit: object | None = None,
         security: list[InjectionScan] | None = None,
+        evidence_text: dict[str, str] | None = None,
     ) -> FinalReport:
+        """The report, from settled state. With `evidence_text` (the text at each locator), the two
+        model-written paragraphs are also checked sentence by sentence (Phase 37)."""
         await self._event(emit, EventType.SYNTHESIS_STARTED, {"findings": len(findings)})
 
         verified = [f for f in findings if f.is_verified]
@@ -96,6 +100,31 @@ class SynthesisEngine:
                 objective, verified, uncertain, rejected, unresolved, execution, narrative
             ),
         )
+
+        if evidence_text:
+            pool = evidence_for(verified + uncertain, evidence_text)
+            checks = [
+                check_narrative(SectionKind.EXECUTIVE_SUMMARY, narrative.executive_summary, pool),
+                check_narrative(SectionKind.REASONING, narrative.reasoning, pool),
+            ]
+            report.narrative_checks = [c for c in checks if c is not None]
+            if report.narrative_checks:
+                await self._event(
+                    emit,
+                    EventType.REPORT_EVALUATED,
+                    {
+                        "sections": {
+                            c.section.value: c.overall.value for c in report.narrative_checks
+                        },
+                        "sentences": sum(len(c.sentences) for c in report.narrative_checks),
+                        "not_supported": sum(
+                            1
+                            for c in report.narrative_checks
+                            for s in c.sentences
+                            if s.status is not TrustStatus.SUPPORTED
+                        ),
+                    },
+                )
 
         await self._event(
             emit,

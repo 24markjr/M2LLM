@@ -105,6 +105,10 @@ class EventType(StrEnum):
     # ungrounded claims, conflicts, chunks and model calls, and which store holds it.
     KNOWLEDGE_EXTRACTED = "KNOWLEDGE_EXTRACTED"
 
+    # The report's model-written narrative was checked sentence by sentence against its evidence
+    # (Phase 37): the overall verdict per paragraph, and how many sentences were not supported.
+    REPORT_EVALUATED = "REPORT_EVALUATED"
+
 
 # Payload keys stripped before persistence. This is the enforcement point for invariant #3:
 # a component may put raw model output in a payload for local debugging, and it will not

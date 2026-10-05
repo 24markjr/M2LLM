@@ -42,17 +42,22 @@ def evaluate_answer(
         return AnswerAssessment(answer=answer, overall=TrustStatus.INSUFFICIENT_EVIDENCE)
 
     verdicts = [verify_claim(sentence, evidence, thresholds) for sentence in sentences]
-    statuses = [v.status for v in verdicts]
+    return AnswerAssessment(
+        answer=answer, overall=overall_status([v.status for v in verdicts]), claims=verdicts
+    )
 
+
+def overall_status(statuses: list[TrustStatus]) -> TrustStatus:
+    """Member 4's answer-level rule, unchanged; factored out in Phase 37 so the report check uses
+    exactly the same one."""
+    if not statuses:
+        return TrustStatus.INSUFFICIENT_EVIDENCE
     if all(s is TrustStatus.SUPPORTED for s in statuses):
-        overall = TrustStatus.SUPPORTED
-    elif any(s is TrustStatus.CONTRADICTED for s in statuses):
-        overall = TrustStatus.CONTRADICTED
-    elif any(s is TrustStatus.SUPPORTED for s in statuses):
-        overall = TrustStatus.PARTIALLY_SUPPORTED
-    elif all(s is TrustStatus.INSUFFICIENT_EVIDENCE for s in statuses):
-        overall = TrustStatus.INSUFFICIENT_EVIDENCE
-    else:
-        overall = TrustStatus.UNSUPPORTED
-
-    return AnswerAssessment(answer=answer, overall=overall, claims=verdicts)
+        return TrustStatus.SUPPORTED
+    if any(s is TrustStatus.CONTRADICTED for s in statuses):
+        return TrustStatus.CONTRADICTED
+    if any(s is TrustStatus.SUPPORTED for s in statuses):
+        return TrustStatus.PARTIALLY_SUPPORTED
+    if all(s is TrustStatus.INSUFFICIENT_EVIDENCE for s in statuses):
+        return TrustStatus.INSUFFICIENT_EVIDENCE
+    return TrustStatus.UNSUPPORTED

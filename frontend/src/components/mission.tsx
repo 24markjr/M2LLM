@@ -14,10 +14,12 @@ import type {
   FinalReport,
   Finding,
   GapRecord,
+  NarrativeCheck,
   Stage,
   TaskGraphResponse,
   TaskNode,
 } from "../api/types";
+import { graphSearchLink } from "./graph3d/investigation";
 
 const STAGES: Stage[] = [
   "UNDERSTANDING",
@@ -415,6 +417,12 @@ export function Report({ report }: { report: FinalReport | null }) {
         <div className="report-section" key={index}>
           <h3>{section.heading}</h3>
           {section.narrative ? <p>{section.narrative}</p> : null}
+          {section.narrative ? (
+            <NarrativeVerdict
+              runId={report.run_id}
+              check={report.narrative_checks?.find((c) => c.section === section.kind) ?? null}
+            />
+          ) : null}
           {section.items.length > 0 ? (
             <ul>
               {section.items.map((item, itemIndex) => (
@@ -424,6 +432,44 @@ export function Report({ report }: { report: FinalReport | null }) {
           ) : null}
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * How far a model-written paragraph is grounded (Phase 37, Member 4's answer evaluator). The prose is
+ * shown as written; this sits under it. A value no cited line contains links to the knowledge graph
+ * searching for it, so a reader can see whether anything the agent read mentions it.
+ */
+function NarrativeVerdict({ runId, check }: { runId: string; check: NarrativeCheck | null }) {
+  if (!check) return null;
+  const weak = check.sentences.filter((s) => s.status !== "SUPPORTED");
+  return (
+    <div className="narrative-check">
+      <span className={`badge v-${check.overall.toLowerCase()}`}>{check.overall.replace(/_/g, " ")}</span>{" "}
+      <span className="dim">
+        {check.sentences.length - weak.length} of {check.sentences.length} sentence(s) supported by the cited lines
+      </span>
+      {weak.length ? (
+        <ul>
+          {weak.map((s) => (
+            <li key={s.sentence}>
+              <span className={`badge v-${s.status.toLowerCase()}`}>{s.status.replace(/_/g, " ")}</span> {s.sentence}
+              {s.ungrounded.length ? (
+                <>
+                  {" "}
+                  <span className="dim">not in evidence:</span>{" "}
+                  {s.ungrounded.map((value) => (
+                    <a key={value} className="mono" href={graphSearchLink(runId, value)} title="Search the knowledge graph for it">
+                      {value}
+                    </a>
+                  ))}
+                </>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

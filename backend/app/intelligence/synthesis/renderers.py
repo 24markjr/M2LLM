@@ -8,6 +8,7 @@ report something you can cite in a meeting rather than a fresh opinion each time
 from __future__ import annotations
 
 from app.schemas.result import FinalReport, SectionKind
+from app.schemas.trust import TrustStatus
 
 RULE = "=" * 78
 
@@ -32,6 +33,10 @@ def ascii_safe(text: str) -> str:
     for source, replacement in _SUBSTITUTIONS.items():
         text = text.replace(source, replacement)
     return text.encode("ascii", "replace").decode("ascii")
+
+
+def _section_name(section: SectionKind) -> str:
+    return section.value.replace("_", " ").lower()
 
 
 def to_markdown(report: FinalReport) -> str:
@@ -61,6 +66,29 @@ def to_markdown(report: FinalReport) -> str:
             lines.append(f"- {item}")
         if section.items:
             lines.append("")
+
+    if report.narrative_checks:
+        lines.append("## How grounded the narrative is")
+        lines.append("")
+        lines.append(
+            "The summary and reasoning above are the only text a model wrote. Each sentence was "
+            "checked against the lines the findings cite (Member 4's answer evaluator)."
+        )
+        lines.append("")
+        for check in report.narrative_checks:
+            lines.append(f"- **{_section_name(check.section)}**: {check.overall.value}")
+            for sentence in check.sentences:
+                if sentence.status is TrustStatus.SUPPORTED:
+                    continue
+                values = (
+                    f" - not in evidence: {', '.join(sentence.ungrounded)}"
+                    if sentence.ungrounded
+                    else ""
+                )
+                lines.append(
+                    f'  - {sentence.status.value}: "{ascii_safe(sentence.sentence)}"{values}'
+                )
+        lines.append("")
 
     lines.append("## Limitations")
     lines.append("")
@@ -100,6 +128,26 @@ def to_text(report: FinalReport) -> str:
             lines.append("")
         for item in section.items:
             lines.append(f"  - {item}")
+        lines.append("")
+
+    if report.narrative_checks:
+        lines.append("NARRATIVE CHECK")
+        lines.append("-" * len("NARRATIVE CHECK"))
+        for check in report.narrative_checks:
+            weak = [s for s in check.sentences if s.status is not TrustStatus.SUPPORTED]
+            lines.append(
+                f"  {_section_name(check.section):<18} {check.overall.value}"
+                f"  ({len(check.sentences) - len(weak)} of {len(check.sentences)} supported)"
+            )
+            for sentence in weak:
+                values = (
+                    f" [not in evidence: {', '.join(sentence.ungrounded)}]"
+                    if sentence.ungrounded
+                    else ""
+                )
+                lines.append(
+                    f"    - {sentence.status.value}: {ascii_safe(sentence.sentence)[:90]}{values}"
+                )
         lines.append("")
 
     lines.append("LIMITATIONS")

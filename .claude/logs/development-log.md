@@ -6,6 +6,39 @@ and what is still broken.
 
 ---
 
+# 2026-10-05 - Phase 37: Member 4's answer evaluator checks every report
+
+## What was done
+
+Member 4's answer evaluator was ported in Phase 26 and never called by anything, as in their
+original. Synthesis already guarantees that every fact in a report is placed from settled state; the
+only text a model writes is two paragraphs. Those are now checked sentence by sentence, and the
+verdict sits beside them in the report, its renderings, the event stream and the mission page.
+
+## Decisions
+
+- **Check the prose, against the report's own evidence.** The pool is the resolved lines cited by the
+  findings the report presents as verified or uncertain; rejected findings are excluded, since the
+  narrative should not rest on them.
+- **Report, never rewrite.** The paragraph stays as the model wrote it. Deleting an unsupported
+  sentence would hide what the model said; marking it shows it.
+- **Member 4's rule unchanged**, factored out so both uses share it. Adding the specifics check made a
+  status their rule never met (`PARTIALLY_SUPPORTED` for one sentence), which their rule would call
+  `UNSUPPORTED`; that one case is handled explicitly and documented.
+- **Interrelated:** a value the evidence does not hold links to the graph's search for it, through a
+  new `?q=` route parameter.
+- **`eval --with-report` left out**, to keep the phase small (the owner asked to move on quickly);
+  recorded in the plan.
+
+## Verification
+
+- 9 new backend tests pass; full suite 877 passed, **57 skipped**: Docker was down during the run,
+  and every skip is a Postgres or Neo4j test, none of which touches this phase. Not re-run with
+  Docker up (the owner asked for no repeated runs)
+- mypy --strict (117 modules), ruff, tsc, Vitest 32, build; OpenAPI regenerated
+
+---
+
 # 2026-10-05 - Phase 36: Member 3's missing screens, interrelated
 
 ## What was done

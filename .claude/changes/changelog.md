@@ -5,6 +5,33 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-05 - Phase 37: Member 4's answer evaluator checks every report
+
+### Added
+
+- `app/intelligence/synthesis/grounding.py`: the report's two model-written paragraphs checked
+  sentence by sentence against the lines its findings cite (Member 4's `evaluate_answer`), plus the
+  specifics check (values no cited line holds; a number where a date belongs)
+- `FinalReport.narrative_checks` (`NarrativeCheck`, `SentenceCheck`); `REPORT_EVALUATED` event
+  (EventType 39 -> 40)
+- Report Markdown and terminal output: what in the narrative was not supported, and why
+- Mission page: a verdict badge under each narrative paragraph; each unsupported value links to the
+  knowledge graph searching for it (`#/mission/{id}/graph?q=`, new); the explorer opens its search
+  tab on `?q=`
+- 9 backend tests (`test_report_grounding.py`), Vitest for the new link
+
+### Changed
+
+- `trust/answer.py`: Member 4's overall rule factored out (`overall_status`), unchanged
+- The mission passes the line text it already builds for verification into synthesis
+- `docs/openapi.json` regenerated (the report schema gained a field)
+
+### Not built
+
+- `eval --with-report` (planned, left out to keep the phase small; the suite skips synthesis)
+
+---
+
 ## 2026-10-05 - Phase 36: Member 3's missing screens, interrelated
 
 ### Added

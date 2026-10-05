@@ -28,7 +28,7 @@ type Route =
   | { name: "list" }
   | { name: "new" }
   | { name: "mission"; runId: string }
-  | { name: "graph"; runId: string; focus: string }
+  | { name: "graph"; runId: string; focus: string; search: string }
   | { name: "knowledge" }
   | { name: "memory"; entity: string }
   | { name: "replay" }
@@ -40,7 +40,7 @@ function parse(full: string): Route {
   const query = hashQuery(full);
   const hash = full.split("?")[0] ?? full;
   const graph = /^#\/mission\/([\w-]+)\/graph$/.exec(hash);
-  if (graph?.[1]) return { name: "graph", runId: graph[1], focus: query.focus ?? "" };
+  if (graph?.[1]) return { name: "graph", runId: graph[1], focus: query.focus ?? "", search: query.q ?? "" };
   if (hash === "#/knowledge") return { name: "knowledge" };
   if (hash === "#/memory") return { name: "memory", entity: query.entity ?? "" };
   const match = /^#\/mission\/([\w-]+)$/.exec(hash);
@@ -145,9 +145,10 @@ export default function App() {
           </div>
           <Suspense fallback={<div className="empty">Loading the 3D view.</div>}>
             <KnowledgeExplorer
-              key={`${route.runId}:${route.focus}`}
+              key={`${route.runId}:${route.focus}:${route.search}`}
               source={{ kind: "mission", runId: route.runId }}
               focusName={route.focus}
+              initialSearch={route.search}
             />
           </Suspense>
         </>

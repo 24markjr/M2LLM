@@ -96,6 +96,7 @@ at a call site would be invisible to all three.
 | Instrumentation | `LLM_CALL_COMPLETED`, `BUDGET_WARNING` |
 | Security | `INJECTION_DETECTED` (Phase 27) |
 | Knowledge | `KNOWLEDGE_EXTRACTED` (Phase 30) |
+| Report | `REPORT_EVALUATED` (Phase 37): the narrative's per-paragraph verdicts, sentence count, sentences not supported |
 
 `PHASE_EVENTS` marks the subset that advances the UI's phase tracker.
 

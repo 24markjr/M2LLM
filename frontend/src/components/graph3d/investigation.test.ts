@@ -17,6 +17,7 @@ import {
   forEntity,
   formatDate,
   graphLink,
+  graphSearchLink,
   hashQuery,
   localInvestigation,
   memoryLink,
@@ -159,5 +160,8 @@ describe("pages link to each other", () => {
     expect(graphLink("run_abc")).toBe("#/mission/run_abc/graph");
     expect(hashQuery("#/memory?entity=Rahul%20Sharma")).toEqual({ entity: "Rahul Sharma" });
     expect(hashQuery("#/memory")).toEqual({});
+    // A report's unsupported value opens the graph searching for it (Phase 37).
+    expect(graphSearchLink("run_abc", "450 crates")).toBe("#/mission/run_abc/graph?q=450%20crates");
+    expect(hashQuery(graphSearchLink("run_abc", "450 crates"))).toEqual({ q: "450 crates" });
   });
 });

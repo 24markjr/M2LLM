@@ -37,7 +37,11 @@ from app.intelligence.intent.engine import IntentEngine
 from app.intelligence.knowledge.extraction import KnowledgeExtractor
 from app.intelligence.planner.engine import PlanInvalidError, Planner
 from app.intelligence.reasoning.engine import ReasoningEngine, requires_comparison
-from app.intelligence.replanning.controller import ReplanningController
+from app.intelligence.replanning.controller import (
+    ReplanningController,
+    evidence_from_observations,
+    evidence_text_map,
+)
 from app.intelligence.router.engine import ToolRouter
 from app.intelligence.synthesis.engine import SynthesisEngine
 from app.llm.provider import LLMProvider
@@ -272,6 +276,11 @@ async def run_mission(
                 termination=result.termination_reason,
                 emit=emitter,
                 security=result.security,
+                # The text at each cited line, for checking the narrative (Phase 37): the same map
+                # verification reads.
+                evidence_text=evidence_text_map(
+                    evidence_from_observations(result.observations, documents, page_starts or {})
+                ),
             )
 
         result.status = MissionStatus.COMPLETED

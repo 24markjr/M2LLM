@@ -75,7 +75,16 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 }
 
-export default function KnowledgeExplorer({ source, focusName }: { source: GraphSource; focusName?: string }) {
+export default function KnowledgeExplorer({
+  source,
+  focusName,
+  initialSearch = "",
+}: {
+  source: GraphSource;
+  focusName?: string;
+  /** Open with the workbench searching for this (a report's unsupported value, Phase 37). */
+  initialSearch?: string;
+}) {
   const runId = source.kind === "mission" ? source.runId : null;
   // Member 3's views read through one interface: the API for a mission, the analysis otherwise.
   // Keyed on the run or the analysis data, not on `source` itself: a route renders `source` inline,
@@ -88,8 +97,8 @@ export default function KnowledgeExplorer({ source, focusName }: { source: Graph
   );
   // Bumped whenever the graph is (re)loaded, so open views refetch while a mission grows.
   const [version, setVersion] = useState(0);
-  const [workbenchTab, setWorkbenchTab] = useState<WorkbenchTab>("conflicts");
-  const [workbenchQuery, setWorkbenchQuery] = useState("");
+  const [workbenchTab, setWorkbenchTab] = useState<WorkbenchTab>(initialSearch ? "search" : "conflicts");
+  const [workbenchQuery, setWorkbenchQuery] = useState(initialSearch);
   const focusApplied = useRef(false);
   const [view, setView] = useState<KnowledgeGraphView | null>(
     source.kind === "analysis" ? source.view : null,

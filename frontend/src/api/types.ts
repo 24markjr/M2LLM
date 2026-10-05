@@ -205,6 +205,21 @@ export interface ExecutionSummary {
   gaps_resolved: number;
 }
 
+/** One sentence of the model-written narrative, judged against the report's evidence (Phase 37). */
+export interface SentenceCheck {
+  sentence: string;
+  status: string;
+  reasoning: string;
+  /** Dates and figures no cited line contains, and numbers standing where a date belongs. */
+  ungrounded: string[];
+}
+
+export interface NarrativeCheck {
+  section: string;
+  overall: string;
+  sentences: SentenceCheck[];
+}
+
 export interface FinalReport {
   run_id: string;
   objective: string;
@@ -217,6 +232,8 @@ export interface FinalReport {
   unresolved_gaps: string[];
   limitations: string[];
   execution: ExecutionSummary;
+  /** Absent on reports recorded before Phase 37. */
+  narrative_checks?: NarrativeCheck[];
 }
 
 /** The body of every failed request. The UI renders codes, never message text. */

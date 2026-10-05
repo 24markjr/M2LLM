@@ -41,7 +41,7 @@ accounts for that.
 | # | Phase | Covers | Size | Depends on | Status |
 |---|---|---|---|---|---|
 | 36 | Member 3's missing screens | Hybrid search, timeline, all contradictions, the investigate card - one workbench tied to the graph | M | - | **DONE** 2026-10-05 |
-| 37 | Member 4's answer evaluator, wired in | The final report checked sentence by sentence, deterministically | S | - | TODO |
+| 37 | Member 4's answer evaluator, wired in | The final report checked sentence by sentence, deterministically | S | - | **DONE** 2026-10-05 |
 | 38 | Member 2 (A): formats and provenance | DOCX (paragraphs and tables), XLSX (sheets as pages), images; file hash, parser and OCR flag stored | M | D7 | TODO |
 | 39 | Member 2 (B): OCR | Scanned PDFs and images; OCR'd text marked to the evidence; low confidence never makes a conflict | M-L | 38, D8 | TODO |
 | 40 | Member 2 (C): stored, workspace-scoped retrieval | pgvector with an in-memory fallback; `/context/ingest` and `/context/retrieve`; their 600/80 chunker beside ours, chosen by measurement | L | D9-D11 | TODO |
@@ -79,3 +79,31 @@ browser from its own response; search and date comparison need a stored base and
 **Verified:** Vitest (32: 10 new, on where each click leads), strict typecheck, production build.
 **Not verified in a browser** for this phase: the owner asked for no repeated live runs; the views
 are wired through the same, tested functions.
+
+---
+
+### Phase 37 — Member 4's answer evaluator, wired in
+
+**Goal:** the report's model-written prose checked sentence by sentence, with no model call.
+
+**As built (2026-10-05).** Synthesis places every fact; the model writes two paragraphs (the
+executive summary and the reasoning). Each of their sentences is checked against the lines the
+report's verified and uncertain findings cite, with Member 4's `evaluate_answer` as ported, plus the
+specifics check (a date or figure no cited line contains, a number where a date belongs). The
+report keeps the prose as written and carries a `NarrativeCheck` per paragraph beside it.
+
+| Where | What |
+|---|---|
+| `synthesis/grounding.py` | The check (pure). Member 4's overall rule is reused unchanged (`trust/answer.py:overall_status`, factored out); one case their rule never met (a sentence downgraded by the specifics check) is stated |
+| `FinalReport.narrative_checks` | `SentenceCheck`: sentence, status, reasoning, ungrounded values |
+| `REPORT_EVALUATED` | Per-paragraph verdicts and how many sentences were not supported. EventType 39 -> 40 |
+| Report Markdown and terminal text | A "How grounded the narrative is" / "NARRATIVE CHECK" section listing what was not supported |
+| Mission page | A verdict badge under each narrative paragraph; weak sentences listed; each value not in evidence **links to the knowledge graph searching for it** (`#/mission/{id}/graph?q=`) |
+
+**Not built: `eval --with-report`.** The evaluation suite skips synthesis to save a model call per
+scenario. The opt-in mode was planned to report the check per scenario; it was left out to keep the
+phase small. Every API and CLI mission gets the check.
+
+**Verified:** 9 new backend tests (the check, synthesis with the event, both renderings, the
+unchanged overall rule), 1 new Vitest assertion group; mypy, ruff, tsc, build. The database-backed
+integration tests skipped in the final run because Docker was down; none touch this phase's code.

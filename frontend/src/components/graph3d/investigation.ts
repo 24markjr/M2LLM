@@ -167,6 +167,11 @@ export function graphLink(runId: string, entityName?: string): string {
   return `#/mission/${runId}/graph${entityName ? `?focus=${encodeURIComponent(entityName)}` : ""}`;
 }
 
+/** A mission's knowledge graph with the workbench already searching for `text` (Phase 37). */
+export function graphSearchLink(runId: string, text: string): string {
+  return `#/mission/${runId}/graph?q=${encodeURIComponent(text)}`;
+}
+
 /** `name=value` pairs after a hash route's `?`. */
 export function hashQuery(hash: string): Record<string, string> {
   const at = hash.indexOf("?");

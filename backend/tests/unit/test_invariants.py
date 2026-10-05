@@ -220,9 +220,10 @@ def test_no_unbounded_while_true_outside_a_guarded_loop() -> None:
 
 @pytest.mark.parametrize(
     ("enum", "expected"),
-    # EventType 37 -> 38: INJECTION_DETECTED (Phase 27); 38 -> 39: KNOWLEDGE_EXTRACTED (Phase 30).
+    # EventType 37 -> 38: INJECTION_DETECTED (Phase 27); 38 -> 39: KNOWLEDGE_EXTRACTED (Phase 30);
+    # 39 -> 40: REPORT_EVALUATED (Phase 37).
     # The rest were added by the port of Members 3 and 4 (Phases 26-33) and counted in Phase 34.
-    [(Operation, 17), (TaskType, 16), (TaskStatus, 8), (EventType, 39), *PORT_VOCABULARIES],
+    [(Operation, 17), (TaskType, 16), (TaskStatus, 8), (EventType, 40), *PORT_VOCABULARIES],
 )
 def test_the_closed_vocabularies_are_the_size_they_claim(enum: type, expected: int) -> None:
     """Extending one of these is a deliberate act.
