@@ -3,8 +3,9 @@
 **Scope:** understanding user intent, planning tasks, selecting tools, and reasoning across all
 gathered information.
 **Repository:** [github.com/24markjr/M2LLM](https://github.com/24markjr/M2LLM)
-**Baseline for every number below:** `.agent/evals/reports/20261004T172506-qwen3-4b-all.json` (8 scenarios)
-(`qwen3:4b`, prompt versions `intent=2 planner=2 reasoning=4 relevance=3 verification=1`)
+**Baseline for every number below:** `.agent/evals/reports/20261005T050619-qwen3-4b-all.json` (11 scenarios)
+(`qwen3:4b`, prompt versions `intent=2 planner=2 knowledge=1 reasoning=5 relevance=3 verification=2`,
+`composite` verifier)
 
 ---
 
@@ -47,7 +48,7 @@ Supporting: concurrent execution by dependency wave, an append-only event log fr
 fully reconstructable, a FastAPI + SSE surface, and a React operations console that streams a run
 live and can replay a recorded one.
 
-**920 tests**, `mypy --strict` clean across 116 modules, 89% coverage (90–100% on
+**925 tests**, `mypy --strict` clean across 116 modules, 89% coverage (90–100% on
 `intelligence/**` and `schemas/**`).
 
 ---
@@ -137,22 +138,70 @@ conclusion, and the agent duly reported "the budget file does not contradict its
 a finding — absence cannot be cited, so nothing can support it. Both prompts now say so, and both
 negative cases produce nothing.
 
-So the build is still red, on the opposite criterion: two positive scenarios yield no findings where
-claims are planted. I have not weakened the threshold. Of the two failures this is the better one —
-an investigation that reports nothing is honest, and one that invents findings is not — but it is a
-real limit and I would rather present it than a green build that got there by lowering a bar.
+For weeks after that the build stayed red, first on positive scenarios that found nothing, then on
+a negative case that invented a finding again with no code change (BUG-019): the model's output is
+stable within a session and differs between them. I did not weaken the threshold. The fix, on
+2026-10-05, was structural again and narrow: the invented conflict stated a value ("31 January
+2026") that neither of its cited lines contains, so a claim of conflict must now have **both of its
+values in the lines it cites**, not only cite both sides. Measured on the full suite, the negative
+case produces nothing, every positive scenario keeps its findings, and every threshold passes.
 
-Also honestly outstanding: eight evaluation scenarios where the plan calls for twenty; the API
-does not yet persist runs; no frontend test runner.
+Honestly outstanding: eleven evaluation scenarios where the plan called for twenty; one run per
+experiment arm, on a model whose output varies between sessions; the 3D graph is not rebuilt in
+replay; facts in memory merge only when the model names an attribute the same way twice.
+
+---
+
+## Members 3 and 4: what they built, and what it became
+
+Members 3 and 4 built their parts as standalone prototypes. Their features were ported into this
+codebase with the same logic ([ADR-009](../.claude/decisions/ADR-009-port-teammates-in-process.md));
+**the design and the logic below are theirs**, and what the port changed is listed beside each. The
+full inventory, original file by original file, is
+[`teammate-port.md`](../.claude/integrations/teammate-port.md); the originals are archived in
+[`.claude/integrations/originals/`](../.claude/integrations/originals/).
+
+**Member 3 — the knowledge graph** (`jarvis-member3/`)
+
+| Their feature | Where it lives now | What the port changed |
+|---|---|---|
+| LLM extraction of entities, relationships and claims (`extractor.py`) | `intelligence/knowledge/extraction.py` | Values and names grounded on their source line; CSV extracted without a model; names carried across chunks |
+| Entity resolution and relationship linking (`resolve.py`, `db.py`) | `intelligence/knowledge/store.py` | Per run instead of one global store; wider name normalisation |
+| Contradiction detection by entity and attribute (`contradictions.py`) | `intelligence/knowledge/conflicts.py` | Values compared by kind (date, number, text); grounded claims only |
+| Timeline with before/after/same, and claim comparison (`timeline.py`) | `intelligence/knowledge/timeline.py` | No invented year; differing precision is "unknown" |
+| Knowledge graph and N-hop neighbourhood (`graph.py`) | `intelligence/knowledge/graph.py`, Neo4j store | Neo4j or in memory, one test suite for both |
+| Hybrid search with explainable score (`retrieval.py`) | `intelligence/knowledge/search.py` | Same score and reasons |
+| The 14-endpoint API (`main.py`) | `api/v1/knowledge.py` | Per mission, typed errors, CORS on the allow-list |
+| The dashboard (`dashboard.html`) | Mission Control, `components/graph3d/` | Interactive 3D (2D fallback): sub-nodes, highlight, hover, evidence trail |
+| Sample data (`sample_data.json`) | `.agent/fixtures/documents/shipment_*.txt` | Verbatim; now three evaluation scenarios |
+
+Measured: their planted contradiction (Shipment 4821, 14 vs 16 September) is found by the full agent
+with their knowledge pass on and missed without it (Experiment 003).
+
+**Member 4 — trust, security, memory, evaluation** (`mem4/MajorP/Mem-4/`)
+
+| Their feature | Where it lives now | What the port changed |
+|---|---|---|
+| TF-IDF relevance and claim verification, four statuses (`trust/verifier.py`) | `intelligence/trust/tfidf.py`, `lexical.py` | Matches scikit-learn to 4.4e-16 with no dependency; dates conflict too |
+| Entity-aware conflict rule | `intelligence/trust/lexical.py` | Adds disjoint dates; times by minute |
+| Answer-level hallucination evaluation (`hallucination_evaluator.py`) | `intelligence/trust/answer.py` | Logic unchanged |
+| Prompt-injection scanner, 21 patterns and severity (`security/injection_guard.py`) | `security/injection.py` | Patterns verbatim; run on every document; a flag never drops evidence |
+| Safe prompt construction | `security/injection.py:wrap_untrusted` | The wrapper escapes its own closing tag |
+| 14-case security suite | `.agent/evals/security/injection_cases.yaml` | Their 14 verbatim plus 13; 27/27 |
+| Working, episodic and semantic memory (`memory/`) | `app/memory/` | Derived from finished runs; facts only from verified findings, with support instead of `confidence=1.0`; never read back into a run |
+| Synthetic benchmark generator and runner (`eval/`) | `evaluation/trust.py`, `cli eval-trust` | Byte-identical data from seed 42; a stamped report CI re-runs |
+
+Measured: their verifier, inside the `composite` verifier, is now the default. It rejected the one
+invented finding the previous default passed, and nothing correct (Experiment 004).
 
 ---
 
 ## Boundaries respected
 
-Members 2, 3 and 4 own context retrieval, knowledge search and verification. Each is reached
-through a `Protocol` selected by environment variable, each has a local fallback so this side was
-never blocked by another timeline, and **no member's implementation is imported directly** — a test
-parses the source tree to prove it. The same test proves invariant 1: the language model is
+Member 2 owns context retrieval, reached through a `Protocol` with a local fallback so this side was
+never blocked by another timeline. Members 3 and 4's work was **ported, not imported**: no teammate's
+code is imported anywhere, and the ported features sit behind the same seams (the `KnowledgeBase`
+protocol, the `VerificationProvider` seam). A test parses the source tree to prove it. The same test proves invariant 1: the language model is
 reachable from exactly one package,
 [`app/llm/`](../backend/app/llm/).
 
@@ -162,7 +211,8 @@ reachable from exactly one package,
 
 ```bash
 python -m app.cli health                      # the engine answers
-pytest tests -m "not llm"                     # 920 tests, no model needed, ~30s
+pytest tests -m "not llm"                     # 925 tests, no model needed, ~30s
+python -m app.cli eval-trust --no-write       # Member 4's benchmark: 60/60, injection 27/27
 pytest tests/unit/test_llm_isolation.py -v    # invariant 1, proven by parsing the source
 pytest tests/unit/test_invariants.py -v       # the whole "must not do" list
 pytest tests/unit/test_adversarial.py -v      # injection, corrupt input, zero-finding runs

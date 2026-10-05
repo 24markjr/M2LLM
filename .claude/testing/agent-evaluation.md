@@ -198,9 +198,12 @@ it says. Whether the rule helps a real investigation is measured by Exp-004 in t
 
 ## Known gaps
 
-- **Three scenarios, not twenty.** The three in place cover the contradiction case, a
-  single-document case and the negative case — enough for the metrics to be real, not enough to
-  be a benchmark. Tool failure, multi-document and evidence-gap scenarios are the next to add.
+- **Eleven scenarios, not twenty** (Phase 34). Three document families, three negative cases and
+  one planted injection - enough for the metrics to be real, not enough to be a benchmark. A
+  tool-failure scenario is the obvious next one.
+- **One run per measurement.** The model's output is stable within a session and differs between
+  them (BUG-019), so a single scenario flipping between runs is evidence, not proof. Running each
+  scenario several times and reporting the spread is the next improvement to the harness.
 - **Not re-run since the intent, plan-cap and observation-budget fixes.** The last committed
   report predates them, so its numbers are stale and the regression check will correctly refuse
   to compare against it (prompt versions changed).

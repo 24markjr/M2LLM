@@ -204,10 +204,10 @@ number says so.
 
 ## Known gaps
 
-- **No frontend test runner.** `tsc` and a production build run in CI, but there is no vitest, so
-  `reconstruct()` in `useReplay.ts` — which rebuilds a run's state from its events — has no unit
-  test. The weakest part of the test estate.
-- **Three evaluation scenarios, not the twenty** the plan calls for.
+- **The frontend's tests cover only the knowledge explorer** (Vitest, Phase 32). `reconstruct()`
+  in `useReplay.ts` — which rebuilds a run's state from its events — still has no unit test. The
+  weakest part of the test estate.
+- **Eleven evaluation scenarios, not the twenty** the plan calls for (Phase 34).
 - **Fault injection is manual.** "A deliberately broken planner drops `plan_validity`" is verified
   by hand, not by a scenario.
-- **Three evaluation scenarios became eight**, where the plan calls for twenty.
+- **Three evaluation scenarios became eight, then eleven** (Phase 34), where the plan calls for twenty.

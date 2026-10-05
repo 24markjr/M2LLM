@@ -76,6 +76,23 @@ it would leave findings that look verified and are not.
 This is enforced structurally: adapters live in `app/integrations/`, and nothing else in the
 codebase knows a remote service exists.
 
+### What changed with the integration (Phases 25-35, ADR-009)
+
+Members 3 and 4 delivered prototypes rather than services, and the owner chose to bring their
+features into this codebase (2026-10-03). They were **ported, not imported**: re-implemented with the
+same logic, typed, tested and logged feature by feature in `integrations/teammate-port.md`, with the
+originals archived in `integrations/originals/`. So the rule above still holds in the sense that
+matters - no teammate's code is imported - while the areas in the table now have implementations
+here:
+
+| Area | Now |
+|---|---|
+| Knowledge base (Member 3) | `app/intelligence/knowledge/`, per run, in memory or Neo4j (ADR-010) |
+| Verification (Member 4) | `LexicalVerifier` and `CompositeVerifier` behind the same `VerificationProvider` seam; `composite` is the default (Experiment 004) |
+| Security, memory, trust benchmark (Member 4) | `app/security/`, `app/memory/`, `app/evaluation/trust.py` |
+
+Member 2's context retrieval is unchanged: still the `ContextProvider` seam with its local fallback.
+
 ---
 
 ## What "done" means for this contribution

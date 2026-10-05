@@ -109,7 +109,7 @@ the reason).
 | T11 | Episodic memory (Q&A log, archived investigations, keyword search) | `memory/episodic_memory.py` (SQLite) | `app/memory/episodic.py`; Postgres `memory_episodes`, `memory_investigations` | CHANGED. One episode per finding, every status kept; same `ILIKE` search, newest first, 5 by default, wildcards escaped |
 | T12 | Semantic memory (subject-predicate-object facts) | `memory/semantic_memory.py` (SQLite) | `app/memory/semantic.py`; `neo4j_store.py:Neo4jSemanticMemory` | CHANGED. Facts only from verified findings; `support` (runs and lines) instead of `confidence=1.0`; entities merged across runs; Neo4j or Postgres by configuration; never read back into a run |
 | T13 | Synthetic benchmark generator | `eval/generate_benchmark.py` | `app/evaluation/trust.py` | DONE. Byte-identical data from seed 42, checked by test |
-| T14 | Benchmark runner and dashboard | `eval/run_benchmark.py` | `python -m app.cli eval-trust` | CHANGED. Typed, stamped report; per-case episodic logging returns in Phase 33 |
+| T14 | Benchmark runner and dashboard | `eval/run_benchmark.py` | `python -m app.cli eval-trust`; `scripts/check_trust_reports.py` | CHANGED. Typed, stamped report, committed and re-run by CI. Per-case episodic logging was **not** brought back: memory (Phase 33) records missions, and logging 60 synthetic benchmark cases as past investigations would fill it with things no investigation found |
 | T15 | Benchmark data (60 cases, 58 documents) | `eval/benchmark.json`, `eval/evidence_corpus.json` | `.agent/evals/trust/` | DONE. Copied verbatim |
 | T16 | `contradiction_test.py` demo | `trust/contradiction_test.py` | `tests/unit/test_trust.py` | CHANGED. The original demo itself returns SUPPORTED (see T16 below); kept as a test of that, plus a working variant |
 | T17 | `member4_steps1-5/` | an older copy of five files | superseded by `Mem-4/`, not ported | NOT PORTED |
@@ -461,3 +461,28 @@ the allow-list, not `*`; `/ingest` became `POST /api/v1/knowledge/analyze`, whic
 base and stores nothing. Added for the 3D view: the graph as nodes and links (claims as sub-nodes of
 their entity), a detail record per node for the hover pop-up, and a finding's trail. A mission whose
 graph is in Neo4j is still answered after the API restarts.
+
+---
+
+## Add-ons (A1-A15), as built
+
+What the integration added beyond Members 3 and 4's features, from the plan's table in
+`implementation/integration-plan-phases-25-35.md`. Every one was built.
+
+| ID | Add-on | Phase | Status |
+|---|---|---|---|
+| A1 | The verifier reads the cited line, not a tool summary (BUG-015) | 25 | DONE |
+| A2 | Observation details match on document and line (BUG-016) | 25 | DONE |
+| A3 | Composite verifier | 26 | DONE. The default since Experiment 004 |
+| A4 | Date conflicts in the lexical verifier | 26 | DONE |
+| A5 | Knowledge pass for comparative objectives | 30 | DONE. Measured in Experiment 003: finds the shipment conflict, which is missed without it |
+| A6 | Claim grounding on the source line | 28 | DONE |
+| A7 | Deterministic CSV extraction | 28 | DONE |
+| A8 | Shared attribute vocabulary across chunks | 28 | DONE. Attribute names still vary between *runs* (Phase 33's memory measurement) |
+| A9 | Evidence trail in 3D | 32 | DONE |
+| A10 | Live graph growth over SSE | 32 | DONE. Replay does not rebuild the graph |
+| A11 | Injection scan at document load | 27 | DONE |
+| A12 | Trust and security benchmarks in the harness | 26, 27, 34 | DONE. Re-run by CI since Phase 34 |
+| A13 | Three shipment scenarios | 34 | DONE |
+| A14 | Cross-investigation graph in Neo4j | 33 | DONE |
+| A15 | Specifics check in the composite verifier | 26 | DONE. Extended to numbers in a date's place (BUG-021) |

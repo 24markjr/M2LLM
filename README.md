@@ -10,6 +10,13 @@ replanning when the evidence is insufficient.
 It is not a chat interface. You give it an objective; it works out how to accomplish it, and it
 shows its work.
 
+Built as Member 1's orchestration engine, it now also carries the work of **Member 3** (a knowledge
+graph of entities, relationships and claims, with cross-document conflicts, a timeline and search)
+and **Member 4** (a lexical verifier, a prompt-injection scanner, a trust benchmark and three tiers
+of memory), ported into the same process and held to the same rules
+([ADR-009](.claude/decisions/ADR-009-port-teammates-in-process.md)). Who built what is in
+[`docs/contribution.md`](docs/contribution.md).
+
 ```
 USER OBJECTIVE → INTENT → PLAN → TASK GRAPH → TOOL ROUTING → EXECUTION
       → OBSERVATION → REASONING → FINDINGS → VERIFICATION
@@ -67,7 +74,7 @@ bug in this file.
 | Python | 3.12 | everything |
 | [Ollama](https://ollama.com) | any recent | the model |
 | Node | 20+ | the web console only |
-| Docker | any recent | Postgres and Neo4j — **not needed for the demo**; without them runs are not stored and knowledge graphs stay in memory |
+| Docker | any recent | Postgres (stored runs, memory of past missions) and Neo4j (the knowledge graph, facts across missions) — **not needed for the demo**; without them nothing is stored and knowledge graphs stay in memory |
 
 ### 1. The model
 
@@ -94,11 +101,17 @@ source .venv/bin/activate
 pip install -e "backend[dev]"
 ```
 
-Optional, for stored runs and the knowledge graph in Neo4j ([ADR-010](.claude/decisions/ADR-010-neo4j-knowledge-graph.md)):
+Optional, for stored runs, memory, and the knowledge graph in Neo4j
+([ADR-010](.claude/decisions/ADR-010-neo4j-knowledge-graph.md)):
 
 ```bash
 docker compose up -d postgres neo4j   # Neo4j Browser: http://localhost:7474
+cd backend && alembic upgrade head && cd ..
 ```
+
+The migration is not optional once Postgres is up: without the tables, runs and memory are not
+stored (the run itself still completes, and the log says why). Neo4j needs no setup; its
+constraints are created on first use.
 
 ### 3. Check it can run
 
@@ -138,23 +151,41 @@ cd frontend && npm install && npm run dev
 Open <http://localhost:5173>. The Aurora objective and documents are prefilled — click **New
 mission** then **Start mission** and watch it run live over SSE.
 
-There is also `#/replay`, which replays a recorded run at up to 20x, and `#/evaluation`, which
-charts the committed evaluation reports.
+When it finishes, press **Knowledge graph** on the mission page: the run's entities in 3D (2D with
+reduced motion), claims and documents unfolding beneath them. Hover a node for its details, click
+one to light up everything related, click a finding to light up the evidence it rests on
+([ADR-011](.claude/decisions/ADR-011-3d-knowledge-explorer.md)).
+
+The other pages: `#/memory` (findings and entities across past missions, with Docker up),
+`#/knowledge` (a knowledge graph from documents, no mission), `#/replay` (a recorded run replayed at
+up to 20x), and `#/evaluation` (the committed evaluation reports, charted).
 
 ### 6. The tests
 
 ```bash
 cd backend
-pytest tests -m "not llm"      # 920 tests, no model needed
+pytest tests -m "not llm"      # 925 tests, no model needed
+```
+
+### 7. Reproduce the trust benchmark
+
+Member 4's verifier benchmark (60 cases) and the prompt-injection suite (27 cases) need no model and
+are deterministic, so their committed report can be reproduced exactly:
+
+```bash
+cd backend
+python -m app.cli eval-trust --no-write        # 60/60, hallucination_rate 0.000, injection 27/27
+python scripts/check_trust_reports.py          # compares a fresh run with the committed report
 ```
 
 ---
 
 ## The demo
 
-[`docs/demo-script.md`](docs/demo-script.md) has six demos with exact commands, what each one
-proves, and a recorded-trace fallback for when local inference stalls — which it occasionally
-does, and which a presentation should not depend on.
+[`docs/demo-script.md`](docs/demo-script.md) has nine demos with exact commands, what each one
+proves, and a recorded fallback for when local inference stalls — which it occasionally does, and
+which a presentation should not depend on. Demos 7-9 are the knowledge graph, a planted prompt
+injection, and memory across missions.
 
 ---
 
@@ -273,21 +304,37 @@ A **modular monolith** with custom orchestration — no agent framework.
 
 ```
 backend/app/
-├── schemas/          12 modules, 97 types — every boundary is typed
+├── schemas/          15 modules, 116 types — every boundary is typed
 ├── llm/              the ONLY package that speaks to a model (invariant 1)
-├── tools/            registry, loader, built-in document tools
+├── tools/            registry, loader, document tools, the knowledge-graph tool
 ├── intelligence/     intent · planner · graph · router · execution · context
 │                     reasoning · evidence_gap · replanning · planning_policy · synthesis
+│                     knowledge (Member 3) · trust (Member 4) · temporal
+├── security/         prompt-injection scanning and safe wrapping (Member 4)
+├── memory/           working · episodic · semantic memory across missions (Member 4)
+├── integrations/     verifiers (baseline · lexical · composite) · Neo4j store (the only
+│                     module that imports the driver) · context provider
 ├── orchestration/    the headless pipeline. CLI, API and UI all render one run
-├── api/              FastAPI + SSE  (ADR-008)
-├── evaluation/       the metrics harness
-├── database/         async SQLAlchemy, 11 tables
+├── api/              FastAPI + SSE  (ADR-008): missions, knowledge, memory, replay
+├── evaluation/       the metrics harness, the trust and security benchmarks
+├── database/         async SQLAlchemy, 17 tables
 └── core/             config, events, logging
 
-frontend/src/         React + TypeScript — Mission Control
+frontend/src/         React + TypeScript — Mission Control, the 3D knowledge explorer
 .agent/               prompts · config · fixtures · evals · traces  (behaviour, versioned)
 .claude/              architecture · decisions · logs · testing  (why it is like this)
 ```
+
+### What the integration added
+
+| Subsystem | What it does | Where to read |
+|---|---|---|
+| **Knowledge layer** (Member 3) | Extracts entities, relationships and claims from each document, grounds every value on its source line, finds claims that conflict across documents, orders a timeline, searches with explained scores. Per run, never shared between runs | [`knowledge-layer.md`](.claude/architecture/knowledge-layer.md) |
+| **Neo4j** | Holds each run's knowledge graph (and cross-run facts). Optional: when it is down, runs use the in-memory store, which answers identically - one test suite holds both to it | [ADR-010](.claude/decisions/ADR-010-neo4j-knowledge-graph.md) |
+| **3D explorer** | The knowledge graph in Mission Control: nodes with sub-nodes, click to light up what is related, hover for details, a finding's evidence trail, 2D fallback | [ADR-011](.claude/decisions/ADR-011-3d-knowledge-explorer.md) |
+| **Verification** (Member 4) | The `composite` verifier, the default by experiment: the model check, Member 4's lexical rule, and a check that every date and figure a claim states is in its cited lines | [`verification.md`](.claude/architecture/verification.md) |
+| **Security** (Member 4) | Every document is scanned for prompt injection; a flag is reported, never used to drop evidence; untrusted text is wrapped in the prompts | [`security.md`](.claude/architecture/security.md) |
+| **Memory** (Member 4) | Past missions' findings (every status) and facts (only from verified findings, with their support, no confidence). Written after a run; never read back into one | [`memory.md`](.claude/architecture/memory.md) |
 
 ### Invariants
 
@@ -303,6 +350,10 @@ These are not aspirations. Each one has a test that fails if it is violated — 
 6. **Closed vocabularies.** Operations, task types, statuses and event types are fixed sets.
 7. **Every loop is bounded.** Every ceiling is configured, and a new `while True` fails the build
    until its exit condition is written down.
+8. **Knowledge is scoped per run.** Two runs in one Neo4j database never see each other.
+9. **Memory never feeds a run.** No module a mission executes may import `app.memory`.
+10. **Optional infrastructure never fails a run.** Postgres, Neo4j and memory each degrade to
+    "not stored", contained and logged.
 
 ### Two configuration surfaces
 
@@ -316,12 +367,15 @@ silently-ignored setting is impossible.
 
 | | |
 |---|---|
-| The build order and status of all 25 phases | [`.claude/implementation/implementation-plan.md`](.claude/implementation/implementation-plan.md) |
+| The build order and status of all 36 phases | [`.claude/implementation/implementation-plan.md`](.claude/implementation/implementation-plan.md) |
+| How Members 3 and 4 were integrated, phase by phase | [`.claude/implementation/integration-plan-phases-25-35.md`](.claude/implementation/integration-plan-phases-25-35.md) |
+| Every teammate feature, and what became of it | [`.claude/integrations/teammate-port.md`](.claude/integrations/teammate-port.md) |
 | Why the reasoning engine is shaped this way | [`.claude/architecture/reasoning-engine.md`](.claude/architecture/reasoning-engine.md) |
 | Why verification sits outside the plan | [`.claude/architecture/verification.md`](.claude/architecture/verification.md) |
 | The HTTP API | [`.claude/api/endpoints.md`](.claude/api/endpoints.md) · [`docs/openapi.json`](docs/openapi.json) |
 | How the agent is measured | [`.claude/testing/agent-evaluation.md`](.claude/testing/agent-evaluation.md) |
 | Every defect found, and what caused it | [`.claude/logs/bug-log.md`](.claude/logs/bug-log.md) |
+| Every measurement that decided something | [`.claude/logs/experiment-log.md`](.claude/logs/experiment-log.md) |
 | Architecture decisions | [`.claude/decisions/`](.claude/decisions/) |
 | What this contributes, for a reviewer | [`docs/contribution.md`](docs/contribution.md) |
 
@@ -329,17 +383,21 @@ silently-ignored setting is impossible.
 
 ## Scope
 
-This repository is **Member 1** of a four-person system: intent, planning, tool selection and
-reasoning — the orchestration brain.
+This repository began as **Member 1** of a four-person system: intent, planning, tool selection
+and reasoning — the orchestration brain.
 
-Members 2, 3 and 4 own context retrieval, knowledge search and verification. Each is reached
-through a `Protocol` selected by environment variable, each has a local fallback so this side is
-never blocked, and **no member's implementation is ever imported directly**. See
+Members 3 and 4 built their parts as separate prototypes. They were **ported into this codebase**,
+with the same logic, typed and tested, rather than called as services
+([ADR-009](.claude/decisions/ADR-009-port-teammates-in-process.md)): every feature, the original
+file it came from and what changed is in
+[`teammate-port.md`](.claude/integrations/teammate-port.md), and the originals are archived in
+[`.claude/integrations/originals/`](.claude/integrations/originals/). Member 2's context retrieval
+is still reached through a `Protocol` with a local fallback. See
 [`.claude/context/member-1-scope.md`](.claude/context/member-1-scope.md).
 
 ## Status
 
-Phases 0–24 built, and Phases 25–30 of the Members 3 and 4 integration
+Phases 0–24 built, and Phases 25–35 of the Members 3 and 4 integration complete
 ([plan](.claude/implementation/integration-plan-phases-25-35.md)). The evaluation gate passes on
 the committed baseline since the BUG-019 fix. It was red until then, deliberately, and was never
 weakened to make it green.

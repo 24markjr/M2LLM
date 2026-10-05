@@ -45,6 +45,19 @@ New to the project, in order:
 4. [`implementation/implementation-plan.md`](implementation/implementation-plan.md) — the build order
 5. [`decisions/`](decisions/) — why, for the contested choices
 
+Then, for the integration of Members 3 and 4 (Phases 25-35):
+
+6. [`decisions/ADR-009-port-teammates-in-process.md`](decisions/ADR-009-port-teammates-in-process.md) — why port rather than call
+7. [`integrations/teammate-port.md`](integrations/teammate-port.md) — every teammate feature, the
+   original file, where it lives now and what changed
+8. [`implementation/integration-plan-phases-25-35.md`](implementation/integration-plan-phases-25-35.md) — the plan, its decisions (D1-D6) and what each phase built
+9. [`architecture/knowledge-layer.md`](architecture/knowledge-layer.md),
+   [`architecture/security.md`](architecture/security.md),
+   [`architecture/verification.md`](architecture/verification.md),
+   [`architecture/memory.md`](architecture/memory.md) — the ported subsystems
+10. [`logs/experiment-log.md`](logs/experiment-log.md) and [`logs/bug-log.md`](logs/bug-log.md) —
+    what was measured, and what broke
+
 ## The documentation rule
 
 Any change that alters architecture or behaviour updates, in the same change:
@@ -67,3 +80,8 @@ code is a decision nobody can evaluate, defend, or safely revisit.
 | [004](decisions/ADR-004-custom-orchestration.md) | Custom orchestration, not an agent framework | Accepted |
 | [005](decisions/ADR-005-pgvector.md) | pgvector, not a separate vector database | Accepted |
 | [006](decisions/ADR-006-task-graph.md) | A mutable DAG, not a linear chain | Proposed |
+| 007 | *Never written* - see [`decisions/README.md`](decisions/README.md) | - |
+| [008](decisions/ADR-008-sse-over-websocket.md) | Server-sent events, not WebSocket | Accepted |
+| [009](decisions/ADR-009-port-teammates-in-process.md) | Port Members 3 and 4 into the backend, not call them as services | Accepted |
+| [010](decisions/ADR-010-neo4j-knowledge-graph.md) | Neo4j for the knowledge graph, optional, behind one protocol | Accepted |
+| [011](decisions/ADR-011-3d-knowledge-explorer.md) | The 3D knowledge explorer: vanilla 3d-force-graph, pure logic beside it | Accepted |

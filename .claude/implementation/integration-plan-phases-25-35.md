@@ -94,7 +94,7 @@ Two rules this plan adds, both following from the teammates' code:
 | 32 | 3D knowledge graph explorer | K13 | L | 31 | **DONE** 2026-10-04 |
 | 33 | Memory: working, episodic, semantic | T10–T12 | M | 29, 31 | **DONE** 2026-10-05 |
 | 34 | Evaluation and hardening | K14 | M | 26–33 | **DONE** 2026-10-05 |
-| 35 | Documentation and handover | — | S | 34 | TODO |
+| 35 | Documentation and handover | — | S | 34 | **DONE** 2026-10-05 |
 
 **Minimum viable integration**, if time runs short: 25, 26, 28, 30, 34. That delivers verified
 cross-document contradictions in the agent's own findings, which is what the open defect needs.
