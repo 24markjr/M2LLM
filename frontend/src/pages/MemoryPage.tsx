@@ -71,6 +71,16 @@ function EpisodeSearch() {
 
   useEffect(() => search(""), []);
 
+  // Remove what one mission contributed to memory (its episodes, its support for facts). The
+  // mission itself and its recording are untouched.
+  const forget = (runId: string) => {
+    if (!window.confirm(`Remove ${runId} from memory? Its episodes go, and facts only it supported.`)) return;
+    api
+      .forgetRun(runId)
+      .then(() => search(query))
+      .catch((exc: unknown) => setError(exc instanceof Error ? exc.message : String(exc)));
+  };
+
   const submit = (event: FormEvent) => {
     event.preventDefault();
     search(query);
@@ -104,6 +114,9 @@ function EpisodeSearch() {
                   {e.run_id}
                 </a>
                 <span className="dim mono">{new Date(e.created_at).toLocaleString()}</span>
+                <button className="link" onClick={() => forget(e.run_id)} title="Remove this mission from memory">
+                  forget this mission
+                </button>
               </div>
               <div>{e.claim}</div>
               <div className="dim">asked: {e.objective}</div>

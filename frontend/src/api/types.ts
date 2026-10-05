@@ -279,6 +279,8 @@ export interface Recording {
     findings?: { run_id: string; findings: Finding[] };
     gaps?: GapRecord[];
     report?: FinalReport;
+    /** The run's knowledge graph, so replay opens the 3D explorer from the recording (absent before this fix). */
+    knowledge?: { snapshot: KnowledgeSnapshot; timeline: TimelineEvent[]; graph: KnowledgeGraphView };
   };
 }
 

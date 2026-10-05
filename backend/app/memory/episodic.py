@@ -62,6 +62,16 @@ class EpisodicMemory:
         )
         await self._session.flush()
 
+    async def forget(self, run_id: str) -> int:
+        """Remove a run's episodes and its archived snapshot. Returns how many episodes went."""
+        removed = await self._session.execute(
+            delete(MemoryEpisode).where(MemoryEpisode.run_id == run_id)
+        )
+        await self._session.execute(
+            delete(MemoryInvestigation).where(MemoryInvestigation.run_id == run_id)
+        )
+        return int(getattr(removed, "rowcount", 0) or 0)
+
     async def search(self, keyword: str = "", limit: int = DEFAULT_SEARCH_LIMIT) -> list[Episode]:
         """Episodes whose objective or claim contains `keyword`, newest first. Empty: all."""
         query = select(MemoryEpisode)

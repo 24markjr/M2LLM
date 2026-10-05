@@ -123,6 +123,33 @@ async def facts(
     return [FactView.of(f) for f in found]
 
 
+class Forgotten(JarvisModel):
+    run_id: str
+    episodes: int
+    episodic: bool
+    semantic: bool
+
+
+@router.delete("/runs/{run_id}", response_model=Forgotten)
+async def forget_run(run_id: str) -> Forgotten:
+    """Remove what one mission contributed to memory: its episodes, its archived snapshot, its
+    support for facts. A fact or entity nothing else supports goes with it; one other missions also
+    saw stays, with their support. The mission itself and its recording are untouched."""
+    episodes = 0
+    episodic = await episodic_available()
+    if episodic:
+        async with session_scope() as session:
+            episodes = await EpisodicMemory(session).forget(run_id)
+    memory = await get_semantic_memory()
+    if memory is not None:
+        await memory.forget(run_id)
+    if not episodic and memory is None:
+        raise MemoryUnavailableError("episodic")
+    return Forgotten(
+        run_id=run_id, episodes=episodes, episodic=episodic, semantic=memory is not None
+    )
+
+
 @router.get("/entities/{name}", response_model=EntityMemoryView)
 async def entity(name: str) -> EntityMemoryView:
     """An entity as seen across investigations, with the facts known about it."""

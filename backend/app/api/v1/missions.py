@@ -310,6 +310,14 @@ def snapshot_payloads(record: MissionRecord) -> dict[str, object]:
     if result is None:
         return payload
 
+    # The knowledge graph, so a replay opens the 3D explorer from the recording alone.
+    if result.knowledge is not None and record.knowledge_view is not None:
+        payload["knowledge"] = {
+            "snapshot": result.knowledge.model_dump(mode="json"),
+            "timeline": record.knowledge_timeline or [],
+            "graph": record.knowledge_view,
+        }
+
     if result.plan is not None:
         nodes = [
             TaskNode(

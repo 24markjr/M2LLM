@@ -61,6 +61,10 @@ class MissionRecord:
         self.result: MissionResult | None = None
         self.task: asyncio.Task[None] | None = None
         self.events: list[ExecutionEvent] = []
+        # The knowledge graph as the explorer draws it, and the run's timeline, built when the run
+        # ends so a recording can carry them: replay then opens the 3D graph with no server.
+        self.knowledge_view: dict[str, object] | None = None
+        self.knowledge_timeline: list[dict[str, object]] | None = None
 
     def is_finished(self) -> bool:
         """Whether the run has reached a terminal status.
@@ -212,6 +216,7 @@ class MissionRegistry:
             # Recorded on the way out, so a run that failed or was cancelled is replayable
             # too. A recording of only the successful runs would make the demo look better
             # than the system is.
+            await _capture_knowledge(record)
             write_recording(record)
             if self._database is not None:
                 # Flush before the final write, so the stored timeline is complete when the run
@@ -222,6 +227,27 @@ class MissionRegistry:
             # once the run is over and never read back into one.
             if record.result is not None:
                 await _record_memory(record.result, record.started_at)
+
+
+async def _capture_knowledge(record: MissionRecord) -> None:
+    """Keep the run's graph view and timeline for its recording. Never raises.
+
+    Built from the run's own knowledge base in memory, whichever store held it, so a replay shows
+    exactly what the run knew, even after the store is cleared.
+    """
+    result = record.result
+    if result is None or result.knowledge is None:
+        return
+    try:
+        from app.intelligence.knowledge.base import InMemoryKnowledgeBase
+        from app.intelligence.knowledge.view import build_view
+
+        base = InMemoryKnowledgeBase(result.knowledge)
+        view = await build_view(base, record.run_id, result.findings)
+        record.knowledge_view = view.model_dump(mode="json")
+        record.knowledge_timeline = [e.model_dump(mode="json") for e in await base.timeline()]
+    except Exception:  # the run is over; a recording without its graph is still a recording
+        log.exception("knowledge_capture_failed", run_id=record.run_id)
 
 
 async def _record_memory(result: MissionResult, started_at: datetime | None) -> None:

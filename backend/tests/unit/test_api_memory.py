@@ -110,3 +110,10 @@ async def test_memory_failing_outright_never_fails_the_mission(
 
     monkeypatch.setattr(registry, "record_run", explode)
     await registry._record_memory(_result(), None)  # contained: does not raise
+
+
+async def test_forgetting_without_a_store_says_memory_is_off() -> None:
+    async with await _client() as client:
+        response = await client.delete("/api/v1/memory/runs/run_00000000a001")
+    assert response.status_code == 503
+    assert response.json()["error_code"] == "MEMORY_UNAVAILABLE"

@@ -5,6 +5,27 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-05 - Two known gaps closed (before Phase 40)
+
+The bug log had no open bugs (BUG-001 to BUG-026 all fixed). Two known limitations a person would
+hit were closed:
+
+### Fixed
+
+- **Replay now opens the knowledge graph.** When a run ends, its graph view and timeline are built
+  from its own knowledge base and stored in the recording; the replay page opens the 3D explorer
+  from the recording alone, with no server or model (Phase 32's deferred item)
+- **A mission's memory can be forgotten.** `DELETE /api/v1/memory/runs/{run_id}` and "forget this
+  mission" on the Memory page: its episodes, snapshot and support for facts go; facts other
+  missions also saw stay (Phase 33's open item)
+
+### Verified
+
+- 4 new tests (the recording's graph; forgetting without a store; forgetting on Postgres keeps
+  another mission's facts); Vitest 35, tsc, build, mypy, ruff
+
+---
+
 ## 2026-10-05 - Phase 39: seeing and hearing
 
 ### Added

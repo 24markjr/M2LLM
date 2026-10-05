@@ -6,6 +6,21 @@ and what is still broken.
 
 ---
 
+# 2026-10-05 - Two known gaps closed (before Phase 40)
+
+The owner asked to resolve all bugs before Phase 40. The bug log had none open; the changelog's known
+limitations were reviewed and the two a person would actually hit were fixed: replay could not show
+the knowledge graph (a recording held only event summaries), and memory could not forget a mission.
+The rest are design choices, kept and documented: memory does not merge attribute synonyms, the CLI
+stores no runs, label overlap in a dense 3D neighbourhood.
+
+- The recording's snapshot now carries the graph view, the knowledge base and its timeline, built at
+  the end of the run from the run's own knowledge (in memory, whichever store held it), so the
+  replay shows exactly what the run knew. The replay page reuses the analysis path (Phase 36).
+- Forgetting is per mission, never "clear everything" as Member 4's `clear()` was.
+
+---
+
 # 2026-10-05 - Phase 39: seeing and hearing
 
 ## What the owner asked for

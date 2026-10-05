@@ -1200,6 +1200,35 @@
         "title": "FindingsResponse",
         "type": "object"
       },
+      "Forgotten": {
+        "additionalProperties": false,
+        "properties": {
+          "episodes": {
+            "title": "Episodes",
+            "type": "integer"
+          },
+          "episodic": {
+            "title": "Episodic",
+            "type": "boolean"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "semantic": {
+            "title": "Semantic",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "run_id",
+          "episodes",
+          "episodic",
+          "semantic"
+        ],
+        "title": "Forgotten",
+        "type": "object"
+      },
       "FormatKind": {
         "enum": [
           "text",
@@ -3645,6 +3674,49 @@
           }
         },
         "summary": "Investigation",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/memory/runs/{run_id}": {
+      "delete": {
+        "description": "Remove what one mission contributed to memory: its episodes, its archived snapshot, its\nsupport for facts. A fact or entity nothing else supports goes with it; one other missions also\nsaw stays, with their support. The mission itself and its recording are untouched.",
+        "operationId": "forget_run_api_v1_memory_runs__run_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Forgotten"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Forget Run",
         "tags": [
           "memory"
         ]

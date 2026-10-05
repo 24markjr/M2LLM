@@ -463,3 +463,26 @@ async def test_two_missions_leave_one_known_entity_with_supported_facts(
             for run_id in (first, second):
                 await PostgresSemanticMemory().forget(run_id)
         await _drop_runs([first, second])
+
+
+@requires_db
+async def test_forgetting_a_mission_removes_its_episodes_and_only_its_facts(sfx: str) -> None:
+    """Postgres store: forget one mission; the facts another mission also saw stay."""
+    first, second = await _runs("first", "second")
+    try:
+        await record_run(_mission(first, sfx, "staff.txt:r3", "night"))
+        await record_run(_mission(second, sfx, "roster.txt:r7", "night"))
+        async with AsyncClient(transport=ASGITransport(app=create_app()), base_url="http://t") as c:
+            forgotten = (await c.delete(f"/api/v1/memory/runs/{first}")).json()
+            assert forgotten == {"run_id": first, "episodes": 1, "episodic": True, "semantic": True}
+            episodes = (await c.get("/api/v1/memory/episodes", params={"q": sfx})).json()
+            assert [e["run_id"] for e in episodes] == [second]
+            entity = (await c.get(f"/api/v1/memory/entities/rahul sharma {sfx}")).json()
+            assert entity["entity"]["runs"] == [second]
+            assert {f["support_count"] for f in entity["facts"]} == {1}
+            gone = await c.get(f"/api/v1/memory/investigations/{first}")
+            assert gone.status_code == 404
+    finally:
+        for run_id in (first, second):
+            await PostgresSemanticMemory().forget(run_id)
+        await _drop_runs([first, second])

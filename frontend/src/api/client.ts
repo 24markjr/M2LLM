@@ -198,6 +198,12 @@ export const api = {
         (predicate ? `&predicate=${encodeURIComponent(predicate)}` : ""),
     ),
 
+  forgetRun: (runId: string) =>
+    request<{ run_id: string; episodes: number; episodic: boolean; semantic: boolean }>(
+      `${BASE}/memory/runs/${runId}`,
+      { method: "DELETE" },
+    ),
+
   getEntityMemory: (name: string) =>
     request<EntityMemory>(`${BASE}/memory/entities/${encodeURIComponent(name)}`),
 };

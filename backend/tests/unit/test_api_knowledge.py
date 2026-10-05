@@ -407,3 +407,28 @@ async def test_after_a_restart_the_knowledge_is_still_served_from_neo4j(neo4j_ru
     assert {n["kind"] for n in graph["nodes"]} == {"ENTITY", "CLAIM", "DOCUMENT"}, (
         "findings live in the registry, so after a restart the graph has none"
     )
+
+
+async def test_a_recording_carries_the_knowledge_graph_for_replay() -> None:
+    """The graph is captured when the run ends, so replay can open the 3D view with no server."""
+    from app.api.registry import _capture_knowledge
+    from app.api.v1.missions import snapshot_payloads
+
+    record = _mission()
+    await _capture_knowledge(record)
+    knowledge = snapshot_payloads(record)["knowledge"]
+    assert isinstance(knowledge, dict)
+    graph = knowledge["graph"]
+    assert isinstance(graph, dict) and graph["nodes"]
+    assert {n["kind"] for n in graph["nodes"]} >= {"ENTITY", "FINDING"}
+    assert knowledge["snapshot"]["entities"]
+    assert isinstance(knowledge["timeline"], list)
+
+
+async def test_a_run_without_knowledge_records_no_graph() -> None:
+    from app.api.registry import _capture_knowledge
+    from app.api.v1.missions import snapshot_payloads
+
+    record = _mission(knowledge=None)
+    await _capture_knowledge(record)
+    assert "knowledge" not in snapshot_payloads(record)

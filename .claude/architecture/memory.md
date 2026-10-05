@@ -93,8 +93,9 @@ no run rows, so it records no memory.
 ## Forgetting a run
 
 `SemanticMemory.forget(run_id)` removes a run's support and its "seen in", then drops facts nothing
-supports and entities nothing references. In Postgres, deleting a run row cascades through its
-episodes, snapshot, support and entity rows. Used by the tests; there is no API for it yet.
+supports and entities nothing references; `EpisodicMemory.forget(run_id)` removes its episodes and
+archived snapshot. In Postgres, deleting a run row cascades through all of them. Exposed as
+`DELETE /api/v1/memory/runs/{run_id}` and the Memory page's "forget this mission" (2026-10-05).
 
 ## What was measured (2026-10-05)
 

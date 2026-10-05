@@ -6,7 +6,7 @@
  * in a conversation.
  */
 
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 
 import { ApiError, api } from "../api/client";
 import type { MissionDetail, MissionSummary, RecordingSummary } from "../api/types";
@@ -24,6 +24,9 @@ import { useMission, useMissionList } from "../hooks/useMission";
 import { SPEEDS, useReplay } from "../hooks/useReplay";
 import { DocumentPicker } from "../components/DocumentPicker";
 import { EvaluationDashboard } from "../components/evaluation";
+
+// The 3D explorer pulls in three.js; loaded only when a replay opens its graph.
+const KnowledgeExplorer = lazy(() => import("../components/graph3d/KnowledgeExplorer"));
 
 /** Fixtures that ship with the repo, offered so a demo needs no upload. */
 const SUGGESTED = [
@@ -403,6 +406,8 @@ export function ReplayPage({ onBack }: { onBack: () => void }) {
 
 function Replay({ name }: { name: string }) {
   const replay = useReplay(name);
+  const [showGraph, setShowGraph] = useState(false);
+  const knowledge = replay.recording?.snapshot.knowledge ?? null;
 
   if (replay.loading) {
     return (
@@ -466,6 +471,25 @@ function Replay({ name }: { name: string }) {
       </div>
 
       <MissionViewPanels view={replay} />
+
+      {/* The run's knowledge graph, rebuilt from the recording alone: no server, no model. */}
+      {knowledge ? (
+        <div className="panel">
+          <h2>
+            Knowledge graph <span className="count">from the recording</span>
+          </h2>
+          <div className="panel-body">
+            <button onClick={() => setShowGraph(!showGraph)}>{showGraph ? "Hide" : "Open"} the knowledge graph</button>
+          </div>
+        </div>
+      ) : null}
+      {knowledge && showGraph ? (
+        <Suspense fallback={<div className="empty">Loading the 3D view.</div>}>
+          <KnowledgeExplorer
+            source={{ kind: "analysis", view: knowledge.graph, snapshot: knowledge.snapshot, timeline: knowledge.timeline }}
+          />
+        </Suspense>
+      ) : null}
     </>
   );
 }

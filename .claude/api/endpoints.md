@@ -193,6 +193,7 @@ never read by a running mission. Code: `app/api/v1/memory.py`; design: `architec
 | GET | `/api/v1/memory/investigations/{run_id}` | `InvestigationMemory`: the archived working-memory snapshot and the run's episodes | `archive_investigation` (read back) |
 | GET | `/api/v1/memory/facts?subject=&predicate=&limit=` | `FactView`s by normalised subject and predicate, best supported first; `limit` 1-200 | `SemanticMemory.query(subject, predicate)` |
 | GET | `/api/v1/memory/entities/{name}` | `EntityMemoryView`: the entity across missions (`runs`) and its facts, as subject or as a relation's object | (new) |
+| DELETE | `/api/v1/memory/runs/{run_id}` | `Forgotten`: removes the mission's episodes, archived snapshot and support for facts; facts and entities nothing else supports go with it. The mission and its recording stay | `clear()`, per mission instead of everything |
 
 A fact has **no confidence**: `support` lists the (run, source line) pairs that asserted it, and
 `support_count` counts them. Only lines cited by a verified finding become facts; every finding,
