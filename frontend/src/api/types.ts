@@ -402,8 +402,90 @@ export interface KnowledgeSummary {
 }
 
 export interface AnalyzeResponse {
+  snapshot: KnowledgeSnapshot;
+  timeline: TimelineEvent[];
   graph: KnowledgeGraphView;
   excluded: string[];
+}
+
+// --- Member 3's investigation views (Phase 36) ---------------------------------------------
+
+/** A knowledge base, whole: what `analyze` returns, so its views can be built in the browser. */
+export interface KnowledgeSnapshot {
+  entities: KnowledgeEntity[];
+  relationships: KnowledgeRelationship[];
+  claims: KnowledgeClaim[];
+  conflicts: ClaimConflict[];
+}
+
+/** A date as far as the text gives it: a year may be missing, and a day. */
+export interface PartialDate {
+  year: number | null;
+  month: number;
+  day: number | null;
+}
+
+export type TimelineRelation = "SAME_TIME_AS" | "AFTER" | "UNKNOWN";
+
+export interface TimelineEvent {
+  claim_id: string;
+  entity_id: string;
+  entity_name: string;
+  attribute: string;
+  value: string;
+  source: string;
+  date: PartialDate | null;
+  /** The year used for ordering was inferred from the other events, not read from this one. */
+  year_inferred: boolean;
+  relation_to_previous: TimelineRelation | null;
+}
+
+export type ClaimOrder = "A_BEFORE_B" | "A_AFTER_B" | "SAME_TIME" | "UNKNOWN";
+
+export interface ClaimComparison {
+  claim_a: KnowledgeClaim;
+  claim_b: KnowledgeClaim;
+  date_a: PartialDate | null;
+  date_b: PartialDate | null;
+  relation: ClaimOrder;
+  reason: string;
+}
+
+/** A claim ranked by Member 3's explainable score: every point has a reason. */
+export interface SearchHit {
+  claim: KnowledgeClaim;
+  entity_name: string;
+  score: number;
+  explanation: string[];
+}
+
+export interface NetworkNode {
+  entity_id: string;
+  name: string;
+  entity_type: EntityType;
+}
+
+export interface NetworkEdge {
+  from_id: string;
+  to_id: string;
+  predicate: string;
+  source: string;
+}
+
+export interface EntityNetwork {
+  center_id: string;
+  depth: number;
+  nodes: NetworkNode[];
+  edges: NetworkEdge[];
+}
+
+/** Member 3's `/investigation/{name}`: everything known about one entity. */
+export interface EntityInvestigation {
+  entity: KnowledgeEntity;
+  sources: string[];
+  network: EntityNetwork;
+  claims: KnowledgeClaim[];
+  conflicts: ClaimConflict[];
 }
 
 // --- memory across investigations (Phase 33) ------------------------------------------------

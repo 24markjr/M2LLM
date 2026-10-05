@@ -5,6 +5,38 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-05 - Phase 36: Member 3's missing screens, interrelated
+
+### Added
+
+- `components/graph3d/Workbench.tsx`: Member 3's **hybrid search** (score badge and reasons),
+  **timeline** (before / same time / order unknown, missing and inferred years said; pick two to
+  compare) and **all contradictions** (every side with its citations), as tabs under the graph
+- `components/graph3d/InvestigateCard.tsx`: an entity's **investigate card** (Member 3's
+  `/investigation`): documents, contradictions, claims, timeline, connections
+- `components/graph3d/investigation.ts` (pure, 10 tests) and `access.ts` (API for a mission, the
+  browser for an analysis)
+- API client and types for `knowledge/search`, `/timeline`, `/timeline/compare`, `/conflicts`,
+  `/investigation`; `AnalyzeResponse` now typed with its snapshot and timeline
+- `.claude/implementation/integration-plan-phases-36-42.md`
+
+### Changed - everything linked
+
+- Any row selects or lights the graph; any entity name opens its card; a contradiction lights all
+  of its sides (the evidence-trail highlight, generalised to a "spotlight")
+- The graph's selection narrows the timeline and contradictions ("all entities" switch)
+- The entity search box falls through to the claim search when no entity matches
+- Memory <-> graph: `#/memory?entity=` opens Memory on an entity; an entity's missions link to
+  `#/mission/{id}/graph?focus=`, which opens the graph on it
+- A claim's panel links to its entity
+
+### Verified
+
+- Vitest 32 (10 new), `tsc -b`, `npm run build`. Not walked through in a browser this phase (the
+  owner asked for no repeated live runs)
+
+---
+
 ## 2026-10-05 - Phase 35: documentation and handover
 
 ### Added

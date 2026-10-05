@@ -1262,3 +1262,120 @@ table.memory-facts td {
 .node-tooltip .memory-note {
   color: var(--accent);
 }
+
+/* --- the investigation workbench (Phase 36) ---------------------------------- */
+/* Member 3's search, timeline and contradictions, tied to the graph. Every row is a button or
+   leads to one: nothing here is read-only text that could have been a link. */
+
+button.link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  width: auto;
+}
+button.link:hover,
+button.link:focus-visible {
+  text-decoration: underline;
+}
+
+.workbench {
+  margin-top: 16px;
+}
+.workbench-tabs {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 8px 12px 0;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.workbench-tabs button[role="tab"] {
+  border-radius: 4px 4px 0 0;
+  border-bottom: none;
+}
+.workbench-tabs button[role="tab"].on {
+  background: var(--accent-dim);
+  color: var(--text);
+}
+.workbench-tabs label input {
+  width: auto;
+}
+
+.workbench-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  max-height: 42vh;
+  overflow: auto;
+}
+.workbench-list > li {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--line);
+  border-left: 3px solid transparent;
+}
+/* What the graph has lit is marked here too: a border and a background, not colour alone. */
+.workbench-list > li.on {
+  background: var(--accent-dim);
+  border-left-color: var(--accent);
+}
+.workbench-list .row-main {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  width: auto;
+}
+.workbench-list .row-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 4px;
+  font-size: 12px;
+}
+.workbench-list.timeline > li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 8px;
+}
+.workbench-list.timeline > li > input {
+  width: auto;
+  grid-row: span 2;
+}
+.workbench-list .when {
+  display: inline-block;
+  min-width: 15ch;
+  color: var(--text-dim);
+}
+.workbench-list .score {
+  display: inline-block;
+  min-width: 2.2em;
+  margin-right: 8px;
+  padding: 1px 6px;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-align: center;
+  color: var(--accent);
+}
+.workbench-list .sides {
+  list-style: none;
+  margin: 4px 0 0;
+  padding-left: 14px;
+  font-size: 13px;
+}
+.compare-result {
+  color: var(--text);
+}
+
+.investigate h3 .count {
+  margin-left: 4px;
+}

@@ -18,6 +18,7 @@ import {
   ReplayPage,
 } from "./pages/pages";
 import { MemoryPage } from "./pages/MemoryPage";
+import { hashQuery } from "./components/graph3d/investigation";
 
 // The knowledge graph pages pull in three.js (~600 kB). Loaded only when opened (Phase 32).
 const KnowledgeExplorer = lazy(() => import("./components/graph3d/KnowledgeExplorer"));
@@ -27,17 +28,21 @@ type Route =
   | { name: "list" }
   | { name: "new" }
   | { name: "mission"; runId: string }
-  | { name: "graph"; runId: string }
+  | { name: "graph"; runId: string; focus: string }
   | { name: "knowledge" }
-  | { name: "memory" }
+  | { name: "memory"; entity: string }
   | { name: "replay" }
   | { name: "evaluation" };
 
-function parse(hash: string): Route {
+function parse(full: string): Route {
+  // Pages link to each other with a parameter (Phase 36): the graph opened on an entity
+  // (`?focus=`), Memory opened on an entity (`?entity=`).
+  const query = hashQuery(full);
+  const hash = full.split("?")[0] ?? full;
   const graph = /^#\/mission\/([\w-]+)\/graph$/.exec(hash);
-  if (graph?.[1]) return { name: "graph", runId: graph[1] };
+  if (graph?.[1]) return { name: "graph", runId: graph[1], focus: query.focus ?? "" };
   if (hash === "#/knowledge") return { name: "knowledge" };
-  if (hash === "#/memory") return { name: "memory" };
+  if (hash === "#/memory") return { name: "memory", entity: query.entity ?? "" };
   const match = /^#\/mission\/([\w-]+)$/.exec(hash);
   if (match?.[1]) return { name: "mission", runId: match[1] };
   if (hash === "#/new") return { name: "new" };
@@ -139,7 +144,11 @@ export default function App() {
             <span className="dim mono">knowledge graph · {route.runId}</span>
           </div>
           <Suspense fallback={<div className="empty">Loading the 3D view.</div>}>
-            <KnowledgeExplorer source={{ kind: "mission", runId: route.runId }} />
+            <KnowledgeExplorer
+              key={`${route.runId}:${route.focus}`}
+              source={{ kind: "mission", runId: route.runId }}
+              focusName={route.focus}
+            />
           </Suspense>
         </>
       ) : null}
@@ -150,7 +159,7 @@ export default function App() {
         </Suspense>
       ) : null}
 
-      {route.name === "memory" ? <MemoryPage /> : null}
+      {route.name === "memory" ? <MemoryPage key={route.entity} entity={route.entity} /> : null}
     </div>
   );
 }

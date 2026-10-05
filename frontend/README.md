@@ -37,6 +37,7 @@ npm test            # vitest run: the knowledge explorer's logic (Phase 32)
 | Mission detail | Phase tracker, task graph, findings, gaps, report, execution trace |
 | Knowledge graph (`#/mission/{id}/graph`) | The run's knowledge graph in 3D (or 2D): entities, with claims and documents as sub-nodes; click lights up what is related, hover shows a pop-up, a finding lights up its evidence trail. Grows live while the run extracts (Phase 32, ADR-011) |
 | Knowledge (`#/knowledge`) | Analyze documents without a mission: the same explorer over a graph that is not stored |
+| Investigation workbench (under the graph) | Member 3's other views, linked to the graph (Phase 36): **Search** (free text, ranked with reasons), **Timeline** (before/after, honest about missing years), **Contradictions** (every side lit at once). A selected entity opens its **investigate card** and narrows the lists; every row selects or lights something in the graph |
 | Memory (`#/memory`) | Earlier missions' findings (episodes, every status) and an entity across missions with its verified facts and their support. The graph's pop-up and panel say how many earlier missions saw an entity (Phase 33) |
 
 The detail page subscribes to `GET /missions/{id}/stream` with `EventSource`, so the phase

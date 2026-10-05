@@ -6,6 +6,51 @@ and what is still broken.
 
 ---
 
+# 2026-10-05 - Phase 36: Member 3's missing screens, interrelated
+
+## What was done
+
+An as-built review of the three teammates' reports showed Member 3's dashboard had four views and
+Mission Control had one (the graph). The other three - hybrid search, the timeline, all
+contradictions - and the investigate card now exist, as one workbench under the graph. The owner set
+the rule for this phase and the rest: **everything is interrelated**.
+
+## How "interrelated" was built
+
+- **One selection, one spotlight.** The explorer already had a selection (lights a node's
+  neighbourhood) and a finding trail (lights a set). The trail became a general spotlight, used by
+  contradictions too. Every view calls the same four actions (`Links`: select a node, open an
+  entity, spotlight a set, search for text), so none keeps its own idea of what is selected.
+- **The graph drives the views back.** A selected claim's entity narrows the timeline and
+  contradictions; lit nodes are marked in every list.
+- **Pages link too.** Memory and the graph open each other on one entity, through two URL parameters.
+
+## Decisions
+
+- **Pure link logic** (`investigation.ts`) beside the components, as Phase 32 did with `model.ts`:
+  where a click leads is tested without a browser.
+- **An analysis builds the views itself.** `analyze` already returns the whole knowledge base and its
+  timeline, so the card, timeline and contradictions are computed in the browser. Search and date
+  comparison run Member 3's scoring and the temporal comparison server-side, so for an analysis they
+  say they need a mission rather than reimplementing either in TypeScript.
+- **A naming collision** (`Workbench.tsx` and `workbench.ts`, the same file on Windows) renamed the
+  logic module to `investigation.ts`.
+- **The access object is keyed on the run id**, not the `source` prop, which a route creates inline:
+  otherwise every parent render would refetch every view.
+
+## Correction
+
+The review told the owner JARVIS had "pgvector search". Reading `LocalContextProvider` for the plan
+showed it keeps embeddings in memory. Recorded in the plan; Phase 40 covers it.
+
+## Verification
+
+- Vitest 32 passed (10 new); `tsc -b` clean; `npm run build` clean (main bundle +9 kB)
+- A live browser walkthrough was started and stopped at the owner's request ("don't test it again and
+  again"). Not run; stated here and in the changelog
+
+---
+
 # 2026-10-05 - Phase 35: documentation and handover
 
 ## What was done

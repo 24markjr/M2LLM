@@ -90,3 +90,8 @@ a canvas cannot be. The canvas is checked by the build and by screenshots in the
   full text being in the pop-up and panel.
 - The frontend now has a test runner (Vitest). CI runs it from Phase 34.
 - Mission Control has only a dark theme; the canvas uses its background colour.
+- **Phase 36** put Member 3's other views beside the graph (search, timeline, contradictions,
+  the investigate card). They follow the same rule as the canvas: their link logic is pure
+  (`investigation.ts`, tested), their data comes through one interface (`access.ts`: the API for a
+  mission, the browser for an analysis), and they share the explorer's selection and spotlight
+  rather than keeping their own.

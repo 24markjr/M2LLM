@@ -8,7 +8,7 @@
 import { useState } from "react";
 
 import { ApiError, api } from "../../api/client";
-import type { KnowledgeGraphView } from "../../api/types";
+import type { AnalyzeResponse } from "../../api/types";
 import KnowledgeExplorer from "./KnowledgeExplorer";
 
 const FIXTURES = [
@@ -23,18 +23,18 @@ const FIXTURES = [
 
 export default function AnalyzePage() {
   const [documents, setDocuments] = useState<string[]>(["aurora_project_report.txt", "aurora_financial_report.txt"]);
-  const [view, setView] = useState<KnowledgeGraphView | null>(null);
+  const [analysis, setAnalysis] = useState<AnalyzeResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
   const run = () => {
     setBusy(true);
     setMessage("");
-    setView(null);
+    setAnalysis(null);
     api
       .analyzeDocuments(documents)
       .then((result) => {
-        setView(result.graph);
+        setAnalysis(result);
         if (result.excluded.length) setMessage(`Not readable, left out: ${result.excluded.join(", ")}`);
       })
       .catch((exc: unknown) => setMessage(exc instanceof ApiError ? `${exc.code}: ${exc.message}` : String(exc)))
@@ -69,7 +69,11 @@ export default function AnalyzePage() {
         </div>
       </div>
       {message ? <div className="notice">{message}</div> : null}
-      {view ? <KnowledgeExplorer source={{ kind: "analysis", view }} /> : null}
+      {analysis ? (
+        <KnowledgeExplorer
+          source={{ kind: "analysis", view: analysis.graph, snapshot: analysis.snapshot, timeline: analysis.timeline }}
+        />
+      ) : null}
     </>
   );
 }

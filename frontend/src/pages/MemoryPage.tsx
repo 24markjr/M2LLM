@@ -12,9 +12,10 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 
 import { ApiError, api } from "../api/client";
+import { graphLink } from "../components/graph3d/investigation";
 import type { EntityMemory, Episode, MemoryStatus } from "../api/types";
 
-export function MemoryPage() {
+export function MemoryPage({ entity = "" }: { entity?: string }) {
   const [status, setStatus] = useState<MemoryStatus | null>(null);
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export function MemoryPage() {
           run a mission.
         </div>
       ) : null}
-      {status?.semantic_store ? <EntityLookup /> : null}
+      {status?.semantic_store ? <EntityLookup initial={entity} /> : null}
       {status?.episodic ? <EpisodeSearch /> : null}
     </>
   );
@@ -115,14 +116,24 @@ function EpisodeSearch() {
   );
 }
 
-function EntityLookup() {
-  const [name, setName] = useState("");
+function EntityLookup({ initial }: { initial: string }) {
+  const [name, setName] = useState(initial);
   const [found, setFound] = useState<EntityMemory | null>(null);
   const [message, setMessage] = useState("");
 
+  // Arriving from the graph with an entity (`#/memory?entity=`): look it up straight away.
+  useEffect(() => {
+    if (initial.trim()) find(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on arrival
+  }, []);
+
   const lookup = (event: FormEvent) => {
     event.preventDefault();
-    const wanted = name.trim();
+    find(name);
+  };
+
+  const find = (raw: string) => {
+    const wanted = raw.trim();
     if (!wanted) return;
     setFound(null);
     setMessage("");
@@ -178,6 +189,9 @@ function EntityCard({ memory }: { memory: EntityMemory }) {
             {i ? ", " : ""}
             <a className="mono" href={`#/mission/${run}`}>
               {run}
+            </a>{" "}
+            <a href={graphLink(run, entity.name)} title={`Open ${run}'s knowledge graph on ${entity.name}`}>
+              (graph)
             </a>
           </span>
         ))}

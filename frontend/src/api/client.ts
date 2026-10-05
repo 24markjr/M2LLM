@@ -26,6 +26,7 @@ import type {
   TaskGraphResponse,
 } from "./types";
 import type { EntityMemory, Episode, Fact, InvestigationMemory, MemoryStatus } from "./types";
+import type { ClaimComparison, ClaimConflict, EntityInvestigation, SearchHit, TimelineEvent } from "./types";
 
 const BASE = "/api/v1";
 
@@ -128,6 +129,35 @@ export const api = {
   getKnowledgeNode: (runId: string, nodeId: string) =>
     request<NodeDetail>(
       `${BASE}/missions/${runId}/knowledge/nodes/${encodeURIComponent(nodeId)}`,
+    ),
+
+  // --- Member 3's investigation views (Phase 36) ---
+  searchKnowledge: (runId: string, q: string, depth = 1) =>
+    request<SearchHit[]>(
+      `${BASE}/missions/${runId}/knowledge/search?q=${encodeURIComponent(q)}&depth=${depth}`,
+    ),
+
+  getTimeline: (runId: string, entityId?: string) =>
+    request<TimelineEvent[]>(
+      `${BASE}/missions/${runId}/knowledge/timeline` +
+        (entityId ? `?entity_id=${encodeURIComponent(entityId)}` : ""),
+    ),
+
+  compareClaims: (runId: string, claimA: string, claimB: string) =>
+    request<ClaimComparison>(
+      `${BASE}/missions/${runId}/knowledge/timeline/compare?claim_a=${encodeURIComponent(claimA)}` +
+        `&claim_b=${encodeURIComponent(claimB)}`,
+    ),
+
+  getConflicts: (runId: string, entityId?: string) =>
+    request<ClaimConflict[]>(
+      `${BASE}/missions/${runId}/knowledge/conflicts` +
+        (entityId ? `?entity_id=${encodeURIComponent(entityId)}` : ""),
+    ),
+
+  investigate: (runId: string, name: string) =>
+    request<EntityInvestigation>(
+      `${BASE}/missions/${runId}/knowledge/investigation?name=${encodeURIComponent(name)}`,
     ),
 
   getFindingTrail: (runId: string, findingId: string) =>

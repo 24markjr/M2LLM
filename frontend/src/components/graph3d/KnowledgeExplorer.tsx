@@ -12,13 +12,24 @@
  * Added: conflicts drawn red with moving particles; click a finding to light up the evidence it
  * rests on; search to fly to an entity; filters; a 2D view, chosen automatically for reduced motion
  * or no WebGL; a keyboard-navigable list mirroring the graph; and live growth while a mission runs.
+ *
+ * Phase 36 adds Member 3's investigation views - hybrid search, the timeline, every contradiction
+ * (`Workbench`) and an entity's investigate card (`InvestigateCard`) - and ties them to the graph
+ * through one selection and one spotlight: any row in any view selects or lights the graph, and the
+ * graph's selection narrows the views. One set of `Links` does it, so no view has its own idea of
+ * what is selected.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiError, api } from "../../api/client";
-import type { GraphNode, KnowledgeGraphView, NodeDetail } from "../../api/types";
+import type { GraphNode, KnowledgeGraphView, KnowledgeSnapshot, NodeDetail, TimelineEvent } from "../../api/types";
+import { analysisAccess, missionAccess } from "./access";
+import { InvestigateCard } from "./InvestigateCard";
 import { KnowledgeGraph3D } from "./KnowledgeGraph3D";
+import { Workbench } from "./Workbench";
+import type { Links, WorkbenchTab } from "./Workbench";
+import { entityOfSelection } from "./investigation";
 import type { Filters } from "./model";
 import {
   NO_FILTERS,
@@ -33,7 +44,18 @@ import {
 } from "./model";
 
 /** Where the graph comes from: a mission (live, with details and trails) or an analysis. */
-export type GraphSource = { kind: "mission"; runId: string } | { kind: "analysis"; view: KnowledgeGraphView };
+export type GraphSource =
+  | { kind: "mission"; runId: string }
+  | { kind: "analysis"; view: KnowledgeGraphView; snapshot: KnowledgeSnapshot; timeline: TimelineEvent[] };
+
+/** What is lit as a set: a finding's evidence trail, or every side of one contradiction. */
+type Spotlight = {
+  kind: "trail" | "conflict";
+  label: string;
+  findingId: string;
+  ids: Set<string>;
+  unmatched: string[];
+};
 
 const ENTITY_TYPES = ["PERSON", "ORG", "LOCATION", "DATE", "PRODUCT", "SHIPMENT", "OTHER"];
 // Events after which the graph may have changed: the knowledge base was built, a finding settled,
@@ -53,8 +75,22 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 }
 
-export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
+export default function KnowledgeExplorer({ source, focusName }: { source: GraphSource; focusName?: string }) {
   const runId = source.kind === "mission" ? source.runId : null;
+  // Member 3's views read through one interface: the API for a mission, the analysis otherwise.
+  // Keyed on the run or the analysis data, not on `source` itself: a route renders `source` inline,
+  // and a new object each render would make every view refetch.
+  const sourceKey = source.kind === "mission" ? source.runId : source.snapshot;
+  const access = useMemo(
+    () => (source.kind === "mission" ? missionAccess(source.runId) : analysisAccess(source.snapshot, source.timeline)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on `sourceKey` on purpose
+    [sourceKey],
+  );
+  // Bumped whenever the graph is (re)loaded, so open views refetch while a mission grows.
+  const [version, setVersion] = useState(0);
+  const [workbenchTab, setWorkbenchTab] = useState<WorkbenchTab>("conflicts");
+  const [workbenchQuery, setWorkbenchQuery] = useState("");
+  const focusApplied = useRef(false);
   const [view, setView] = useState<KnowledgeGraphView | null>(
     source.kind === "analysis" ? source.view : null,
   );
@@ -64,7 +100,7 @@ export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
   const [focus, setFocus] = useState<string | null>(null);
   const [depth, setDepth] = useState(1);
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
-  const [trail, setTrail] = useState<{ findingId: string; ids: Set<string>; unmatched: string[] } | null>(null);
+  const [trail, setTrail] = useState<Spotlight | null>(null);
   const [mode, setMode] = useState<"2d" | "3d">(() => initialMode(prefersReducedMotion(), hasWebGL()));
   const [hover, setHover] = useState<{ node: GraphNode; x: number; y: number } | null>(null);
   const [query, setQuery] = useState("");
@@ -82,6 +118,7 @@ export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
     try {
       setView(await api.getKnowledgeGraph(runId));
       details.current.clear();
+      setVersion((v) => v + 1);
       setStatus(null);
     } catch (exc: unknown) {
       if (exc instanceof ApiError && exc.code === "KNOWLEDGE_NOT_BUILT") {
@@ -230,7 +267,7 @@ export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
         const found = await api.getFindingTrail(runId, findingId);
         const ids = new Set(found.node_ids);
         setSelected(null);
-        setTrail({ findingId, ids, unmatched: found.unmatched_sources });
+        setTrail({ kind: "trail", label: findingId, findingId, ids, unmatched: found.unmatched_sources });
         setExpanded((current) => new Set([...current, ...parentsToExpand(view, ids)]));
         setFilters((current) => ({ ...current, showFindings: true }));
         setFocus(findingId);
@@ -240,6 +277,46 @@ export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
     },
     [runId, view],
   );
+
+  // One set of actions for every view: the workbench, the investigate card, the node panel.
+  const links: Links = useMemo(
+    () => ({
+      selectNode: (nodeId: string) => {
+        const node = view?.nodes.find((n) => n.id === nodeId);
+        if (node?.kind === "FINDING") void showTrail(nodeId);
+        else select(nodeId);
+      },
+      openEntity: (entityId: string) => select(entityId),
+      spotlight: (label: string, ids: Set<string>, focusId: string) => {
+        setSelected(null);
+        setTrail({ kind: "conflict", label, findingId: "", ids, unmatched: [] });
+        if (view) setExpanded((current) => new Set([...current, ...parentsToExpand(view, ids)]));
+        setFocus(focusId);
+      },
+      searchFor: (text: string) => {
+        setWorkbenchTab("search");
+        setWorkbenchQuery(text);
+      },
+    }),
+    [view, select, showTrail],
+  );
+
+  // The entity the graph's selection belongs to narrows the workbench's lists.
+  const focusEntity = useMemo(() => {
+    const id = view ? entityOfSelection(view, selected) : null;
+    const node = id ? view?.nodes.find((n) => n.id === id) : undefined;
+    return node ? { id: node.id, name: node.label } : null;
+  }, [view, selected]);
+
+  // Arriving from elsewhere (Memory, a link) with an entity to open: open it once the graph is here.
+  useEffect(() => {
+    if (!view || !focusName || focusApplied.current) return;
+    const [best] = searchEntities(view, focusName);
+    if (best) {
+      focusApplied.current = true;
+      select(best.id);
+    }
+  }, [view, focusName, select]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -271,6 +348,10 @@ export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
   };
 
   // --- rendering -----------------------------------------------------------------------------------
+  const selectedNode = selected
+    ? (graph.nodes.find((n) => n.id === selected) ?? view?.nodes.find((n) => n.id === selected) ?? null)
+    : null;
+
   if (!view) {
     return (
       <div className="panel">
@@ -294,10 +375,12 @@ export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
           onKeyDown={(e) => {
             if (e.key === "Enter" && view) {
               const [best] = searchEntities(view, query);
+              // No entity by that name: search every claim for it instead.
               if (best) select(best.id);
+              else if (query.trim()) links.searchFor(query);
             }
           }}
-          aria-label="Find an entity and fly to it"
+          aria-label="Find an entity and fly to it; Enter searches every claim when no entity matches"
         />
         <datalist id="graph-entities">
           {view.nodes
@@ -413,7 +496,18 @@ export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
         </div>
 
         <aside className="explorer-side">
-          {trail ? (
+          {trail?.kind === "conflict" ? (
+            <div className="panel">
+              <h2 className="bad">Contradiction</h2>
+              <div className="panel-body">
+                <div>{trail.label}</div>
+                <div className="dim">{trail.ids.size} node(s) lit: every side, the entity, and the documents each side was read from.</div>
+                <button onClick={clear}>Clear</button>
+              </div>
+            </div>
+          ) : null}
+
+          {trail?.kind === "trail" ? (
             <div className="panel">
               <h2>Evidence trail</h2>
               <div className="panel-body">
@@ -429,14 +523,26 @@ export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
             </div>
           ) : null}
 
-          {selected ? (
+          {selectedNode?.kind === "ENTITY" ? (
+            <InvestigateCard
+              node={selectedNode}
+              access={access}
+              version={version}
+              recall={recallText(selectedRecall, runId)}
+              expanded={expanded.has(selectedNode.id)}
+              onToggle={() => toggleExpand(selectedNode.id)}
+              onClear={clear}
+              links={links}
+            />
+          ) : selectedNode ? (
             <NodePanel
               detail={detail}
               recall={recallText(selectedRecall, runId)}
-              node={graph.nodes.find((n) => n.id === selected) ?? view.nodes.find((n) => n.id === selected) ?? null}
-              expanded={expanded.has(selected)}
-              onToggle={() => toggleExpand(selected)}
+              node={selectedNode}
+              expanded={expanded.has(selectedNode.id)}
+              onToggle={() => toggleExpand(selectedNode.id)}
               onClear={clear}
+              links={links}
             />
           ) : null}
 
@@ -487,6 +593,20 @@ export default function KnowledgeExplorer({ source }: { source: GraphSource }) {
           </div>
         </aside>
       </div>
+
+      <Workbench
+        access={access}
+        version={version}
+        focusEntity={focusEntity}
+        lit={lit}
+        selectedId={selected}
+        depth={depth}
+        tab={workbenchTab}
+        onTab={setWorkbenchTab}
+        query={workbenchQuery}
+        onQuery={setWorkbenchQuery}
+        links={links}
+      />
     </div>
   );
 }
@@ -550,6 +670,7 @@ function NodePanel({
   expanded,
   onToggle,
   onClear,
+  links,
 }: {
   node: GraphNode | null;
   detail: NodeDetail | null;
@@ -557,6 +678,7 @@ function NodePanel({
   expanded: boolean;
   onToggle: () => void;
   onClear: () => void;
+  links: Links;
 }) {
   if (!node) return null;
   return (
@@ -612,6 +734,14 @@ function NodePanel({
               ))}
             </ul>
           </>
+        ) : null}
+        {node.kind === "CLAIM" && node.parent ? (
+          <div>
+            claim of{" "}
+            <button className="link" onClick={() => node.parent && links.openEntity(node.parent)}>
+              {detail?.entity?.name ?? node.parent}
+            </button>
+          </div>
         ) : null}
         {detail?.finding_claim ? <div>{detail.finding_claim}</div> : null}
         {detail === null && node.kind !== "ENTITY" ? <div className="dim">{node.source}</div> : null}
