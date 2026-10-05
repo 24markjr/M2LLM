@@ -1,7 +1,8 @@
 # Integration plan — Phases 36–42: completing Members 2, 3 and 4
 
 **Status:** Drafted 2026-10-05 after an as-built review of the three teammates' reports against this
-codebase. Phase 36 approved and started the same day; decisions D7-D11 still open.
+codebase. Phases 36-38 done the same day. D7-D11 taken as recommended when the owner said to
+proceed with Phase 38 (to be overridden if wanted); D12 (speech-to-text) open for Phase 39.
 
 **Why this plan exists.** Phases 25-35 ported Members 3 and 4. A review of their own build reports
 found what that left out: three of Member 3's dashboard views had an API but no screen, Member 4's
@@ -33,6 +34,7 @@ accounts for that.
 | D9 | Vector store | pgvector (ADR-005) with their in-memory fallback idea; not Qdrant |
 | D10 | Embeddings | Keep `nomic-embed-text` via Ollama; not Sentence-Transformers (PyTorch, ~2 GB; and the LLM stays behind `app/llm/`) |
 | D11 | Workspaces | `workspace_id` on uploads and retrieval (default `default`); a mission may name a workspace as its document scope |
+| D12 | Speech-to-text for video and audio (raised in Phase 38) | An optional extra (`faster-whisper`, local, no model service), like OCR; until then a video's text is a subtitle file of the same name |
 
 ---
 
@@ -42,7 +44,7 @@ accounts for that.
 |---|---|---|---|---|---|
 | 36 | Member 3's missing screens | Hybrid search, timeline, all contradictions, the investigate card - one workbench tied to the graph | M | - | **DONE** 2026-10-05 |
 | 37 | Member 4's answer evaluator, wired in | The final report checked sentence by sentence, deterministically | S | - | **DONE** 2026-10-05 |
-| 38 | Member 2 (A): formats and provenance | DOCX (paragraphs and tables), XLSX (sheets as pages), images; file hash, parser and OCR flag stored | M | D7 | TODO |
+| 38 | Member 2 (A): formats, provenance, adding files | One parser per file type (Word, Excel, CSV, PDF, text, subtitles, images, video); provenance; New Mission adds files, typed context and earlier uploads | M | D7 | **DONE** 2026-10-05 |
 | 39 | Member 2 (B): OCR | Scanned PDFs and images; OCR'd text marked to the evidence; low confidence never makes a conflict | M-L | 38, D8 | TODO |
 | 40 | Member 2 (C): stored, workspace-scoped retrieval | pgvector with an in-memory fallback; `/context/ingest` and `/context/retrieve`; their 600/80 chunker beside ours, chosen by measurement | L | D9-D11 | TODO |
 | 41 | Evaluation and hardening | Three new scenarios (14), recall@k, Experiment 006 (chunking), repeated runs with spread, CI, invariants, a new baseline | M | 36-40 | TODO |
@@ -107,3 +109,33 @@ phase small. Every API and CLI mission gets the check.
 **Verified:** 9 new backend tests (the check, synthesis with the event, both renderings, the
 unchanged overall rule), 1 new Vitest assertion group; mypy, ruff, tsc, build. The database-backed
 integration tests skipped in the final run because Docker was down; none touch this phase's code.
+
+---
+
+### Phase 38 — Member 2 (A): every file type, and adding files to a mission
+
+**Owner's additions when approving it (2026-10-05):** documents, Excel, CSV, XLSX, any kind of file,
+image or video, one parser per extension where needed; an option to add files and to type context;
+all of it in the New Mission form.
+
+**As built.**
+
+| Piece | What |
+|---|---|
+| `app/tools/formats.py` | **The format registry**: one entry per family, its extensions, its parser and how it becomes lines. The upload endpoint's accepted types, the console's file picker (`GET /documents/formats`) and `load_document` all read it |
+| Parsers | Text (`.txt .md .json .log`), table (`.csv .tsv`), **spreadsheet** (`.xlsx .xlsm`: each sheet a page, one row per line, computed values), **Word** (`.docx`: paragraphs *and tables* in order - Member 2's dropped tables), PDF, **subtitles** (`.srt .vtt`: one timed cue per line), **image** (8 extensions: size, format, EXIF orientation - Member 2's behaviour), **video** (6 extensions: the transcript from a same-named subtitle file) |
+| No text yet | An image, or a video without a transcript, is accepted and kept but `has_text=False`: a mission excludes it and logs why, the picker shows it as "kept, not attached until it has text". Text from images is Phase 39 (OCR); from speech, D12 |
+| Provenance | Every upload reports its parser and SHA-256 (Member 2's provenance log) and is logged with them |
+| Uploads | Streamed to a temporary file and renamed when complete (was: buffered in memory). 25 MB, or 500 MB for video. `GET /documents` lists earlier uploads |
+| New Mission | A document picker: attached documents with what each parsed as (kind, size, lines or pages, an injection warning); **Add files** (picker and drag-and-drop); **Type or paste context** (saved as a named `.txt`, cited like any document); **Earlier uploads**; **Examples**; "how each type is read" |
+| Knowledge page | Uses the same picker, so an analysis can read uploads and typed context too |
+
+**Defects found:** BUG-023 (no mission could use an uploaded file) and BUG-024 (`.agent/uploads/` was
+not git-ignored). Both fixed; see the bug log.
+
+**Not in this phase:** OCR (39), speech-to-text (D12), storing hashes in the `documents` table (40,
+with stored retrieval).
+
+**Verified:** 19 new backend tests (every parser on generated files, the upload API, the BUG-023
+regression), 3 new Vitest tests; mypy, ruff, tsc, build. Docker was down: the 57 database tests
+skipped, none touching this phase.

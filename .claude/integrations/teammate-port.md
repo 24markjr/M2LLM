@@ -486,3 +486,25 @@ What the integration added beyond Members 3 and 4's features, from the plan's ta
 | A13 | Three shipment scenarios | 34 | DONE |
 | A14 | Cross-investigation graph in Neo4j | 33 | DONE |
 | A15 | Specifics check in the composite verifier | 26 | DONE. Extended to numbers in a date's place (BUG-021) |
+
+---
+
+## Member 2 — M2LLM, document ingestion (Phases 38-40)
+
+Ported from their build report (reviewed 2026-10-05; their code was not in this repository). Decision
+D7: re-implemented in-process, as Members 3 and 4 were.
+
+| ID | Their feature | Their file | JARVIS location | Status |
+|---|---|---|---|---|
+| M1 | File classification by extension | `ingestion/classifier.py` | `app/tools/formats.py` | CHANGED. One registry read by the upload check, the file picker and the loader |
+| M2 | PDF text, page by page | `parsers/` (PyMuPDF) | `tools/loader.py:load_pdf` (pypdf) | DONE before the port; OCR for scanned pages is Phase 39 |
+| M3 | DOCX paragraphs | `parsers/` (python-docx) | `formats.py:load_docx` | CHANGED. Tables too, in document order |
+| M4 | TXT, CSV | `parsers/` | `loader.py:load_text` | DONE |
+| M5 | XLSX sheets to text | `parsers/` (pandas, openpyxl) | `formats.py:load_xlsx` (openpyxl) | CHANGED. Each sheet a page, so a citation names the sheet; bounded and said to be |
+| M6 | Images: orientation and dimensions | `parsers/` (Pillow) | `formats.py:load_image` | DONE, and marked as having no text until OCR |
+| M7 | Provenance: file hash, parser, OCR flag | `provenance/tracker.py` (JSONL) | `UploadedDocument.parser/sha256`, logged | CHANGED. In the upload response and the log; stored with retrieval in Phase 40 |
+| M8 | OCR (PaddleOCR) | `ocr/` | - | TODO, Phase 39 (D8) |
+| M9 | Normalisation, chunking (600/80) | `normalization/`, `chunking/` | - | TODO, Phase 40 (chunker chosen by measurement) |
+| M10 | Embeddings, Qdrant with in-memory fallback, workspace-scoped retrieval | `embeddings/`, `vectorstore/`, `retrieval/` | - | TODO, Phase 40 (pgvector, D9-D11) |
+| M11 | Vision-language interface | `vision/` (raises `NotImplementedError`) | - | NOT PORTED: theirs is unimplemented |
+| - | Video | (not in their build) | `formats.py:load_video` | ADDED. Text from a same-named subtitle file; speech-to-text is D12 |

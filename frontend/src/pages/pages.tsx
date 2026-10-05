@@ -22,6 +22,7 @@ import {
 import type { MissionView } from "../hooks/useMission";
 import { useMission, useMissionList } from "../hooks/useMission";
 import { SPEEDS, useReplay } from "../hooks/useReplay";
+import { DocumentPicker } from "../components/DocumentPicker";
 import { EvaluationDashboard } from "../components/evaluation";
 
 /** Fixtures that ship with the repo, offered so a demo needs no upload. */
@@ -131,7 +132,7 @@ export function NewMission({
           if (exc.code === "AT_CAPACITY") {
             setError("The engine is already running as many missions as it allows. Wait for one to finish.");
           } else if (exc.code === "NO_READABLE_DOCUMENTS") {
-            setError("None of those documents could be read. Check the names against .agent/fixtures/.");
+            setError("None of those documents has readable text. Images need OCR and videos a transcript.");
           } else if (exc.code === "UNREACHABLE") {
             setError("Cannot reach the engine. Start it with: uvicorn app.api.app:create_app --factory");
           } else {
@@ -143,11 +144,6 @@ export function NewMission({
         setBusy(false);
       });
   };
-
-  const toggle = (name: string) =>
-    setDocuments((current) =>
-      current.includes(name) ? current.filter((d) => d !== name) : [...current, name],
-    );
 
   return (
     <>
@@ -173,21 +169,10 @@ export function NewMission({
 
           <div className="field">
             <label>Documents</label>
-            <div className="row">
-              {SUGGESTED.map((name) => (
-                <button
-                  key={name}
-                  className={documents.includes(name) ? "primary" : ""}
-                  onClick={() => toggle(name)}
-                >
-                  {documents.includes(name) ? "✓ " : ""}
-                  {name}
-                </button>
-              ))}
-            </div>
+            <DocumentPicker examples={SUGGESTED} selected={documents} onChange={setDocuments} />
             <div className="hint">
-              Resolved by name inside <code className="mono">.agent/fixtures/</code>. Anything
-              unreadable is excluded and reported rather than silently skipped.
+              Word, Excel, CSV, PDF, text, subtitles, images and video. Every line is citable;
+              anything unreadable is excluded and reported rather than silently skipped.
             </div>
           </div>
 

@@ -1395,3 +1395,49 @@ button.link:focus-visible {
 .narrative-check a + a {
   margin-left: 6px;
 }
+
+/* --- New Mission documents (Phase 38) ------------------------------------------ */
+.document-picker {
+  display: grid;
+  gap: 12px;
+}
+.document-picker .attached {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.document-picker .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1px solid var(--line-bright);
+  border-radius: 4px;
+  font-size: 13px;
+}
+.drop-zone {
+  display: grid;
+  gap: 4px;
+  padding: 18px;
+  border: 1px dashed var(--line-bright);
+  border-radius: 6px;
+  text-align: center;
+  cursor: pointer;
+}
+.drop-zone.over {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.drop-zone input[type="file"] {
+  display: none;
+}
+.typed-context {
+  display: grid;
+  gap: 6px;
+}
+.typed-context[open] > summary {
+  margin-bottom: 6px;
+}
+.typed-context button {
+  justify-self: start;
+}

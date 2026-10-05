@@ -51,6 +51,12 @@ class LoadedDocument(JarvisModel):
     # Line number at which each page begins, in order. Empty for non-paginated documents.
     # This is what lets a tool report `report.pdf:p12` instead of `report.pdf:r847`.
     page_starts: list[int] = Field(default_factory=list)
+    # Provenance (Phase 38, Member 2's provenance log): which parser read it, and the file's hash.
+    parser: str = ""
+    sha256: str = ""
+    # False for a file that yields no citable text yet (an image before OCR, a video without a
+    # transcript). A mission excludes it and says why rather than reading silence as evidence.
+    has_text: bool = True
 
     @property
     def summary(self) -> str:
@@ -131,12 +137,10 @@ def load_text(path: Path, *, max_chars: int = MAX_DOCUMENT_CHARS) -> LoadedDocum
 
 
 def load_document(path: Path) -> LoadedDocument:
-    """Load one document by extension."""
-    if not path.exists():
-        raise DocumentLoadError(f"no such file: {path}")
-    if path.suffix.lower() == ".pdf":
-        return load_pdf(path)
-    return load_text(path)
+    """Load one document with the parser its extension calls for (`app/tools/formats.py`)."""
+    from app.tools.formats import parse
+
+    return parse(path)
 
 
 def load_documents(paths: list[Path]) -> tuple[dict[str, str], list[LoadedDocument]]:
@@ -154,6 +158,14 @@ def load_documents(paths: list[Path]) -> tuple[dict[str, str], list[LoadedDocume
             document = load_document(path)
         except DocumentLoadError as exc:
             log.warning("document_load_failed", path=str(path), error=str(exc))
+            continue
+        if not document.has_text:
+            log.warning(
+                "document_has_no_text",
+                document=document.document_id,
+                kind=document.kind,
+                reason=document.text.splitlines()[-1] if document.text else "",
+            )
             continue
         documents[document.document_id] = document.text
         loaded.append(document)
@@ -232,8 +244,17 @@ def resolve_document(name: str) -> Path:
     if direct.exists():
         return direct
 
-    root = get_settings().agent_dir / "fixtures"
-    for candidate in (root / "documents" / name, root / "csv" / name, root / name):
+    agent = get_settings().agent_dir
+    root = agent / "fixtures"
+    # Uploads too (BUG-023): files uploaded through the API land in `.agent/uploads/`, and until
+    # Phase 38 no mission could find them - the upload endpoint said they would be "referenced by
+    # name when a mission is created, exactly like a fixture", and nothing resolved that name.
+    for candidate in (
+        root / "documents" / name,
+        root / "csv" / name,
+        root / name,
+        agent / "uploads" / name,
+    ):
         if candidate.exists():
             return candidate
     return direct

@@ -505,6 +505,42 @@ export interface EntityInvestigation {
   conflicts: ClaimConflict[];
 }
 
+// --- documents of every kind (Phase 38) -----------------------------------------------------
+
+/** One family of file types the engine reads: from `GET /documents/formats`. */
+export interface FormatSpec {
+  kind: string;
+  extensions: string[];
+  parser: string;
+  /** False for images and video until OCR and transcription: accepted, but no text yet. */
+  yields_text: boolean;
+  becomes: string;
+}
+
+/** What an upload parsed as. The parse result, not an acknowledgement. */
+export interface UploadedDocument {
+  document_id: string;
+  name: string;
+  kind: string;
+  bytes: number;
+  summary: string;
+  truncated: boolean;
+  injection: { source: string; hits: Record<string, string[]>; severity: string };
+  parser: string;
+  sha256: string;
+  has_text: boolean;
+  /** Why a file has no text yet, when it has none. */
+  note: string;
+}
+
+/** An earlier upload, offered again to a new mission. */
+export interface StoredDocument {
+  name: string;
+  kind: string;
+  bytes: number;
+  uploaded_at: string;
+}
+
 // --- memory across investigations (Phase 33) ------------------------------------------------
 
 export interface MemoryStatus {

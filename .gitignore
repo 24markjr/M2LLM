@@ -28,6 +28,8 @@ frontend/.vite/
 # Committed traces are curated demo assets; local scratch traces are not.
 .agent/traces/*.local.json
 .agent/evals/reports/*.local.json
+# Files people upload to missions (Phase 38): theirs, never part of the repository.
+.agent/uploads/
 
 # --- Editors / OS ---
 .idea/

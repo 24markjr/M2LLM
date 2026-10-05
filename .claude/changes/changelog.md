@@ -5,6 +5,36 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-05 - Phase 38: every file type, and adding files to a mission
+
+### Added
+
+- `app/tools/formats.py`: the format registry and one parser per family - text, CSV/TSV,
+  **Excel** (`.xlsx`, `.xlsm`, each sheet a page), **Word** (`.docx`, tables included), PDF,
+  **subtitles** (`.srt`, `.vtt`, timed cues), **images** (8 types, described; text needs OCR) and
+  **video** (6 types, text from a same-named subtitle file)
+- Upload provenance: parser and SHA-256 per file; `has_text` and a note for files with no text yet
+- `GET /api/v1/documents/formats` (what the engine reads) and `GET /api/v1/documents` (earlier
+  uploads); OpenAPI 36 -> 37 paths
+- New Mission's **document picker**: add files (picker and drag-and-drop), **type or paste context**
+  (saved as a named document), reuse earlier uploads, examples, and what each file parsed as. The
+  Knowledge page uses the same picker
+- Dependencies: `python-docx`, `openpyxl`, `Pillow`
+- Tests: `test_formats.py` (12), `test_api_documents.py` (7, the endpoint's first), Vitest 3
+
+### Changed
+
+- Uploads stream to a temporary file and are renamed when complete (were buffered in memory);
+  video may be up to 500 MB
+- A mission excludes a file with no text yet and logs why
+
+### Fixed
+
+- **BUG-023**: no mission could use an uploaded file (`resolve_document` never searched uploads)
+- **BUG-024**: `.agent/uploads/` was not git-ignored
+
+---
+
 ## 2026-10-05 - Phase 37: Member 4's answer evaluator checks every report
 
 ### Added

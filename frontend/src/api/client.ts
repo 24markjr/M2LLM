@@ -27,6 +27,7 @@ import type {
 } from "./types";
 import type { EntityMemory, Episode, Fact, InvestigationMemory, MemoryStatus } from "./types";
 import type { ClaimComparison, ClaimConflict, EntityInvestigation, SearchHit, TimelineEvent } from "./types";
+import type { FormatSpec, StoredDocument, UploadedDocument } from "./types";
 
 const BASE = "/api/v1";
 
@@ -50,9 +51,11 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  // A file upload sends FormData, whose content type (with its boundary) the browser must set.
+  const isForm = init?.body instanceof FormData;
   const response = await fetch(path, {
     ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+    headers: { ...(isForm ? {} : { "Content-Type": "application/json" }), ...(init?.headers ?? {}) },
   });
 
   if (!response.ok) {
@@ -168,6 +171,17 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ documents }),
     }),
+
+  // --- documents (Phase 38) ---
+  getFormats: () => request<FormatSpec[]>(`${BASE}/documents/formats`),
+
+  listUploads: () => request<StoredDocument[]>(`${BASE}/documents`),
+
+  uploadDocuments: (files: File[]) => {
+    const form = new FormData();
+    for (const file of files) form.append("files", file, file.name);
+    return request<UploadedDocument[]>(`${BASE}/documents`, { method: "POST", body: form });
+  },
 
   // --- memory (Phase 33) ---
   getMemoryStatus: () => request<MemoryStatus>(`${BASE}/memory`),

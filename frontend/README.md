@@ -33,7 +33,7 @@ npm test            # vitest run: the knowledge explorer's logic (Phase 32)
 | View | Purpose |
 |---|---|
 | Mission list | Every run, newest first, with finding and gap counts |
-| New mission | Objective plus documents. Aurora fixtures are prefilled |
+| New mission | Objective plus documents: **add files** of any supported type (Word, Excel, CSV, PDF, text, subtitles, images, video; picker or drag-and-drop), **type or paste context** as a document, reuse earlier uploads, or pick an example. Each file shows what it parsed as (Phase 38) |
 | Mission detail | Phase tracker, task graph, findings, gaps, report, execution trace |
 | Knowledge graph (`#/mission/{id}/graph`) | The run's knowledge graph in 3D (or 2D): entities, with claims and documents as sub-nodes; click lights up what is related, hover shows a pop-up, a finding lights up its evidence trail. Grows live while the run extracts (Phase 32, ADR-011) |
 | Knowledge (`#/knowledge`) | Analyze documents without a mission: the same explorer over a graph that is not stored |

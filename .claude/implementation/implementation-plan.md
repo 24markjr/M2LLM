@@ -62,7 +62,7 @@ place to read the state of the build.*
 | 23 | Test hardening & CI | `DONE`, gate red (verified) | 581 tests, invariant + adversarial suites, GitHub Actions. `eval-regression` correctly fails on the baseline's confabulation - see testing-strategy.md |
 | 24 | Documentation & demo package | `DONE`, 2 caveats | README rewritten, six-demo script, contribution statement, changelog current. 4 of 6 demos have a recorded fallback; a clean clone has not been tested from scratch. *Both closed in Phase 35: nine demos, each with a fallback; a clean clone tested end to end on 2026-10-05* |
 | 25-35 | Integration of Members 3 and 4 | `DONE` | Phase-by-phase plan in [`integration-plan-phases-25-35.md`](integration-plan-phases-25-35.md): trust layer, security, knowledge core, Neo4j, pipeline wiring, knowledge API, 3D graph explorer, memory, evaluation, handover. Approved 2026-10-03 (D1-D6 answered) |
-| 36-42 | Completing Members 2, 3 and 4 | `IN PROGRESS` (36-37 done) | Plan in [`integration-plan-phases-36-42.md`](integration-plan-phases-36-42.md): Member 3's missing screens, Member 4's answer evaluator, Member 2's formats, OCR and stored retrieval. D7-D11 open |
+| 36-42 | Completing Members 2, 3 and 4 | `IN PROGRESS` (36-38 done) | Plan in [`integration-plan-phases-36-42.md`](integration-plan-phases-36-42.md): Member 3's missing screens, Member 4's answer evaluator, Member 2's formats, OCR and stored retrieval. D7-D11 open |
 
 **Carried debt**
 

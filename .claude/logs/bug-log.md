@@ -957,3 +957,36 @@ is not configuration, so adding three to the dataset left the key unchanged.
 The key includes the sorted scenario ids, and the refusal says so ("... or set of scenarios").
 Test: `test_reports_over_different_scenarios_are_not_compared`. Old reports need no migration: the
 ids are read from each report's own scenarios.
+
+---
+
+## BUG-023 — No mission could use an uploaded file
+
+**Found:** 2026-10-05, reading the upload path for Phase 38
+**Severity:** High. The console's upload feature could not do the one thing it was for
+**Status:** Fixed (`tools/loader.py:resolve_document`)
+
+**Symptom.** `POST /documents` stores a file in `.agent/uploads/` and says, in its own docstring, that
+uploads "are then referenced by name when a mission is created, exactly like a fixture". Mission
+creation resolves names with `resolve_document`, which looked in `.agent/fixtures/` only. An uploaded
+file's name resolved to nothing, so the mission excluded it as unreadable.
+
+**Why it was not caught.** The upload endpoint had no tests at all, and the console had no upload
+control, so nothing ever uploaded a file and then used it.
+
+**Fix.** `resolve_document` also searches `.agent/uploads/`. `test_an_uploaded_file_can_be_used_by_name`
+uploads a Word file and loads it by name; `test_api_documents.py` (new) covers the endpoint.
+
+---
+
+## BUG-024 — Uploaded files were not git-ignored
+
+**Found:** 2026-10-05, Phase 38, before the console made uploading easy
+**Severity:** Medium. A person's documents could have been committed with an unrelated change
+**Status:** Fixed (`.gitignore`)
+
+**Symptom.** `.gitignore` ignored local traces and local reports, not `.agent/uploads/`. Nothing had
+been uploaded on this machine, so nothing leaked; with Phase 38's "Add files" it would have been one
+`git add -A` away.
+
+**Fix.** `.agent/uploads/` is ignored, with the reason beside it.

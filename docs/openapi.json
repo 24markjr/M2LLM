@@ -1200,6 +1200,57 @@
         "title": "FindingsResponse",
         "type": "object"
       },
+      "FormatKind": {
+        "enum": [
+          "text",
+          "csv",
+          "spreadsheet",
+          "word",
+          "pdf",
+          "subtitles",
+          "image",
+          "video"
+        ],
+        "title": "FormatKind",
+        "type": "string"
+      },
+      "FormatSpec": {
+        "additionalProperties": false,
+        "description": "One family of file types: which extensions, which parser, and how it becomes text.",
+        "properties": {
+          "becomes": {
+            "title": "Becomes",
+            "type": "string"
+          },
+          "extensions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Extensions",
+            "type": "array"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/FormatKind"
+          },
+          "parser": {
+            "title": "Parser",
+            "type": "string"
+          },
+          "yields_text": {
+            "default": true,
+            "title": "Yields Text",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind",
+          "extensions",
+          "parser",
+          "becomes"
+        ],
+        "title": "FormatSpec",
+        "type": "object"
+      },
       "GapRecord": {
         "additionalProperties": false,
         "properties": {
@@ -2616,6 +2667,37 @@
         "title": "Stage",
         "type": "string"
       },
+      "StoredDocument": {
+        "additionalProperties": false,
+        "description": "An earlier upload, offered again to a new mission.",
+        "properties": {
+          "bytes": {
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "uploaded_at": {
+            "format": "date-time",
+            "title": "Uploaded At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "bytes",
+          "uploaded_at"
+        ],
+        "title": "StoredDocument",
+        "type": "object"
+      },
       "TaskGraphResponse": {
         "additionalProperties": false,
         "properties": {
@@ -2849,6 +2931,11 @@
             "title": "Document Id",
             "type": "string"
           },
+          "has_text": {
+            "default": true,
+            "title": "Has Text",
+            "type": "boolean"
+          },
           "injection": {
             "$ref": "#/components/schemas/InjectionScan"
           },
@@ -2858,6 +2945,21 @@
           },
           "name": {
             "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "parser": {
+            "default": "",
+            "title": "Parser",
+            "type": "string"
+          },
+          "sha256": {
+            "default": "",
+            "title": "Sha256",
             "type": "string"
           },
           "summary": {
@@ -3104,6 +3206,30 @@
   "openapi": "3.1.0",
   "paths": {
     "/api/v1/documents": {
+      "get": {
+        "description": "Earlier uploads, newest first, so a new mission can reuse them without uploading again.",
+        "operationId": "list_uploads_api_v1_documents_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoredDocument"
+                  },
+                  "title": "Response List Uploads Api V1 Documents Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Uploads",
+        "tags": [
+          "documents"
+        ]
+      },
       "post": {
         "description": "Store uploads and report what each one parsed as.\n\nThe response is the parse result, not an acknowledgement. A client that only learns a\nfile was accepted still does not know whether it will contribute anything to a run -\na 12-page scanned PDF with no text layer uploads perfectly and yields nothing.",
         "operationId": "upload_documents_api_v1_documents_post",
@@ -3144,6 +3270,32 @@
           }
         },
         "summary": "Upload Documents",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/formats": {
+      "get": {
+        "description": "Every file type a mission can read, which parser reads it, and how it becomes text.",
+        "operationId": "formats_api_v1_documents_formats_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FormatSpec"
+                  },
+                  "title": "Response Formats Api V1 Documents Formats Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Formats",
         "tags": [
           "documents"
         ]

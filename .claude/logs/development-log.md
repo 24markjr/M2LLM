@@ -6,6 +6,44 @@ and what is still broken.
 
 ---
 
+# 2026-10-05 - Phase 38: every file type, and adding files to a mission
+
+## What was done
+
+Member 2's document formats, and what the owner added when approving the phase: any kind of file
+(documents, Excel, CSV, images, video), one parser per type where needed, and New Mission able to
+add files and typed context.
+
+## Decisions
+
+- **One registry** for the types: the upload check, the file picker and the loader all read it.
+- **Everything becomes lines**, so every format shares the citation and verification path.
+  Spreadsheets reuse the PDF page mechanism: a sheet is a page.
+- **Silence is not evidence.** Images (until OCR) and videos (without a transcript) are accepted
+  and kept, marked `has_text=False`, excluded from a mission's evidence, and shown as such.
+- **Video's text is its transcript.** A same-named `.srt`/`.vtt` is read; speech-to-text needs a new
+  optional dependency, raised as D12 rather than added unasked.
+- **Typed context is a document**: uploaded as a named `.txt`, so it is cited line by line like any
+  file - no separate path.
+- **D7-D11 taken as recommended** on "proceed with Phase 38"; recorded so they can be overridden.
+
+## What reading the upload path found
+
+- **BUG-023**: uploads were stored where no mission looked. The endpoint had no tests and the console
+  no upload control, so it had never been exercised end to end.
+- **BUG-024**: the uploads folder was not git-ignored.
+- The endpoint buffered whole uploads in memory before writing; fine at 25 MB, not for video. It now
+  streams to a temporary file.
+
+## Verification
+
+- Backend: 896 passed, 57 skipped (Docker down; all skips are database tests, none in this phase);
+  mypy (118 modules), ruff; OpenAPI regenerated
+- Frontend: Vitest 35, tsc, build
+- Not run live: the owner asked for no repeated live or browser runs
+
+---
+
 # 2026-10-05 - Phase 37: Member 4's answer evaluator checks every report
 
 ## What was done

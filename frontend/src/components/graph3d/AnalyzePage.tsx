@@ -9,6 +9,7 @@ import { useState } from "react";
 
 import { ApiError, api } from "../../api/client";
 import type { AnalyzeResponse } from "../../api/types";
+import { DocumentPicker } from "../DocumentPicker";
 import KnowledgeExplorer from "./KnowledgeExplorer";
 
 const FIXTURES = [
@@ -41,9 +42,6 @@ export default function AnalyzePage() {
       .finally(() => setBusy(false));
   };
 
-  const toggle = (name: string) =>
-    setDocuments((current) => (current.includes(name) ? current.filter((d) => d !== name) : [...current, name]));
-
   return (
     <>
       <div className="panel">
@@ -53,14 +51,8 @@ export default function AnalyzePage() {
             Extract entities, relationships and claims, and the claims that conflict across sources, without
             running an investigation. Nothing is stored. Takes about ten seconds per document on a local model.
           </div>
-          <div className="doc-picker">
-            {FIXTURES.map((name) => (
-              <label key={name}>
-                <input type="checkbox" checked={documents.includes(name)} onChange={() => toggle(name)} />{" "}
-                <span className="mono">{name}</span>
-              </label>
-            ))}
-          </div>
+          {/* The same picker as New Mission (Phase 38): files, typed context, earlier uploads. */}
+          <DocumentPicker examples={FIXTURES} selected={documents} onChange={setDocuments} />
           <div className="row">
             <button className="primary" disabled={busy || documents.length === 0} onClick={run}>
               {busy ? "Extracting." : "Analyze"}
