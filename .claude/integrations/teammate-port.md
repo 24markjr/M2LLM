@@ -90,7 +90,7 @@ the reason).
 | K11 | Evidence lookup for a claim | `main.py:/evidence/{claim_id}` | `base.py`; `neo4j_store.py` | DONE on both stores |
 | K12 | REST API (14 endpoints) | `main.py` | `app/api/v1/knowledge.py` | CHANGED. All 14 endpoints per mission, typed errors, CORS on the allow-list; plus graph, node detail, finding trail; `analyze` replaces `/ingest` and stores nothing |
 | K13 | Browser dashboard | `dashboard.html` | `frontend/src/components/graph3d/`; `#/mission/{id}/graph`, `#/knowledge` | CHANGED. Per mission, 3D (2D fallback) instead of a static 2D network; entities with claims and documents as sub-nodes; click lights related nodes, hover pop-up, finding evidence trail; live refresh on SSE; ADR-011 |
-| K14 | Sample data (7 chunks) and loader | `sample_data.json`, `load_sample.py` | `.agent/fixtures/documents/shipment_*.txt`, evaluation scenario | TODO |
+| K14 | Sample data (7 chunks) and loader | `sample_data.json`, `load_sample.py` | `.agent/fixtures/documents/shipment_*.txt`; scenarios `shipment_arrival_conflict`, `shipment_9012_consistent` | CHANGED. Text verbatim, one document per source; the loader is the evaluation runner (a scenario names its documents); a planted-injection note added for `injection_document` |
 
 ### Member 4 — memory, trust, security, evaluation
 

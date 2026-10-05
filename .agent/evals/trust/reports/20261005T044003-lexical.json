@@ -1,0 +1,940 @@
+{
+  "generated_at": "2026-10-05T04:40:03.268729Z",
+  "verifier": "lexical",
+  "thresholds": {
+    "relevance": 0.2,
+    "support": 0.4,
+    "conflict": 0.5
+  },
+  "dataset_hash": "sha256:1ab383cea19b441f",
+  "cases": 60,
+  "correct": 60,
+  "accuracy": 1.0,
+  "hallucination_rate": 0.0,
+  "risky_cases": 30,
+  "false_confidence": 0,
+  "category_accuracy": {
+    "contradiction": 1.0,
+    "insufficient_evidence": 1.0,
+    "supported": 1.0
+  },
+  "avg_latency_ms": 1.845491666616302,
+  "injection_detection_rate": 1.0,
+  "security": {
+    "cases": 27,
+    "detection_rate": 1.0,
+    "attack_recall": 1.0,
+    "false_positive_rate": 0.0,
+    "category_misses": 0,
+    "results": [
+      {
+        "id": "override_1",
+        "source": "member4",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "override_instructions"
+        ],
+        "severity": "MEDIUM",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "override_2",
+        "source": "member4",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "override_instructions"
+        ],
+        "severity": "MEDIUM",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "override_3",
+        "source": "member4",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "override_instructions"
+        ],
+        "severity": "MEDIUM",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "role_1",
+        "source": "member4",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "role_manipulation"
+        ],
+        "severity": "MEDIUM",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "role_2",
+        "source": "member4",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "role_manipulation"
+        ],
+        "severity": "MEDIUM",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "extraction_1",
+        "source": "member4",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "system_prompt_extraction"
+        ],
+        "severity": "HIGH",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "extraction_2",
+        "source": "member4",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "system_prompt_extraction"
+        ],
+        "severity": "HIGH",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "exfil_1",
+        "source": "member4",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "data_exfiltration"
+        ],
+        "severity": "HIGH",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "exfil_2",
+        "source": "member4",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "data_exfiltration"
+        ],
+        "severity": "HIGH",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "tool_spoof_1",
+        "source": "member4",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "tool_call_spoofing"
+        ],
+        "severity": "HIGH",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "tool_spoof_2",
+        "source": "member4",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "tool_call_spoofing"
+        ],
+        "severity": "HIGH",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "clean_1",
+        "source": "member4",
+        "expected_flag": false,
+        "flagged": false,
+        "categories": [],
+        "severity": "NONE",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "clean_2",
+        "source": "member4",
+        "expected_flag": false,
+        "flagged": false,
+        "categories": [],
+        "severity": "NONE",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "clean_3",
+        "source": "member4",
+        "expected_flag": false,
+        "flagged": false,
+        "categories": [],
+        "severity": "NONE",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "adv_ignore",
+        "source": "adversarial",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "override_instructions"
+        ],
+        "severity": "MEDIUM",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "adv_maintenance",
+        "source": "adversarial",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "role_manipulation"
+        ],
+        "severity": "MEDIUM",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "adv_chat_template",
+        "source": "adversarial",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "tool_call_spoofing"
+        ],
+        "severity": "HIGH",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "adv_note_to_ai",
+        "source": "adversarial",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "override_instructions"
+        ],
+        "severity": "MEDIUM",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "wrapper_breakout",
+        "source": "jarvis",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "tool_call_spoofing"
+        ],
+        "severity": "HIGH",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "fake_findings_json",
+        "source": "jarvis",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "tool_call_spoofing"
+        ],
+        "severity": "HIGH",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "message_for_model",
+        "source": "jarvis",
+        "expected_flag": true,
+        "flagged": true,
+        "categories": [
+          "override_instructions"
+        ],
+        "severity": "MEDIUM",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "clean_change_request",
+        "source": "clean",
+        "expected_flag": false,
+        "flagged": false,
+        "categories": [],
+        "severity": "NONE",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "clean_instructions_for_staff",
+        "source": "clean",
+        "expected_flag": false,
+        "flagged": false,
+        "categories": [],
+        "severity": "NONE",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "clean_ai_project",
+        "source": "clean",
+        "expected_flag": false,
+        "flagged": false,
+        "categories": [],
+        "severity": "NONE",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "clean_ignore_rounding",
+        "source": "clean",
+        "expected_flag": false,
+        "flagged": false,
+        "categories": [],
+        "severity": "NONE",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "clean_csv_row",
+        "source": "clean",
+        "expected_flag": false,
+        "flagged": false,
+        "categories": [],
+        "severity": "NONE",
+        "correct": true,
+        "category_ok": true
+      },
+      {
+        "id": "clean_security_policy",
+        "source": "clean",
+        "expected_flag": false,
+        "flagged": false,
+        "categories": [],
+        "severity": "NONE",
+        "correct": true,
+        "category_ok": true
+      }
+    ]
+  },
+  "results": [
+    {
+      "case_id": "BENCH-008",
+      "category": "supported",
+      "claim": "Shipment 1008 was processed at 14:30 PM by Rahul Sharma representing Meridian Supply Co.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8999760602625714,
+      "reasoning": "Supported by: inspection_log_013.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-000",
+      "category": "supported",
+      "claim": "Shipment 1000 was processed at 17:30 PM by Karan Mehta representing ABC Logistics.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8963409722830652,
+      "reasoning": "Supported by: incident_report_000.pdf:p1, shipping_report_020.pdf:p1, security_report_034.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-022",
+      "category": "supported",
+      "claim": "Shipment 1022 was processed at 14:00 PM by Sana Iyer representing Meridian Supply Co.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8482796568481484,
+      "reasoning": "Supported by: inspection_log_021.pdf:p1, employee_statement_033.pdf:p1, incident_report_056.pdf:p1, employee_statement_057.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-INSUFF-011",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 11 received a salary related to shipment 90011.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.12236100197817831,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-028",
+      "category": "contradiction",
+      "claim": "Shipment 1028 was processed at 6:15 AM by Aman Verma representing Zenith Traders.",
+      "expected": "CONTRADICTED",
+      "actual": "CONTRADICTED",
+      "correct": true,
+      "relevance": 0.7317294256796587,
+      "reasoning": "Relevant evidence disagrees with the claim. Conflicting source(s): invoice_043.pdf:p1 (times 06:15 vs 08:00 on shared id 1028)"
+    },
+    {
+      "case_id": "BENCH-INSUFF-013",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 13 received a salary related to shipment 90013.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.12474777914763871,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-INSUFF-003",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 3 received a salary related to shipment 90003.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.011860952570947617,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-006",
+      "category": "contradiction",
+      "claim": "Shipment 1006 was processed at 12:00 PM by Aman Verma representing ABC Logistics.",
+      "expected": "CONTRADICTED",
+      "actual": "CONTRADICTED",
+      "correct": true,
+      "relevance": 0.6829395300574226,
+      "reasoning": "Relevant evidence disagrees with the claim. Conflicting source(s): invoice_011.pdf:p1 (times 12:00 vs 13:00 on shared id 1006)"
+    },
+    {
+      "case_id": "BENCH-017",
+      "category": "supported",
+      "claim": "Shipment 1017 was processed at 12:40 PM by Aman Verma representing Orion Freight.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8395173270135259,
+      "reasoning": "Supported by: security_report_026.pdf:p1, invoice_027.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-025",
+      "category": "contradiction",
+      "claim": "Shipment 1025 was processed at 14:00 PM by Karan Mehta representing Zenith Traders.",
+      "expected": "CONTRADICTED",
+      "actual": "CONTRADICTED",
+      "correct": true,
+      "relevance": 0.7396185261333613,
+      "reasoning": "Relevant evidence disagrees with the claim. Conflicting source(s): inspection_log_037.pdf:p1 (times 14:00 vs 15:00 on shared id 1025)"
+    },
+    {
+      "case_id": "BENCH-INSUFF-000",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 0 received a salary related to shipment 90000.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.011860952570947617,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-015",
+      "category": "contradiction",
+      "claim": "Shipment 1015 was processed at 9:00 AM by Karan Mehta representing Zenith Traders.",
+      "expected": "CONTRADICTED",
+      "actual": "CONTRADICTED",
+      "correct": true,
+      "relevance": 0.6962300094872581,
+      "reasoning": "Relevant evidence disagrees with the claim. Conflicting source(s): incident_report_024.pdf:p1 (times 09:00 vs 11:15 on shared id 1015)"
+    },
+    {
+      "case_id": "BENCH-024",
+      "category": "supported",
+      "claim": "Shipment 1024 was processed at 13:00 PM by Aman Verma representing Meridian Supply Co.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8697465335838166,
+      "reasoning": "Supported by: invoice_011.pdf:p1, invoice_035.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-INSUFF-012",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 12 received a salary related to shipment 90012.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.11558674176193189,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-014",
+      "category": "supported",
+      "claim": "Shipment 1014 was processed at 20:45 PM by Sana Iyer representing Meridian Supply Co.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8699214388638624,
+      "reasoning": "Supported by: inspection_log_021.pdf:p1, audit_note_047.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-036",
+      "category": "supported",
+      "claim": "Shipment 1036 was processed at 16:40 PM by Rahul Sharma representing Orion Freight.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8699580174009505,
+      "reasoning": "Supported by: inspection_log_053.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-016",
+      "category": "supported",
+      "claim": "Shipment 1016 was processed at 9:45 AM by Sana Iyer representing Zenith Traders.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8806437989291619,
+      "reasoning": "Supported by: incident_report_016.pdf:p1, employee_statement_017.pdf:p1, employee_statement_025.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-INSUFF-008",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 8 received a salary related to shipment 90008.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.011860952570947617,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-029",
+      "category": "supported",
+      "claim": "Shipment 1029 was processed at 19:00 PM by Rahul Sharma representing ABC Logistics.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8366267015199933,
+      "reasoning": "Supported by: shipping_report_044.pdf:p1, inspection_log_045.pdf:p1, shipping_report_052.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-001",
+      "category": "supported",
+      "claim": "Shipment 1001 was processed at 16:45 PM by Priya Nair representing Orion Freight.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.891971440694115,
+      "reasoning": "Supported by: employee_statement_001.pdf:p1, audit_note_031.pdf:p1, incident_report_032.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-039",
+      "category": "contradiction",
+      "claim": "Shipment 1039 was processed at 19:00 PM by Sana Iyer representing Meridian Supply Co.",
+      "expected": "CONTRADICTED",
+      "actual": "CONTRADICTED",
+      "correct": true,
+      "relevance": 0.6030142511017357,
+      "reasoning": "Relevant evidence disagrees with the claim. Conflicting source(s): employee_statement_057.pdf:p1 (times 19:00 vs 21:15 on shared id 1039)"
+    },
+    {
+      "case_id": "BENCH-023",
+      "category": "supported",
+      "claim": "Shipment 1023 was processed at 18:30 PM by Karan Mehta representing ABC Logistics.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8475279598638698,
+      "reasoning": "Supported by: incident_report_000.pdf:p1, shipping_report_004.pdf:p1, security_report_034.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-026",
+      "category": "supported",
+      "claim": "Shipment 1026 was processed at 11:15 AM by Aman Verma representing Orion Freight.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8638028585030615,
+      "reasoning": "Supported by: inspection_log_029.pdf:p1, transactions_038.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-INSUFF-009",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 9 received a salary related to shipment 90009.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.011860952570947617,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-INSUFF-015",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 15 received a salary related to shipment 90015.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.10265538190476667,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-INSUFF-016",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 16 received a salary related to shipment 90016.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.09603408960184201,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-007",
+      "category": "supported",
+      "claim": "Shipment 1007 was processed at 17:40 PM by Aman Verma representing Zenith Traders.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8777358067289811,
+      "reasoning": "Supported by: shipping_report_012.pdf:p1, invoice_019.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-INSUFF-019",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 19 received a salary related to shipment 90019.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.12117314133431402,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-021",
+      "category": "contradiction",
+      "claim": "Shipment 1021 was processed at 15:00 PM by Priya Nair representing Orion Freight.",
+      "expected": "CONTRADICTED",
+      "actual": "CONTRADICTED",
+      "correct": true,
+      "relevance": 0.7235206278543922,
+      "reasoning": "Relevant evidence disagrees with the claim. Conflicting source(s): incident_report_032.pdf:p1 (times 15:00 vs 16:15 on shared id 1021)"
+    },
+    {
+      "case_id": "BENCH-002",
+      "category": "supported",
+      "claim": "Shipment 1002 was processed at 6:00 AM by Devika Rao representing Meridian Supply Co.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8713284323355908,
+      "reasoning": "Supported by: security_report_002.pdf:p1, transactions_030.pdf:p1, audit_note_047.pdf:p1, employee_statement_049.pdf:p1, security_report_050.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-019",
+      "category": "supported",
+      "claim": "Shipment 1019 was processed at 11:15 AM by Aman Verma representing Meridian Supply Co.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8275633555394608,
+      "reasoning": "Supported by: inspection_log_029.pdf:p1, transactions_038.pdf:p1, security_report_050.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-004",
+      "category": "contradiction",
+      "claim": "Shipment 1004 was processed at 18:00 PM by Priya Nair representing Meridian Supply Co.",
+      "expected": "CONTRADICTED",
+      "actual": "CONTRADICTED",
+      "correct": true,
+      "relevance": 0.6584498507064571,
+      "reasoning": "Relevant evidence disagrees with the claim. Conflicting source(s): audit_note_007.pdf:p1 (times 18:00 vs 21:00 on shared id 1004)"
+    },
+    {
+      "case_id": "BENCH-011",
+      "category": "supported",
+      "claim": "Shipment 1011 was processed at 16:30 PM by Sana Iyer representing Zenith Traders.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8444334770923523,
+      "reasoning": "Supported by: incident_report_016.pdf:p1, employee_statement_017.pdf:p1, security_report_018.pdf:p1, employee_statement_025.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-005",
+      "category": "supported",
+      "claim": "Shipment 1005 was processed at 10:15 AM by Karan Mehta representing Meridian Supply Co.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8566639001710199,
+      "reasoning": "Supported by: incident_report_008.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-038",
+      "category": "supported",
+      "claim": "Shipment 1038 was processed at 16:40 PM by Priya Nair representing ABC Logistics.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8863397879553181,
+      "reasoning": "Supported by: audit_note_055.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-INSUFF-001",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 1 received a salary related to shipment 90001.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.011860952570947617,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-010",
+      "category": "supported",
+      "claim": "Shipment 1010 was processed at 7:15 AM by Karan Mehta representing Orion Freight.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8172682447546676,
+      "reasoning": "Supported by: audit_note_015.pdf:p1, incident_report_048.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-033",
+      "category": "contradiction",
+      "claim": "Shipment 1033 was processed at 9:15 AM by Devika Rao representing Meridian Supply Co.",
+      "expected": "CONTRADICTED",
+      "actual": "CONTRADICTED",
+      "correct": true,
+      "relevance": 0.7843219005788797,
+      "reasoning": "Relevant evidence disagrees with the claim. Conflicting source(s): security_report_050.pdf:p1 (times 09:15 vs 11:15 on shared id 1033)"
+    },
+    {
+      "case_id": "BENCH-032",
+      "category": "supported",
+      "claim": "Shipment 1032 was processed at 12:30 PM by Karan Mehta representing Orion Freight.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8384185348390817,
+      "reasoning": "Supported by: audit_note_015.pdf:p1, incident_report_048.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-030",
+      "category": "supported",
+      "claim": "Shipment 1030 was processed at 14:15 PM by Priya Nair representing Orion Freight.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8327613067237734,
+      "reasoning": "Supported by: employee_statement_001.pdf:p1, audit_note_031.pdf:p1, incident_report_032.pdf:p1, transactions_046.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-INSUFF-017",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 17 received a salary related to shipment 90017.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.1048413871241811,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-INSUFF-014",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 14 received a salary related to shipment 90014.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.11075976113743369,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-INSUFF-018",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 18 received a salary related to shipment 90018.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.10857748919268378,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-020",
+      "category": "supported",
+      "claim": "Shipment 1020 was processed at 18:00 PM by Devika Rao representing Meridian Supply Co.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8835476447402386,
+      "reasoning": "Supported by: security_report_002.pdf:p1, inspection_log_005.pdf:p1, transactions_006.pdf:p1, transactions_030.pdf:p1, employee_statement_049.pdf:p1, security_report_050.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-INSUFF-007",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 7 received a salary related to shipment 90007.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.011860952570947617,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-034",
+      "category": "supported",
+      "claim": "Shipment 1034 was processed at 15:15 PM by Aman Verma representing ABC Logistics.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8754283217718488,
+      "reasoning": "Supported by: invoice_051.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-037",
+      "category": "supported",
+      "claim": "Shipment 1037 was processed at 9:40 AM by Devika Rao representing Orion Freight.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8081371473867991,
+      "reasoning": "Supported by: transactions_054.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-003",
+      "category": "contradiction",
+      "claim": "Shipment 1003 was processed at 17:45 PM by Priya Nair representing ABC Logistics.",
+      "expected": "CONTRADICTED",
+      "actual": "CONTRADICTED",
+      "correct": true,
+      "relevance": 0.5997602254020441,
+      "reasoning": "Relevant evidence disagrees with the claim. Conflicting source(s): shipping_report_004.pdf:p1 (times 17:45 vs 18:30 on shared id 1003)"
+    },
+    {
+      "case_id": "BENCH-013",
+      "category": "supported",
+      "claim": "Shipment 1013 was processed at 14:15 PM by Karan Mehta representing ABC Logistics.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8830748284810152,
+      "reasoning": "Supported by: incident_report_000.pdf:p1, shipping_report_020.pdf:p1, shipping_report_036.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-018",
+      "category": "supported",
+      "claim": "Shipment 1018 was processed at 17:45 PM by Aman Verma representing Orion Freight.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8718083976497997,
+      "reasoning": "Supported by: shipping_report_028.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-012",
+      "category": "contradiction",
+      "claim": "Shipment 1012 was processed at 16:30 PM by Aman Verma representing Zenith Traders.",
+      "expected": "CONTRADICTED",
+      "actual": "CONTRADICTED",
+      "correct": true,
+      "relevance": 0.6180411722094764,
+      "reasoning": "Relevant evidence disagrees with the claim. Conflicting source(s): invoice_019.pdf:p1 (times 16:30 vs 17:15 on shared id 1012)"
+    },
+    {
+      "case_id": "BENCH-009",
+      "category": "supported",
+      "claim": "Shipment 1009 was processed at 17:00 PM by Devika Rao representing Zenith Traders.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.873576516462243,
+      "reasoning": "Supported by: transactions_014.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-031",
+      "category": "supported",
+      "claim": "Shipment 1031 was processed at 20:45 PM by Devika Rao representing Meridian Supply Co.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8912064272865038,
+      "reasoning": "Supported by: security_report_002.pdf:p1, inspection_log_021.pdf:p1, audit_note_047.pdf:p1, employee_statement_049.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-INSUFF-005",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 5 received a salary related to shipment 90005.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.011860952570947617,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-INSUFF-002",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 2 received a salary related to shipment 90002.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.011860952570947617,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-035",
+      "category": "supported",
+      "claim": "Shipment 1035 was processed at 7:00 AM by Rahul Sharma representing ABC Logistics.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8597184267131345,
+      "reasoning": "Supported by: shipping_report_044.pdf:p1, inspection_log_045.pdf:p1, shipping_report_052.pdf:p1"
+    },
+    {
+      "case_id": "BENCH-INSUFF-010",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 10 received a salary related to shipment 90010.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.15529537432654816,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-INSUFF-006",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 6 received a salary related to shipment 90006.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.011860952570947617,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-INSUFF-004",
+      "category": "insufficient_evidence",
+      "claim": "Unlisted Person 4 received a salary related to shipment 90004.",
+      "expected": "INSUFFICIENT_EVIDENCE",
+      "actual": "INSUFFICIENT_EVIDENCE",
+      "correct": true,
+      "relevance": 0.011860952570947617,
+      "reasoning": "No evidence in the pool is topically relevant to this claim."
+    },
+    {
+      "case_id": "BENCH-027",
+      "category": "supported",
+      "claim": "Shipment 1027 was processed at 13:00 PM by Devika Rao representing ABC Logistics.",
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "correct": true,
+      "relevance": 0.8398644145215102,
+      "reasoning": "Supported by: invoice_011.pdf:p1, audit_note_039.pdf:p1, incident_report_040.pdf:p1"
+    }
+  ]
+}

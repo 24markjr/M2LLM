@@ -76,7 +76,7 @@ tools:
     capabilities: [VERIFICATION]
     cost_hint: medium
     timeout_s: 60
-    provider: baseline      # baseline | remote — see Settings.verification_provider
+    provider: composite     # baseline | lexical | composite | remote — see Settings.verification_provider
 
 # --- Fallback chains -----------------------------------------------------------
 # Walked in order when a tool fails permanently. When the chain is exhausted the

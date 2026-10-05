@@ -440,7 +440,7 @@ _TOLERANCES = {
 }
 
 
-async def run_eval(suite: str, *, write: bool = True) -> int:
+async def run_eval(suite: str, *, write: bool = True, out: Path | None = None) -> int:
     """Run the evaluation suite and report measured metrics.
 
     Every number printed here is computed by a scorer from a real run. None is hard-coded,
@@ -512,7 +512,9 @@ async def run_eval(suite: str, *, write: bool = True) -> int:
                 )
 
     if write:
-        _, md_path = write_report(report, reports_dir())
+        # `--out` writes elsewhere: an experiment arm must not become the suite's baseline, which
+        # is the newest report in `reports/` (Phase 34).
+        _, md_path = write_report(report, out or reports_dir())
         print()
         print(f"report written to {md_path}")
 
@@ -592,6 +594,9 @@ def main(argv: list[str] | None = None) -> int:
     eval_cmd = sub.add_parser("eval", help="run the agent evaluation suite")
     eval_cmd.add_argument("--suite", default="all", help="core | negative | all")
     eval_cmd.add_argument("--no-write", action="store_true", help="do not write a report file")
+    eval_cmd.add_argument(
+        "--out", type=Path, default=None, help="write the report here instead of evals/reports"
+    )
 
     trust_cmd = sub.add_parser("eval-trust", help="run Member 4's verifier benchmark")
     trust_cmd.add_argument("--no-write", action="store_true", help="do not write a report file")
@@ -603,7 +608,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "intent":
         return asyncio.run(run_intent(args.objective, args.docs))
     if args.command == "eval":
-        return asyncio.run(run_eval(args.suite, write=not args.no_write))
+        return asyncio.run(run_eval(args.suite, write=not args.no_write, out=args.out))
     if args.command == "eval-trust":
         return run_eval_trust(write=not args.no_write)
     if args.command == "investigate":

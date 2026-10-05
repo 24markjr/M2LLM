@@ -35,19 +35,19 @@ Everything else in the design follows from taking that seriously.
 
 | Capability | Where | Evidence it works |
 |---|---|---|
-| **Intent understanding** — objective → goal + required operations from a closed vocabulary, or a refusal to plan | [`intelligence/intent/engine.py`](../backend/app/intelligence/intent/engine.py) | `intent_accuracy` **0.628** |
-| **Task planning** — a validated DAG, with deterministic repair and bounded re-prompting | [`intelligence/planner/`](../backend/app/intelligence/planner/) | `plan_validity` **0.625**, `dependency_correctness` **0.848** |
+| **Intent understanding** — objective → goal + required operations from a closed vocabulary, or a refusal to plan | [`intelligence/intent/engine.py`](../backend/app/intelligence/intent/engine.py) | `intent_accuracy` **0.595** |
+| **Task planning** — a validated DAG, with deterministic repair and bounded re-prompting | [`intelligence/planner/`](../backend/app/intelligence/planner/) | `plan_validity` **0.636**, `dependency_correctness` **0.844** |
 | **Tool selection** — capability filter → schema compatibility → model tiebreak only on a tie | [`intelligence/router/engine.py`](../backend/app/intelligence/router/engine.py) | `tool_selection_accuracy` **1.000** |
 | **Reasoning over evidence** — claims bound to real locators, classification and confidence recomputed | [`intelligence/reasoning/engine.py`](../backend/app/intelligence/reasoning/engine.py) | `evidence_coverage` **1.000**, `unsupported_claim_rate` **0.000** |
 | **Evidence gap detection** — deterministic, naming the specific absent element | [`intelligence/evidence_gap/detector.py`](../backend/app/intelligence/evidence_gap/detector.py) | `replanning_success` **1.000** (vacuous: no gaps on this baseline) |
-| **Adaptive replanning** — the graph is edited while it runs, bounded, every stop reasoned | [`intelligence/replanning/controller.py`](../backend/app/intelligence/replanning/controller.py) | `task_efficiency` **1.654** |
+| **Adaptive replanning** — the graph is edited while it runs, bounded, every stop reasoned | [`intelligence/replanning/controller.py`](../backend/app/intelligence/replanning/controller.py) | `task_efficiency` **1.650** |
 | **Measurement** — ten metrics computed from real runs | [`app/evaluation/`](../backend/app/evaluation/) | reports in [`.agent/evals/reports/`](../.agent/evals/reports/) |
 
 Supporting: concurrent execution by dependency wave, an append-only event log from which a run is
 fully reconstructable, a FastAPI + SSE surface, and a React operations console that streams a run
 live and can replay a recorded one.
 
-**904 tests**, `mypy --strict` clean across 116 modules, 89% coverage (90–100% on
+**920 tests**, `mypy --strict` clean across 116 modules, 89% coverage (90–100% on
 `intelligence/**` and `schemas/**`).
 
 ---
@@ -162,7 +162,7 @@ reachable from exactly one package,
 
 ```bash
 python -m app.cli health                      # the engine answers
-pytest tests -m "not llm"                     # 904 tests, no model needed, ~25s
+pytest tests -m "not llm"                     # 920 tests, no model needed, ~30s
 pytest tests/unit/test_llm_isolation.py -v    # invariant 1, proven by parsing the source
 pytest tests/unit/test_invariants.py -v       # the whole "must not do" list
 pytest tests/unit/test_adversarial.py -v      # injection, corrupt input, zero-finding runs

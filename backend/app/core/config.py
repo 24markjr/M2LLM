@@ -121,7 +121,9 @@ class Settings(BaseSettings):
     # --- Integrations ---
     context_provider: ProviderMode = ProviderMode.LOCAL
     knowledge_provider: ProviderMode = ProviderMode.LOCAL
-    verification_provider: VerificationProviderName = VerificationProviderName.BASELINE
+    # `composite` since Phase 34, by measurement (Experiment 004): over eleven scenarios it
+    # rejected the one invented finding the baseline verifier passed, and nothing else.
+    verification_provider: VerificationProviderName = VerificationProviderName.COMPOSITE
     planning_policy: PlanningPolicyName = PlanningPolicyName.HEURISTIC
     m2context_base_url: str = ""
     knowledge_base_url: str = ""
@@ -136,6 +138,12 @@ class Settings(BaseSettings):
     # Real deployments set NEO4J_PASSWORD; nothing outside a developer machine should use this.
     neo4j_password: str = "jarvis-neo4j"  # noqa: S105
     neo4j_database: str = "neo4j"
+
+    # --- Experiments (Phase 34) ---
+    # Overrides `agent.yaml:knowledge.cross_source_pass` for one process, so an experiment arm is
+    # an environment variable rather than an edit to a committed file. Empty: the YAML decides. The
+    # value is part of the evaluation config hash either way (it is read through the policy).
+    knowledge_cross_source_pass: str = ""
 
     @field_validator("log_level")
     @classmethod

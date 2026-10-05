@@ -143,7 +143,11 @@ def test_no_fixture_document_is_flagged() -> None:
     paths = [p for p in root.rglob("*") if p.suffix.lower() in {".txt", ".csv", ".pdf"}]
     assert paths
     flagged = {p.name: scan(load_document(p).text).hits for p in paths}
-    assert {name: hits for name, hits in flagged.items() if hits} == {}
+    # The one exception is planted on purpose, for the `injection_document` scenario (Phase 34),
+    # and it must keep being flagged - the scenario fails without it.
+    planted = {"shipment_driver_note.txt": {"override_instructions"}}
+    actual = {name: set(hits) for name, hits in flagged.items() if hits}
+    assert actual == planted
 
 
 # --- wrapping ---------------------------------------------------------------------

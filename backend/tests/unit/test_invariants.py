@@ -22,12 +22,33 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from app.core.agent_config import CrossSourcePass
 from app.core.events import EventBus, MemoryEventSink, RunEventEmitter
 from app.schemas.common import new_run_id
 from app.schemas.event import REDACTED_PAYLOAD_KEYS, EventType, ExecutionEvent
 from app.schemas.finding import Confidence, FindingClassification
 from app.schemas.intent import Operation
+from app.schemas.knowledge import ConflictKind, EntityType, GraphLinkKind, GraphNodeKind
+from app.schemas.memory import FactKind
 from app.schemas.task import TaskStatus, TaskType
+from app.schemas.tool import ToolCapability
+from app.schemas.trust import InjectionSeverity, TrustStatus
+from app.schemas.verification import VerificationStatus
+
+# Closed vocabularies the port added or that the port's code dispatches on. A new member needs the
+# code that handles it: a capability needs a tool, a link kind needs the 3D view to draw it.
+PORT_VOCABULARIES: list[tuple[type, int]] = [
+    (ToolCapability, 9),
+    (VerificationStatus, 5),
+    (TrustStatus, 5),
+    (InjectionSeverity, 3),
+    (EntityType, 7),
+    (ConflictKind, 3),
+    (GraphNodeKind, 4),
+    (GraphLinkKind, 6),
+    (FactKind, 2),
+    (CrossSourcePass, 3),
+]
 
 APP_ROOT = Path(__file__).resolve().parents[2] / "app"
 
@@ -200,7 +221,8 @@ def test_no_unbounded_while_true_outside_a_guarded_loop() -> None:
 @pytest.mark.parametrize(
     ("enum", "expected"),
     # EventType 37 -> 38: INJECTION_DETECTED (Phase 27); 38 -> 39: KNOWLEDGE_EXTRACTED (Phase 30).
-    [(Operation, 17), (TaskType, 16), (TaskStatus, 8), (EventType, 39)],
+    # The rest were added by the port of Members 3 and 4 (Phases 26-33) and counted in Phase 34.
+    [(Operation, 17), (TaskType, 16), (TaskStatus, 8), (EventType, 39), *PORT_VOCABULARIES],
 )
 def test_the_closed_vocabularies_are_the_size_they_claim(enum: type, expected: int) -> None:
     """Extending one of these is a deliberate act.
@@ -227,7 +249,7 @@ def test_every_event_type_value_matches_its_name() -> None:
 
 def test_every_vocabulary_value_is_unique() -> None:
     """Two members sharing a value collapse into one after a round trip through JSON."""
-    for enum in (Operation, TaskType, TaskStatus, EventType):
+    for enum in (Operation, TaskType, TaskStatus, EventType, *(e for e, _ in PORT_VOCABULARIES)):
         values = [member.value for member in enum]
         assert len(values) == len(set(values)), f"{enum.__name__} has a duplicated value"
 

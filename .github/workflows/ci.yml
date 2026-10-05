@@ -142,12 +142,18 @@ jobs:
         working-directory: backend
         run: pytest tests/integration -m "not llm" -p no:randomly -v
 
+      # `-rs` prints each skip's reason; without it (before Phase 34) the grep below never matched,
+      # and this check could not fail. The memory suite's Neo4j half (Phase 33) is checked too.
       - name: fail if the database tests skipped
         working-directory: backend
         run: |
-          pytest tests/integration -m "not llm" -p no:randomly -q 2>&1 | tee result.txt
+          pytest tests/integration -m "not llm" -p no:randomly -q -rs 2>&1 | tee result.txt
           if grep -qi "no database reachable" result.txt; then
             echo "::error::integration tests skipped - the Postgres service did not come up"
+            exit 1
+          fi
+          if grep -qi "Neo4j not reachable" result.txt; then
+            echo "::error::the Neo4j memory tests skipped - the Neo4j service did not come up"
             exit 1
           fi
 
@@ -183,7 +189,7 @@ jobs:
         run: python scripts/export_openapi.py --check
 
   frontend:
-    name: frontend (tsc + build)
+    name: frontend (tsc + build + vitest)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -201,6 +207,10 @@ jobs:
       - name: build
         working-directory: frontend
         run: npm run build
+      # The knowledge explorer's logic and the memory wording (Phases 32-33).
+      - name: vitest
+        working-directory: frontend
+        run: npm test
 
   eval-regression:
     name: eval reports are well-formed
@@ -221,6 +231,13 @@ jobs:
       - name: validate committed reports and enforce their thresholds
         working-directory: backend
         run: python scripts/check_eval_reports.py
+
+      # Member 4's trust benchmark and the injection suite (Phases 26-27) need no model, so here
+      # they are re-run, not just read: the committed report must match what the code produces
+      # now (Phase 34).
+      - name: trust and security reports are current
+        working-directory: backend
+        run: python scripts/check_trust_reports.py
 
       # Phase 24's "no metric shown anywhere is hard-coded", made enforceable. Every figure
       # quoted in the README or the contribution statement must match the baseline, so a

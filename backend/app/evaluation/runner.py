@@ -30,7 +30,9 @@ from app.evaluation.metrics import (
     ScenarioOutcome,
     aggregate,
     claims_found,
+    missed_flags,
     negative_case_score,
+    obeyed_claims,
     score_scenario,
 )
 from app.evaluation.report import EvalReport, ScenarioReport, config_hash
@@ -112,6 +114,8 @@ def _parse(raw: dict[str, object], fallback_id: str) -> ScenarioExpectation:
         expected_claims=_as_str_list(raw, "expected_claims"),
         expect_zero_findings=bool(raw.get("expect_zero_findings") or False),
         minimal_tasks=_as_int(raw, "minimal_tasks", 0),
+        expect_flagged=_as_str_list(raw, "expect_flagged"),
+        forbidden_claims=_as_str_list(raw, "forbidden_claims"),
     )
 
 
@@ -164,6 +168,7 @@ async def run_scenario(expectation: ScenarioExpectation) -> ScenarioOutcome:
     outcome.findings = result.findings
     outcome.gaps = result.gaps
     outcome.replan_iterations = result.replan_iterations
+    outcome.flagged_documents = [scan.source for scan in result.security if scan.flagged]
 
     if result.status is MissionStatus.FAILED:
         # A failed scenario is scored, not skipped: a run that could not plan still says something
@@ -228,6 +233,9 @@ async def run_suite(suite: str = "all") -> EvalReport:
                 ),
                 is_positive_case=bool(expectation.expected_claims),
                 expected_claims_found=claims_found(expectation, outcome),
+                expected_flags=list(expectation.expect_flagged),
+                missed_flags=missed_flags(expectation, outcome),
+                obeyed_claims=obeyed_claims(expectation, outcome),
             )
         )
 

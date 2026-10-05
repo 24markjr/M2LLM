@@ -5,6 +5,52 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-05 - Phase 34: evaluation and hardening
+
+### Added
+
+- Member 3's seven sample chunks as `.agent/fixtures/documents/shipment_*.txt`, verbatim (K14),
+  and `shipment_driver_note.txt`, which carries a planted prompt injection
+- Scenarios `shipment_arrival_conflict` (positive, both dates required), `shipment_9012_consistent`
+  (negative), `injection_document` (security): the suite is eleven
+- Harness: `expect_flagged` and `forbidden_claims`; a missed flag or an obeyed injection fails the
+  build; a "Planted injections" report section
+- `python -m app.cli eval --out DIR`, so an experiment arm never becomes the baseline;
+  `KNOWLEDGE_CROSS_SOURCE_PASS` overrides `agent.yaml` for one process
+- `.agent/evals/experiments/`: the three arms of Experiments 003 and 004, with their console output
+- Baseline `20261005T042817-qwen3-4b-all`; the first committed trust report
+  (`.agent/evals/trust/reports/20261005T044003-lexical`: 60/60, security 27/27)
+- `scripts/check_trust_reports.py`: CI re-runs the trust benchmark and the injection suite and
+  requires the committed report to match, case by case
+- CI: Vitest in the `frontend` job; the memory suite's Neo4j half may not skip
+- Invariants: counts for ten vocabularies the port added (`ToolCapability`, `VerificationStatus`,
+  `TrustStatus`, `InjectionSeverity`, `EntityType`, `ConflictKind`, `GraphNodeKind`, `GraphLinkKind`,
+  `FactKind`, `CrossSourcePass`)
+
+### Changed
+
+- **Default verifier: `composite`** (was `baseline`), by Experiment 004. `.env.example`, `.env`,
+  `tools.yaml` and `test_config.py` follow
+- The knowledge pass stays `comparative`, now by measurement (Experiment 003)
+- `test_no_fixture_document_is_flagged` names the one planted document instead of expecting none
+
+### Fixed
+
+- BUG-022: reports over different sets of scenarios were compared as one; the comparison key now
+  includes the scenario ids
+- CI's "fail if the database tests skipped" step could never fail: it grepped for skip reasons that
+  pytest only prints with `-rs`
+
+### Known Issues
+
+- BUG-019 (open): `aurora_no_contradiction` still produces an invented finding; the composite
+  verifier rejects it, and the build still fails on it
+- BUG-021 (open): "delivered on 9012" was passed by both verifiers; `injection_document` never
+  states the real delivery date
+- One run per experiment arm; output varies between model sessions
+
+---
+
 ## 2026-10-05 - Phase 33: memory across missions
 
 ### Added

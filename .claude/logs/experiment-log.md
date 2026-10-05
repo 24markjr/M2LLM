@@ -40,10 +40,81 @@ cost and the scoring weights are wrong.
 
 ## Completed
 
+### Experiment 003 — The knowledge pass: `never` vs `comparative` (Phase 34)
+
+**Date:** 2026-10-05. **Model:** `qwen3:4b` via Ollama. **Suite:** `all`, eleven scenarios (eight
+before Phase 34, plus `shipment_arrival_conflict`, `shipment_9012_consistent`,
+`injection_document`). **Verifier:** `baseline` in both arms. **Graph store:** in memory.
+**Objective:** does the cross-source knowledge pass (Phase 30) earn its cost? It was kept on
+`comparative` in Phase 30 without a measured benefit, pending this experiment.
+
+| Arm | `KNOWLEDGE_CROSS_SOURCE_PASS` | Report |
+|---|---|---|
+| A | `comparative` | `.agent/evals/experiments/arm-a-comparative-baseline/20261005T035611-qwen3-4b-all` |
+| B | `never` | `.agent/evals/experiments/arm-b-never-baseline/20261005T040355-qwen3-4b-all` |
+
+<!-- historical -->
+| | A (comparative) | B (never) |
+|---|---|---|
+| `shipment_arrival_conflict` | 1 finding, both dates, verified | **0 findings (blind spot, build failure)** |
+| `helix_evidence_gap` | 1 finding | 0 findings |
+| All other scenarios | same findings | same findings |
+| `task_efficiency` | 1.650 | 1.477 |
+| `latency_s` (mean per scenario) | 41.5 s | 25.0 s |
+| Other eight metrics | equal | equal |
+<!-- /historical -->
+
+Both arms failed `aurora_no_contradiction` (BUG-019), with different invented claims.
+
+**Result.** The first measured benefit of the knowledge pass, and it lands where Member 3's rule was
+built to: two documents giving different values for one attribute (`arrival_date`) of one entity.
+On Aurora it never helped (Phase 30), because Aurora's contradictions are planned-versus-actual
+across two attributes. The cost is time: about 16 s more per scenario on average, and more tasks
+per plan (`task_efficiency` 1.650 vs 1.477), because the pass adds an extraction task.
+
+**Decision.** Keep `cross_source_pass: comparative`. Without it the agent misses the one planted
+cross-document conflict of the kind the pass exists for. **Caveat:** one run per arm; Phase 30 saw
+model output vary between sessions (BUG-019), so a single scenario flipping is evidence, not proof.
+
+### Experiment 004 — The verifier: `baseline` vs `composite` (Phase 34)
+
+**Date:** 2026-10-05. **Model:** `qwen3:4b`. **Suite:** `all`, eleven scenarios. **Knowledge
+pass:** `comparative` in both arms. **Objective:** should the composite verifier (Phase 26: the model
+verifier plus Member 4's lexical rule and the specifics check) replace `baseline` as the default?
+BUG-018 showed `baseline` passing a claim whose decisive date appears in none of its evidence.
+
+| Arm | `VERIFICATION_PROVIDER` | Report |
+|---|---|---|
+| A | `baseline` | `arm-a-comparative-baseline/20261005T035611-qwen3-4b-all` (shared with Exp-003) |
+| C | `composite` | `arm-c-comparative-composite/20261005T040834-qwen3-4b-all` |
+
+<!-- historical -->
+| | A (baseline) | C (composite) |
+|---|---|---|
+| `aurora_no_contradiction` finding "30 April 2026 and 31 January 2026" | **SUPPORTED** | **rejected** |
+| Findings on the other ten scenarios | all verified | all verified, the same |
+| `verification_success` | 1.000 | 0.909 |
+| `latency_s` (mean) | 41.5 s | 42.0 s |
+| Other eight metrics | equal | equal |
+<!-- /historical -->
+
+The two arms produced the same findings, word for word where checked, so the comparison isolates the
+verifier.
+
+**Result.** The composite verifier rejected exactly one finding: the invented one on the negative
+case, which `baseline` passed. It rejected nothing correct. Its cost is within noise. The lower
+`verification_success` is the point, not a loss: a verifier at 1.000 was approving a fabrication.
+The negative case still fails, because a rejected finding is still a finding; the scoring was not
+changed to make the experiment look better.
+
+**Decision.** `composite` becomes the default (`Settings.verification_provider`, `.env.example`).
+**Caveats:** one run per arm, and one decisive case. BUG-021, found in the same session, is a claim
+**both** verifiers passed ("delivered on 9012"), so composite is better, not sufficient.
+
 ### Experiment 005 — Knowledge extraction on Member 3's own sample (Phase 28 acceptance)
 
-*Numbered 005 because 003 (knowledge pass on/off) and 004 (`baseline` vs `composite` verifier) are
-reserved by the integration plan for Phase 34.*
+*Numbered 005 because 003 (knowledge pass on/off) and 004 (`baseline` vs `composite` verifier) were
+reserved by the integration plan for Phase 34; both are recorded above.*
 
 **Date:** 2026-10-03. **Model:** `qwen3:4b` via Ollama. **Prompt:** `knowledge` v1.
 **Input:** the 7 chunks of Member 3's `sample_data.json` (archived in

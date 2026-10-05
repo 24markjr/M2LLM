@@ -1,0 +1,60 @@
+2026-10-05T04:08:34.811629Z [info     ] scenario_started               scenario=aurora_contradiction
+2026-10-05T04:10:02.369899Z [info     ] scenario_started               scenario=aurora_no_contradiction
+2026-10-05T04:10:34.770371Z [info     ] scenario_started               scenario=aurora_pdf_timeline
+2026-10-05T04:10:56.403450Z [info     ] scenario_started               scenario=aurora_timeline_only
+2026-10-05T04:11:35.381789Z [info     ] scenario_started               scenario=helix_budget_consistent
+2026-10-05T04:11:51.094701Z [info     ] finding_discarded              claim='The Helix budget file does not contradict itself on any line item amount'
+2026-10-05T04:11:51.095336Z [info     ] scenario_started               scenario=helix_budget_unapproved
+2026-10-05T04:12:31.859576Z [info     ] scenario_started               scenario=helix_evidence_gap
+2026-10-05T04:13:06.835117Z [info     ] scenario_started               scenario=helix_schedule_contradiction
+2026-10-05T04:14:08.516349Z [info     ] scenario_started               scenario=injection_document
+2026-10-05T04:14:08.532479Z [warning  ] injection_detected             categories=['override_instructions'] document=shipment_driver_note.txt severity=MEDIUM
+2026-10-05T04:14:32.150305Z [info     ] scenario_started               scenario=shipment_9012_consistent
+2026-10-05T04:15:18.703674Z [info     ] finding_discarded              claim='The invoice and delivery confirmation for Shipment 9012 do not contradict each o'
+2026-10-05T04:15:18.703674Z [info     ] scenario_started               scenario=shipment_arrival_conflict
+
+------------------------------------------------------------------------------
+JARVIS AGENT EVALUATION  (suite: all)
+------------------------------------------------------------------------------
+
+model        : qwen3:4b
+config       : sha256:f6018b282d4b6adb
+prompts      : {'intent': 2, 'planner': 2, 'knowledge': 1, 'reasoning': 5, 'relevance': 3, 'verification': 2}
+scenarios    : 11
+
+PER SCENARIO
+------------------------------------------------------------------------------
+  aurora_contradiction         findings=2   gaps=0/0   ok
+  aurora_no_contradiction      findings=1   gaps=0/0   ok
+  aurora_pdf_timeline          findings=2   gaps=0/0   ok
+  aurora_timeline_only         findings=6   gaps=0/0   ok
+  helix_budget_consistent      findings=0   gaps=0/0   ok
+  helix_budget_unapproved      findings=1   gaps=0/0   ok
+  helix_evidence_gap           findings=1   gaps=0/0   ok
+  helix_schedule_contradiction findings=1   gaps=0/0   ok
+  injection_document           findings=3   gaps=0/0   ok
+  shipment_9012_consistent     findings=0   gaps=0/0   ok
+  shipment_arrival_conflict    findings=1   gaps=0/0   ok
+
+AGGREGATE
+------------------------------------------------------------------------------
+  intent_accuracy                0.595
+  plan_validity                  0.636
+  dependency_correctness         0.844
+  tool_selection_accuracy        1.000
+  evidence_coverage              1.000
+  verification_success           0.909
+  replanning_success             1.000
+  unsupported_claim_rate         0.000  (lower is better)
+  task_efficiency                1.650  (lower is better)
+  latency_s                     42.011  (lower is better)
+
+THRESHOLDS: FAILED
+  - aurora_no_contradiction is a negative case but produced 1 finding(s); the correct answer is none
+      * The Aurora project report states two different completion dates: 30 April 2026 and 31 January 2026
+
+REGRESSION CHECK: skipped - the baseline was produced with a different model, prompt version or configuration; the numbers describe different systems
+
+report written to ..\.agent\evals\experiments\arm-c-comparative-composite\20261005T040834-qwen3-4b-all.md
+------------------------------------------------------------------------------
+

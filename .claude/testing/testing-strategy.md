@@ -122,7 +122,11 @@ Three jobs deserve a note.
 
 **`integration` fails if the database tests skip.** They skip themselves when no database is
 reachable, which is right locally and wrong in CI — a silently-skipped integration suite is a
-green tick over nothing.
+green tick over nothing. Since Phase 34 the check runs pytest with `-rs`: before that, skip reasons
+were never printed, so the grep for them could not match and the check could not fail. It also
+fails when the memory suite's Neo4j half skips, as the knowledge-store step already did.
+
+**`frontend` runs Vitest** (Phase 34): the knowledge explorer's logic and the memory wording.
 
 **`contract` runs `export_openapi.py --check`.** The frontend's types come from
 `docs/openapi.json`, so a stale one means the UI is built against a contract the API no longer
@@ -132,6 +136,10 @@ serves.
 the committed reports and enforces the thresholds they recorded. **A green CI must not be read as
 evidence the agent was measured** — the metrics are produced locally and committed, and that is
 stated in the job's own comments so nobody infers otherwise.
+
+Since Phase 34 it also runs `check_trust_reports.py`. Member 4's trust benchmark and the
+injection suite need no model, so they **are** re-run: the committed trust report must match the
+code's verdicts case by case, and every security case must pass.
 
 Thresholds are enforced on the newest report per suite — the baseline — and deliberately not on
 older ones. A report recording a defect that was later fixed is exactly the evidence worth

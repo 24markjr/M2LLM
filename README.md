@@ -145,7 +145,7 @@ charts the committed evaluation reports.
 
 ```bash
 cd backend
-pytest tests -m "not llm"      # 904 tests, no model needed
+pytest tests -m "not llm"      # 920 tests, no model needed
 ```
 
 ---
@@ -165,56 +165,63 @@ cd backend
 python -m app.cli eval --suite all
 ```
 
-Ten metrics, over **eight scenarios** - two of them negative cases, across two document families and three file formats - computed from real runs over datasets in
+Ten metrics, over **eleven scenarios** - three negative cases and one planted prompt injection, across three document families and three file formats - computed from real runs over datasets in
 [`.agent/evals/datasets/`](.agent/evals/datasets/). Reports are written to
 [`.agent/evals/reports/`](.agent/evals/reports/) and committed. **No number anywhere in this
 repository is hand-written** — a report carries the model, prompt versions and a config hash, and
 two reports produced with different stamps are refused as incomparable rather than quietly
 compared.
 
-The current baseline is `20261004T172506-qwen3-4b-all`. Its headline numbers:
+The current baseline is `20261005T042817-qwen3-4b-all` (Phase 34: the `composite` verifier and the
+knowledge pass on comparative questions, both chosen by experiment). Its headline numbers:
 
 | Metric | Value | |
 |---|---|---|
 | `evidence_coverage` | 1.000 | every finding has resolved evidence |
 | `unsupported_claim_rate` | 0.000 | the hallucination proxy |
 | `tool_selection_accuracy` | 1.000 | |
-| `dependency_correctness` | 0.848 | |
+| `dependency_correctness` | 0.844 | |
 | `replanning_success` | 1.000 | gaps closed within the iteration ceiling - vacuous here, see below |
-| `intent_accuracy` | 0.628 | |
-| `task_efficiency` | 1.654 | tasks ÷ minimal sufficient tasks — lower is better |
-| `plan_validity` | 0.625 | plans passing with **zero** repairs |
+| `intent_accuracy` | 0.595 | |
+| `task_efficiency` | 1.650 | tasks ÷ minimal sufficient tasks — lower is better |
+| `plan_validity` | 0.636 | plans passing with **zero** repairs |
+| `verification_success` | 0.909 | findings that survive the independent check |
 
 Two of those deserve their explanation rather than a chart.
 
-**`plan_validity` at 0.625** means three plans in eight still need a deterministic repair before
+**`plan_validity` at 0.636** means four plans in eleven still need a deterministic repair before
 they can execute. That is the planner needing help, and the metric says so instead of hiding it.
 The repairs are recorded on the plan, so a repaired plan never counts as clean.
 
-**`verification_success` is now 1.000, and that is being treated as a worry, not a win.** A
-verifier that approved everything would score perfectly and be worthless. It rose from 0.750 when
-BUG-015 was fixed: until 2026-10-03 the verifier was handed a tool's summary ("11 date(s)") instead
-of the line a finding cited, so it rejected findings for the wrong reason. Reading real text, it now
-passes them, and an audit of every pass found most correct and at least one wrong: a claim whose
-decisive date appears in none of its cited evidence. That is BUG-018. The composite verifier's
-specifics check (Phase 26) catches exactly that case, and whether it becomes the default is decided
-by measurement in Phase 34.
+**`verification_success` fell from 1.000 to 0.909, and that is the improvement.** A verifier that
+approves everything scores perfectly and is worthless. At 1.000 the baseline verifier was passing an
+invented finding on a negative case. Experiment 004 ran the suite with each verifier: the `composite`
+verifier (the model check, Member 4's lexical rule and the specifics check) rejected exactly that
+finding and nothing else, at no measurable cost, so it is now the default. It is better, not
+sufficient: it still passed "delivered on 9012", a shipment number taken for a date (BUG-021,
+open).
 
-**`replanning_success` at 1.000 is vacuous.** With every finding verified, no evidence gaps were
-detected, so the metric is 0 of 0 gaps closed. It says nothing about the replanning loop on this
+**The knowledge pass earned its place.** Experiment 003 turned it off: the agent then found nothing on
+`shipment_arrival_conflict`, Member 3's own planted contradiction, which it finds with the pass on.
+It costs about 16 s per scenario.
+
+**`replanning_success` at 1.000 is vacuous.** No evidence gaps were detected in this run, so the
+metric is 0 of 0 gaps closed. It says nothing about the replanning loop on this
 baseline.
 
 ### The open defect, stated plainly
 
 **Mostly fixed, and not reliably: the agent sometimes invents a finding on a negative case.** The
-two negative scenarios ask whether a consistent report, and a consistent budget CSV, contradict
-themselves; the correct answer to both is no finding. For two weeks of runs both produced none. On
+three negative scenarios ask whether a consistent report, a consistent budget CSV and a consistent
+invoice and delivery note contradict themselves; the correct answer to all three is no finding. For two weeks of runs both produced none. On
 2026-10-03 one produced this, five times out of five:
 
 > *The Aurora project report states 30 April 2026 as the approved completion date in two different
 > places (r10 and r15), but does not state a single approved completion date.*
 
-Two agreeing lines presented as a conflict, cited correctly and passed by the verifier. The **same
+Two agreeing lines presented as a conflict, cited correctly and passed by the verifier. (In the
+current baseline the invented claim is a different one, and the `composite` verifier now **rejects**
+it; the case still fails, because a rejected finding is still a finding.) The **same
 code** passed that scenario an hour earlier, when the model wrote a different claim that the
 relevance gate discarded. Nothing in the repository changed what the model produces: its output is
 stable within a session and differs between them. Measured, not assumed: BUG-019 in the bug log.
@@ -237,7 +244,9 @@ Two changes reduced it, and neither was asking the model more firmly:
 planted contradictions (completion date and budget), each citing both documents, since BUG-015
 let the verifier read the cited lines. `aurora_pdf_timeline` failed in every run until BUG-020:
 for a PDF the reasoning model was shown page references with no content, so it had nothing to
-state. **What remains is the negative case above** (BUG-019), and the build fails on it. The
+state. `shipment_arrival_conflict` finds both of Member 3's dates, and `injection_document` flags the
+planted instruction and does not obey it. **What remains is the negative case above** (BUG-019),
+and the build fails on it. The
 threshold has not been moved.
 
 That trade is worth understanding rather than glossing. Before these fixes the contradiction

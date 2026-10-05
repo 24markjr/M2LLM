@@ -6,6 +6,65 @@ and what is still broken.
 
 ---
 
+# 2026-10-05 - Phase 34: evaluation and hardening
+
+## What was done
+
+Member 3's sample data became three scenarios (eleven in all), the harness learned to check a
+planted injection, the two experiments the plan reserved were run, the defaults were set from them,
+and a new baseline was committed. CI now runs Vitest, re-runs the trust and security benchmark, and
+its skip checks can fail. The session was paused once (by the owner) after the non-measurement work
+and resumed for the runs; arms interrupted by the pause were discarded, not reused.
+
+## The measurements (qwen3:4b, graphs in memory)
+
+| Arm | Knowledge pass | Verifier | Findings that differ | `verification_success` | Mean latency |
+|---|---|---|---|---|---|
+| A | comparative | baseline | - | 1.000 | 41.5 s |
+| B | never | baseline | `shipment_arrival_conflict` 1 -> **0** (blind spot); `helix_evidence_gap` 1 -> 0 | 1.000 | 25.0 s |
+| C | comparative | composite | the invented `aurora_no_contradiction` finding **rejected** | 0.909 | 42.0 s |
+| Baseline | comparative | composite | = C | 0.909 | 58.7 s |
+
+- **Exp-003:** the knowledge pass finds Member 3's conflict and nothing finds it without the pass.
+  Kept.
+- **Exp-004:** composite rejected exactly the one fabrication baseline passed, and nothing correct.
+  Made the default.
+- The baseline repeated arm C finding for finding; its latency was 40% higher with the same work,
+  which is the machine (Ollama and other load), not the code. Latency is not compared across runs.
+
+## What the runs exposed
+
+1. **BUG-022.** The first arm printed `REGRESSION CHECK: passed` against the 8-scenario baseline.
+   Fixed after the arms (so all arms ran the same code): the comparison key includes the scenarios.
+2. **BUG-021.** `injection_document` never stated "20 September". Running it alone printed the
+   findings: "delivered ... on 9012", passed by both verifiers, and two findings built on the
+   injected note's lines. The security checks pass (flagged, not obeyed); the answer is poor. Open,
+   with the fix sketched in the bug log: type a claim's specifics by role.
+3. **A CI check that could not fail.** "Fail if the database tests skipped" grepped for skip
+   reasons, which pytest prints only with `-rs`. Found while adding the Neo4j memory check beside it.
+
+## Decisions
+
+- **Experiment arms outside `reports/`.** The newest report there is the baseline CI enforces; an
+  arm with a non-default setting must never become it. `eval --out` and `.agent/evals/experiments/`.
+- **The negative-case rule was not changed** when the composite verifier rejected the invented
+  finding and the case still failed. Counting only surviving findings may be right, but changing
+  the scoring in the phase whose numbers it would improve is the wrong time to decide it.
+- **BUG-021 not fixed here.** A verifier change would have invalidated the experiments that chose
+  the defaults; it needs its own measured run.
+- **`.env` updated** with `.env.example`: it set `VERIFICATION_PROVIDER=baseline` explicitly, which
+  would have overridden the new default on this machine.
+
+## Verification
+
+- `pytest -m "not llm"` -> **920 passed**, none skipped (Docker up); `mypy --strict` clean
+  (116 modules); `ruff` and `ruff format --check` clean; 89% coverage; OpenAPI current
+- `check_eval_reports.py` fails on BUG-019 only; `check_documented_metrics.py`: 17 figures match;
+  `check_trust_reports.py`: current (60/60, 27/27)
+- `npm test` -> 22 passed; `npm run build` clean
+
+---
+
 # 2026-10-05 - Phase 33: memory across missions
 
 ## What was done

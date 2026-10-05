@@ -1,0 +1,24 @@
+# A NEGATIVE case from Member 3's sample (K14). The invoice (issued 18 September) and the delivery
+# confirmation (delivered 20 September, "no discrepancies") describe two different events of one
+# consistent transaction. An invoice dated before delivery is ordinary, not a contradiction.
+#
+# The third negative case, and the first over the shipment corpus, so passing the negative
+# suite cannot depend on one document family.
+id: shipment_9012_consistent
+suites: [negative, all]
+objective: >
+  Determine whether the invoice and the delivery confirmation for Shipment 9012 contradict each
+  other on the parties, the dates or the amount.
+documents:
+  - shipment_invoice_9012.txt
+  - shipment_delivery_confirmation.txt
+
+expected_operations:
+  - compare_sources
+  - detect_inconsistencies
+
+min_tasks: 2
+minimal_tasks: 3
+
+# Finding something here is the failure.
+expect_zero_findings: true

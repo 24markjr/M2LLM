@@ -301,5 +301,7 @@ def get_knowledge_policy() -> KnowledgePolicy:
             name="knowledge.max_claims",
         ),
         max_known_terms=int(raw.get("max_known_terms", 40)),
-        cross_source_pass=CrossSourcePass(raw.get("cross_source_pass", "comparative")),
+        cross_source_pass=CrossSourcePass(
+            settings.knowledge_cross_source_pass or raw.get("cross_source_pass", "comparative")
+        ),
     )

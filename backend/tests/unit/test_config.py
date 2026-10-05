@@ -39,7 +39,8 @@ def test_defaults_are_usable_without_an_env_file(clean_env: None) -> None:
 
     assert s.llm_provider is LLMProviderName.OLLAMA
     assert s.context_provider is ProviderMode.LOCAL
-    assert s.verification_provider is VerificationProviderName.BASELINE
+    # composite since Phase 34 (Experiment 004).
+    assert s.verification_provider is VerificationProviderName.COMPOSITE
     assert s.embedding_dim == 768
 
 

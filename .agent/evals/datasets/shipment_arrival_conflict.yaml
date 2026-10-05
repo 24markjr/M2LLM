@@ -1,0 +1,36 @@
+# Member 3's planted contradiction (K14), as a mission: two shipping reports disagree about when
+# Shipment 4821 arrived - 14 September in one, 16 September in the other. The employee statement,
+# the CCTV report and the witness statement are the surrounding evidence Member 3's sample had;
+# the witness statement also disputes who was on duty, which the agent may or may not raise.
+#
+# A third document family, after Aurora and Helix, and the first whose documents are each one
+# sentence long: a different shape of evidence for the same behaviour.
+id: shipment_arrival_conflict
+suites: [core, all]
+objective: >
+  Investigate when Shipment 4821 arrived at the Mumbai warehouse, and whether the shipping
+  reports agree on its arrival date.
+documents:
+  - shipment_report_a.txt
+  - shipment_report_b.txt
+  - shipment_employee_statement.txt
+  - shipment_security_report.txt
+  - shipment_witness_statement.txt
+
+expected_operations:
+  - extract_timeline
+  - compare_sources
+  - detect_inconsistencies
+  - generate_report
+
+min_tasks: 3
+minimal_tasks: 4
+
+expected_edges:
+  - [extract_timeline, compare_sources]
+
+# Both sides of the conflict. Stricter than the "2026" the Aurora and Helix cases ask for: a finding
+# that names one date has not found a contradiction.
+expected_claims:
+  - "14 September"
+  - "16 September"

@@ -93,7 +93,7 @@ Two rules this plan adds, both following from the teammates' code:
 | 31 | Knowledge API | K12 | M | 30 | **DONE** 2026-10-04 |
 | 32 | 3D knowledge graph explorer | K13 | L | 31 | **DONE** 2026-10-04 |
 | 33 | Memory: working, episodic, semantic | T10–T12 | M | 29, 31 | **DONE** 2026-10-05 |
-| 34 | Evaluation and hardening | K14 | M | 26–33 | TODO |
+| 34 | Evaluation and hardening | K14 | M | 26–33 | **DONE** 2026-10-05 |
 | 35 | Documentation and handover | — | S | 34 | TODO |
 
 **Minimum viable integration**, if time runs short: 25, 26, 28, 30, 34. That delivers verified
@@ -680,6 +680,14 @@ says what that is.
 
 **Documents:** `experiment-log.md`, `agent-evaluation.md`, `testing-strategy.md`, the README
 metrics table (checked by `check_documented_metrics.py`); changelog.
+
+**As built (2026-10-05).** Done. Exp-003 kept the knowledge pass on `comparative` (without it the
+shipment conflict is missed); Exp-004 made `composite` the default verifier (it rejected the one
+invented finding `baseline` passed). Baseline `20261005T042817`. CI is green except
+`eval-regression`, which fails on BUG-019 as the README states. Additions beyond the plan: the
+harness's injection checks (`expect_flagged`, `forbidden_claims`), `eval --out`,
+`KNOWLEDGE_CROSS_SOURCE_PASS`, a committed trust report re-run by CI, ten more vocabulary counts,
+and two defects found by the runs: BUG-021 (open) and BUG-022 (fixed).
 
 ---
 
