@@ -6,6 +6,54 @@ and what is still broken.
 
 ---
 
+# 2026-10-05 - Phase 35: documentation and handover
+
+## What was done
+
+The handover documents: README, demo script, contribution statement, the port inventory, the plan
+status and the `.claude/` reading order. Then the phase's acceptance test, run literally.
+
+## The clean clone
+
+Cloned the committed handover (`bf4fd21`) into a scratch directory, created a new virtualenv, and
+created an empty database (`jarvis_clone`) in the running Postgres container, because this machine's
+own database was already migrated and would have hidden a missing step. The one deviation from the
+README: `DATABASE_URL` pointed at that empty database (this machine runs Postgres on 5433; the
+defaults are 5432, which is why the README now has a note for a taken port).
+
+| Step | Result |
+|---|---|
+| `pip install -e "backend[dev]"` | installed |
+| `alembic upgrade head` on the empty database | both revisions applied |
+| `python -m app.cli health` | OK, `qwen3:4b` |
+| `investigate` (Aurora) | completed, 2 findings, 64 s, report written |
+| API + `npm install` + `npm run dev` | up; memory on (Postgres and Neo4j) |
+| Demo 8's upload of the planted note | `injection.hits.override_instructions`, MEDIUM, as the script says |
+| A mission through the API | COMPLETED; knowledge in Neo4j, 20 entities, 31 claims |
+| `#/mission/{id}/graph` | the 3D graph rendered |
+| `eval-trust --no-write`, `check_trust_reports.py` | 60/60, 27/27; "current" |
+| `pytest -m "not llm"` | 925 passed, none skipped |
+| `npm test`, `npm run build` | 22 passed; built |
+
+Afterwards the clone's run was removed from the shared Neo4j (graph and memory), the empty database
+dropped, and the clone's servers stopped by process id.
+
+## What writing the quickstart found
+
+The README never said to run the migrations, and nothing runs them automatically. On a fresh
+database, run persistence and memory fail on missing tables, which is contained and only logged, so
+a new user would have seen a working app that stored nothing. It had been true since Phase 3 (the
+README was "verified from a clean clone" in Phase 24, with Docker off). Fixed in the README before
+the clone was made, which is why the clone did not trip on it.
+
+## Verification
+
+- Clean clone: every step above
+- `check_documented_metrics.py`: every quoted figure matches the baseline (`20261005T050619`)
+- `check_eval_reports.py`: passes
+
+---
+
 # 2026-10-05 - Fixing the open bugs (before Phase 35)
 
 ## What was done

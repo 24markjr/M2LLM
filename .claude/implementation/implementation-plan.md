@@ -60,7 +60,7 @@ place to read the state of the build.*
 | 21 | Frontend: Mission Control | `DONE` | React only; Tailwind/Query/Zustand/Recharts/Framer omitted — `frontend/README.md` |
 | 22 | Live execution visualization | `DONE` | Replay (demo insurance), evaluation dashboard, animated replan insertion |
 | 23 | Test hardening & CI | `DONE`, gate red (verified) | 581 tests, invariant + adversarial suites, GitHub Actions. `eval-regression` correctly fails on the baseline's confabulation - see testing-strategy.md |
-| 24 | Documentation & demo package | `DONE`, 2 caveats | README rewritten, six-demo script, contribution statement, changelog current. 4 of 6 demos have a recorded fallback; a clean clone has not been tested from scratch |
+| 24 | Documentation & demo package | `DONE`, 2 caveats | README rewritten, six-demo script, contribution statement, changelog current. 4 of 6 demos have a recorded fallback; a clean clone has not been tested from scratch. *Both closed in Phase 35: nine demos, each with a fallback; a clean clone tested end to end on 2026-10-05* |
 | 25-35 | Integration of Members 3 and 4 | `DONE` | Phase-by-phase plan in [`integration-plan-phases-25-35.md`](integration-plan-phases-25-35.md): trust layer, security, knowledge core, Neo4j, pipeline wiring, knowledge API, 3D graph explorer, memory, evaluation, handover. Approved 2026-10-03 (D1-D6 answered) |
 
 **Carried debt**

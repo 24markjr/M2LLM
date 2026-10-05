@@ -707,6 +707,14 @@ feature by feature); `teammate-port.md` with every row `DONE`/`CHANGED`/`NOT POR
 **Done when:** a clean clone, following the README, runs a mission, opens the 3D graph, and
 reproduces the committed trust benchmark.
 
+**As built (2026-10-05).** Done, and the "done when" was run literally: a fresh clone of the
+committed handover, a new virtualenv, and a new empty database. The CLI investigation (2 findings,
+64 s), the API and console, a mission whose graph went to Neo4j and opened in 3D, the trust benchmark
+(60/60, 27/27, matching the committed report), 925 tests and the frontend all worked. Writing the
+quickstart found that it had never said to run the migrations, so on a fresh database runs and
+memory were never stored. Fixed in the README before the clone was made. Both teammate folders had
+already been deleted by the owner; the archive and the inventory are the record, as planned.
+
 ---
 
 ## 3. Decisions needed from you before Phase 25

@@ -64,8 +64,9 @@ does:
 
 ## Quickstart
 
-Verified from a clean clone on Windows 11 and Linux. If any step here does not work, that is a
-bug in this file.
+Verified from a clean clone, most recently on 2026-10-05 on Windows 11: a fresh virtualenv and an
+empty database, every step below, including a mission, its 3D graph and the trust benchmark. If any
+step here does not work, that is a bug in this file.
 
 ### Prerequisites
 
@@ -112,6 +113,9 @@ cd backend && alembic upgrade head && cd ..
 The migration is not optional once Postgres is up: without the tables, runs and memory are not
 stored (the run itself still completes, and the log says why). Neo4j needs no setup; its
 constraints are created on first use.
+
+If port 5432 is already taken on your machine, copy `.env.example` to `.env` and set
+`POSTGRES_PORT` and the port in `DATABASE_URL` to a free one; compose and the app both read it.
 
 ### 3. Check it can run
 

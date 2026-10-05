@@ -5,6 +5,36 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-05 - Phase 35: documentation and handover
+
+### Added
+
+- README: the integrated subsystems (knowledge layer, Neo4j, 3D explorer, verification, security,
+  memory), invariants 8-10, the knowledge graph and memory pages, step 7 (reproduce the trust
+  benchmark), a note for a taken Postgres port
+- `docs/demo-script.md`: Demo 8 (a planted prompt injection) and Demo 9 (memory), each with a
+  fallback that needs no model; a fallback for Demo 7
+- `docs/contribution.md`: Members 3 and 4, feature by feature: their original, where it lives now,
+  what the port changed, and what was measured
+- `teammate-port.md`: the add-ons' as-built status (A1-A15, all built)
+- `.claude/README.md`: a reading order for the integration; ADRs 007-011 in the index
+- `member-1-scope.md`: what the integration changed about the boundary rule (ported, not imported)
+
+### Fixed
+
+- **The quickstart never said to run the migrations.** On a fresh database the tables did not
+  exist, so runs and memory were never stored (contained, logged, invisible). Now step 2
+- Stale statements: "CI is red", "eight scenarios", "the API does not persist runs", "no frontend
+  test runner", T14's promise of per-case episodic logging (not built, and why)
+
+### Verified
+
+- A clean clone of the committed handover, with a fresh virtualenv and an empty database: every
+  quickstart step, a mission and its 3D graph from Neo4j, Demo 8's upload response, the trust
+  benchmark reproduced (60/60, 27/27), 925 tests, Vitest and the build
+
+---
+
 ## 2026-10-05 - The open bugs: BUG-018, BUG-019, BUG-021 closed
 
 ### Fixed
