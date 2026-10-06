@@ -1,6 +1,6 @@
 # JARVIS — Demo Script
 
-Nine demos, fifteen minutes, and nothing here depends on luck.
+Eleven demos, twenty minutes, and nothing here depends on luck.
 
 Every command below has been run. Every one has a **recorded fallback**, because local inference
 on laptop hardware occasionally stalls and a presentation should not be hostage to that. The
@@ -227,10 +227,10 @@ Start a mission and open the graph while it runs to show it growing as the agent
 
 `#/knowledge` does the same over documents with no mission (Member 3's original use).
 
-**Fallback.** Replay does not rebuild the graph (`#/replay` shows the trace, not the 3D view), so
-the fallback is a mission whose graph is already stored. With Neo4j up, a finished mission's graph
-is served from Neo4j even after an API restart, with no model call: open any mission from before
-the demo and press **Knowledge graph**. Without Docker, the screenshots of a real run are in
+**Fallback.** A recording carries its graph (since 2026-10-05): in `#/replay`, load a recording and
+press **Open the knowledge graph** - the 3D view rebuilt from the recording alone, no server and no
+model. With Neo4j up, a finished mission's graph is also served from Neo4j after an API restart.
+Without either, the screenshots of a real run are in
 [`docs/screenshots/`](screenshots/) (`phase32-3d-overview.png`, `-3d-click.png`, `-3d-trail.png`,
 `-2d-hover.png`).
 
@@ -293,6 +293,55 @@ synonyms.
 **Fallback:** memory is stored, so what earlier missions left is there without a model: open
 `#/memory` and look up "Project Aurora". Without Docker: `docs/screenshots/phase33-memory-page.png`
 and `phase33-graph-recall.png`, from three real missions.
+
+---
+
+## Demo 10 — Files that are not text
+
+**Shows:** a Word memo, an Excel ledger and a scanned delivery note read as citable lines; a finding
+that exists only because OCR read an image.
+
+In **New Mission**, drop in `.agent/fixtures/documents/orion_purchase_order.txt` and
+`orion_delivery_note.png` (or pick them from earlier uploads). Each file shows what it parsed as; the
+note says *"7 line(s) read, 10 seen by qwen2.5vl:3b"*. Objective:
+
+> Determine whether Polar Systems delivered the Orion cooling units in the quantity and by the date
+> the purchase order required.
+
+The finding cites the purchase order's "40 units" and the note's "Units delivered: 36" - a line that
+exists only in the image. **Open the evidence**: read lines are evidence; lines marked `[seen]` are a
+vision model's account, and a finding resting only on them is never fully supported.
+
+Then `orion_budget_memo.docx` + `orion_ledger.xlsx`, objective *"Determine whether Project Orion's
+recorded spend stayed within the approved budget"*: the overrun is cited at the memo's paragraph and
+the ledger's sheet.
+
+**Fallback:** `python -m app.cli eval --suite formats --no-write` (about 3 minutes) runs the three
+Orion scenarios; the committed baseline's per-scenario table has their results.
+
+---
+
+## Demo 11 — A workspace, searched by meaning
+
+**Shows:** Member 2's ingest-and-search: documents kept in a workspace, found by meaning, each hit a
+citation that starts an investigation.
+
+1. **Documents** (`#/documents`): type `aurora` as a new workspace, **Open**, **Add files**: the three
+   Aurora reports. Each is listed with its parser, SHA-256 and chunk count (indexing runs in the
+   background; the page lists anything still indexing).
+2. **Search by meaning:** *"spending went over what was authorised"*. No word of it is in the
+   answer; the top hit is `aurora_financial_report.txt:r9`, *"expenditure above the original
+   approved project budget"*, with its score and the store that answered.
+3. **investigate this file** opens New Mission filled in: the file, the workspace, and the search as
+   the objective. Started from there, the mission's recall searches the workspace by meaning.
+
+**What to say:** *Experiment 006 chose these defaults: search by meaning found the right line in the
+top five for 94% of queries against 56% for word matching; Member 2's 600-character chunks held the
+answer more often but cited the wrong line more often, so line chunks stayed; and no score threshold
+separates answers from non-answers, so the page shows scores instead of filtering.*
+
+**Fallback:** `python -m app.cli eval-retrieval --no-write` (embeddings only, about a minute), or the
+committed report in `.agent/evals/experiments/exp-006-retrieval/`.
 
 ---
 
@@ -384,13 +433,15 @@ the recording is better anyway.
 
 Worth knowing before someone asks:
 
-- **Eleven evaluation scenarios, not twenty**, and one run per experiment arm on a model whose
-  output varies between sessions.
-- **The frontend's only unit tests are the knowledge explorer's** (Vitest, Phase 32); the replay
-  reconstruction still has none.
-- **Replay does not rebuild the knowledge graph.** The trace replays; the 3D view needs the stored
-  graph.
-- **Memory is written only for missions run through the API** (the CLI stores no runs), and has no
-  API to forget a run yet.
+- **Fourteen evaluation scenarios, not twenty.** The suite is now run three times
+  (`eval --repeat 3`) and the spread reported; with a fixed seed and temperature 0 the three runs
+  agree, so the spread measures determinism on one machine, not variation across machines.
+- **Frontend unit tests cover pure logic only** (the explorer, file kinds, workspace links); the
+  replay reconstruction and the React components have none.
+- **Memory is written only for missions run through the API** (the CLI stores no runs).
+- **Stored retrieval is opt-in per mission.** Evaluation and missions without a workspace match
+  words, so the measured agent does not depend on what a workspace holds.
+- **No currency check.** A finding can say "$" where the documents say INR; nothing compares units
+  of money yet.
 - **CI does not measure the agent.** It cannot run a model; it validates the committed reports and
   enforces their thresholds, and re-runs the trust and security benchmarks, which need none.

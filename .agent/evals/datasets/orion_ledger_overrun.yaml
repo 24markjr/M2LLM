@@ -1,0 +1,25 @@
+# Phase 41: the first scenario read through the Word and Excel parsers (Phase 38). The memo approves
+# INR 250,000; the ledger's "Total spend" row is INR 287,500, and the memo says no change request was
+# raised. The overrun is the finding, and it crosses a paragraph locator and a spreadsheet row on a
+# sheet that acts as a page. Fixtures: `.agent/fixtures/make_orion_fixtures.py`.
+id: orion_ledger_overrun
+suites: [core, formats, all]
+objective: >
+  Determine whether Project Orion's recorded spend stayed within the budget approved by the
+  steering committee.
+documents:
+  - orion_budget_memo.docx
+  - orion_ledger.xlsx
+
+expected_operations:
+  - extract_budget
+  - compare_sources
+  - detect_inconsistencies
+  - generate_report
+
+min_tasks: 3
+minimal_tasks: 4
+
+# The spend figure. "287" matches "287,500" and "287500" alike.
+expected_claims:
+  - "287"

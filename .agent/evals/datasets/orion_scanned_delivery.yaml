@@ -1,0 +1,25 @@
+# Phase 41: the first scenario whose finding exists only in an image (Phase 39). The purchase order
+# asks for 40 units by 12 March; the delivery note is a scan saying 36 units on 19 March. Unless OCR
+# read the note, the run has nothing to compare - and a finding resting only on what the vision
+# model "saw" is PARTIALLY_SUPPORTED by design, so the read lines are what must carry it.
+id: orion_scanned_delivery
+suites: [core, formats, all]
+objective: >
+  Determine whether Polar Systems delivered the Orion cooling units in the quantity and by the
+  date the purchase order required.
+documents:
+  - orion_purchase_order.txt
+  - orion_delivery_note.png
+
+expected_operations:
+  - extract_timeline
+  - compare_sources
+  - detect_inconsistencies
+  - generate_report
+
+min_tasks: 3
+minimal_tasks: 4
+
+# The delivered quantity, which is only in the scanned note.
+expected_claims:
+  - "36"

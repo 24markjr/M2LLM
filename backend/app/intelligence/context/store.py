@@ -44,6 +44,8 @@ class StoredDocument(JarvisModel):
     kind: str = "text"
     sha256: str = ""
     parser: str = ""
+    # The chunker that cut it (Phase 41), so a change of chunker is not mistaken for "unchanged".
+    chunker: str = "lines"
     chunks: int = 0
 
 
@@ -179,3 +181,24 @@ class RetrievalHit(JarvisModel):
     line: int | None = None
     text: str
     score: float = Field(ge=0.0, le=1.0)
+
+
+# Reciprocal rank fusion's constant: the usual 60, which keeps one list's top rank from drowning
+# the other list's.
+RRF_K = 60
+
+
+def fuse(
+    rankings: list[list[tuple[str, int]]], *, k: int = RRF_K
+) -> list[tuple[tuple[str, int], float]]:
+    """Reciprocal rank fusion of several rankings of (document, line) citations, best first.
+
+    Phase 41 (Experiment 006): word matching won keyword queries and embeddings won paraphrases,
+    so a citation ranked well by either should rank well. Ranks are fused, not scores: the two
+    searches score on unrelated scales.
+    """
+    fused: dict[tuple[str, int], float] = {}
+    for ranking in rankings:
+        for rank, key in enumerate(dict.fromkeys(ranking), start=1):
+            fused[key] = fused.get(key, 0.0) + 1.0 / (k + rank)
+    return sorted(fused.items(), key=lambda item: (-item[1], item[0]))

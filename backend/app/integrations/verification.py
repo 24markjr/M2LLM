@@ -231,14 +231,16 @@ class RemoteVerifier:
                     f"{self._base_url}/verify", json=request.model_dump(mode="json")
                 )
                 response.raise_for_status()
-                return VerificationResult.model_validate(response.json())
+                remote: VerificationResult = VerificationResult.model_validate(response.json())
+                return remote
         except (httpx.HTTPError, ValueError) as exc:
             reason = f"{type(exc).__name__}: {exc}"
             log.warning("verification_degraded", reason=reason)
             result = await self._fallback.verify(request)
-            return result.model_copy(
+            degraded: VerificationResult = result.model_copy(
                 update={"degraded": True, "degraded_reason": reason, "verifier": "baseline"}
             )
+            return degraded
 
 
 class LexicalVerifier:
@@ -464,7 +466,10 @@ class CompositeVerifier:
                     }
                 )
 
-        return chosen.model_copy(update={"verifier": self.name, "opinions": opinions})
+        combined: VerificationResult = chosen.model_copy(
+            update={"verifier": self.name, "opinions": opinions}
+        )
+        return combined
 
 
 def build_verification_provider(llm: LLMProvider) -> VerificationProvider:
@@ -505,7 +510,7 @@ def described_only(
     cited = [evidence_text.get(ref.as_ref(), "") for ref in finding.evidence if ref.is_resolved]
     if not cited or not all(is_seen_line(text) for text in cited):
         return result
-    return result.model_copy(
+    described: VerificationResult = result.model_copy(
         update={
             "status": VerificationStatus.PARTIALLY_SUPPORTED,
             "issues": [
@@ -520,6 +525,7 @@ def described_only(
             ],
         }
     )
+    return described
 
 
 async def verify_finding(

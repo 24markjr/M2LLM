@@ -1,0 +1,10 @@
+PROJECT ORION - PURCHASE ORDER PO-7741
+
+Supplier: Polar Systems
+Issued: 5 March 2026
+
+Item: Cooling units, model PX-200
+Quantity ordered: 40 units
+Delivery due: 12 March 2026, Orion site, Pune
+
+Partial deliveries must be agreed in writing by the Orion procurement office.

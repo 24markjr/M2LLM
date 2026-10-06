@@ -135,7 +135,7 @@ export function DocumentsPage({ workspace = DEFAULT_WORKSPACE }: { workspace?: s
                     <td className="mono">{d.document_id}</td>
                     <td>{d.kind}</td>
                     <td className="mono dim">{d.parser || "-"}</td>
-                    <td>{d.chunks}</td>
+                    <td title={`cut by the ${d.chunker} chunker`}>{d.chunks}</td>
                     <td className="mono dim" title={d.sha256}>
                       {shortHash(d.sha256)}
                     </td>
@@ -162,7 +162,9 @@ export function DocumentsPage({ workspace = DEFAULT_WORKSPACE }: { workspace?: s
 
 function PassageSearch({ workspace }: { workspace: string }) {
   const [query, setQuery] = useState("");
-  const [minScore, setMinScore] = useState(0.5);
+  // 0 by measurement (Experiment 006): a query nothing answers scored 0.80, above the first relevant
+  // hit of a third of answerable queries, so no threshold separates them. Scores are shown instead.
+  const [minScore, setMinScore] = useState(0);
   const [result, setResult] = useState<RetrieveResponse | null>(null);
   const [error, setError] = useState("");
 
@@ -191,7 +193,7 @@ function PassageSearch({ workspace }: { workspace: string }) {
             onChange={(e) => setQuery(e.target.value)}
             style={{ flex: 1 }}
           />
-          <label className="dim mono" title="Cosine similarity mapped to 0-1: 0.5 is unrelated">
+          <label className="dim mono" title="Cosine similarity mapped to 0-1. Experiment 006 found no threshold that drops non-answers without dropping answers: judge by the passage, not the number.">
             min score{" "}
             <input
               type="number"

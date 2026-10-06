@@ -1,0 +1,20 @@
+# Phase 41: a NEGATIVE case across the subtitle and Word parsers. The meeting recording's subtitles
+# and the written minutes agree: installation done 1 April, handover 6 April 2026. The wording
+# differs ("finished" / "completed", "confirm" / "confirmed for"), which is the point: a paraphrase
+# is not a contradiction.
+id: orion_meeting_consistent
+suites: [negative, formats, all]
+objective: >
+  Determine whether the Orion site readiness meeting recording and its written minutes disagree on
+  the site handover date.
+documents:
+  - orion_meeting.srt
+  - orion_minutes.docx
+
+expected_operations:
+  - detect_inconsistencies
+
+min_tasks: 2
+minimal_tasks: 3
+
+expect_zero_findings: true

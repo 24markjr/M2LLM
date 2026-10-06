@@ -21,7 +21,13 @@ from pathlib import Path
 from app.core.config import get_settings
 from app.core.events import EventBus, MemoryEventSink, RunEventEmitter
 from app.core.logging import configure_logging
-from app.evaluation.report import LOWER_IS_BETTER, compare, load_latest, write_report
+from app.evaluation.report import (
+    LOWER_IS_BETTER,
+    EvalReport,
+    compare,
+    load_latest,
+    write_report,
+)
 from app.evaluation.runner import reports_dir, run_suite
 from app.intelligence.intent.engine import IntentEngine, derive_operations
 from app.intelligence.planner.engine import execution_levels
@@ -443,18 +449,29 @@ _TOLERANCES = {
 }
 
 
-async def run_eval(suite: str, *, write: bool = True, out: Path | None = None) -> int:
+async def run_eval(
+    suite: str, *, write: bool = True, out: Path | None = None, repeat: int = 1
+) -> int:
     """Run the evaluation suite and report measured metrics.
 
     Every number printed here is computed by a scorer from a real run. None is hard-coded,
     which is the whole point of the harness.
+
+    `repeat` (Phase 41) runs the suite several times and reports each metric's spread: the noise
+    a single report carries. The last run is reported and written as usual (and becomes the
+    baseline); every run and the spread go to `reports/repeats/<stamp>/`.
     """
     print()
     print(RULE)
-    print(f"JARVIS AGENT EVALUATION  (suite: {suite})")
+    print(f"JARVIS AGENT EVALUATION  (suite: {suite}{f', {repeat} runs' if repeat > 1 else ''})")
     print(RULE)
 
-    report = await run_suite(suite)
+    runs = []
+    for number in range(1, repeat + 1):
+        if repeat > 1:
+            print(f"run {number}/{repeat}", flush=True)
+        runs.append(await run_suite(suite))
+    report = runs[-1]
 
     if not report.scenarios:
         print("no scenarios matched this suite")
@@ -484,6 +501,12 @@ async def run_eval(suite: str, *, write: bool = True, out: Path | None = None) -
         print(f"  {name:<28} {value:7.3f}{marker}")
 
     failures = report.build_failures()
+    # Every run is held to the thresholds, not only the one reported: a confabulation in run 2 of 3
+    # is a confabulation.
+    for number, earlier in enumerate(runs[:-1], start=1):
+        failures += [f"run {number}: {failure}" for failure in earlier.build_failures()]
+    if len(runs) > 1:
+        _print_spread(runs, write=write, out=out)
     print()
     if failures:
         print("THRESHOLDS: FAILED")
@@ -524,6 +547,28 @@ async def run_eval(suite: str, *, write: bool = True, out: Path | None = None) -
     print(RULE)
     print()
     return 1 if failures else 0
+
+
+def _print_spread(runs: list[EvalReport], *, write: bool, out: Path | None) -> None:
+    from app.evaluation.report import spread, write_spread
+
+    summary = spread(runs, _TOLERANCES)
+    print()
+    print(f"SPREAD OVER {summary.runs} RUNS")
+    print("-" * 78)
+    for m in summary.metrics:
+        flag = "  ! noisier than its tolerance" if m.noisier_than_tolerance else ""
+        print(
+            f"  {m.metric:<28} mean {m.mean:7.3f}  sd {m.stdev:6.3f}  "
+            f"range {m.minimum:.3f}-{m.maximum:.3f}{flag}"
+        )
+    unstable = [s.scenario_id for s in summary.scenarios if not s.stable]
+    print(f"  unstable scenarios: {', '.join(unstable) if unstable else 'none'}")
+    if write:
+        folder = (out or reports_dir()) / "repeats" / summary.generated_at.strftime("%Y%m%dT%H%M%S")
+        for run in runs:
+            write_report(run, folder)
+        print(f"spread written to {write_spread(summary, folder)}")
 
 
 def run_eval_trust(*, write: bool) -> int:
@@ -569,6 +614,38 @@ def run_eval_trust(*, write: bool) -> int:
     return 1 if report.false_confidence or security_failed else 0
 
 
+async def run_eval_retrieval(*, write: bool) -> int:
+    """Experiment 006 (Phase 41). Embeddings only, no chat model: about a minute with Ollama."""
+    from app.evaluation.retrieval import run_retrieval_experiment, write_retrieval_report
+
+    report = await run_retrieval_experiment(get_provider())
+    print()
+    print(RULE)
+    print(f"EXPERIMENT 006: RETRIEVAL  ({report.embedding_model} via {report.provider})")
+    print(RULE)
+    if report.meaningless:
+        print("  the echo provider's embeddings are hashes: this measures plumbing, not retrieval")
+    print(f"  {report.documents} documents, {report.queries} queries, k = {report.k}")
+    print()
+    print(f"  {'arm':<16} {'hit@1':>6} {'hit@5':>6} {'rec@5':>6} {'MRR':>6} {'psg@5':>6}")
+    for arm in report.arms:
+        print(
+            f"  {arm.arm:<16} {arm.hit_at_1:6.3f} {arm.hit_at_5:6.3f} {arm.recall_at_5:6.3f} "
+            f"{arm.mrr:6.3f} {arm.passage_hit_at_5:6.3f}"
+        )
+    for arm in report.arms:
+        if arm.best_unanswerable_score is not None:
+            print(
+                f"  {arm.arm}: best unanswerable score {arm.best_unanswerable_score:.3f}; "
+                f"answerable above it {arm.answerable_above_it:.3f}"
+            )
+    if write:
+        print()
+        print(f"report written to {write_retrieval_report(report)}")
+    print(RULE)
+    return 0
+
+
 async def run_health() -> int:
     provider = get_provider()
     ok = await provider.health()
@@ -600,6 +677,14 @@ def main(argv: list[str] | None = None) -> int:
     eval_cmd.add_argument(
         "--out", type=Path, default=None, help="write the report here instead of evals/reports"
     )
+    eval_cmd.add_argument(
+        "--repeat", type=int, default=1, help="run the suite N times and report the spread"
+    )
+
+    retrieval_cmd = sub.add_parser(
+        "eval-retrieval", help="Experiment 006: lexical vs semantic search, two chunkers"
+    )
+    retrieval_cmd.add_argument("--no-write", action="store_true", help="do not write a report")
 
     trust_cmd = sub.add_parser("eval-trust", help="run Member 4's verifier benchmark")
     trust_cmd.add_argument("--no-write", action="store_true", help="do not write a report file")
@@ -611,7 +696,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "intent":
         return asyncio.run(run_intent(args.objective, args.docs))
     if args.command == "eval":
-        return asyncio.run(run_eval(args.suite, write=not args.no_write, out=args.out))
+        return asyncio.run(
+            run_eval(args.suite, write=not args.no_write, out=args.out, repeat=max(1, args.repeat))
+        )
+    if args.command == "eval-retrieval":
+        return asyncio.run(run_eval_retrieval(write=not args.no_write))
     if args.command == "eval-trust":
         return run_eval_trust(write=not args.no_write)
     if args.command == "investigate":

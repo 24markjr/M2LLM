@@ -480,7 +480,7 @@ What the integration added beyond Members 3 and 4's features, from the plan's ta
 | A7 | Deterministic CSV extraction | 28 | DONE |
 | A8 | Shared attribute vocabulary across chunks | 28 | DONE. Attribute names still vary between *runs* (Phase 33's memory measurement) |
 | A9 | Evidence trail in 3D | 32 | DONE |
-| A10 | Live graph growth over SSE | 32 | DONE. Replay does not rebuild the graph |
+| A10 | Live graph growth over SSE | 32 | DONE. Replay rebuilds the graph from the recording since 2026-10-05 |
 | A11 | Injection scan at document load | 27 | DONE |
 | A12 | Trust and security benchmarks in the harness | 26, 27, 34 | DONE. Re-run by CI since Phase 34 |
 | A13 | Three shipment scenarios | 34 | DONE |
@@ -489,7 +489,7 @@ What the integration added beyond Members 3 and 4's features, from the plan's ta
 
 ---
 
-## Member 2 — M2LLM, document ingestion (Phases 38-40)
+## Member 2 — M2LLM, document ingestion (Phases 38-41)
 
 Ported from their build report (reviewed 2026-10-05; their code was not in this repository). Decision
 D7: re-implemented in-process, as Members 3 and 4 were.
@@ -504,7 +504,15 @@ D7: re-implemented in-process, as Members 3 and 4 were.
 | M6 | Images: orientation and dimensions | `parsers/` (Pillow) | `formats.py:load_image` | DONE, and marked as having no text until OCR |
 | M7 | Provenance: file hash, parser, OCR flag | `provenance/tracker.py` (JSONL) | `UploadedDocument.parser/sha256`, logged | CHANGED. In the upload response and the log; stored with retrieval in Phase 40 |
 | M8 | OCR (PaddleOCR) | `ocr/` | `app/tools/media.py:read_text` | CHANGED. PaddleOCR's models through RapidOCR; images, scanned PDF pages (rendered with pypdfium2) and video frames; low-confidence lines marked; cached per file (Phase 39) |
-| M9 | Normalisation, chunking (600/80) | `normalization/`, `chunking/` | `context/store.py:chunk_by_chars`, `CONTEXT_CHUNKER=chars` | CHANGED. Their 600/80 windows, nudged to a word start, each recording the line it starts on so it is citable; beside the line chunker, the default chosen by Experiment 006 (Phase 41). Normalisation is the format registry's (Phase 38) |
+| M9 | Normalisation, chunking (600/80) | `normalization/`, `chunking/` | `context/store.py:chunk_by_chars`, `CONTEXT_CHUNKER=chars` | CHANGED. Their 600/80 windows, nudged to a word start, each recording the line it starts on so it is citable; beside the line chunker. Experiment 006 (Phase 41) kept `lines` the default: theirs held the answer in the passage more often (1.000 vs 0.938) but cited the right line less often (hit@1 0.438 vs 0.562); ADR-013. Normalisation is the format registry's (Phase 38) |
 | M10 | Embeddings, Qdrant with in-memory fallback, workspace-scoped retrieval | `embeddings/`, `vectorstore/`, `retrieval/` | `app/database/context_store.py`, `context/store.py`, `integrations/context.py`, `api/v1/context.py`, `#/documents` | CHANGED. pgvector instead of Qdrant (D9), `nomic-embed-text` through `app/llm` instead of Sentence-Transformers (D10), workspaces (D11); the fallback store named in every answer; ingest skipped for unchanged text; hits cited at their closest line; a mission's recall searches its own workspace (Phase 40) |
 | M11 | Vision-language interface | `vision/` (raises `NotImplementedError`) | `app/tools/media.py:see`, the `vision` role | ADDED, since theirs was unimplemented: a local vision model (`qwen2.5vl:3b`) through `app/llm/`; its output marked `[seen]` and weaker than read text (ADR-012) |
 | - | Video, audio | (not in their build) | `formats.py`, `media.py` | ADDED. A timeline of speech (faster-whisper, or a person's transcript), on-screen text and what sampled frames show; audio as timed speech (Phase 39) |
+| - | Their parsers in the evaluation | - | three Orion scenarios (`formats` suite), Experiment 006 | ADDED. Word, Excel, an OCR-only image and subtitles in measured scenarios; retrieval scored line by line (Phase 41) |
+
+**Not ported, deliberately:** Qdrant and Sentence-Transformers (D9, D10: pgvector and the Ollama
+embedding model already in the stack); carrier/shipment tracking (out of scope in their own report);
+the JSONL provenance file (provenance is in the upload response, the `documents` table and the log).
+
+**Member 2's port is complete** (Phase 42): every row above is DONE, CHANGED with its reason, ADDED, or
+deliberately not ported. Decisions: ADR-012 (seeing and hearing), ADR-013 (stored retrieval).

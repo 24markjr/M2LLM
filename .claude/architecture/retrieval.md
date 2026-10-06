@@ -65,7 +65,9 @@ text, `vector(768)`). Replacing a document deletes the row; its chunks cascade.
 | `lines` (default) | Up to four lines, or to a blank line | the chunk's first line |
 | `chars` | Member 2's: 600 characters, 80 repeated, nudged to a word start | the line of its first kept character |
 
-Which is the default is decided by Experiment 006, as every default since Phase 34.
+**`lines` stays the default, by measurement (Experiment 006, below).** A changed chunker re-chunks
+unchanged text: each stored document records the chunker that cut it (Phase 41, migration
+`00c052316938`); before that, the hash alone said "unchanged" and the old chunks stayed.
 
 ## What the live check found (2026-10-06)
 
@@ -76,5 +78,44 @@ what was authorised" -> the over-budget line, "when will the work be finished" -
 dates).
 
 **Scores cluster high.** Mapped similarities ran 0.71-0.84, and a query nothing answers ("who
-supplies the hardware") still scored 0.73. A `min_score` of 0.5 therefore filters nothing; a useful
-threshold is a measurement for Experiment 006, not a guess made here.
+supplies the hardware") still scored 0.73. Experiment 006 confirmed it: there is no useful threshold.
+
+## Experiment 006 (Phase 41)
+
+`python -m app.cli eval-retrieval`: 18 fixture documents (text, CSV, Word, Excel) searched together,
+20 queries with the exact lines a reader would cite (`.agent/evals/retrieval/queries.yaml`): 6 that
+share words with their answer, 10 paraphrases, 4 that nothing answers. A hit counts only at the
+exact line. Code `app/evaluation/retrieval.py`; reports
+`.agent/evals/experiments/exp-006-retrieval/`. `nomic-embed-text`, 2026-10-06:
+
+| Arm | hit@1 | hit@5 | recall@5 | MRR | passage hit@5 |
+|---|---|---|---|---|---|
+| lexical (`document_search`) | 0.375 | 0.562 | 0.400 | 0.458 | 0.562 |
+| **semantic, line chunks** | **0.562** | **0.938** | **0.680** | **0.729** | 0.938 |
+| semantic, Member 2's 600/80 | 0.438 | 0.750 | 0.600 | 0.552 | 1.000 |
+| hybrid (rank fusion of lexical and line chunks) | 0.438 | 0.875 | 0.680 | 0.604 | 0.875 |
+
+By kind: lexical found every keyword query in its top 5 (hit@5 1.000, semantic 0.833) but only 3 of
+10 paraphrases; semantic found all 10 paraphrases (hit@5 1.000, hit@1 0.700).
+
+**Decisions:**
+
+1. **Line chunks stay the default.** Member 2's 600/80 chunks hold the answer somewhere in the
+   passage more often (passage hit 1.000) but cite the right line less often (hit@1 0.438 vs 0.562):
+   a long chunk's closest line is more often a neighbour of the answer. A citation that names the
+   wrong line is one a reader cannot check, so precision wins.
+2. **No hybrid.** Fusing the two rankings (added after the first run, when each search won one kind
+   of query) lost to semantic search alone on hit@1 and MRR. Per query: it moved three keyword
+   answers up one place (k1, k2, k5), but on paraphrases lexical's wrong-line matches were fused
+   above the semantic answer (p2 fell from 1st to 3rd, p9 from 1st to 4th, p10 out of the top 5).
+   Not built into the tool.
+3. **No `min_score`.** The best-scoring query nothing answers reached 0.802; only 62.5% of answerable
+   queries had their first relevant hit above that (31.2% with 600/80 chunks). Any threshold that
+   drops non-answers drops real answers, so the API default is 0 and the Documents page shows scores
+   rather than filtering.
+4. **Missions keep both.** Semantic search is what a mission naming a workspace gets; evaluation
+   runs stay lexical, so the agent's baseline is comparable across phases. Making stored retrieval
+   the default for every mission would change what the baseline measures and is not done here.
+
+Twenty queries over 18 small documents: a direction, not a benchmark. The semantic numbers were
+identical across both runs (deterministic embeddings); lexical is deterministic by construction.

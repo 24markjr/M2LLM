@@ -14,6 +14,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.api.app import create_app
+from app.api.v1.documents import wait_for_indexing
 from app.core.config import get_settings
 from app.integrations import context as context_integration
 from app.integrations.context import (
@@ -206,8 +207,10 @@ async def test_an_upload_is_ingested_into_its_workspace_and_searchable() -> None
             files=[("files", ("helix.txt", REPORT.encode()))],
         )
         assert uploaded.status_code == 201, uploaded.text
-        ingested = uploaded.json()[0]["ingested"]
-        assert ingested["workspace_id"] == "helix" and ingested["chunks"] > 0
+        # The upload answers before its passages are embedded (2026-10-06): indexing follows.
+        assert uploaded.json()[0]["indexing"] is True
+        assert uploaded.json()[0]["ingested"] is None
+        await wait_for_indexing()
 
         found = await client.post(
             "/api/v1/context/retrieve",
@@ -228,6 +231,7 @@ async def test_an_upload_is_ingested_into_its_workspace_and_searchable() -> None
 async def test_ingest_reports_what_it_could_not_read() -> None:
     async with await _client() as client:
         await client.post("/api/v1/documents", files=[("files", ("a.txt", REPORT.encode()))])
+        await wait_for_indexing()
         response = await client.post(
             "/api/v1/context/ingest", json={"documents": ["a.txt", "nowhere.txt"]}
         )
@@ -259,6 +263,7 @@ async def test_a_mission_naming_a_workspace_searches_it(monkeypatch: pytest.Monk
     monkeypatch.setattr(registry_module.get_registry(), "create", create)
     async with await _client() as client:
         await client.post("/api/v1/documents", files=[("files", ("m.txt", REPORT.encode()))])
+        await wait_for_indexing()
         with pytest.raises(RuntimeError):
             await client.post(
                 "/api/v1/missions",
@@ -310,3 +315,67 @@ def test_a_char_chunk_starting_at_a_newline_cites_the_line_its_text_is_on() -> N
     for chunk in chunks:
         first = chunk.text.splitlines()[0]
         assert first in text.splitlines()[chunk.locator.row - 1]
+
+
+async def test_changing_the_chunker_rechunks_unchanged_text(
+    _fresh_memory_store: MemoryContextStore,
+) -> None:
+    # Phase 41: the hash alone said "unchanged", and switching CONTEXT_CHUNKER kept the old chunks.
+    llm = EchoProvider()
+    lines = await ingest_document(
+        _fresh_memory_store,
+        llm,
+        workspace_id="w",
+        document_id="r.txt",
+        text=REPORT,
+        chunker="lines",
+    )
+    chars = await ingest_document(
+        _fresh_memory_store,
+        llm,
+        workspace_id="w",
+        document_id="r.txt",
+        text=REPORT,
+        chunker="chars",
+    )
+    assert not chars.unchanged and chars.chunks != lines.chunks
+    stored = await _fresh_memory_store.current("w", "r.txt")
+    assert stored is not None and stored.chunker == "chars"
+
+
+@pytest.mark.usefixtures("_uploads")
+async def test_an_upload_answers_before_a_slow_embedding_finishes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """2026-10-06: eight files held one upload for minutes while they were embedded."""
+    import asyncio
+
+    from app.api.v1 import documents as documents_api
+
+    release = asyncio.Event()
+
+    async def slow(*args: object, **kwargs: object) -> None:
+        await release.wait()
+
+    monkeypatch.setattr(documents_api, "ingest_document", slow)
+    async with await _client() as client:
+        uploaded = await asyncio.wait_for(
+            client.post("/api/v1/documents", files=[("files", ("big.txt", REPORT.encode()))]),
+            timeout=10,
+        )
+        assert uploaded.status_code == 201 and uploaded.json()[0]["indexing"] is True
+        view = (await client.get("/api/v1/context/workspaces/default")).json()
+        assert view["indexing"] == ["big.txt"]
+    release.set()
+    await wait_for_indexing()
+
+
+async def test_an_invalid_request_names_the_field_and_the_problem() -> None:
+    """2026-10-06: a too-long objective came back as "did not match the expected shape"."""
+    async with await _client() as client:
+        response = await client.post(
+            "/api/v1/missions", json={"objective": "x" * 2500, "documents": []}
+        )
+    body = response.json()
+    assert response.status_code == 422 and body["error_code"] == "INVALID_REQUEST"
+    assert body["message"].startswith("objective:") and "2000" in body["message"]

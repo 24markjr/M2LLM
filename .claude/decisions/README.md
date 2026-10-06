@@ -25,3 +25,4 @@ reader looking for something that was never written.
 | ADR-010 | Neo4j for the knowledge graph, optional, behind one protocol | Accepted |
 | ADR-011 | The knowledge graph explorer: vanilla 3d-force-graph, one wrapper, pure logic beside it | Accepted |
 | ADR-012 | Seeing and hearing: read, seen and heard, kept apart | Accepted |
+| ADR-013 | Stored retrieval: pgvector, workspaces, and defaults set by measurement | Accepted |

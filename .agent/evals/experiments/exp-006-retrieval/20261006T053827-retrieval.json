@@ -1,0 +1,3479 @@
+{
+  "generated_at": "2026-10-06T05:38:27.606987+00:00",
+  "embedding_model": "nomic-embed-text",
+  "provider": "OllamaProvider",
+  "documents": 18,
+  "queries": 20,
+  "k": 5,
+  "arms": [
+    {
+      "arm": "lexical",
+      "chunks": 0,
+      "ingest_s": 0.0,
+      "mean_query_s": 0.0005133450000812445,
+      "hit_at_1": 0.375,
+      "hit_at_5": 0.5625,
+      "recall_at_5": 0.4,
+      "mrr": 0.4583333333333333,
+      "passage_hit_at_5": 0.5625,
+      "by_kind": {
+        "keyword": {
+          "hit_at_1": 0.5,
+          "hit_at_5": 1.0,
+          "mrr": 0.7222222222222222
+        },
+        "paraphrase": {
+          "hit_at_1": 0.3,
+          "hit_at_5": 0.3,
+          "mrr": 0.3
+        }
+      },
+      "best_unanswerable_score": null,
+      "answerable_above_it": null,
+      "queries": [
+        {
+          "id": "k1",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "The financial team records expenditure above the original approved project budget.",
+              "score": 0.75
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 18,
+              "text": "The approved project budget is INR 380,000.",
+              "score": 0.75
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 4,
+              "text": "The steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.",
+              "score": 0.75
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 1,
+              "text": "PROJECT AURORA — FINANCIAL STATUS REPORT",
+              "score": 0.5
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 1,
+              "text": "PROJECT AURORA — MILESTONE UPDATE",
+              "score": 0.5
+            }
+          ],
+          "first_relevant_rank": 2,
+          "first_relevant_score": 0.75,
+          "relevant_cited": 1,
+          "relevant_total": 2,
+          "passage_hit": true,
+          "seconds": 0.0007360999998127227
+        },
+        {
+          "id": "k2",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "project_report.txt",
+              "line": 10,
+              "text": "The target completion date is 2026-04-30.",
+              "score": 0.75
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 10,
+              "text": "The original baseline completion date is not reproduced in this document.",
+              "score": 0.5
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 10,
+              "text": "The approved baseline completion date is 30 April 2026.",
+              "score": 0.5
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 6,
+              "text": "Total spend to date on the Helix migration is 450,000.",
+              "score": 0.5
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 6,
+              "text": "Total expenditure recorded to date: INR 450,000.",
+              "score": 0.25
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.75,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 0.0003604000003178953
+        },
+        {
+          "id": "k3",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 1.0
+            },
+            {
+              "document_id": "shipment_report_b.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 16 September at the Mumbai facility, according to security logs.",
+              "score": 1.0
+            },
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.6666666666666666
+            },
+            {
+              "document_id": "shipment_invoice_9012.txt",
+              "line": 1,
+              "text": "Invoice 9012 for Shipment 9012 was issued by ABC Logistics to XYZ Traders on 18 September. Total amount recorded as accurate and undisputed.",
+              "score": 0.3333333333333333
+            },
+            {
+              "document_id": "shipment_delivery_confirmation.txt",
+              "line": 1,
+              "text": "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya Menon. No discrepancies were reported.",
+              "score": 0.3333333333333333
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 1.0,
+          "relevant_cited": 2,
+          "relevant_total": 2,
+          "passage_hit": true,
+          "seconds": 0.00023539999983768212
+        },
+        {
+          "id": "k4",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "milestone_report.txt",
+              "line": 7,
+              "text": "M4 go-live closed 2026-05-14.",
+              "score": 1.0
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 6,
+              "text": "M4 — Production readiness — status: CLOSED",
+              "score": 0.5
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 10,
+              "text": "Finance has been advised that delivery completed on 2026-05-14.",
+              "score": 0.5
+            },
+            {
+              "document_id": "milestone_report.txt",
+              "line": 2,
+              "text": "Prepared by: Delivery",
+              "score": 0.5
+            },
+            {
+              "document_id": "milestone_report.txt",
+              "line": 4,
+              "text": "M1 requirements sign-off closed 2026-02-03.",
+              "score": 0.5
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 1.0,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 0.0002368999998907384
+        },
+        {
+          "id": "k5",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 1,
+              "text": "PROJECT ORION - PURCHASE ORDER PO-7741",
+              "score": 0.6
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 7,
+              "text": "Quantity ordered: 40 units",
+              "score": 0.6
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 1,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO",
+              "score": 0.2
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 2,
+              "text": "From: Steering Committee, Orion Cold Storage Programme",
+              "score": 0.2
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 4,
+              "text": "The steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.",
+              "score": 0.2
+            }
+          ],
+          "first_relevant_rank": 2,
+          "first_relevant_score": 0.6,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 0.00027940000018134015
+        },
+        {
+          "id": "k6",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "financial_report.txt",
+              "line": 6,
+              "text": "Total spend to date on the Helix migration is 450,000.",
+              "score": 0.5
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 4,
+              "text": "The steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.",
+              "score": 0.5
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 7,
+              "text": "Total spend,,,287500",
+              "score": 0.5
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 9,
+              "text": "Ledger maintained by the Orion finance office.",
+              "score": 0.5
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 6,
+              "text": "Total expenditure recorded to date: INR 450,000.",
+              "score": 0.25
+            }
+          ],
+          "first_relevant_rank": 3,
+          "first_relevant_score": 0.5,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 0.00026740000021163723
+        },
+        {
+          "id": "p1",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "This document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.16666666666666666
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 6,
+              "text": "1. PROJECT OVERVIEW",
+              "score": 0.16666666666666666
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 23,
+              "text": "5. GOVERNANCE NOTE",
+              "score": 0.16666666666666666
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 7,
+              "text": "This figure covers all line items through the end of the reporting period.",
+              "score": 0.16666666666666666
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 9,
+              "text": "Project start date was 2026-01-12.",
+              "score": 0.16666666666666666
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 3,
+          "passage_hit": false,
+          "seconds": 0.0006575000002158049
+        },
+        {
+          "id": "p2",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "shipment_employee_statement.txt",
+              "line": 1,
+              "text": "Rahul Sharma works for ABC Logistics and was present at the Mumbai warehouse on 14 September.",
+              "score": 0.4
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "The financial team records expenditure above the original approved project budget.",
+              "score": 0.2
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "The latest recorded completion milestone is 14 May 2026.",
+              "score": 0.2
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 15,
+              "text": "The report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.",
+              "score": 0.2
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "This report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.2
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 2,
+          "passage_hit": false,
+          "seconds": 0.0024875000003703462
+        },
+        {
+          "id": "p3",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 5,
+              "text": "Any spend above the approved budget requires a change request signed by the programme sponsor before it is incurred.",
+              "score": 0.3333333333333333
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 9,
+              "text": "Ledger maintained by the Orion finance office.",
+              "score": 0.3333333333333333
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 10,
+              "text": "Partial deliveries must be agreed in writing by the Orion procurement office.",
+              "score": 0.3333333333333333
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "The financial team records expenditure above the original approved project budget.",
+              "score": 0.16666666666666666
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "The latest recorded completion milestone is 14 May 2026.",
+              "score": 0.16666666666666666
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 4,
+          "passage_hit": false,
+          "seconds": 0.0003951000003326044
+        },
+        {
+          "id": "p4",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 15,
+              "text": "The report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.",
+              "score": 0.3333333333333333
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 21,
+              "text": "The project team reports that all major development activities are progressing against the approved baseline.",
+              "score": 0.3333333333333333
+            },
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 5,
+              "text": "3. Operations assumes the night shift from the handover date.",
+              "score": 0.3333333333333333
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "The financial team records expenditure above the original approved project budget.",
+              "score": 0.2222222222222222
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "The latest recorded completion milestone is 14 May 2026.",
+              "score": 0.2222222222222222
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 2,
+          "passage_hit": false,
+          "seconds": 0.00040589999980511493
+        },
+        {
+          "id": "p5",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "The financial team records expenditure above the original approved project budget.",
+              "score": 0.125
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "The latest recorded completion milestone is 14 May 2026.",
+              "score": 0.125
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 15,
+              "text": "The report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.",
+              "score": 0.125
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "This report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.125
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 10,
+              "text": "The original baseline completion date is not reproduced in this document.",
+              "score": 0.125
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 1,
+          "passage_hit": false,
+          "seconds": 0.0005767000002379064
+        },
+        {
+          "id": "p6",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.3333333333333333
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "This document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.16666666666666666
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 21,
+              "text": "The project team reports that all major development activities are progressing against the approved baseline.",
+              "score": 0.16666666666666666
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 10,
+              "text": "Finance has been advised that delivery completed on 2026-05-14.",
+              "score": 0.16666666666666666
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 11,
+              "text": "Costs have been accrued through that date.",
+              "score": 0.16666666666666666
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.3333333333333333,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 0.00035200000002078013
+        },
+        {
+          "id": "p7",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 4,
+              "text": "The steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.",
+              "score": 0.4444444444444444
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "This report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.2222222222222222
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "This document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.2222222222222222
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 24,
+              "text": "Any material change to the approved baseline should be documented through a formal change request and reflected in the financial records.",
+              "score": 0.2222222222222222
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 6,
+              "text": "The Helix migration moves the claims platform onto the new core.",
+              "score": 0.2222222222222222
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.4444444444444444,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 0.0005117000000609551
+        },
+        {
+          "id": "p8",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 4,
+              "text": "2. Site handover to operations confirmed for 6 April 2026.",
+              "score": 0.42857142857142855
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "This report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.2857142857142857
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "This document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.2857142857142857
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 24,
+              "text": "Any material change to the approved baseline should be documented through a formal change request and reflected in the financial records.",
+              "score": 0.2857142857142857
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 6,
+              "text": "The Helix migration moves the claims platform onto the new core.",
+              "score": 0.2857142857142857
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.42857142857142855,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 0.0004835999998249463
+        },
+        {
+          "id": "p9",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "The financial team records expenditure above the original approved project budget.",
+              "score": 0.25
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "The latest recorded completion milestone is 14 May 2026.",
+              "score": 0.25
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 15,
+              "text": "The report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.",
+              "score": 0.25
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "This report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.25
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 10,
+              "text": "The original baseline completion date is not reproduced in this document.",
+              "score": 0.25
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 1,
+          "passage_hit": false,
+          "seconds": 0.00037610000026688795
+        },
+        {
+          "id": "p10",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "This document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.625
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "This report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.5
+            },
+            {
+              "document_id": "shipment_employee_statement.txt",
+              "line": 1,
+              "text": "Rahul Sharma works for ABC Logistics and was present at the Mumbai warehouse on 14 September.",
+              "score": 0.5
+            },
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.5
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 10,
+              "text": "The original baseline completion date is not reproduced in this document.",
+              "score": 0.375
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 1,
+          "passage_hit": false,
+          "seconds": 0.0006249000002753746
+        },
+        {
+          "id": "u1",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "The financial team records expenditure above the original approved project budget.",
+              "score": 0.2
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "The latest recorded completion milestone is 14 May 2026.",
+              "score": 0.2
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 15,
+              "text": "The report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.",
+              "score": 0.2
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "This report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.2
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 10,
+              "text": "The original baseline completion date is not reproduced in this document.",
+              "score": 0.2
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 0.0003461999999672116
+        },
+        {
+          "id": "u2",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 0.6666666666666666
+            },
+            {
+              "document_id": "shipment_employee_statement.txt",
+              "line": 1,
+              "text": "Rahul Sharma works for ABC Logistics and was present at the Mumbai warehouse on 14 September.",
+              "score": 0.6666666666666666
+            },
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.6666666666666666
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "This document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.5
+            },
+            {
+              "document_id": "shipment_security_report.txt",
+              "line": 1,
+              "text": "CCTV footage confirms Rahul Sharma entered the Mumbai warehouse at 10:15 AM on 14 September and left at 11:40 AM.",
+              "score": 0.5
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 0.00034209999967060867
+        },
+        {
+          "id": "u3",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 24,
+              "text": "Any material change to the approved baseline should be documented through a formal change request and reflected in the financial records.",
+              "score": 0.25
+            },
+            {
+              "document_id": "milestone_report.txt",
+              "line": 10,
+              "text": "The approved baseline schedule is held by the PMO and is not attached here.",
+              "score": 0.25
+            },
+            {
+              "document_id": "shipment_employee_statement.txt",
+              "line": 1,
+              "text": "Rahul Sharma works for ABC Logistics and was present at the Mumbai warehouse on 14 September.",
+              "score": 0.25
+            },
+            {
+              "document_id": "shipment_security_report.txt",
+              "line": 1,
+              "text": "CCTV footage confirms Rahul Sharma entered the Mumbai warehouse at 10:15 AM on 14 September and left at 11:40 AM.",
+              "score": 0.25
+            },
+            {
+              "document_id": "shipment_invoice_9012.txt",
+              "line": 1,
+              "text": "Invoice 9012 for Shipment 9012 was issued by ABC Logistics to XYZ Traders on 18 September. Total amount recorded as accurate and undisputed.",
+              "score": 0.25
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 0.000241100000039296
+        },
+        {
+          "id": "u4",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "The financial team records expenditure above the original approved project budget.",
+              "score": 0.2
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "The latest recorded completion milestone is 14 May 2026.",
+              "score": 0.2
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 15,
+              "text": "The report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.",
+              "score": 0.2
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "This report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.2
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 10,
+              "text": "The original baseline completion date is not reproduced in this document.",
+              "score": 0.2
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 0.0003509000002850371
+        }
+      ]
+    },
+    {
+      "arm": "semantic-lines",
+      "chunks": 50,
+      "ingest_s": 43.21,
+      "mean_query_s": 4.723085424999954,
+      "hit_at_1": 0.5625,
+      "hit_at_5": 0.9375,
+      "recall_at_5": 0.68,
+      "mrr": 0.7291666666666666,
+      "passage_hit_at_5": 0.9375,
+      "by_kind": {
+        "keyword": {
+          "hit_at_1": 0.3333333333333333,
+          "hit_at_5": 0.8333333333333334,
+          "mrr": 0.5277777777777778
+        },
+        "paraphrase": {
+          "hit_at_1": 0.7,
+          "hit_at_5": 1.0,
+          "mrr": 0.85
+        }
+      },
+      "best_unanswerable_score": 0.8019,
+      "answerable_above_it": 0.625,
+      "queries": [
+        {
+          "id": "k1",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 1,
+              "text": "PROJECT AURORA — FINANCIAL STATUS REPORT\nDocument ID: AUR-FIN-2026-05\nReporting period: 1 January 2026 to 14 May 2026",
+              "score": 0.8735
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 1,
+              "text": "PROJECT AURORA — EXECUTIVE PROJECT REPORT\nDocument ID: AUR-PR-2026-04\nVersion: 1.2\nDate: 20 April 2026",
+              "score": 0.8614
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 18,
+              "text": "3. APPROVED BUDGET\nThe approved project budget is INR 380,000.",
+              "score": 0.8609
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 7,
+              "text": "1. PROJECT OVERVIEW\nProject Aurora is a customer analytics platform scheduled for production readiness in Q2 2026.",
+              "score": 0.8469
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 1,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO\nFrom: Steering Committee, Orion Cold Storage Programme\nDate: 3 March 2026\nThe steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.",
+              "score": 0.8444
+            }
+          ],
+          "first_relevant_rank": 3,
+          "first_relevant_score": 0.8609,
+          "relevant_cited": 1,
+          "relevant_total": 2,
+          "passage_hit": true,
+          "seconds": 5.420684400000027
+        },
+        {
+          "id": "k2",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "milestone_report.txt",
+              "line": 1,
+              "text": "PROJECT HELIX - MILESTONE REPORT\nPrepared by: Delivery",
+              "score": 0.8597
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 10,
+              "text": "2. SCHEDULE\nProject start date was 2026-01-12.\nThe target completion date is 2026-04-30.\nThe final milestone M4 is scheduled to close on 2026-04-28.",
+              "score": 0.8498
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 1,
+              "text": "PROJECT HELIX - STATUS REPORT\nReporting period: Q1 2026\nPrepared by: Programme Office",
+              "score": 0.8471
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 1,
+              "text": "PROJECT HELIX - FINANCIAL REPORT\nReporting period: Q1 2026\nPrepared by: Finance",
+              "score": 0.8299
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "3. DATES\nThe latest recorded completion milestone is 14 May 2026.",
+              "score": 0.8287
+            }
+          ],
+          "first_relevant_rank": 2,
+          "first_relevant_score": 0.8498,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.3813366999997925
+        },
+        {
+          "id": "k3",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "shipment_report_b.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 16 September at the Mumbai facility, according to security logs.",
+              "score": 0.9021
+            },
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 0.8852
+            },
+            {
+              "document_id": "shipment_delivery_confirmation.txt",
+              "line": 1,
+              "text": "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya Menon. No discrepancies were reported.",
+              "score": 0.8177
+            },
+            {
+              "document_id": "shipment_invoice_9012.txt",
+              "line": 1,
+              "text": "Invoice 9012 for Shipment 9012 was issued by ABC Logistics to XYZ Traders on 18 September. Total amount recorded as accurate and undisputed.",
+              "score": 0.8032
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 8,
+              "text": "Item: Cooling units, model PX-200\nQuantity ordered: 40 units\nDelivery due: 12 March 2026, Orion site, Pune",
+              "score": 0.8009
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.9021,
+          "relevant_cited": 2,
+          "relevant_total": 2,
+          "passage_hit": true,
+          "seconds": 5.111215799999627
+        },
+        {
+          "id": "k4",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "milestone_report.txt",
+              "line": 7,
+              "text": "M1 requirements sign-off closed 2026-02-03.\nM2 build complete closed 2026-03-19.\nM3 user acceptance closed 2026-04-22.\nM4 go-live closed 2026-05-14.",
+              "score": 0.8677
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 6,
+              "text": "MILESTONE M4\nM4 — Production readiness — status: CLOSED\nRecorded closure date: 14 May 2026.",
+              "score": 0.8428
+            },
+            {
+              "document_id": "milestone_report.txt",
+              "line": 9,
+              "text": "Milestone M4 closed later than the date given in the programme report.\nThe approved baseline schedule is held by the PMO and is not attached here.",
+              "score": 0.8301
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 11,
+              "text": "2. SCHEDULE\nProject start date was 2026-01-12.\nThe target completion date is 2026-04-30.\nThe final milestone M4 is scheduled to close on 2026-04-28.",
+              "score": 0.7625
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 15,
+              "text": "- M2 Architecture complete: 31 January 2026\n- M3 Development complete: 31 March 2026\n- M4 Production readiness: 30 April 2026",
+              "score": 0.7494
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.8677,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.344810200000211
+        },
+        {
+          "id": "k5",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 1,
+              "text": "PROJECT ORION - PURCHASE ORDER PO-7741",
+              "score": 0.909
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 9,
+              "text": "Ledger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.8465
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 7,
+              "text": "Item: Cooling units, model PX-200\nQuantity ordered: 40 units\nDelivery due: 12 March 2026, Orion site, Pune",
+              "score": 0.8422
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 10,
+              "text": "Partial deliveries must be agreed in writing by the Orion procurement office.",
+              "score": 0.8412
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 1,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO\nFrom: Steering Committee, Orion Cold Storage Programme\nDate: 3 March 2026\nThe steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.",
+              "score": 0.8056
+            }
+          ],
+          "first_relevant_rank": 3,
+          "first_relevant_score": 0.8422,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.079975899999681
+        },
+        {
+          "id": "k6",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 9,
+              "text": "Ledger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.8619
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 4,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO\nFrom: Steering Committee, Orion Cold Storage Programme\nDate: 3 March 2026\nThe steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.",
+              "score": 0.8247
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 6,
+              "text": "1. SUMMARY\nTotal spend to date on the Helix migration is 450,000.\nThis figure covers all line items through the end of the reporting period.",
+              "score": 0.8098
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 1,
+              "text": "PROJECT ORION - PURCHASE ORDER PO-7741",
+              "score": 0.7952
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 10,
+              "text": "Partial deliveries must be agreed in writing by the Orion procurement office.",
+              "score": 0.7854
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 1,
+          "passage_hit": false,
+          "seconds": 5.0245417000001
+        },
+        {
+          "id": "p1",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 5,
+              "text": "Any spend above the approved budget requires a change request signed by the programme sponsor before it is incurred.\nNo change request has been raised as of the date of this memo.",
+              "score": 0.8436
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 14,
+              "text": "3. VARIANCE\nSpend exceeds the figure quoted in the programme report.\nNo revised budget approval has been recorded in this system.",
+              "score": 0.836
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.",
+              "score": 0.8314
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 16,
+              "text": "3. BUDGET\nThe approved budget for the migration phase is 380,000.\nSpend to date is reported by Finance separately.",
+              "score": 0.8127
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "5. NOTE\nThis report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.8119
+            }
+          ],
+          "first_relevant_rank": 2,
+          "first_relevant_score": 0.836,
+          "relevant_cited": 2,
+          "relevant_total": 3,
+          "passage_hit": true,
+          "seconds": 5.0282539999998335
+        },
+        {
+          "id": "p2",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "project_report.txt",
+              "line": 10,
+              "text": "2. SCHEDULE\nProject start date was 2026-01-12.\nThe target completion date is 2026-04-30.\nThe final milestone M4 is scheduled to close on 2026-04-28.",
+              "score": 0.836
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "3. DATES\nThe latest recorded completion milestone is 14 May 2026.",
+              "score": 0.8269
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 13,
+              "text": "- M2 Architecture complete: 31 January 2026\n- M3 Development complete: 31 March 2026\n- M4 Production readiness: 30 April 2026",
+              "score": 0.8227
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 10,
+              "text": "BASELINE\nThe original baseline completion date is not reproduced in this document.",
+              "score": 0.8139
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 21,
+              "text": "4. STATUS\nThe project team reports that all major development activities are progressing against the approved baseline.",
+              "score": 0.7996
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.836,
+          "relevant_cited": 1,
+          "relevant_total": 2,
+          "passage_hit": true,
+          "seconds": 5.261510700000144
+        },
+        {
+          "id": "p3",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 5,
+              "text": "Any spend above the approved budget requires a change request signed by the programme sponsor before it is incurred.\nNo change request has been raised as of the date of this memo.",
+              "score": 0.7612
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "5. NOTE\nThis report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.7421
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.",
+              "score": 0.7397
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 10,
+              "text": "Ledger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.7348
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 15,
+              "text": "COMMENT\nThis document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.7304
+            }
+          ],
+          "first_relevant_rank": 2,
+          "first_relevant_score": 0.7421,
+          "relevant_cited": 1,
+          "relevant_total": 4,
+          "passage_hit": true,
+          "seconds": 5.074570899999799
+        },
+        {
+          "id": "p4",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 10,
+              "text": "BASELINE\nThe original baseline completion date is not reproduced in this document.",
+              "score": 0.7851
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 14,
+              "text": "3. VARIANCE\nSpend exceeds the figure quoted in the programme report.\nNo revised budget approval has been recorded in this system.",
+              "score": 0.7659
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 1,
+              "text": "PROJECT AURORA — EXECUTIVE PROJECT REPORT\nDocument ID: AUR-PR-2026-04\nVersion: 1.2\nDate: 20 April 2026",
+              "score": 0.7593
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 1,
+              "text": "PROJECT AURORA — FINANCIAL STATUS REPORT\nDocument ID: AUR-FIN-2026-05\nReporting period: 1 January 2026 to 14 May 2026",
+              "score": 0.758
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.",
+              "score": 0.7563
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.7851,
+          "relevant_cited": 1,
+          "relevant_total": 2,
+          "passage_hit": true,
+          "seconds": 4.901566600000024
+        },
+        {
+          "id": "p5",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "shipment_security_report.txt",
+              "line": 1,
+              "text": "CCTV footage confirms Rahul Sharma entered the Mumbai warehouse at 10:15 AM on 14 September and left at 11:40 AM.",
+              "score": 0.8
+            },
+            {
+              "document_id": "shipment_report_b.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 16 September at the Mumbai facility, according to security logs.",
+              "score": 0.766
+            },
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.7422
+            },
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 0.7408
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 10,
+              "text": "Ledger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.7365
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.8,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 3.316195399999742
+        },
+        {
+          "id": "p6",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.8078
+            },
+            {
+              "document_id": "shipment_security_report.txt",
+              "line": 1,
+              "text": "CCTV footage confirms Rahul Sharma entered the Mumbai warehouse at 10:15 AM on 14 September and left at 11:40 AM.",
+              "score": 0.7569
+            },
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 5,
+              "text": "3. Operations assumes the night shift from the handover date.",
+              "score": 0.756
+            },
+            {
+              "document_id": "shipment_delivery_confirmation.txt",
+              "line": 1,
+              "text": "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya Menon. No discrepancies were reported.",
+              "score": 0.7548
+            },
+            {
+              "document_id": "shipment_employee_statement.txt",
+              "line": 1,
+              "text": "Rahul Sharma works for ABC Logistics and was present at the Mumbai warehouse on 14 September.",
+              "score": 0.751
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.8078,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 0.799116099999992
+        },
+        {
+          "id": "p7",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 4,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO\nFrom: Steering Committee, Orion Cold Storage Programme\nDate: 3 March 2026\nThe steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.",
+              "score": 0.8675
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 9,
+              "text": "Ledger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.8174
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 6,
+              "text": "1. SUMMARY\nTotal spend to date on the Helix migration is 450,000.\nThis figure covers all line items through the end of the reporting period.",
+              "score": 0.8106
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 1,
+              "text": "PROJECT ORION - PURCHASE ORDER PO-7741",
+              "score": 0.803
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 10,
+              "text": "Partial deliveries must be agreed in writing by the Orion procurement office.",
+              "score": 0.7937
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.8675,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.199917299999925
+        },
+        {
+          "id": "p8",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 4,
+              "text": "PROJECT ORION - SITE READINESS REVIEW, MINUTES\nAttendees: programme sponsor, site lead, operations lead\n1. Installation completed on 1 April 2026; commissioning passed.\n2. Site handover to operations confirmed for 6 April 2026.",
+              "score": 0.8091
+            },
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 5,
+              "text": "3. Operations assumes the night shift from the handover date.",
+              "score": 0.7944
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 19,
+              "text": "4. RISKS\nVendor availability in March remains the principal schedule risk.",
+              "score": 0.7777
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 9,
+              "text": "2. SCHEDULE\nProject start date was 2026-01-12.\nThe target completion date is 2026-04-30.\nThe final milestone M4 is scheduled to close on 2026-04-28.",
+              "score": 0.774
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 21,
+              "text": "4. STATUS\nThe project team reports that all major development activities are progressing against the approved baseline.",
+              "score": 0.7648
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.8091,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.2631248000002415
+        },
+        {
+          "id": "p9",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "project_report.txt",
+              "line": 19,
+              "text": "4. RISKS\nVendor availability in March remains the principal schedule risk.",
+              "score": 0.7963
+            },
+            {
+              "document_id": "milestone_report.txt",
+              "line": 9,
+              "text": "Milestone M4 closed later than the date given in the programme report.\nThe approved baseline schedule is held by the PMO and is not attached here.",
+              "score": 0.7765
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 8,
+              "text": "2. SCHEDULE\nProject start date was 2026-01-12.\nThe target completion date is 2026-04-30.\nThe final milestone M4 is scheduled to close on 2026-04-28.",
+              "score": 0.7681
+            },
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 5,
+              "text": "3. Operations assumes the night shift from the handover date.",
+              "score": 0.751
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "COMMENT\nThis document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.7443
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.7963,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 4.9891929999998865
+        },
+        {
+          "id": "p10",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "shipment_delivery_confirmation.txt",
+              "line": 1,
+              "text": "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya Menon. No discrepancies were reported.",
+              "score": 0.7752
+            },
+            {
+              "document_id": "shipment_invoice_9012.txt",
+              "line": 1,
+              "text": "Invoice 9012 for Shipment 9012 was issued by ABC Logistics to XYZ Traders on 18 September. Total amount recorded as accurate and undisputed.",
+              "score": 0.7738
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 10,
+              "text": "Ledger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.7668
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 11,
+              "text": "2. SCHEDULE NOTE\nFinance has been advised that delivery completed on 2026-05-14.\nCosts have been accrued through that date.",
+              "score": 0.7565
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.",
+              "score": 0.7529
+            }
+          ],
+          "first_relevant_rank": 2,
+          "first_relevant_score": 0.7738,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.16918190000024
+        },
+        {
+          "id": "u1",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 3,
+              "text": "Supplier: Polar Systems\nIssued: 5 March 2026",
+              "score": 0.7627
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 2,
+              "text": "--- sheet: Spend ---\nItem,Supplier,Date,Amount (INR)\nCooling units (36),Polar Systems,2026-03-19,162000\nInstallation,Polar Systems,2026-03-24,58500",
+              "score": 0.7519
+            },
+            {
+              "document_id": "shipment_invoice_9012.txt",
+              "line": 1,
+              "text": "Invoice 9012 for Shipment 9012 was issued by ABC Logistics to XYZ Traders on 18 September. Total amount recorded as accurate and undisputed.",
+              "score": 0.7504
+            },
+            {
+              "document_id": "shipment_employee_statement.txt",
+              "line": 1,
+              "text": "Rahul Sharma works for ABC Logistics and was present at the Mumbai warehouse on 14 September.",
+              "score": 0.7472
+            },
+            {
+              "document_id": "shipment_delivery_confirmation.txt",
+              "line": 1,
+              "text": "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya Menon. No discrepancies were reported.",
+              "score": 0.7462
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 5.130786799999896
+        },
+        {
+          "id": "u2",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "shipment_security_report.txt",
+              "line": 1,
+              "text": "CCTV footage confirms Rahul Sharma entered the Mumbai warehouse at 10:15 AM on 14 September and left at 11:40 AM.",
+              "score": 0.8019
+            },
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 0.795
+            },
+            {
+              "document_id": "shipment_employee_statement.txt",
+              "line": 1,
+              "text": "Rahul Sharma works for ABC Logistics and was present at the Mumbai warehouse on 14 September.",
+              "score": 0.7867
+            },
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.7833
+            },
+            {
+              "document_id": "shipment_report_b.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 16 September at the Mumbai facility, according to security logs.",
+              "score": 0.7641
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 2.309298000000126
+        },
+        {
+          "id": "u3",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 10,
+              "text": "Ledger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.7456
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 5,
+              "text": "Electrical works,Sundar Electricals,2026-03-26,41000\nCommissioning,Polar Systems,2026-04-01,26000\nTotal spend,,,287500\n--- sheet: Notes ---",
+              "score": 0.734
+            },
+            {
+              "document_id": "budget.csv",
+              "line": 3,
+              "text": "item,amount,approved\nmigration,450000,no\ntraining,25000,yes\ncontingency,15000,yes",
+              "score": 0.7297
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 2,
+              "text": "--- sheet: Spend ---\nItem,Supplier,Date,Amount (INR)\nCooling units (36),Polar Systems,2026-03-19,162000\nInstallation,Polar Systems,2026-03-24,58500",
+              "score": 0.7295
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 14,
+              "text": "4. VARIANCE\nThe report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.",
+              "score": 0.7238
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 5.451577199999974
+        },
+        {
+          "id": "u4",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "milestone_report.txt",
+              "line": 4,
+              "text": "M1 requirements sign-off closed 2026-02-03.\nM2 build complete closed 2026-03-19.\nM3 user acceptance closed 2026-04-22.\nM4 go-live closed 2026-05-14.",
+              "score": 0.7634
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 4,
+              "text": "Supplier: Polar Systems\nIssued: 5 March 2026",
+              "score": 0.759
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 10,
+              "text": "2. TIMELINE\nThe approved baseline completion date is 30 April 2026.\nMajor milestones:\n- M1 Requirements complete: 15 January 2026",
+              "score": 0.7519
+            },
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 3,
+              "text": "PROJECT ORION - SITE READINESS REVIEW, MINUTES\nAttendees: programme sponsor, site lead, operations lead\n1. Installation completed on 1 April 2026; commissioning passed.\n2. Site handover to operations confirmed for 6 April 2026.",
+              "score": 0.7491
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "3. DATES\nThe latest recorded completion milestone is 14 May 2026.",
+              "score": 0.749
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 5.204851099999814
+        }
+      ]
+    },
+    {
+      "arm": "semantic-chars",
+      "chunks": 19,
+      "ingest_s": 40.84,
+      "mean_query_s": 4.6854006499999965,
+      "hit_at_1": 0.4375,
+      "hit_at_5": 0.75,
+      "recall_at_5": 0.6,
+      "mrr": 0.5520833333333334,
+      "passage_hit_at_5": 1.0,
+      "by_kind": {
+        "keyword": {
+          "hit_at_1": 0.3333333333333333,
+          "hit_at_5": 0.5,
+          "mrr": 0.4166666666666667
+        },
+        "paraphrase": {
+          "hit_at_1": 0.5,
+          "hit_at_5": 0.9,
+          "mrr": 0.6333333333333333
+        }
+      },
+      "best_unanswerable_score": 0.8019,
+      "answerable_above_it": 0.3125,
+      "queries": [
+        {
+          "id": "k1",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 1,
+              "text": "PROJECT AURORA — FINANCIAL STATUS REPORT\nDocument ID: AUR-FIN-2026-05\nReporting period: 1 January 2026 to 14 May 2026\n\n1. FINANCIAL SUMMARY\nTotal expenditure recorded to date: INR 450,000.\n\n2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.\n\n3. DATES\nThe latest recorded completion milestone is 14 May 2026.\n\n4. VARIANCE\nThe report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.\n\n5. NOTE\nThis report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.8915
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 1,
+              "text": "PROJECT AURORA — EXECUTIVE PROJECT REPORT\nDocument ID: AUR-PR-2026-04\nVersion: 1.2\nDate: 20 April 2026\n\n1. PROJECT OVERVIEW\nProject Aurora is a customer analytics platform scheduled for production readiness in Q2 2026.\n\n2. TIMELINE\nThe approved baseline completion date is 30 April 2026.\nMajor milestones:\n- M1 Requirements complete: 15 January 2026\n- M2 Architecture complete: 31 January 2026\n- M3 Development complete: 31 March 2026\n- M4 Production readiness: 30 April 2026\n\n3. APPROVED BUDGET\nThe approved project budget is INR 380,000.\n\n4. STATUS\nThe project team reports that all major developme",
+              "score": 0.8772
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 1,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO\nFrom: Steering Committee, Orion Cold Storage Programme\nDate: 3 March 2026\nThe steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.\nAny spend above the approved budget requires a change request signed by the programme sponsor before it is incurred.\nNo change request has been raised as of the date of this memo.",
+              "score": 0.8471
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 1,
+              "text": "PROJECT AURORA — MILESTONE UPDATE\nDocument ID: AUR-MIL-2026-05\nDate: 14 May 2026\n\nMILESTONE M4\nM4 — Production readiness — status: CLOSED\nRecorded closure date: 14 May 2026.\n\nBASELINE\nThe original baseline completion date is not reproduced in this document.\n\nCHANGE CONTROL\nA formal baseline-change request number is not recorded in this milestone update.\n\nCOMMENT\nThis document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.8153
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 21,
+              "text": "is INR 380,000.\n\n4. STATUS\nThe project team reports that all major development activities are progressing against the approved baseline.\n\n5. GOVERNANCE NOTE\nAny material change to the approved baseline should be documented through a formal change request and reflected in the financial records.",
+              "score": 0.812
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 2,
+          "passage_hit": true,
+          "seconds": 5.417934099999911
+        },
+        {
+          "id": "k2",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "milestone_report.txt",
+              "line": 1,
+              "text": "PROJECT HELIX - MILESTONE REPORT\nPrepared by: Delivery\n\nM1 requirements sign-off closed 2026-02-03.\nM2 build complete closed 2026-03-19.\nM3 user acceptance closed 2026-04-22.\nM4 go-live closed 2026-05-14.\n\nMilestone M4 closed later than the date given in the programme report.\nThe approved baseline schedule is held by the PMO and is not attached here.",
+              "score": 0.8693
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 10,
+              "text": "PROJECT HELIX - STATUS REPORT\nReporting period: Q1 2026\nPrepared by: Programme Office\n\n1. SCOPE\nThe Helix migration moves the claims platform onto the new core.\n\n2. SCHEDULE\nProject start date was 2026-01-12.\nThe target completion date is 2026-04-30.\nThe final milestone M4 is scheduled to close on 2026-04-28.\nAll milestones remain on track as of this report.\n\n3. BUDGET\nThe approved budget for the migration phase is 380,000.\nSpend to date is reported by Finance separately.\n\n4. RISKS\nVendor availability in March remains the principal schedule risk.",
+              "score": 0.8689
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 1,
+              "text": "PROJECT HELIX - FINANCIAL REPORT\nReporting period: Q1 2026\nPrepared by: Finance\n\n1. SUMMARY\nTotal spend to date on the Helix migration is 450,000.\nThis figure covers all line items through the end of the reporting period.\n\n2. SCHEDULE NOTE\nFinance has been advised that delivery completed on 2026-05-14.\nCosts have been accrued through that date.\n\n3. VARIANCE\nSpend exceeds the figure quoted in the programme report.\nNo revised budget approval has been recorded in this system.",
+              "score": 0.8293
+            },
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 3,
+              "text": "PROJECT ORION - SITE READINESS REVIEW, MINUTES\nAttendees: programme sponsor, site lead, operations lead\n1. Installation completed on 1 April 2026; commissioning passed.\n2. Site handover to operations confirmed for 6 April 2026.\n3. Operations assumes the night shift from the handover date.",
+              "score": 0.8096
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 7,
+              "text": "PROJECT AURORA — MILESTONE UPDATE\nDocument ID: AUR-MIL-2026-05\nDate: 14 May 2026\n\nMILESTONE M4\nM4 — Production readiness — status: CLOSED\nRecorded closure date: 14 May 2026.\n\nBASELINE\nThe original baseline completion date is not reproduced in this document.\n\nCHANGE CONTROL\nA formal baseline-change request number is not recorded in this milestone update.\n\nCOMMENT\nThis document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.7844
+            }
+          ],
+          "first_relevant_rank": 2,
+          "first_relevant_score": 0.8689,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.235485800000333
+        },
+        {
+          "id": "k3",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "shipment_report_b.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 16 September at the Mumbai facility, according to security logs.",
+              "score": 0.9021
+            },
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 0.8852
+            },
+            {
+              "document_id": "shipment_delivery_confirmation.txt",
+              "line": 1,
+              "text": "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya Menon. No discrepancies were reported.",
+              "score": 0.8177
+            },
+            {
+              "document_id": "shipment_invoice_9012.txt",
+              "line": 1,
+              "text": "Invoice 9012 for Shipment 9012 was issued by ABC Logistics to XYZ Traders on 18 September. Total amount recorded as accurate and undisputed.",
+              "score": 0.8032
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 8,
+              "text": "PROJECT ORION - PURCHASE ORDER PO-7741\n\nSupplier: Polar Systems\nIssued: 5 March 2026\n\nItem: Cooling units, model PX-200\nQuantity ordered: 40 units\nDelivery due: 12 March 2026, Orion site, Pune\n\nPartial deliveries must be agreed in writing by the Orion procurement office.",
+              "score": 0.7724
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.9021,
+          "relevant_cited": 2,
+          "relevant_total": 2,
+          "passage_hit": true,
+          "seconds": 4.514201899999989
+        },
+        {
+          "id": "k4",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "milestone_report.txt",
+              "line": 7,
+              "text": "PROJECT HELIX - MILESTONE REPORT\nPrepared by: Delivery\n\nM1 requirements sign-off closed 2026-02-03.\nM2 build complete closed 2026-03-19.\nM3 user acceptance closed 2026-04-22.\nM4 go-live closed 2026-05-14.\n\nMilestone M4 closed later than the date given in the programme report.\nThe approved baseline schedule is held by the PMO and is not attached here.",
+              "score": 0.7901
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 6,
+              "text": "PROJECT AURORA — MILESTONE UPDATE\nDocument ID: AUR-MIL-2026-05\nDate: 14 May 2026\n\nMILESTONE M4\nM4 — Production readiness — status: CLOSED\nRecorded closure date: 14 May 2026.\n\nBASELINE\nThe original baseline completion date is not reproduced in this document.\n\nCHANGE CONTROL\nA formal baseline-change request number is not recorded in this milestone update.\n\nCOMMENT\nThis document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.7438
+            },
+            {
+              "document_id": "shipment_security_report.txt",
+              "line": 1,
+              "text": "CCTV footage confirms Rahul Sharma entered the Mumbai warehouse at 10:15 AM on 14 September and left at 11:40 AM.",
+              "score": 0.721
+            },
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 4,
+              "text": "PROJECT ORION - SITE READINESS REVIEW, MINUTES\nAttendees: programme sponsor, site lead, operations lead\n1. Installation completed on 1 April 2026; commissioning passed.\n2. Site handover to operations confirmed for 6 April 2026.\n3. Operations assumes the night shift from the handover date.",
+              "score": 0.7139
+            },
+            {
+              "document_id": "shipment_report_b.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 16 September at the Mumbai facility, according to security logs.",
+              "score": 0.7118
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.7901,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.1131006999999045
+        },
+        {
+          "id": "k5",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 1,
+              "text": "PROJECT ORION - PURCHASE ORDER PO-7741\n\nSupplier: Polar Systems\nIssued: 5 March 2026\n\nItem: Cooling units, model PX-200\nQuantity ordered: 40 units\nDelivery due: 12 March 2026, Orion site, Pune\n\nPartial deliveries must be agreed in writing by the Orion procurement office.",
+              "score": 0.8877
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 9,
+              "text": "--- sheet: Spend ---\nItem,Supplier,Date,Amount (INR)\nCooling units (36),Polar Systems,2026-03-19,162000\nInstallation,Polar Systems,2026-03-24,58500\nElectrical works,Sundar Electricals,2026-03-26,41000\nCommissioning,Polar Systems,2026-04-01,26000\nTotal spend,,,287500\n--- sheet: Notes ---\nLedger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.8167
+            },
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 1,
+              "text": "PROJECT ORION - SITE READINESS REVIEW, MINUTES\nAttendees: programme sponsor, site lead, operations lead\n1. Installation completed on 1 April 2026; commissioning passed.\n2. Site handover to operations confirmed for 6 April 2026.\n3. Operations assumes the night shift from the handover date.",
+              "score": 0.8006
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 1,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO\nFrom: Steering Committee, Orion Cold Storage Programme\nDate: 3 March 2026\nThe steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.\nAny spend above the approved budget requires a change request signed by the programme sponsor before it is incurred.\nNo change request has been raised as of the date of this memo.",
+              "score": 0.7987
+            },
+            {
+              "document_id": "shipment_invoice_9012.txt",
+              "line": 1,
+              "text": "Invoice 9012 for Shipment 9012 was issued by ABC Logistics to XYZ Traders on 18 September. Total amount recorded as accurate and undisputed.",
+              "score": 0.7837
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 4.908287299999756
+        },
+        {
+          "id": "k6",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 9,
+              "text": "--- sheet: Spend ---\nItem,Supplier,Date,Amount (INR)\nCooling units (36),Polar Systems,2026-03-19,162000\nInstallation,Polar Systems,2026-03-24,58500\nElectrical works,Sundar Electricals,2026-03-26,41000\nCommissioning,Polar Systems,2026-04-01,26000\nTotal spend,,,287500\n--- sheet: Notes ---\nLedger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.8321
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 4,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO\nFrom: Steering Committee, Orion Cold Storage Programme\nDate: 3 March 2026\nThe steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.\nAny spend above the approved budget requires a change request signed by the programme sponsor before it is incurred.\nNo change request has been raised as of the date of this memo.",
+              "score": 0.8183
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 6,
+              "text": "PROJECT AURORA — FINANCIAL STATUS REPORT\nDocument ID: AUR-FIN-2026-05\nReporting period: 1 January 2026 to 14 May 2026\n\n1. FINANCIAL SUMMARY\nTotal expenditure recorded to date: INR 450,000.\n\n2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.\n\n3. DATES\nThe latest recorded completion milestone is 14 May 2026.\n\n4. VARIANCE\nThe report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.\n\n5. NOTE\nThis report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.7803
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 6,
+              "text": "PROJECT HELIX - FINANCIAL REPORT\nReporting period: Q1 2026\nPrepared by: Finance\n\n1. SUMMARY\nTotal spend to date on the Helix migration is 450,000.\nThis figure covers all line items through the end of the reporting period.\n\n2. SCHEDULE NOTE\nFinance has been advised that delivery completed on 2026-05-14.\nCosts have been accrued through that date.\n\n3. VARIANCE\nSpend exceeds the figure quoted in the programme report.\nNo revised budget approval has been recorded in this system.",
+              "score": 0.7743
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 1,
+              "text": "PROJECT ORION - PURCHASE ORDER PO-7741\n\nSupplier: Polar Systems\nIssued: 5 March 2026\n\nItem: Cooling units, model PX-200\nQuantity ordered: 40 units\nDelivery due: 12 March 2026, Orion site, Pune\n\nPartial deliveries must be agreed in writing by the Orion procurement office.",
+              "score": 0.7738
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.376571900000272
+        },
+        {
+          "id": "p1",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 5,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO\nFrom: Steering Committee, Orion Cold Storage Programme\nDate: 3 March 2026\nThe steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.\nAny spend above the approved budget requires a change request signed by the programme sponsor before it is incurred.\nNo change request has been raised as of the date of this memo.",
+              "score": 0.8205
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 24,
+              "text": "is INR 380,000.\n\n4. STATUS\nThe project team reports that all major development activities are progressing against the approved baseline.\n\n5. GOVERNANCE NOTE\nAny material change to the approved baseline should be documented through a formal change request and reflected in the financial records.",
+              "score": 0.8066
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "PROJECT AURORA — FINANCIAL STATUS REPORT\nDocument ID: AUR-FIN-2026-05\nReporting period: 1 January 2026 to 14 May 2026\n\n1. FINANCIAL SUMMARY\nTotal expenditure recorded to date: INR 450,000.\n\n2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.\n\n3. DATES\nThe latest recorded completion milestone is 14 May 2026.\n\n4. VARIANCE\nThe report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.\n\n5. NOTE\nThis report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.7971
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 7,
+              "text": "--- sheet: Spend ---\nItem,Supplier,Date,Amount (INR)\nCooling units (36),Polar Systems,2026-03-19,162000\nInstallation,Polar Systems,2026-03-24,58500\nElectrical works,Sundar Electricals,2026-03-26,41000\nCommissioning,Polar Systems,2026-04-01,26000\nTotal spend,,,287500\n--- sheet: Notes ---\nLedger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.7737
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 14,
+              "text": "PROJECT HELIX - FINANCIAL REPORT\nReporting period: Q1 2026\nPrepared by: Finance\n\n1. SUMMARY\nTotal spend to date on the Helix migration is 450,000.\nThis figure covers all line items through the end of the reporting period.\n\n2. SCHEDULE NOTE\nFinance has been advised that delivery completed on 2026-05-14.\nCosts have been accrued through that date.\n\n3. VARIANCE\nSpend exceeds the figure quoted in the programme report.\nNo revised budget approval has been recorded in this system.",
+              "score": 0.7725
+            }
+          ],
+          "first_relevant_rank": 3,
+          "first_relevant_score": 0.7971,
+          "relevant_cited": 2,
+          "relevant_total": 3,
+          "passage_hit": true,
+          "seconds": 5.381900400000177
+        },
+        {
+          "id": "p2",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "milestone_report.txt",
+              "line": 5,
+              "text": "PROJECT HELIX - MILESTONE REPORT\nPrepared by: Delivery\n\nM1 requirements sign-off closed 2026-02-03.\nM2 build complete closed 2026-03-19.\nM3 user acceptance closed 2026-04-22.\nM4 go-live closed 2026-05-14.\n\nMilestone M4 closed later than the date given in the programme report.\nThe approved baseline schedule is held by the PMO and is not attached here.",
+              "score": 0.7956
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 10,
+              "text": "PROJECT AURORA — MILESTONE UPDATE\nDocument ID: AUR-MIL-2026-05\nDate: 14 May 2026\n\nMILESTONE M4\nM4 — Production readiness — status: CLOSED\nRecorded closure date: 14 May 2026.\n\nBASELINE\nThe original baseline completion date is not reproduced in this document.\n\nCHANGE CONTROL\nA formal baseline-change request number is not recorded in this milestone update.\n\nCOMMENT\nThis document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.7806
+            },
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 3,
+              "text": "PROJECT ORION - SITE READINESS REVIEW, MINUTES\nAttendees: programme sponsor, site lead, operations lead\n1. Installation completed on 1 April 2026; commissioning passed.\n2. Site handover to operations confirmed for 6 April 2026.\n3. Operations assumes the night shift from the handover date.",
+              "score": 0.7802
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 10,
+              "text": "PROJECT AURORA — EXECUTIVE PROJECT REPORT\nDocument ID: AUR-PR-2026-04\nVersion: 1.2\nDate: 20 April 2026\n\n1. PROJECT OVERVIEW\nProject Aurora is a customer analytics platform scheduled for production readiness in Q2 2026.\n\n2. TIMELINE\nThe approved baseline completion date is 30 April 2026.\nMajor milestones:\n- M1 Requirements complete: 15 January 2026\n- M2 Architecture complete: 31 January 2026\n- M3 Development complete: 31 March 2026\n- M4 Production readiness: 30 April 2026\n\n3. APPROVED BUDGET\nThe approved project budget is INR 380,000.\n\n4. STATUS\nThe project team reports that all major developme",
+              "score": 0.7734
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 21,
+              "text": "is INR 380,000.\n\n4. STATUS\nThe project team reports that all major development activities are progressing against the approved baseline.\n\n5. GOVERNANCE NOTE\nAny material change to the approved baseline should be documented through a formal change request and reflected in the financial records.",
+              "score": 0.7694
+            }
+          ],
+          "first_relevant_rank": 4,
+          "first_relevant_score": 0.7734,
+          "relevant_cited": 1,
+          "relevant_total": 2,
+          "passage_hit": true,
+          "seconds": 5.5665171999999075
+        },
+        {
+          "id": "p3",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "shipment_invoice_9012.txt",
+              "line": 1,
+              "text": "Invoice 9012 for Shipment 9012 was issued by ABC Logistics to XYZ Traders on 18 September. Total amount recorded as accurate and undisputed.",
+              "score": 0.7203
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "PROJECT AURORA — FINANCIAL STATUS REPORT\nDocument ID: AUR-FIN-2026-05\nReporting period: 1 January 2026 to 14 May 2026\n\n1. FINANCIAL SUMMARY\nTotal expenditure recorded to date: INR 450,000.\n\n2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.\n\n3. DATES\nThe latest recorded completion milestone is 14 May 2026.\n\n4. VARIANCE\nThe report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.\n\n5. NOTE\nThis report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.7123
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 15,
+              "text": "PROJECT AURORA — MILESTONE UPDATE\nDocument ID: AUR-MIL-2026-05\nDate: 14 May 2026\n\nMILESTONE M4\nM4 — Production readiness — status: CLOSED\nRecorded closure date: 14 May 2026.\n\nBASELINE\nThe original baseline completion date is not reproduced in this document.\n\nCHANGE CONTROL\nA formal baseline-change request number is not recorded in this milestone update.\n\nCOMMENT\nThis document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.7094
+            },
+            {
+              "document_id": "budget.csv",
+              "line": 1,
+              "text": "item,amount,approved\nmigration,450000,no\ntraining,25000,yes\ncontingency,15000,yes",
+              "score": 0.7084
+            },
+            {
+              "document_id": "shipment_delivery_confirmation.txt",
+              "line": 1,
+              "text": "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya Menon. No discrepancies were reported.",
+              "score": 0.7055
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 4,
+          "passage_hit": true,
+          "seconds": 4.984116399999948
+        },
+        {
+          "id": "p4",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "milestone_report.txt",
+              "line": 10,
+              "text": "PROJECT HELIX - MILESTONE REPORT\nPrepared by: Delivery\n\nM1 requirements sign-off closed 2026-02-03.\nM2 build complete closed 2026-03-19.\nM3 user acceptance closed 2026-04-22.\nM4 go-live closed 2026-05-14.\n\nMilestone M4 closed later than the date given in the programme report.\nThe approved baseline schedule is held by the PMO and is not attached here.",
+              "score": 0.7668
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "PROJECT AURORA — FINANCIAL STATUS REPORT\nDocument ID: AUR-FIN-2026-05\nReporting period: 1 January 2026 to 14 May 2026\n\n1. FINANCIAL SUMMARY\nTotal expenditure recorded to date: INR 450,000.\n\n2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.\n\n3. DATES\nThe latest recorded completion milestone is 14 May 2026.\n\n4. VARIANCE\nThe report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.\n\n5. NOTE\nThis report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.7635
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 10,
+              "text": "PROJECT AURORA — MILESTONE UPDATE\nDocument ID: AUR-MIL-2026-05\nDate: 14 May 2026\n\nMILESTONE M4\nM4 — Production readiness — status: CLOSED\nRecorded closure date: 14 May 2026.\n\nBASELINE\nThe original baseline completion date is not reproduced in this document.\n\nCHANGE CONTROL\nA formal baseline-change request number is not recorded in this milestone update.\n\nCOMMENT\nThis document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.7608
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 14,
+              "text": "PROJECT HELIX - FINANCIAL REPORT\nReporting period: Q1 2026\nPrepared by: Finance\n\n1. SUMMARY\nTotal spend to date on the Helix migration is 450,000.\nThis figure covers all line items through the end of the reporting period.\n\n2. SCHEDULE NOTE\nFinance has been advised that delivery completed on 2026-05-14.\nCosts have been accrued through that date.\n\n3. VARIANCE\nSpend exceeds the figure quoted in the programme report.\nNo revised budget approval has been recorded in this system.",
+              "score": 0.7607
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 1,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO\nFrom: Steering Committee, Orion Cold Storage Programme\nDate: 3 March 2026\nThe steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.\nAny spend above the approved budget requires a change request signed by the programme sponsor before it is incurred.\nNo change request has been raised as of the date of this memo.",
+              "score": 0.7503
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.7668,
+          "relevant_cited": 2,
+          "relevant_total": 2,
+          "passage_hit": true,
+          "seconds": 5.336940700000014
+        },
+        {
+          "id": "p5",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "shipment_security_report.txt",
+              "line": 1,
+              "text": "CCTV footage confirms Rahul Sharma entered the Mumbai warehouse at 10:15 AM on 14 September and left at 11:40 AM.",
+              "score": 0.8
+            },
+            {
+              "document_id": "shipment_report_b.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 16 September at the Mumbai facility, according to security logs.",
+              "score": 0.766
+            },
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.7422
+            },
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 0.7408
+            },
+            {
+              "document_id": "shipment_employee_statement.txt",
+              "line": 1,
+              "text": "Rahul Sharma works for ABC Logistics and was present at the Mumbai warehouse on 14 September.",
+              "score": 0.7338
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.8,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 2.1239598000001934
+        },
+        {
+          "id": "p6",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.8078
+            },
+            {
+              "document_id": "shipment_security_report.txt",
+              "line": 1,
+              "text": "CCTV footage confirms Rahul Sharma entered the Mumbai warehouse at 10:15 AM on 14 September and left at 11:40 AM.",
+              "score": 0.7569
+            },
+            {
+              "document_id": "shipment_delivery_confirmation.txt",
+              "line": 1,
+              "text": "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya Menon. No discrepancies were reported.",
+              "score": 0.7548
+            },
+            {
+              "document_id": "shipment_employee_statement.txt",
+              "line": 1,
+              "text": "Rahul Sharma works for ABC Logistics and was present at the Mumbai warehouse on 14 September.",
+              "score": 0.751
+            },
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 0.7449
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.8078,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 2.0278447000000597
+        },
+        {
+          "id": "p7",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 4,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO\nFrom: Steering Committee, Orion Cold Storage Programme\nDate: 3 March 2026\nThe steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.\nAny spend above the approved budget requires a change request signed by the programme sponsor before it is incurred.\nNo change request has been raised as of the date of this memo.",
+              "score": 0.8585
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 9,
+              "text": "--- sheet: Spend ---\nItem,Supplier,Date,Amount (INR)\nCooling units (36),Polar Systems,2026-03-19,162000\nInstallation,Polar Systems,2026-03-24,58500\nElectrical works,Sundar Electricals,2026-03-26,41000\nCommissioning,Polar Systems,2026-04-01,26000\nTotal spend,,,287500\n--- sheet: Notes ---\nLedger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.7878
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 6,
+              "text": "PROJECT HELIX - FINANCIAL REPORT\nReporting period: Q1 2026\nPrepared by: Finance\n\n1. SUMMARY\nTotal spend to date on the Helix migration is 450,000.\nThis figure covers all line items through the end of the reporting period.\n\n2. SCHEDULE NOTE\nFinance has been advised that delivery completed on 2026-05-14.\nCosts have been accrued through that date.\n\n3. VARIANCE\nSpend exceeds the figure quoted in the programme report.\nNo revised budget approval has been recorded in this system.",
+              "score": 0.7871
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 15,
+              "text": "PROJECT AURORA — FINANCIAL STATUS REPORT\nDocument ID: AUR-FIN-2026-05\nReporting period: 1 January 2026 to 14 May 2026\n\n1. FINANCIAL SUMMARY\nTotal expenditure recorded to date: INR 450,000.\n\n2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.\n\n3. DATES\nThe latest recorded completion milestone is 14 May 2026.\n\n4. VARIANCE\nThe report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.\n\n5. NOTE\nThis report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.7833
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 1,
+              "text": "PROJECT ORION - PURCHASE ORDER PO-7741\n\nSupplier: Polar Systems\nIssued: 5 March 2026\n\nItem: Cooling units, model PX-200\nQuantity ordered: 40 units\nDelivery due: 12 March 2026, Orion site, Pune\n\nPartial deliveries must be agreed in writing by the Orion procurement office.",
+              "score": 0.7826
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.8585,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.355777900000248
+        },
+        {
+          "id": "p8",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 4,
+              "text": "PROJECT ORION - SITE READINESS REVIEW, MINUTES\nAttendees: programme sponsor, site lead, operations lead\n1. Installation completed on 1 April 2026; commissioning passed.\n2. Site handover to operations confirmed for 6 April 2026.\n3. Operations assumes the night shift from the handover date.",
+              "score": 0.8107
+            },
+            {
+              "document_id": "milestone_report.txt",
+              "line": 9,
+              "text": "PROJECT HELIX - MILESTONE REPORT\nPrepared by: Delivery\n\nM1 requirements sign-off closed 2026-02-03.\nM2 build complete closed 2026-03-19.\nM3 user acceptance closed 2026-04-22.\nM4 go-live closed 2026-05-14.\n\nMilestone M4 closed later than the date given in the programme report.\nThe approved baseline schedule is held by the PMO and is not attached here.",
+              "score": 0.7554
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 7,
+              "text": "PROJECT AURORA — MILESTONE UPDATE\nDocument ID: AUR-MIL-2026-05\nDate: 14 May 2026\n\nMILESTONE M4\nM4 — Production readiness — status: CLOSED\nRecorded closure date: 14 May 2026.\n\nBASELINE\nThe original baseline completion date is not reproduced in this document.\n\nCHANGE CONTROL\nA formal baseline-change request number is not recorded in this milestone update.\n\nCOMMENT\nThis document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.7499
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 21,
+              "text": "is INR 380,000.\n\n4. STATUS\nThe project team reports that all major development activities are progressing against the approved baseline.\n\n5. GOVERNANCE NOTE\nAny material change to the approved baseline should be documented through a formal change request and reflected in the financial records.",
+              "score": 0.7453
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 9,
+              "text": "PROJECT HELIX - STATUS REPORT\nReporting period: Q1 2026\nPrepared by: Programme Office\n\n1. SCOPE\nThe Helix migration moves the claims platform onto the new core.\n\n2. SCHEDULE\nProject start date was 2026-01-12.\nThe target completion date is 2026-04-30.\nThe final milestone M4 is scheduled to close on 2026-04-28.\nAll milestones remain on track as of this report.\n\n3. BUDGET\nThe approved budget for the migration phase is 380,000.\nSpend to date is reported by Finance separately.\n\n4. RISKS\nVendor availability in March remains the principal schedule risk.",
+              "score": 0.7425
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.8107,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.275036200000159
+        },
+        {
+          "id": "p9",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "milestone_report.txt",
+              "line": 9,
+              "text": "PROJECT HELIX - MILESTONE REPORT\nPrepared by: Delivery\n\nM1 requirements sign-off closed 2026-02-03.\nM2 build complete closed 2026-03-19.\nM3 user acceptance closed 2026-04-22.\nM4 go-live closed 2026-05-14.\n\nMilestone M4 closed later than the date given in the programme report.\nThe approved baseline schedule is held by the PMO and is not attached here.",
+              "score": 0.7431
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "PROJECT AURORA — MILESTONE UPDATE\nDocument ID: AUR-MIL-2026-05\nDate: 14 May 2026\n\nMILESTONE M4\nM4 — Production readiness — status: CLOSED\nRecorded closure date: 14 May 2026.\n\nBASELINE\nThe original baseline completion date is not reproduced in this document.\n\nCHANGE CONTROL\nA formal baseline-change request number is not recorded in this milestone update.\n\nCOMMENT\nThis document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.7412
+            },
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 5,
+              "text": "PROJECT ORION - SITE READINESS REVIEW, MINUTES\nAttendees: programme sponsor, site lead, operations lead\n1. Installation completed on 1 April 2026; commissioning passed.\n2. Site handover to operations confirmed for 6 April 2026.\n3. Operations assumes the night shift from the handover date.",
+              "score": 0.7403
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 19,
+              "text": "PROJECT HELIX - STATUS REPORT\nReporting period: Q1 2026\nPrepared by: Programme Office\n\n1. SCOPE\nThe Helix migration moves the claims platform onto the new core.\n\n2. SCHEDULE\nProject start date was 2026-01-12.\nThe target completion date is 2026-04-30.\nThe final milestone M4 is scheduled to close on 2026-04-28.\nAll milestones remain on track as of this report.\n\n3. BUDGET\nThe approved budget for the migration phase is 380,000.\nSpend to date is reported by Finance separately.\n\n4. RISKS\nVendor availability in March remains the principal schedule risk.",
+              "score": 0.729
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 9,
+              "text": "PROJECT HELIX - FINANCIAL REPORT\nReporting period: Q1 2026\nPrepared by: Finance\n\n1. SUMMARY\nTotal spend to date on the Helix migration is 450,000.\nThis figure covers all line items through the end of the reporting period.\n\n2. SCHEDULE NOTE\nFinance has been advised that delivery completed on 2026-05-14.\nCosts have been accrued through that date.\n\n3. VARIANCE\nSpend exceeds the figure quoted in the programme report.\nNo revised budget approval has been recorded in this system.",
+              "score": 0.724
+            }
+          ],
+          "first_relevant_rank": 4,
+          "first_relevant_score": 0.729,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.470505499999945
+        },
+        {
+          "id": "p10",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "shipment_delivery_confirmation.txt",
+              "line": 1,
+              "text": "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya Menon. No discrepancies were reported.",
+              "score": 0.7752
+            },
+            {
+              "document_id": "shipment_invoice_9012.txt",
+              "line": 1,
+              "text": "Invoice 9012 for Shipment 9012 was issued by ABC Logistics to XYZ Traders on 18 September. Total amount recorded as accurate and undisputed.",
+              "score": 0.7738
+            },
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 0.743
+            },
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.7377
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 18,
+              "text": "is INR 380,000.\n\n4. STATUS\nThe project team reports that all major development activities are progressing against the approved baseline.\n\n5. GOVERNANCE NOTE\nAny material change to the approved baseline should be documented through a formal change request and reflected in the financial records.",
+              "score": 0.7368
+            }
+          ],
+          "first_relevant_rank": 2,
+          "first_relevant_score": 0.7738,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 4.634097099999963
+        },
+        {
+          "id": "u1",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "shipment_invoice_9012.txt",
+              "line": 1,
+              "text": "Invoice 9012 for Shipment 9012 was issued by ABC Logistics to XYZ Traders on 18 September. Total amount recorded as accurate and undisputed.",
+              "score": 0.7504
+            },
+            {
+              "document_id": "shipment_employee_statement.txt",
+              "line": 1,
+              "text": "Rahul Sharma works for ABC Logistics and was present at the Mumbai warehouse on 14 September.",
+              "score": 0.7472
+            },
+            {
+              "document_id": "shipment_delivery_confirmation.txt",
+              "line": 1,
+              "text": "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya Menon. No discrepancies were reported.",
+              "score": 0.7462
+            },
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 0.7368
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 3,
+              "text": "PROJECT ORION - PURCHASE ORDER PO-7741\n\nSupplier: Polar Systems\nIssued: 5 March 2026\n\nItem: Cooling units, model PX-200\nQuantity ordered: 40 units\nDelivery due: 12 March 2026, Orion site, Pune\n\nPartial deliveries must be agreed in writing by the Orion procurement office.",
+              "score": 0.7361
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 4.731486700000005
+        },
+        {
+          "id": "u2",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "shipment_security_report.txt",
+              "line": 1,
+              "text": "CCTV footage confirms Rahul Sharma entered the Mumbai warehouse at 10:15 AM on 14 September and left at 11:40 AM.",
+              "score": 0.8019
+            },
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 0.795
+            },
+            {
+              "document_id": "shipment_employee_statement.txt",
+              "line": 1,
+              "text": "Rahul Sharma works for ABC Logistics and was present at the Mumbai warehouse on 14 September.",
+              "score": 0.7867
+            },
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.7833
+            },
+            {
+              "document_id": "shipment_report_b.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 16 September at the Mumbai facility, according to security logs.",
+              "score": 0.7641
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 2.1651143999997657
+        },
+        {
+          "id": "u3",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 10,
+              "text": "--- sheet: Spend ---\nItem,Supplier,Date,Amount (INR)\nCooling units (36),Polar Systems,2026-03-19,162000\nInstallation,Polar Systems,2026-03-24,58500\nElectrical works,Sundar Electricals,2026-03-26,41000\nCommissioning,Polar Systems,2026-04-01,26000\nTotal spend,,,287500\n--- sheet: Notes ---\nLedger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.7345
+            },
+            {
+              "document_id": "budget.csv",
+              "line": 3,
+              "text": "item,amount,approved\nmigration,450000,no\ntraining,25000,yes\ncontingency,15000,yes",
+              "score": 0.7297
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 18,
+              "text": "is INR 380,000.\n\n4. STATUS\nThe project team reports that all major development activities are progressing against the approved baseline.\n\n5. GOVERNANCE NOTE\nAny material change to the approved baseline should be documented through a formal change request and reflected in the financial records.",
+              "score": 0.7271
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 5,
+              "text": "PROJECT AURORA — FINANCIAL STATUS REPORT\nDocument ID: AUR-FIN-2026-05\nReporting period: 1 January 2026 to 14 May 2026\n\n1. FINANCIAL SUMMARY\nTotal expenditure recorded to date: INR 450,000.\n\n2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.\n\n3. DATES\nThe latest recorded completion milestone is 14 May 2026.\n\n4. VARIANCE\nThe report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.\n\n5. NOTE\nThis report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.7222
+            },
+            {
+              "document_id": "shipment_invoice_9012.txt",
+              "line": 1,
+              "text": "Invoice 9012 for Shipment 9012 was issued by ABC Logistics to XYZ Traders on 18 September. Total amount recorded as accurate and undisputed.",
+              "score": 0.7194
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 5.088514199999736
+        },
+        {
+          "id": "u4",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 3,
+              "text": "PROJECT ORION - SITE READINESS REVIEW, MINUTES\nAttendees: programme sponsor, site lead, operations lead\n1. Installation completed on 1 April 2026; commissioning passed.\n2. Site handover to operations confirmed for 6 April 2026.\n3. Operations assumes the night shift from the handover date.",
+              "score": 0.7488
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 7,
+              "text": "PROJECT AURORA — MILESTONE UPDATE\nDocument ID: AUR-MIL-2026-05\nDate: 14 May 2026\n\nMILESTONE M4\nM4 — Production readiness — status: CLOSED\nRecorded closure date: 14 May 2026.\n\nBASELINE\nThe original baseline completion date is not reproduced in this document.\n\nCHANGE CONTROL\nA formal baseline-change request number is not recorded in this milestone update.\n\nCOMMENT\nThis document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.7447
+            },
+            {
+              "document_id": "milestone_report.txt",
+              "line": 4,
+              "text": "PROJECT HELIX - MILESTONE REPORT\nPrepared by: Delivery\n\nM1 requirements sign-off closed 2026-02-03.\nM2 build complete closed 2026-03-19.\nM3 user acceptance closed 2026-04-22.\nM4 go-live closed 2026-05-14.\n\nMilestone M4 closed later than the date given in the programme report.\nThe approved baseline schedule is held by the PMO and is not attached here.",
+              "score": 0.7438
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 21,
+              "text": "is INR 380,000.\n\n4. STATUS\nThe project team reports that all major development activities are progressing against the approved baseline.\n\n5. GOVERNANCE NOTE\nAny material change to the approved baseline should be documented through a formal change request and reflected in the financial records.",
+              "score": 0.7434
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 5,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO\nFrom: Steering Committee, Orion Cold Storage Programme\nDate: 3 March 2026\nThe steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.\nAny spend above the approved budget requires a change request signed by the programme sponsor before it is incurred.\nNo change request has been raised as of the date of this memo.",
+              "score": 0.7409
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 5.000620099999651
+        }
+      ]
+    },
+    {
+      "arm": "hybrid-lines",
+      "chunks": 50,
+      "ingest_s": 42.62,
+      "mean_query_s": 5.192633414999977,
+      "hit_at_1": 0.4375,
+      "hit_at_5": 0.875,
+      "recall_at_5": 0.68,
+      "mrr": 0.6041666666666666,
+      "passage_hit_at_5": 0.875,
+      "by_kind": {
+        "keyword": {
+          "hit_at_1": 0.5,
+          "hit_at_5": 0.8333333333333334,
+          "mrr": 0.6666666666666666
+        },
+        "paraphrase": {
+          "hit_at_1": 0.4,
+          "hit_at_5": 0.9,
+          "mrr": 0.5666666666666667
+        }
+      },
+      "best_unanswerable_score": null,
+      "answerable_above_it": null,
+      "queries": [
+        {
+          "id": "k1",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 1,
+              "text": "PROJECT AURORA — FINANCIAL STATUS REPORT\nDocument ID: AUR-FIN-2026-05\nReporting period: 1 January 2026 to 14 May 2026",
+              "score": 0.03202
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 18,
+              "text": "3. APPROVED BUDGET\nThe approved project budget is INR 380,000.",
+              "score": 0.032
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.",
+              "score": 0.03132
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 1,
+              "text": "PROJECT AURORA — EXECUTIVE PROJECT REPORT\nDocument ID: AUR-PR-2026-04\nVersion: 1.2\nDate: 20 April 2026",
+              "score": 0.03128
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 7,
+              "text": "1. PROJECT OVERVIEW\nProject Aurora is a customer analytics platform scheduled for production readiness in Q2 2026.",
+              "score": 0.03055
+            }
+          ],
+          "first_relevant_rank": 2,
+          "first_relevant_score": 0.032,
+          "relevant_cited": 1,
+          "relevant_total": 2,
+          "passage_hit": true,
+          "seconds": 5.337030700000014
+        },
+        {
+          "id": "k2",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "project_report.txt",
+              "line": 10,
+              "text": "2. SCHEDULE\nProject start date was 2026-01-12.\nThe target completion date is 2026-04-30.\nThe final milestone M4 is scheduled to close on 2026-04-28.",
+              "score": 0.03252
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 6,
+              "text": "1. SUMMARY\nTotal spend to date on the Helix migration is 450,000.\nThis figure covers all line items through the end of the reporting period.",
+              "score": 0.03078
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 10,
+              "text": "2. TIMELINE\nThe approved baseline completion date is 30 April 2026.\nMajor milestones:\n- M1 Requirements complete: 15 January 2026",
+              "score": 0.03037
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "3. DATES\nThe latest recorded completion milestone is 14 May 2026.",
+              "score": 0.03031
+            },
+            {
+              "document_id": "milestone_report.txt",
+              "line": 1,
+              "text": "PROJECT HELIX - MILESTONE REPORT\nPrepared by: Delivery",
+              "score": 0.01639
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.03252,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.301093999999921
+        },
+        {
+          "id": "k3",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 0.03252
+            },
+            {
+              "document_id": "shipment_report_b.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 16 September at the Mumbai facility, according to security logs.",
+              "score": 0.03252
+            },
+            {
+              "document_id": "shipment_delivery_confirmation.txt",
+              "line": 1,
+              "text": "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya Menon. No discrepancies were reported.",
+              "score": 0.03126
+            },
+            {
+              "document_id": "shipment_invoice_9012.txt",
+              "line": 1,
+              "text": "Invoice 9012 for Shipment 9012 was issued by ABC Logistics to XYZ Traders on 18 September. Total amount recorded as accurate and undisputed.",
+              "score": 0.03125
+            },
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.0308
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.03252,
+          "relevant_cited": 2,
+          "relevant_total": 2,
+          "passage_hit": true,
+          "seconds": 4.909953599999881
+        },
+        {
+          "id": "k4",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "milestone_report.txt",
+              "line": 7,
+              "text": "M1 requirements sign-off closed 2026-02-03.\nM2 build complete closed 2026-03-19.\nM3 user acceptance closed 2026-04-22.\nM4 go-live closed 2026-05-14.",
+              "score": 0.03279
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 6,
+              "text": "MILESTONE M4\nM4 — Production readiness — status: CLOSED\nRecorded closure date: 14 May 2026.",
+              "score": 0.03226
+            },
+            {
+              "document_id": "milestone_report.txt",
+              "line": 9,
+              "text": "Milestone M4 closed later than the date given in the programme report.\nThe approved baseline schedule is held by the PMO and is not attached here.",
+              "score": 0.03058
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 10,
+              "text": "Finance has been advised that delivery completed on 2026-05-14.",
+              "score": 0.01587
+            },
+            {
+              "document_id": "milestone_report.txt",
+              "line": 2,
+              "text": "Prepared by: Delivery",
+              "score": 0.01562
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.03279,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.268621799999892
+        },
+        {
+          "id": "k5",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 1,
+              "text": "PROJECT ORION - PURCHASE ORDER PO-7741",
+              "score": 0.03279
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 7,
+              "text": "Item: Cooling units, model PX-200\nQuantity ordered: 40 units\nDelivery due: 12 March 2026, Orion site, Pune",
+              "score": 0.032
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 9,
+              "text": "Ledger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.03128
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 1,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO\nFrom: Steering Committee, Orion Cold Storage Programme\nDate: 3 March 2026\nThe steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.",
+              "score": 0.03126
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 10,
+              "text": "Partial deliveries must be agreed in writing by the Orion procurement office.",
+              "score": 0.03033
+            }
+          ],
+          "first_relevant_rank": 2,
+          "first_relevant_score": 0.032,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.306122500000129
+        },
+        {
+          "id": "k6",
+          "kind": "keyword",
+          "hits": [
+            {
+              "document_id": "financial_report.txt",
+              "line": 6,
+              "text": "1. SUMMARY\nTotal spend to date on the Helix migration is 450,000.\nThis figure covers all line items through the end of the reporting period.",
+              "score": 0.03227
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 4,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO\nFrom: Steering Committee, Orion Cold Storage Programme\nDate: 3 March 2026\nThe steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.",
+              "score": 0.03226
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 9,
+              "text": "Ledger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.03202
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 6,
+              "text": "1. FINANCIAL SUMMARY\nTotal expenditure recorded to date: INR 450,000.",
+              "score": 0.03054
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 16,
+              "text": "3. BUDGET\nThe approved budget for the migration phase is 380,000.\nSpend to date is reported by Finance separately.",
+              "score": 0.02921
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 1,
+          "passage_hit": false,
+          "seconds": 5.189857500000016
+        },
+        {
+          "id": "p1",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "This document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.01639
+            },
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 5,
+              "text": "Any spend above the approved budget requires a change request signed by the programme sponsor before it is incurred.\nNo change request has been raised as of the date of this memo.",
+              "score": 0.01639
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 6,
+              "text": "1. PROJECT OVERVIEW",
+              "score": 0.01613
+            },
+            {
+              "document_id": "financial_report.txt",
+              "line": 14,
+              "text": "3. VARIANCE\nSpend exceeds the figure quoted in the programme report.\nNo revised budget approval has been recorded in this system.",
+              "score": 0.01613
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.",
+              "score": 0.01587
+            }
+          ],
+          "first_relevant_rank": 4,
+          "first_relevant_score": 0.01613,
+          "relevant_cited": 2,
+          "relevant_total": 3,
+          "passage_hit": true,
+          "seconds": 5.1647579000000405
+        },
+        {
+          "id": "p2",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "3. DATES\nThe latest recorded completion milestone is 14 May 2026.",
+              "score": 0.032
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 10,
+              "text": "BASELINE\nThe original baseline completion date is not reproduced in this document.",
+              "score": 0.03078
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 10,
+              "text": "2. TIMELINE\nThe approved baseline completion date is 30 April 2026.\nMajor milestones:\n- M1 Requirements complete: 15 January 2026",
+              "score": 0.02986
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 21,
+              "text": "4. STATUS\nThe project team reports that all major development activities are progressing against the approved baseline.",
+              "score": 0.02967
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 10,
+              "text": "2. SCHEDULE\nProject start date was 2026-01-12.\nThe target completion date is 2026-04-30.\nThe final milestone M4 is scheduled to close on 2026-04-28.",
+              "score": 0.01639
+            }
+          ],
+          "first_relevant_rank": 3,
+          "first_relevant_score": 0.02986,
+          "relevant_cited": 2,
+          "relevant_total": 2,
+          "passage_hit": true,
+          "seconds": 5.293061500000022
+        },
+        {
+          "id": "p3",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 5,
+              "text": "Any spend above the approved budget requires a change request signed by the programme sponsor before it is incurred.\nNo change request has been raised as of the date of this memo.",
+              "score": 0.03279
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.",
+              "score": 0.0315
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "5. NOTE\nThis report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.03105
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 9,
+              "text": "Ledger maintained by the Orion finance office.",
+              "score": 0.01613
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 10,
+              "text": "Partial deliveries must be agreed in writing by the Orion procurement office.",
+              "score": 0.01587
+            }
+          ],
+          "first_relevant_rank": 3,
+          "first_relevant_score": 0.03105,
+          "relevant_cited": 1,
+          "relevant_total": 4,
+          "passage_hit": true,
+          "seconds": 5.070138000000043
+        },
+        {
+          "id": "p4",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 10,
+              "text": "BASELINE\nThe original baseline completion date is not reproduced in this document.",
+              "score": 0.03132
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.",
+              "score": 0.03101
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 21,
+              "text": "4. STATUS\nThe project team reports that all major development activities are progressing against the approved baseline.",
+              "score": 0.03062
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "5. NOTE\nThis report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.02944
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "COMMENT\nThis document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.02941
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.03132,
+          "relevant_cited": 1,
+          "relevant_total": 2,
+          "passage_hit": true,
+          "seconds": 5.2015252000001055
+        },
+        {
+          "id": "p5",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "2. CURRENT STATUS\nThe financial team records expenditure above the original approved project budget.",
+              "score": 0.03068
+            },
+            {
+              "document_id": "shipment_security_report.txt",
+              "line": 1,
+              "text": "CCTV footage confirms Rahul Sharma entered the Mumbai warehouse at 10:15 AM on 14 September and left at 11:40 AM.",
+              "score": 0.01639
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "The latest recorded completion milestone is 14 May 2026.",
+              "score": 0.01613
+            },
+            {
+              "document_id": "shipment_report_b.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 16 September at the Mumbai facility, according to security logs.",
+              "score": 0.01613
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 15,
+              "text": "The report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.",
+              "score": 0.01587
+            }
+          ],
+          "first_relevant_rank": 2,
+          "first_relevant_score": 0.01639,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 4.935855900000206
+        },
+        {
+          "id": "p6",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.03279
+            },
+            {
+              "document_id": "shipment_employee_statement.txt",
+              "line": 1,
+              "text": "Rahul Sharma works for ABC Logistics and was present at the Mumbai warehouse on 14 September.",
+              "score": 0.03009
+            },
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 0.03008
+            },
+            {
+              "document_id": "shipment_delivery_confirmation.txt",
+              "line": 1,
+              "text": "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya Menon. No discrepancies were reported.",
+              "score": 0.02991
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 9,
+              "text": "2. SCHEDULE\nProject start date was 2026-01-12.\nThe target completion date is 2026-04-30.\nThe final milestone M4 is scheduled to close on 2026-04-28.",
+              "score": 0.02986
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.03279,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 4.970795499999895
+        },
+        {
+          "id": "p7",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "orion_budget_memo.docx",
+              "line": 4,
+              "text": "PROJECT ORION - BUDGET APPROVAL MEMO\nFrom: Steering Committee, Orion Cold Storage Programme\nDate: 3 March 2026\nThe steering committee approved a total budget of INR 250,000 for Project Orion, covering equipment, installation and commissioning.",
+              "score": 0.03279
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 9,
+              "text": "Ledger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.03041
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 15,
+              "text": "3. BUDGET\nThe approved budget for the migration phase is 380,000.\nSpend to date is reported by Finance separately.",
+              "score": 0.02986
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "This report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.01613
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "This document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.01587
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.03279,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 4.942852700000003
+        },
+        {
+          "id": "p8",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 4,
+              "text": "PROJECT ORION - SITE READINESS REVIEW, MINUTES\nAttendees: programme sponsor, site lead, operations lead\n1. Installation completed on 1 April 2026; commissioning passed.\n2. Site handover to operations confirmed for 6 April 2026.",
+              "score": 0.03279
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "This report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.01613
+            },
+            {
+              "document_id": "orion_minutes.docx",
+              "line": 5,
+              "text": "3. Operations assumes the night shift from the handover date.",
+              "score": 0.01613
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "This document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.01587
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 19,
+              "text": "4. RISKS\nVendor availability in March remains the principal schedule risk.",
+              "score": 0.01587
+            }
+          ],
+          "first_relevant_rank": 1,
+          "first_relevant_score": 0.03279,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.19901149999987
+        },
+        {
+          "id": "p9",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "COMMENT\nThis document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.03054
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 10,
+              "text": "BASELINE\nThe original baseline completion date is not reproduced in this document.",
+              "score": 0.03031
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "The financial team records expenditure above the original approved project budget.",
+              "score": 0.01639
+            },
+            {
+              "document_id": "project_report.txt",
+              "line": 19,
+              "text": "4. RISKS\nVendor availability in March remains the principal schedule risk.",
+              "score": 0.01639
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "The latest recorded completion milestone is 14 May 2026.",
+              "score": 0.01613
+            }
+          ],
+          "first_relevant_rank": 4,
+          "first_relevant_score": 0.01639,
+          "relevant_cited": 1,
+          "relevant_total": 1,
+          "passage_hit": true,
+          "seconds": 5.121101100000033
+        },
+        {
+          "id": "p10",
+          "kind": "paraphrase",
+          "hits": [
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "COMMENT\nThis document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.0311
+            },
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.02991
+            },
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 0.02921
+            },
+            {
+              "document_id": "shipment_delivery_confirmation.txt",
+              "line": 1,
+              "text": "Shipment 9012 was delivered to XYZ Traders on 20 September by driver Priya Menon. No discrepancies were reported.",
+              "score": 0.01639
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 18,
+              "text": "This report does not contain the formal change-request reference authorising the additional expenditure.",
+              "score": 0.01613
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 1,
+          "passage_hit": false,
+          "seconds": 5.174653599999601
+        },
+        {
+          "id": "u1",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "The financial team records expenditure above the original approved project budget.",
+              "score": 0.01639
+            },
+            {
+              "document_id": "orion_purchase_order.txt",
+              "line": 3,
+              "text": "Supplier: Polar Systems\nIssued: 5 March 2026",
+              "score": 0.01639
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "The latest recorded completion milestone is 14 May 2026.",
+              "score": 0.01613
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 2,
+              "text": "--- sheet: Spend ---\nItem,Supplier,Date,Amount (INR)\nCooling units (36),Polar Systems,2026-03-19,162000\nInstallation,Polar Systems,2026-03-24,58500",
+              "score": 0.01613
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 15,
+              "text": "The report identifies expenditure of INR 450,000 against an approved baseline of INR 380,000.",
+              "score": 0.01587
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 5.328815800000029
+        },
+        {
+          "id": "u2",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "shipment_report_a.txt",
+              "line": 1,
+              "text": "Shipment 4821 arrived on 14 September at the Mumbai warehouse. It was received by Rahul Sharma.",
+              "score": 0.03252
+            },
+            {
+              "document_id": "shipment_employee_statement.txt",
+              "line": 1,
+              "text": "Rahul Sharma works for ABC Logistics and was present at the Mumbai warehouse on 14 September.",
+              "score": 0.032
+            },
+            {
+              "document_id": "shipment_security_report.txt",
+              "line": 1,
+              "text": "CCTV footage confirms Rahul Sharma entered the Mumbai warehouse at 10:15 AM on 14 September and left at 11:40 AM.",
+              "score": 0.03178
+            },
+            {
+              "document_id": "shipment_witness_statement.txt",
+              "line": 1,
+              "text": "Priya Menon stated that the Mumbai warehouse manager on duty during the Shipment 4821 incident was Arjun Verma, not Rahul Sharma.",
+              "score": 0.0315
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 16,
+              "text": "This document confirms the observed milestone closure date, but it does not establish whether the original approved baseline was formally changed.",
+              "score": 0.01562
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 5.2405056999996305
+        },
+        {
+          "id": "u3",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 24,
+              "text": "Any material change to the approved baseline should be documented through a formal change request and reflected in the financial records.",
+              "score": 0.01639
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 10,
+              "text": "Ledger maintained by the Orion finance office.\nFigures are actual invoiced amounts.",
+              "score": 0.01639
+            },
+            {
+              "document_id": "milestone_report.txt",
+              "line": 10,
+              "text": "The approved baseline schedule is held by the PMO and is not attached here.",
+              "score": 0.01613
+            },
+            {
+              "document_id": "orion_ledger.xlsx",
+              "line": 5,
+              "text": "Electrical works,Sundar Electricals,2026-03-26,41000\nCommissioning,Polar Systems,2026-04-01,26000\nTotal spend,,,287500\n--- sheet: Notes ---",
+              "score": 0.01613
+            },
+            {
+              "document_id": "budget.csv",
+              "line": 3,
+              "text": "item,amount,approved\nmigration,450000,no\ntraining,25000,yes\ncontingency,15000,yes",
+              "score": 0.01587
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 5.371128100000078
+        },
+        {
+          "id": "u4",
+          "kind": "unanswerable",
+          "hits": [
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 12,
+              "text": "3. DATES\nThe latest recorded completion milestone is 14 May 2026.",
+              "score": 0.03151
+            },
+            {
+              "document_id": "aurora_project_report.txt",
+              "line": 10,
+              "text": "2. TIMELINE\nThe approved baseline completion date is 30 April 2026.\nMajor milestones:\n- M1 Requirements complete: 15 January 2026",
+              "score": 0.0308
+            },
+            {
+              "document_id": "aurora_milestone_report.txt",
+              "line": 10,
+              "text": "BASELINE\nThe original baseline completion date is not reproduced in this document.",
+              "score": 0.03054
+            },
+            {
+              "document_id": "aurora_financial_report.txt",
+              "line": 9,
+              "text": "The financial team records expenditure above the original approved project budget.",
+              "score": 0.01639
+            },
+            {
+              "document_id": "milestone_report.txt",
+              "line": 4,
+              "text": "M1 requirements sign-off closed 2026-02-03.\nM2 build complete closed 2026-03-19.\nM3 user acceptance closed 2026-04-22.\nM4 go-live closed 2026-05-14.",
+              "score": 0.01639
+            }
+          ],
+          "first_relevant_rank": null,
+          "first_relevant_score": null,
+          "relevant_cited": 0,
+          "relevant_total": 0,
+          "passage_hit": false,
+          "seconds": 5.525785700000142
+        }
+      ]
+    }
+  ],
+  "meaningless": false
+}

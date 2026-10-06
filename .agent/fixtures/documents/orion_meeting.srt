@@ -1,0 +1,15 @@
+1
+00:00:01,000 --> 00:00:05,000
+Good morning. This is the Orion site readiness review.
+
+2
+00:00:05,500 --> 00:00:11,000
+Installation finished on 1 April and commissioning passed.
+
+3
+00:00:11,500 --> 00:00:17,000
+So we confirm the site handover to operations on 6 April 2026.
+
+4
+00:00:17,500 --> 00:00:22,000
+Operations will take over the night shift from that date.

@@ -30,6 +30,9 @@ import { EvaluationDashboard } from "../components/evaluation";
 // The 3D explorer pulls in three.js; loaded only when a replay opens its graph.
 const KnowledgeExplorer = lazy(() => import("../components/graph3d/KnowledgeExplorer"));
 
+/** The server's limit on an objective (`CreateMissionRequest.objective`). */
+const OBJECTIVE_MAX = 2000;
+
 /** Fixtures that ship with the repo, offered so a demo needs no upload. */
 const SUGGESTED = [
   "aurora_project_report.txt",
@@ -133,6 +136,26 @@ export function NewMission({
   }, []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const tooLong = objective.trim().length > OBJECTIVE_MAX;
+
+  // A long brief is evidence, not a question: kept as a citable document, and the objective field
+  // is left for the question itself (2026-10-06: a multi-paragraph objective was rejected).
+  const moveToContext = () => {
+    const text = objective.trim();
+    if (!text) return;
+    setBusy(true);
+    setError("");
+    const name = `mission-brief-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "")}.txt`;
+    api
+      .uploadDocuments([new File([text], name, { type: "text/plain" })], workspace || undefined)
+      .then((results) => {
+        const added = results.filter((r) => r.has_text).map((r) => r.name);
+        setDocuments((current) => [...current, ...added.filter((n) => !current.includes(n))]);
+        setObjective("");
+      })
+      .catch((exc: unknown) => setError(exc instanceof ApiError ? `${exc.code}: ${exc.message}` : String(exc)))
+      .finally(() => setBusy(false));
+  };
 
   const start = () => {
     setBusy(true);
@@ -175,9 +198,25 @@ export function NewMission({
               onChange={(event) => setObjective(event.target.value)}
               placeholder="What should be investigated?"
             />
-            <div className="hint">
-              State a question, not a task list. An objective too vague to plan against comes
-              back as a clarification request rather than a guessed plan.
+            <div className={`hint ${tooLong ? "over-limit" : ""}`}>
+              <span className="mono">
+                {objective.trim().length.toLocaleString()} / {OBJECTIVE_MAX.toLocaleString()}
+              </span>{" "}
+              {tooLong ? (
+                <>
+                  Too long for an objective: the model reads it inside every planning prompt. Keep the
+                  question here and put the background in a document.{" "}
+                  <button className="link" onClick={moveToContext} disabled={busy}>
+                    Move this text into a context document
+                  </button>
+                </>
+              ) : (
+                <>
+                  State a question, not a task list. An objective too vague to plan against comes back
+                  as a clarification request rather than a guessed plan. Background goes in "Type or
+                  paste context" below, where every line is citable.
+                </>
+              )}
             </div>
           </div>
 
@@ -223,7 +262,9 @@ export function NewMission({
             <button
               className="primary"
               onClick={start}
-              disabled={busy || objective.trim().length < 8 || (workspace !== "" && !validWorkspace(workspace))}
+              disabled={
+                busy || objective.trim().length < 8 || tooLong || (workspace !== "" && !validWorkspace(workspace))
+              }
             >
               {busy ? "Starting." : "Start mission"}
             </button>

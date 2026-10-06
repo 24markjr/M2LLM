@@ -62,6 +62,29 @@ orders the work correctly or it does not.
 Writing ground truth is slow and is the reason the dataset is 20 scenarios rather than 200.
 A small, honest dataset beats a large, sloppy one.
 
+## Phase 41 additions
+
+**Fourteen scenarios.** Three Orion scenarios (suite `formats`) read through the Word, Excel, image
+and subtitle parsers of Phases 38-39: `orion_ledger_overrun` (a Word memo's approved budget against an
+Excel ledger's total), `orion_scanned_delivery` (the delivered quantity exists only in a scanned
+note, so the finding exists only if OCR read it), and `orion_meeting_consistent` (a negative case:
+subtitles and Word minutes that agree in different words). Fixtures are generated once by
+`.agent/fixtures/make_orion_fixtures.py` and committed.
+
+**Repeated runs.** `python -m app.cli eval --repeat 3` runs the suite three times. The last run is the
+report (and the new baseline); every run and the spread (`*-all-x3.md`: mean, standard deviation and
+range per metric, and whether each scenario reached the same verdict every time) go to
+`reports/repeats/<stamp>/`. A metric whose range exceeds its regression tolerance is flagged: one
+run of that metric cannot tell a regression from noise. Every run is held to the thresholds, in the
+CLI and in CI.
+
+**Retrieval (Experiment 006).** `python -m app.cli eval-retrieval` scores search, not the agent:
+hit@1, hit@5, recall@5, MRR and passage hit@5 for lexical search, semantic search over two chunkers,
+and a rank-fused hybrid, over `retrieval/queries.yaml` (keyword, paraphrase and unanswerable queries,
+each with the exact lines a reader would cite). Embeddings only, about a minute. Reports in
+`experiments/exp-006-retrieval/`; results and decisions in `.claude/architecture/retrieval.md`. CI
+checks they parse and that none was made with the echo provider.
+
 ## Reports
 
 Generated to `reports/<timestamp>-<model>.json` plus a Markdown summary, stamped with the

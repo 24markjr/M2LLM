@@ -312,6 +312,8 @@ class Document(Base):
     kind: Mapped[str] = mapped_column(String(32), default="text")
     sha256: Mapped[str] = mapped_column(String(64), default="")
     parser: Mapped[str] = mapped_column(String(32), default="")
+    # Which chunker cut it (Phase 41): a change of `CONTEXT_CHUNKER` re-chunks unchanged text.
+    chunker: Mapped[str] = mapped_column(String(16), default="lines")
     page_count: Mapped[int] = mapped_column(Integer, default=0)
     line_count: Mapped[int] = mapped_column(Integer, default=0)
     size_bytes: Mapped[int] = mapped_column(Integer, default=0)

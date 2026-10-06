@@ -556,6 +556,8 @@ export interface WorkspaceDocument {
   kind: string;
   sha256: string;
   parser: string;
+  /** `lines` or `chars`: which chunker cut it (Phase 41). */
+  chunker: string;
   chunks: number;
 }
 

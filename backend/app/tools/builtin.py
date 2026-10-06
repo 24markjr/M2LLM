@@ -257,7 +257,16 @@ class ExtractOutput(JarvisModel):
 MAX_EXTRACTIONS = 60
 
 _DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}\s+\w+\s+\d{4}\b")
-_AMOUNT = re.compile(r"[$£€]\s?[\d,]+(?:\.\d{2})?|\b\d[\d,]{2,}(?:\.\d{2})?\b")
+# Commas only in groups of three (BUG-028). The old pattern took any run of digits and commas, so in
+# the spreadsheet row "Cooling units,Polar Systems,2026-03-19,162000" the date's day and the column
+# separator became one figure, "19,162000", and the reasoning model was handed $19,162,000.
+_AMOUNT = re.compile(r"(?:[$£€]\s?)?\b(?:\d{1,3}(?:,\d{3})+|\d{3,})(?:\.\d{2})?\b")
+
+
+def _amounts(line: str) -> list[str]:
+    """Amounts on a line, with its dates blanked first so a date's digits are never a figure."""
+    masked = _DATE.sub(lambda m: " " * len(m.group()), line)
+    return [m.strip() for m in _AMOUNT.findall(masked)]
 
 
 class DocumentExtractTool(Tool):
@@ -300,8 +309,8 @@ class DocumentExtractTool(Tool):
                     ]
                 if wants_amounts:
                     found += [
-                        Extraction(document_id=doc_id, line=number, value=m.strip(), kind="amount")
-                        for m in _AMOUNT.findall(line)
+                        Extraction(document_id=doc_id, line=number, value=m, kind="amount")
+                        for m in _amounts(line)
                     ]
 
         # A hundred-page PDF yields thousands of matches. Returning them all would

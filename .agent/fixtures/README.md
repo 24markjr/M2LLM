@@ -34,6 +34,21 @@ A synthetic project audit:
 | `budget.csv` | Line-item budget | A line item absent from the financial report |
 | `injection_document.pdf` | Ordinary prose plus an embedded instruction | Tests that document content is treated as data |
 
+## The Orion fixtures (Phase 41)
+
+The first fixtures that are not plain text, so the scenarios exercise the Phase 38-39 parsers. Made by
+`make_orion_fixtures.py` (run once; outputs committed, so evaluation never depends on the fonts of the
+machine that runs it):
+
+| File | Read by | Planted |
+|---|---|---|
+| `orion_budget_memo.docx` | python-docx | Approves INR 250,000; no change request raised |
+| `orion_ledger.xlsx` | openpyxl, sheets as pages | "Total spend" INR 287,500 - the overrun |
+| `orion_purchase_order.txt` | text | 40 units due 12 March 2026 |
+| `orion_delivery_note.png` | OCR (and the vision model, as `[seen]` lines) | 36 units delivered 19 March - only in the image |
+| `orion_meeting.srt` | subtitle parser | Handover 6 April 2026 |
+| `orion_minutes.docx` | python-docx | Handover 6 April 2026 - agrees, in other words |
+
 ## `expected/` format
 
 For every planted flaw, ground truth records where it is and what a correct finding about it

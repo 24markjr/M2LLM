@@ -1022,3 +1022,49 @@ no lines: the exception escaped the frame loop before the timeline was assembled
 
 **Fix.** `see()` treats any failure as "nothing seen" and logs it; what was read and heard is kept.
 `test_a_failing_vision_model_never_loses_what_was_read` holds it.
+
+## BUG-027 — A value taken from a line about something else made a contradiction
+
+**Found:** 2026-10-06, Phase 41's repeated baseline (every run, deterministically)
+**Severity:** High. Two negative cases reported contradictions that do not exist
+**Status:** Fixed (`trust/specifics.values_out_of_context`, `single_value`; the comparative rule in
+`reasoning/engine.py`)
+
+**Symptom.** "The Aurora project report states two different completion dates: 30 April 2026 and
+20 April 2026", citing `Date: 20 April 2026` - the report's own date. "The written minutes state [the
+handover] as 1 April 2026", citing the minutes' installation line. Both values were on the cited
+lines, so BUG-019's rule (values must be in evidence) passed them, and the composite verifier let the
+first through with both verifiers agreeing.
+
+**Fix.** For a comparative objective, a value counts only if some cited line holding it shares a
+content word with the claim (words cut to six letters, generic words like "date" and month names
+ignored, identifiers kept; table rows exempt). The rerun then produced "30 April 2026 at r10, but
+also 30 April 2026 at r15, indicating a single date" - agreement written as a finding - so a claim
+whose every value is the same is discarded too. Tests: the two real claims, five legitimate ones.
+
+## BUG-028 — A spreadsheet row's date and column separator read as one amount
+
+**Found:** 2026-10-06, diagnosing `orion_ledger_overrun` (no findings in any run)
+**Severity:** High. Every amount of a dated spreadsheet row was wrong
+**Status:** Fixed (`tools/builtin.py:_amounts`)
+
+**Symptom.** In `Cooling units (36),Polar Systems,2026-03-19,162000` the amount pattern, which took
+any run of digits and commas, read `19,162000`; the reasoning model was handed $19,162,000.
+
+**Fix.** Commas only in groups of three; date spans blanked before amounts are matched (so a year is
+no longer an amount either).
+
+## BUG-029 — The text at a page citation was whichever tool cited it last
+
+**Found:** 2026-10-06, tracing why a correct overrun finding was discarded
+**Severity:** High. A correct finding was thrown away for citing evidence it held
+**Status:** Fixed (`replanning/controller.py:evidence_text_map`)
+
+**Symptom.** "The recorded spend exceeded the approved budget by $37,500" cited the memo and
+`orion_ledger.xlsx:p1`. A page citation carries the lines a tool matched there; the map from
+citation to text was a plain dict, so the date extraction's rows replaced the budget extraction's
+"Total spend" row, and the total was missing from the claim's evidence.
+
+**Fix.** The text for a citation merges every observation that cited it. Also new in the same work: a
+difference of two cited figures counts as grounded (37,500 = 287,500 - 250,000), since the objective
+asked for exactly that comparison.

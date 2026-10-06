@@ -1,0 +1,128 @@
+# Experiment 006's retrieval benchmark (Phase 41): what a search should find, line by line.
+#
+# Each query names the lines a careful reader would cite for it (`document:rN`, the citation form the
+# evidence binder resolves). A hit counts only when it cites one of those lines exactly: a passage
+# that merely contains the line is reported separately ("passage recall"), because a citation of the
+# wrong line in the right paragraph is still a citation a reader cannot check.
+#
+# Three kinds of query, so neither search wins by construction:
+#   keyword     - shares its words with the answer; lexical search's home ground
+#   paraphrase  - the same question in other words; what embeddings are for
+#   unanswerable - nothing in the corpus answers it; measures the score a non-answer gets, which is
+#                  what a `min_score` threshold has to sit above
+#
+# The corpus is every document named in `corpus`, searched together, as a workspace holds them.
+
+corpus:
+  - aurora_financial_report.txt
+  - aurora_milestone_report.txt
+  - aurora_project_report.txt
+  - financial_report.txt
+  - milestone_report.txt
+  - project_report.txt
+  - budget.csv
+  - shipment_report_a.txt
+  - shipment_report_b.txt
+  - shipment_employee_statement.txt
+  - shipment_security_report.txt
+  - shipment_witness_statement.txt
+  - shipment_invoice_9012.txt
+  - shipment_delivery_confirmation.txt
+  - orion_budget_memo.docx
+  - orion_ledger.xlsx
+  - orion_purchase_order.txt
+  - orion_minutes.docx
+
+queries:
+  # --- keyword -----------------------------------------------------------------------------
+  - id: k1
+    kind: keyword
+    query: approved project budget Aurora
+    relevant: [aurora_project_report.txt:r18, aurora_financial_report.txt:r15]
+  - id: k2
+    kind: keyword
+    query: Helix target completion date
+    relevant: [project_report.txt:r10]
+  - id: k3
+    kind: keyword
+    query: Shipment 4821 arrived
+    relevant: [shipment_report_a.txt:r1, shipment_report_b.txt:r1]
+  - id: k4
+    kind: keyword
+    query: M4 go-live closed
+    relevant: [milestone_report.txt:r7]
+  - id: k5
+    kind: keyword
+    query: Orion purchase order quantity ordered
+    relevant: [orion_purchase_order.txt:r7]
+  - id: k6
+    kind: keyword
+    query: total spend Orion ledger
+    relevant: [orion_ledger.xlsx:r7]
+
+  # --- paraphrase --------------------------------------------------------------------------
+  - id: p1
+    kind: paraphrase
+    query: spending went over what was authorised
+    relevant:
+      - aurora_financial_report.txt:r9
+      - aurora_financial_report.txt:r15
+      - financial_report.txt:r14
+  - id: p2
+    kind: paraphrase
+    query: when is the work supposed to be finished
+    relevant: [project_report.txt:r10, aurora_project_report.txt:r10]
+  - id: p3
+    kind: paraphrase
+    query: nobody signed off the extra money
+    relevant:
+      - financial_report.txt:r15
+      - aurora_financial_report.txt:r18
+      - budget.csv:r2
+      - orion_budget_memo.docx:r6
+  - id: p4
+    kind: paraphrase
+    query: the plan we were measured against is missing from the file
+    relevant: [milestone_report.txt:r10, aurora_milestone_report.txt:r10]
+  - id: p5
+    kind: paraphrase
+    query: camera recordings show who came into the building
+    relevant: [shipment_security_report.txt:r1]
+  - id: p6
+    kind: paraphrase
+    query: a different person was in charge that day
+    relevant: [shipment_witness_statement.txt:r1]
+  - id: p7
+    kind: paraphrase
+    query: how much money did the committee allow for Orion
+    relevant: [orion_budget_memo.docx:r4]
+  - id: p8
+    kind: paraphrase
+    query: when do operations take responsibility for the site
+    relevant: [orion_minutes.docx:r4]
+  - id: p9
+    kind: paraphrase
+    query: biggest threat to the timetable
+    relevant: [project_report.txt:r19]
+  - id: p10
+    kind: paraphrase
+    query: the bill for the goods was not contested
+    relevant: [shipment_invoice_9012.txt:r1]
+
+  # --- unanswerable ------------------------------------------------------------------------
+  - id: u1
+    kind: unanswerable
+    query: who supplies the server hardware
+    relevant: []
+  - id: u2
+    kind: unanswerable
+    query: what was the weather at the warehouse
+    relevant: []
+  - id: u3
+    kind: unanswerable
+    query: employee salaries and bonuses
+    relevant: []
+  - id: u4
+    kind: unanswerable
+    query: the software licence renewal terms
+    relevant: []

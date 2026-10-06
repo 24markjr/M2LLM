@@ -108,11 +108,21 @@ async def ingest_document(
     text: str,
     kind: str = "text",
     parser: str = "",
+    chunker: str | None = None,
 ) -> Ingested:
-    """Chunk, embed and store one document. A file whose SHA-256 is unchanged is skipped."""
+    """Chunk, embed and store one document. A file whose SHA-256 is unchanged is skipped.
+
+    `chunker` overrides `CONTEXT_CHUNKER` for this call (Experiment 006 runs both).
+    """
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    cut_by = chunker or get_settings().context_chunker
     existing = await store.current(workspace_id, document_id)
-    if existing is not None and existing.sha256 == digest and existing.chunks:
+    if (
+        existing is not None
+        and existing.sha256 == digest
+        and existing.chunker == cut_by
+        and existing.chunks
+    ):
         return Ingested(
             workspace_id=workspace_id,
             document_id=document_id,
@@ -121,7 +131,7 @@ async def ingest_document(
             store=store.name,
         )
 
-    chunks = chunk_text(document_id, text, get_settings().context_chunker)
+    chunks = chunk_text(document_id, text, cut_by)
     for start in range(0, len(chunks), EMBED_BATCH):
         batch = chunks[start : start + EMBED_BATCH]
         response = await llm.embed([c.text for c in batch])
@@ -135,6 +145,7 @@ async def ingest_document(
             kind=kind,
             sha256=digest,
             parser=parser,
+            chunker=cut_by,
         ),
         embedded,
     )

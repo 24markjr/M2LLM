@@ -77,8 +77,10 @@ class UploadedDocument(JarvisModel):
     # spoken segments heard, lines seen and by which model. Empty for plain documents.
     understood: str = ""
     # Stored retrieval (Phase 40): the workspace the file was ingested into, its chunks and the
-    # store. None when it has no text yet or the store or embedding model failed (`note` says).
+    # store. Since 2026-10-06 indexing runs after the response (`indexing` is then true and this is
+    # None): embedding a long document took minutes and held the upload with it.
     ingested: Ingested | None = None
+    indexing: bool = False
 
 
 class StoredDocument(JarvisModel):
@@ -143,7 +145,12 @@ async def upload_documents(
                 details={"name": name},
             ) from exc
 
-        ingested, ingest_note = await _ingest(workspace, document)
+        # Indexed for search after the response, not before it. Measured 2026-10-06: eight files
+        # (a 3,155-line Markdown file among them) held one upload request for minutes while their
+        # passages were embedded, and the page showed nothing but "Uploading and reading.".
+        indexing = document.has_text
+        if indexing:
+            _start_indexing(workspace, document)
         results.append(
             UploadedDocument(
                 document_id=document.document_id,
@@ -156,9 +163,9 @@ async def upload_documents(
                 parser=document.parser,
                 sha256=document.sha256,
                 has_text=document.has_text,
-                note=(ingest_note if document.has_text else document.text.splitlines()[-1]),
+                note="" if document.has_text else document.text.splitlines()[-1],
                 understood=_understood(document.sha256),
-                ingested=ingested,
+                indexing=indexing,
             )
         )
         log.info(
@@ -173,11 +180,31 @@ async def upload_documents(
     return results
 
 
-async def _ingest(workspace: str, document: LoadedDocument) -> tuple[Ingested | None, str]:
-    """Ingest an upload into its workspace. Never fails the upload: a file is still usable by
-    missions (lexically) when the store or embedding model is down."""
-    if not document.has_text:
-        return None, ""
+# Background indexing tasks, held so they are not garbage-collected mid-run (asyncio keeps only a
+# weak reference to a task).
+_indexing: set[asyncio.Task[Ingested | None]] = set()
+
+
+def _start_indexing(workspace: str, document: LoadedDocument) -> None:
+    task = asyncio.create_task(_ingest(workspace, document), name=f"index-{document.document_id}")
+    _indexing.add(task)
+    task.add_done_callback(_indexing.discard)
+
+
+async def wait_for_indexing() -> None:
+    """Until every upload started so far is indexed. For tests and shutdown."""
+    while _indexing:
+        await asyncio.gather(*list(_indexing), return_exceptions=True)
+
+
+def indexing_now() -> list[str]:
+    """Documents still being indexed, by name."""
+    return sorted(t.get_name().removeprefix("index-") for t in _indexing if not t.done())
+
+
+async def _ingest(workspace: str, document: LoadedDocument) -> Ingested | None:
+    """Ingest an upload into its workspace. Never fails anything: a file is still usable by
+    missions (lexically) when the store or embedding model is down, and the log says why."""
     try:
         store = await get_context_store()
         done = await ingest_document(
@@ -191,8 +218,9 @@ async def _ingest(workspace: str, document: LoadedDocument) -> tuple[Ingested | 
         )
     except Exception as exc:  # noqa: BLE001 - stored retrieval is optional
         log.warning("upload_ingest_failed", name=document.document_id, error=str(exc))
-        return None, f"not ingested for search ({type(exc).__name__})"
-    return done, ""
+        return None
+    log.info("upload_indexed", name=document.document_id, chunks=done.chunks, store=done.store)
+    return done
 
 
 def _understood(sha256: str) -> str:

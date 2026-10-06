@@ -11,6 +11,7 @@ the server's internals - which is both a leak and useless to the person reading 
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any
 
 from fastapi import FastAPI, Request, status
@@ -104,7 +105,7 @@ def register_error_handlers(app: FastAPI) -> None:
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=ErrorResponse(
                 error_code="INVALID_REQUEST",
-                message="the request body did not match the expected shape",
+                message=_describe(exc.errors()),
                 details={"errors": exc.errors()},
             ).model_dump(mode="json"),
         )
@@ -139,3 +140,16 @@ _CODES = {
     409: "CONFLICT",
     413: "PAYLOAD_TOO_LARGE",
 }
+
+
+def _describe(errors: Sequence[Any]) -> str:
+    """Which field was wrong, and how, in words a person can act on.
+
+    2026-10-06: an objective over the 2,000-character limit came back as "the request body did not
+    match the expected shape", and nothing on the page said which field or why.
+    """
+    parts = []
+    for error in errors[:3]:
+        location = ".".join(str(p) for p in error.get("loc", ()) if p != "body") or "request"
+        parts.append(f"{location}: {error.get('msg', 'invalid')}")
+    return "; ".join(parts) or "the request body did not match the expected shape"

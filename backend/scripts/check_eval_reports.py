@@ -26,7 +26,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from app.evaluation.report import EvalReport
+from app.evaluation.report import EvalReport, SpreadReport
+from app.evaluation.retrieval import RetrievalReport, experiment_dir
 from app.evaluation.runner import reports_dir
 
 
@@ -72,6 +73,9 @@ def main() -> int:
         for failure in report.build_failures():
             failures.append(f"[{suite} baseline: {path.name}] {failure}")
 
+    failures += _check_repeats(directory)
+    failures += _check_retrieval()
+
     print(f"checked {checked} report(s) in {directory}")
     print(f"baselines gated: {', '.join(f'{s}={p.name}' for s, p in sorted(baselines.items()))}")
 
@@ -87,6 +91,51 @@ def main() -> int:
 
     print("all committed reports are well-formed and within their recorded thresholds")
     return 0
+
+
+def _check_repeats(directory: Path) -> list[str]:
+    """Repeated runs (Phase 41): every run and its spread parse, and in the newest set every run
+    is held to the thresholds - a confabulation in run 2 of 3 is a confabulation."""
+    failures: list[str] = []
+    sets = sorted(p for p in (directory / "repeats").glob("*") if p.is_dir())
+    for folder in sets:
+        spreads = sorted(folder.glob("*-x[0-9]*.json"))
+        for path in spreads:
+            try:
+                SpreadReport.model_validate_json(path.read_text(encoding="utf-8"))
+            except ValueError as exc:
+                failures.append(f"repeats/{folder.name}/{path.name}: not a spread ({exc})")
+        runs = [p for p in sorted(folder.glob("*.json")) if p not in spreads]
+        for path in runs:
+            try:
+                report = EvalReport.model_validate_json(path.read_text(encoding="utf-8"))
+            except ValueError as exc:
+                failures.append(f"repeats/{folder.name}/{path.name}: does not parse ({exc})")
+                continue
+            if folder == sets[-1]:
+                failures += [
+                    f"[repeats/{folder.name}/{path.name}] {f}" for f in report.build_failures()
+                ]
+    if sets:
+        print(f"repeated-run sets checked: {len(sets)} (newest gated: {sets[-1].name})")
+    return failures
+
+
+def _check_retrieval() -> list[str]:
+    """Experiment 006's reports (Phase 41) parse, and none was made with the echo provider."""
+    failures: list[str] = []
+    paths = sorted(experiment_dir().glob("*-retrieval.json"))
+    for path in paths:
+        try:
+            report = RetrievalReport.model_validate_json(path.read_text(encoding="utf-8"))
+        except ValueError as exc:
+            failures.append(f"{path.name}: not a retrieval report ({exc})")
+            continue
+        if report.meaningless:
+            failures.append(f"{path.name}: made with the echo provider - it measured nothing")
+    if paths:
+        print(f"retrieval reports checked: {len(paths)}")
+    return failures
 
 
 if __name__ == "__main__":

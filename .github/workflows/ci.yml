@@ -135,6 +135,12 @@ jobs:
         working-directory: backend
         run: alembic upgrade head
 
+      # The newest migration must also come back out (Phase 41): a downgrade that has never run is
+      # a rollback nobody can rely on. Down one step and up again, on the empty database.
+      - name: newest migration round-trips
+        working-directory: backend
+        run: alembic downgrade -1 && alembic upgrade head
+
       # These skip themselves when no database is reachable, which is right locally and wrong
       # here: a silently-skipped integration suite is a green tick over nothing. `-p no:randomly`
       # keeps schema-dependent ordering stable.
@@ -207,7 +213,8 @@ jobs:
       - name: build
         working-directory: frontend
         run: npm run build
-      # The knowledge explorer's logic and the memory wording (Phases 32-33).
+      # The knowledge explorer's logic, the memory wording, file kinds and workspace links
+      # (Phases 32-41).
       - name: vitest
         working-directory: frontend
         run: npm test

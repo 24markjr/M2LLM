@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import statistics
 from datetime import datetime
 from pathlib import Path
 
@@ -341,3 +342,163 @@ def load_latest(directory: Path, suite: str) -> EvalReport | None:
     if not candidates:
         return None
     return EvalReport.model_validate_json(candidates[-1].read_text(encoding="utf-8"))
+
+
+# --- repeated runs (Phase 41) ---------------------------------------------------------------------
+
+
+class MetricSpread(JarvisModel):
+    """One metric over repeated runs of the same suite, same model, same configuration."""
+
+    metric: str
+    mean: float
+    stdev: float
+    minimum: float
+    maximum: float
+    tolerance: float = 0.0
+
+    @property
+    def range(self) -> float:
+        return self.maximum - self.minimum
+
+    @property
+    def noisier_than_tolerance(self) -> bool:
+        """Runs of one unchanged system differ by more than the regression check allows: that
+        check would then report noise as a regression."""
+        return self.range > self.tolerance
+
+
+class ScenarioStability(JarvisModel):
+    """How one scenario behaved across the runs."""
+
+    scenario_id: str
+    findings: list[int] = Field(default_factory=list)
+    expected_claims_found: list[float] = Field(default_factory=list)
+    negative_case_passed: list[bool] = Field(default_factory=list)
+    errors: int = 0
+    is_negative_case: bool = False
+    is_positive_case: bool = False
+
+    @property
+    def stable(self) -> bool:
+        """Every run reached the same verdict: found what was planted, or rightly found nothing."""
+        if self.errors:
+            return False
+        if self.is_negative_case:
+            return len(set(self.negative_case_passed)) <= 1
+        if self.is_positive_case:
+            return len(set(self.expected_claims_found)) <= 1
+        return True
+
+
+class SpreadReport(JarvisModel):
+    suite: str
+    generated_at: datetime = Field(default_factory=utcnow)
+    model: str = ""
+    config_hash: str = ""
+    runs: int = 0
+    metrics: list[MetricSpread] = Field(default_factory=list)
+    scenarios: list[ScenarioStability] = Field(default_factory=list)
+
+
+def spread(reports: list[EvalReport], tolerances: dict[str, float]) -> SpreadReport:
+    """Mean, standard deviation and range of every metric over repeated runs.
+
+    Only reports of one system are combined: a spread over different models or configurations
+    would be a comparison, not a measure of noise.
+    """
+    if not reports:
+        raise ValueError("no runs to combine")
+    keys = {r.comparable_key for r in reports}
+    if len(keys) != 1:
+        raise ValueError("repeated runs must share model, prompts, configuration and scenarios")
+
+    first = reports[0]
+    result = SpreadReport(
+        suite=first.suite, model=first.model, config_hash=first.config_hash, runs=len(reports)
+    )
+    for name in MetricSet.model_fields:
+        values = [float(getattr(r.aggregate, name)) for r in reports]
+        result.metrics.append(
+            MetricSpread(
+                metric=name,
+                mean=statistics.fmean(values),
+                stdev=statistics.stdev(values) if len(values) > 1 else 0.0,
+                minimum=min(values),
+                maximum=max(values),
+                tolerance=tolerances.get(name, 0.05),
+            )
+        )
+    for scenario in first.scenarios:
+        runs = [s for r in reports for s in r.scenarios if s.scenario_id == scenario.scenario_id]
+        result.scenarios.append(
+            ScenarioStability(
+                scenario_id=scenario.scenario_id,
+                findings=[s.findings for s in runs],
+                expected_claims_found=[s.expected_claims_found for s in runs],
+                negative_case_passed=[s.negative_case_passed for s in runs],
+                errors=sum(1 for s in runs if not s.ok),
+                is_negative_case=scenario.is_negative_case,
+                is_positive_case=scenario.is_positive_case,
+            )
+        )
+    return result
+
+
+def spread_to_markdown(report: SpreadReport) -> str:
+    lines = [
+        "# JARVIS Agent Evaluation - repeated runs",
+        "",
+        f"**Suite:** {report.suite}  ",
+        f"**Model:** {report.model}  ",
+        f"**Runs:** {report.runs}  ",
+        f"**Generated:** {report.generated_at:%Y-%m-%d %H:%M UTC}  ",
+        f"**Config:** `{report.config_hash}`",
+        "",
+        "The same system run repeatedly. The spread is the noise any single report carries; a "
+        "metric whose range exceeds its regression tolerance cannot be checked against one run.",
+        "",
+        "| Metric | Mean | Stdev | Min | Max | Range | Tolerance | Noisier than tolerance |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    for m in report.metrics:
+        lines.append(
+            f"| {m.metric} | {m.mean:.3f} | {m.stdev:.3f} | {m.minimum:.3f} | {m.maximum:.3f} "
+            f"| {m.range:.3f} | {m.tolerance:.2f} | {'YES' if m.noisier_than_tolerance else 'no'} |"
+        )
+    lines += [
+        "",
+        "## Per scenario",
+        "",
+        "| Scenario | Findings per run | Expected claims found | Negative case passed | Stable |",
+        "|---|---|---|---|---|",
+    ]
+    for s in report.scenarios:
+        claims = (
+            ", ".join(f"{v:.2f}" for v in s.expected_claims_found) if s.is_positive_case else "-"
+        )
+        negative = (
+            ", ".join("yes" if v else "NO" for v in s.negative_case_passed)
+            if s.is_negative_case
+            else "-"
+        )
+        state = "yes" if s.stable else "NO"
+        if s.errors:
+            state += f" ({s.errors} error(s))"
+        lines.append(
+            f"| {s.scenario_id} | {', '.join(map(str, s.findings))} | {claims} | {negative} "
+            f"| {state} |"
+        )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def write_spread(report: SpreadReport, directory: Path) -> Path:
+    directory.mkdir(parents=True, exist_ok=True)
+    stamp = report.generated_at.strftime("%Y%m%dT%H%M%S")
+    slug = report.model.replace(":", "-") or "unknown"
+    base = directory / f"{stamp}-{slug}-{report.suite}-x{report.runs}"
+    base.with_suffix(".json").write_text(report.model_dump_json(indent=2), encoding="utf-8")
+    md = base.with_suffix(".md")
+    md.write_text(spread_to_markdown(report), encoding="utf-8")
+    return md

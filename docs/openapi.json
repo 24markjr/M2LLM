@@ -3484,6 +3484,11 @@
         "additionalProperties": false,
         "description": "A document as a workspace holds it.",
         "properties": {
+          "chunker": {
+            "default": "lines",
+            "title": "Chunker",
+            "type": "string"
+          },
           "chunks": {
             "default": 0,
             "title": "Chunks",

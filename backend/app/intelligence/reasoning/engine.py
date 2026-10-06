@@ -22,7 +22,12 @@ from pydantic import Field
 
 from app.core.agent_config import get_agent_bounds
 from app.core.logging import get_logger
-from app.intelligence.trust.specifics import numbers_as_dates, ungrounded_specifics
+from app.intelligence.trust.specifics import (
+    numbers_as_dates,
+    single_value,
+    ungrounded_specifics,
+    values_out_of_context,
+)
 from app.llm.errors import LLMError, StructuredOutputError
 from app.llm.prompts import get_prompt_library
 from app.llm.provider import LLMProvider
@@ -210,7 +215,8 @@ def unevidenced_values(
     claim: str, finding: Finding, evidence_text: dict[str, str] | None
 ) -> list[str]:
     """The dates and figures `claim` states that its own cited lines do not contain (BUG-019),
-    plus any bare number it gives as a date (BUG-021)."""
+    any bare number it gives as a date (BUG-021), and any value its cited lines hold only on lines
+    about something else (BUG-027, Phase 41)."""
     if evidence_text is None:
         return []
     cited = [
@@ -218,7 +224,15 @@ def unevidenced_values(
         for ref in finding.evidence
         if ref.is_resolved
     ]
-    return list(dict.fromkeys([*ungrounded_specifics(claim, cited), *numbers_as_dates(claim)]))
+    return list(
+        dict.fromkeys(
+            [
+                *ungrounded_specifics(claim, cited),
+                *numbers_as_dates(claim),
+                *values_out_of_context(claim, cited),
+            ]
+        )
+    )
 
 
 def requires_comparison(intent: Intent | None) -> bool:
@@ -332,7 +346,7 @@ class ReasoningEngine:
             # evidenced conflict, partial or otherwise (BUG-019: "30 April 2026 and 31 January 2026"
             # citing two lines, neither of which holds 31 January). Fully cited only, as above: a
             # claim with unresolved citations is kept, and verification rejects it visibly.
-            unevidenced = (
+            unevidenced: list[str] = (
                 unevidenced_values(claim, finding, evidence_text)
                 if comparative
                 and evidence_text is not None
@@ -348,12 +362,30 @@ class ReasoningEngine:
                         "reason": (
                             "the objective asks for a comparison, and this claim states "
                             + ", ".join(unevidenced)
-                            + ", which none of its cited lines contains: a conflict needs both "
-                            "of its values in evidence"
+                            + ", which its cited lines do not evidence (absent, or only on a "
+                            "line about something else): a conflict needs both of its values "
+                            "in evidence"
                         ),
                     },
                 )
                 log.info("unevidenced_conflict_discarded", claim=claim[:80], values=unevidenced)
+                continue
+
+            # Agreement written as a finding (Phase 41): both sides of the "conflict" are one value.
+            agreed = single_value(claim) if comparative else ""
+            if agreed:
+                await self._event(
+                    emit,
+                    EventType.FINDING_DISCARDED,
+                    {
+                        "claim": claim[:160],
+                        "reason": (
+                            f"the objective asks for a comparison, and every side of this claim "
+                            f"states {agreed}: the same value twice is agreement, not a conflict"
+                        ),
+                    },
+                )
+                log.info("agreement_discarded", claim=claim[:80], value=agreed)
                 continue
 
             findings.append(finding)

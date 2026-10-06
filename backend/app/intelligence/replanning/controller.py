@@ -185,7 +185,24 @@ def _matched_lines(observation: Observation) -> list[int]:
 
 
 def evidence_text_map(evidence: list[Evidence]) -> dict[str, str]:
-    return {e.locator.as_ref(): e.content for e in evidence}
+    """The text at each locator, merged across every observation that cited it (BUG-029).
+
+    A page locator carries the lines a tool matched on that page, so two tools citing one page
+    carry different lines. This was a plain dict, and the last observation won: on the Orion ledger
+    the date extraction (rows with dates) replaced the budget extraction, whose "Total spend" row
+    has no date - and a correct overrun finding was discarded for citing a total its evidence no
+    longer held. A row locator's text is the same line every time, so merging changes nothing there.
+    """
+    merged: dict[str, list[str]] = {}
+    for item in evidence:
+        ref = item.locator.as_ref()
+        body = item.content.removeprefix(f"{ref}: ")
+        parts = merged.setdefault(ref, [])
+        parts.extend(p for p in body.split(" | ") if p and p not in parts)
+    return {
+        ref: f"{ref}: " + " | ".join(parts)[: MAX_PAGE_EVIDENCE_CHARS * 2]
+        for ref, parts in merged.items()
+    }
 
 
 class ReplanningController:

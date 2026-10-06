@@ -14,6 +14,7 @@ from fastapi import APIRouter, status
 from pydantic import Field
 
 from app.api.errors import ApiError
+from app.api.v1.documents import indexing_now
 from app.integrations.context import get_context_store, ingest_document, search_store
 from app.intelligence.context.store import (
     DEFAULT_WORKSPACE,
@@ -48,8 +49,9 @@ class RetrieveRequest(JarvisModel):
     workspace_id: str = Field(default=DEFAULT_WORKSPACE, pattern=WORKSPACE)
     query: str = Field(min_length=1, max_length=2000)
     k: int = Field(default=5, ge=1, le=MAX_RESULTS)
-    # Passages scoring below this are dropped. Cosine similarity mapped to [0, 1]: 0.5 is
-    # orthogonal, so anything useful is above it.
+    # Passages scoring below this are dropped. Cosine similarity mapped to [0, 1]. Default 0 by
+    # measurement (Experiment 006): non-answers scored up to 0.80 with nomic-embed-text, above many
+    # real answers, so no threshold separates them.
     min_score: float = Field(default=0.0, ge=0.0, le=1.0)
     documents: list[str] = Field(default_factory=list, max_length=64)
 
@@ -64,6 +66,9 @@ class Workspace(JarvisModel):
     workspace_id: str
     documents: list[StoredDocument] = Field(default_factory=list)
     store: str
+    # Uploads still being indexed in the background (any workspace): listed so a person knows
+    # why a file they just added is not searchable yet.
+    indexing: list[str] = Field(default_factory=list)
 
 
 @router.post("/ingest", response_model=IngestResponse)
@@ -152,4 +157,5 @@ async def workspace(workspace_id: str) -> Workspace:
         workspace_id=workspace_id,
         documents=await store.documents(workspace_id),
         store=store.name,
+        indexing=indexing_now(),
     )

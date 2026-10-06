@@ -1449,3 +1449,18 @@ button.link:focus-visible {
   border: 1px solid var(--line);
   border-radius: 4px;
 }
+
+/* An objective over the server's limit (2026-10-06). */
+.hint.over-limit {
+  color: var(--bad, #e5534b);
+}
+
+/* The drop zone is a <label> (a click opens the file dialog), so `.field label` made it a block of
+   uppercase text and ran its lines together ("(.AAC)IMAGES"). Restored here (2026-10-06). */
+.field label.drop-zone {
+  display: grid;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 13px;
+  color: var(--text);
+}

@@ -91,6 +91,15 @@ async def test_an_uploaded_image_is_understood_on_upload(
     from app.tools import media
 
     vision = json.dumps({"kind": "photo", "summary": "A blank white card.", "observations": []})
+    # `.agent` points at a temporary folder here, which has no prompts or model config: the vision
+    # call failed whenever this test was the first to load them (found 2026-10-06; the suite's
+    # random order had hidden it).
+    import shutil
+
+    for folder in ("prompts", "config"):
+        shutil.copytree(
+            Path(__file__).parents[3] / ".agent" / folder, _uploads_in_tmp.parent / folder
+        )
     monkeypatch.setattr(get_settings(), "media_understanding", True)
     monkeypatch.setattr(media, "cache_dir", lambda: _uploads_in_tmp.parent / "media-cache")
     monkeypatch.setattr(

@@ -56,6 +56,7 @@ class PgVectorContextStore:
                 kind=document.kind,
                 sha256=document.sha256,
                 parser=document.parser,
+                chunker=document.chunker,
                 line_count=0,
             )
             session.add(row)
@@ -138,5 +139,6 @@ def _stored(row: Document, chunks: int) -> StoredDocument:
         kind=row.kind,
         sha256=row.sha256,
         parser=row.parser,
+        chunker=row.chunker,
         chunks=chunks,
     )
