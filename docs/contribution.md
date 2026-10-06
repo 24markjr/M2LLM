@@ -3,7 +3,7 @@
 **Scope:** understanding user intent, planning tasks, selecting tools, and reasoning across all
 gathered information.
 **Repository:** [github.com/24markjr/M2LLM](https://github.com/24markjr/M2LLM)
-**Baseline for every number below:** `.agent/evals/reports/20261005T050619-qwen3-4b-all.json` (11 scenarios)
+**Baseline for every number below:** `.agent/evals/reports/20261006T095620-qwen3-4b-all.json` (14 scenarios, run three times; identical results)
 (`qwen3:4b`, prompt versions `intent=2 planner=2 knowledge=1 reasoning=5 relevance=3 verification=2`,
 `composite` verifier)
 
@@ -36,19 +36,19 @@ Everything else in the design follows from taking that seriously.
 
 | Capability | Where | Evidence it works |
 |---|---|---|
-| **Intent understanding** — objective → goal + required operations from a closed vocabulary, or a refusal to plan | [`intelligence/intent/engine.py`](../backend/app/intelligence/intent/engine.py) | `intent_accuracy` **0.595** |
-| **Task planning** — a validated DAG, with deterministic repair and bounded re-prompting | [`intelligence/planner/`](../backend/app/intelligence/planner/) | `plan_validity` **0.636**, `dependency_correctness` **0.844** |
+| **Intent understanding** — objective → goal + required operations from a closed vocabulary, or a refusal to plan | [`intelligence/intent/engine.py`](../backend/app/intelligence/intent/engine.py) | `intent_accuracy` **0.564** |
+| **Task planning** — a validated DAG, with deterministic repair and bounded re-prompting | [`intelligence/planner/`](../backend/app/intelligence/planner/) | `plan_validity` **0.714**, `dependency_correctness` **0.878** |
 | **Tool selection** — capability filter → schema compatibility → model tiebreak only on a tie | [`intelligence/router/engine.py`](../backend/app/intelligence/router/engine.py) | `tool_selection_accuracy` **1.000** |
 | **Reasoning over evidence** — claims bound to real locators, classification and confidence recomputed | [`intelligence/reasoning/engine.py`](../backend/app/intelligence/reasoning/engine.py) | `evidence_coverage` **1.000**, `unsupported_claim_rate` **0.000** |
 | **Evidence gap detection** — deterministic, naming the specific absent element | [`intelligence/evidence_gap/detector.py`](../backend/app/intelligence/evidence_gap/detector.py) | `replanning_success` **1.000** (vacuous: no gaps on this baseline) |
-| **Adaptive replanning** — the graph is edited while it runs, bounded, every stop reasoned | [`intelligence/replanning/controller.py`](../backend/app/intelligence/replanning/controller.py) | `task_efficiency` **1.650** |
+| **Adaptive replanning** — the graph is edited while it runs, bounded, every stop reasoned | [`intelligence/replanning/controller.py`](../backend/app/intelligence/replanning/controller.py) | `task_efficiency` **1.731** |
 | **Measurement** — ten metrics computed from real runs | [`app/evaluation/`](../backend/app/evaluation/) | reports in [`.agent/evals/reports/`](../.agent/evals/reports/) |
 
 Supporting: concurrent execution by dependency wave, an append-only event log from which a run is
 fully reconstructable, a FastAPI + SSE surface, and a React operations console that streams a run
 live and can replay a recorded one.
 
-**925 tests**, `mypy --strict` clean across 116 modules, 89% coverage (90–100% on
+**1036 tests**, `mypy --strict` clean across 123 modules, 90% coverage (90–100% on
 `intelligence/**` and `schemas/**`).
 
 ---
@@ -146,15 +146,17 @@ stable within a session and differs between them. I did not weaken the threshold
 values in the lines it cites**, not only cite both sides. Measured on the full suite, the negative
 case produces nothing, every positive scenario keeps its findings, and every threshold passes.
 
-Honestly outstanding: eleven evaluation scenarios where the plan called for twenty; one run per
-experiment arm, on a model whose output varies between sessions; the 3D graph is not rebuilt in
-replay; facts in memory merge only when the model names an attribute the same way twice.
+Honestly outstanding: fourteen evaluation scenarios where the plan called for twenty; the suite now
+runs three times and the runs agree, but on one machine with a fixed seed, so that measures
+determinism, not variation across machines; facts in memory merge only when the model names an
+attribute the same way twice; nothing yet checks that a finding's currency matches its evidence
+("$" where the documents say INR).
 
 ---
 
-## Members 3 and 4: what they built, and what it became
+## Members 2, 3 and 4: what they built, and what it became
 
-Members 3 and 4 built their parts as standalone prototypes. Their features were ported into this
+Members 2, 3 and 4 built their parts as standalone prototypes. Their features were ported into this
 codebase with the same logic ([ADR-009](../.claude/decisions/ADR-009-port-teammates-in-process.md));
 **the design and the logic below are theirs**, and what the port changed is listed beside each. The
 full inventory, original file by original file, is
@@ -194,14 +196,29 @@ with their knowledge pass on and missed without it (Experiment 003).
 Measured: their verifier, inside the `composite` verifier, is now the default. It rejected the one
 invented finding the previous default passed, and nothing correct (Experiment 004).
 
+**Member 2 — document ingestion and retrieval** (M2LLM, from their build report)
+
+| Their feature | Where it lives now | What the port changed |
+|---|---|---|
+| File classification and a parser per type: PDF, DOCX, TXT, CSV, XLSX, images | `tools/formats.py` (one registry for upload, picker and loader) | Word tables in order; each Excel sheet a page so a citation names the sheet; video, audio and subtitles added |
+| Provenance: SHA-256, parser, OCR flag | upload response, `documents` table, log | In the response a person sees, and stored with retrieval |
+| OCR (PaddleOCR) | `tools/media.py:read_text` | PaddleOCR's models through RapidOCR; scanned PDF pages and video frames too; cached per file |
+| Vision interface (theirs raised "not implemented") | `tools/media.py:see`, a local vision model | Added; its output marked `[seen]`, an account weaker than read text ([ADR-012](../.claude/decisions/ADR-012-seeing-and-hearing.md)) |
+| 600/80 chunking | `context/store.py:chunk_by_chars` | Each chunk cites its starting line; kept beside line chunks, which Experiment 006 chose as the default |
+| Embeddings, Qdrant with in-memory fallback, workspace search | pgvector, `nomic-embed-text`, workspaces, `#/documents` | The store that answered is named; hits cited at their closest line; opt-in for missions so the baseline stays comparable ([ADR-013](../.claude/decisions/ADR-013-stored-retrieval.md)) |
+
+Measured: their parsers carry three of the evaluation's fourteen scenarios (an Excel overrun, a
+finding that exists only in a scanned image, subtitles against Word minutes), and Experiment 006
+scored their retrieval design line by line: search by meaning found the right line in the top five
+for 94% of queries against 56% for word matching.
+
 ---
 
 ## Boundaries respected
 
-Member 2 owns context retrieval, reached through a `Protocol` with a local fallback so this side was
-never blocked by another timeline. Members 3 and 4's work was **ported, not imported**: no teammate's
+Members 2, 3 and 4's work was **ported, not imported**: no teammate's
 code is imported anywhere, and the ported features sit behind the same seams (the `KnowledgeBase`
-protocol, the `VerificationProvider` seam). A test parses the source tree to prove it. The same test proves invariant 1: the language model is
+protocol, the `VerificationProvider` seam, the `ContextStore` protocol). A test parses the source tree to prove it. The same test proves invariant 1: the language model is
 reachable from exactly one package,
 [`app/llm/`](../backend/app/llm/).
 
@@ -211,7 +228,7 @@ reachable from exactly one package,
 
 ```bash
 python -m app.cli health                      # the engine answers
-pytest tests -m "not llm"                     # 925 tests, no model needed, ~30s
+pytest tests -m "not llm"                     # 1036 tests, no model needed, ~2 min
 python -m app.cli eval-trust --no-write       # Member 4's benchmark: 60/60, injection 27/27
 pytest tests/unit/test_llm_isolation.py -v    # invariant 1, proven by parsing the source
 pytest tests/unit/test_invariants.py -v       # the whole "must not do" list

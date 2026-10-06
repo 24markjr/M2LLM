@@ -173,7 +173,7 @@ up to 20x), and `#/evaluation` (the committed evaluation reports, charted).
 
 ```bash
 cd backend
-pytest tests -m "not llm"      # 925 tests, no model needed
+pytest tests -m "not llm"      # 1036 tests, no model needed
 ```
 
 ### 7. Reproduce the trust benchmark
@@ -205,43 +205,46 @@ cd backend
 python -m app.cli eval --suite all
 ```
 
-Ten metrics, over **eleven scenarios** - three negative cases and one planted prompt injection, across three document families and three file formats - computed from real runs over datasets in
+Ten metrics, over **fourteen scenarios** - four negative cases and one planted prompt injection, across four document families and seven file formats (text, CSV, PDF, Word, Excel, a scanned image, subtitles) - computed from real runs over datasets in
 [`.agent/evals/datasets/`](.agent/evals/datasets/). Reports are written to
 [`.agent/evals/reports/`](.agent/evals/reports/) and committed. **No number anywhere in this
 repository is hand-written** — a report carries the model, prompt versions and a config hash, and
 two reports produced with different stamps are refused as incomparable rather than quietly
 compared.
 
-The current baseline is `20261005T050619-qwen3-4b-all` (the `composite` verifier and the knowledge
-pass on comparative questions, both chosen by experiment, and the BUG-019/BUG-021 fixes). Every
-build threshold passes. Its headline numbers:
+The current baseline is `20261006T095620-qwen3-4b-all` (Phase 41: fourteen scenarios, the
+`composite` verifier and the knowledge pass on comparative questions, both chosen by experiment, and
+the BUG-019, BUG-021 and BUG-027 to BUG-029 fixes). It was run three times (`eval --repeat 3`):
+every metric was identical across the runs except latency (32.8-37.1 s), and every build threshold
+passes in all three. Its headline numbers:
 
 | Metric | Value | |
 |---|---|---|
 | `evidence_coverage` | 1.000 | every finding has resolved evidence |
 | `unsupported_claim_rate` | 0.000 | the hallucination proxy |
 | `tool_selection_accuracy` | 1.000 | |
-| `dependency_correctness` | 0.844 | |
+| `dependency_correctness` | 0.878 | |
 | `replanning_success` | 1.000 | gaps closed within the iteration ceiling - vacuous here, see below |
-| `intent_accuracy` | 0.595 | |
-| `task_efficiency` | 1.650 | tasks ÷ minimal sufficient tasks — lower is better |
-| `plan_validity` | 0.636 | plans passing with **zero** repairs |
-| `verification_success` | 0.970 | findings that survive the independent check |
+| `intent_accuracy` | 0.564 | |
+| `task_efficiency` | 1.731 | tasks ÷ minimal sufficient tasks — lower is better |
+| `plan_validity` | 0.714 | plans passing with **zero** repairs |
+| `verification_success` | 0.976 | findings that survive the independent check |
 
 Two of those deserve their explanation rather than a chart.
 
-**`plan_validity` at 0.636** means four plans in eleven still need a deterministic repair before
+**`plan_validity` at 0.714** means four plans in fourteen still need a deterministic repair before
 they can execute. That is the planner needing help, and the metric says so instead of hiding it.
 The repairs are recorded on the plan, so a repaired plan never counts as clean.
 
-**`verification_success` at 0.970 is worth reading scenario by scenario**, because a verifier that
+**`verification_success` at 0.976 is worth reading scenario by scenario**, because a verifier that
 approves everything scores 1.000 and is worthless. It was 1.000 in Phase 33, when the baseline
 verifier passed an invented finding. Experiment 004 made the `composite` verifier (the model check,
 Member 4's lexical rule and the specifics check) the default: it rejected that finding and nothing
 else, and the figure fell to 0.909. Two fixes then moved it to 0.970, and both are explained: the
 invented finding is no longer produced at all (BUG-019; that scenario's 1.000 is vacuous, nothing to
 verify), and "delivered on 9012", a shipment number taken for a date, is now caught (BUG-021; that
-scenario fell from 1.000 to 0.667). The other nine scenarios did not move.
+scenario fell from 1.000 to 0.667). Every other scenario verifies everything it reports: thirteen at
+1.000 and the injection scenario at 0.667 make 0.976.
 
 **The knowledge pass earned its place.** Experiment 003 turned it off: the agent then found nothing on
 `shipment_arrival_conflict`, Member 3's own planted contradiction, which it finds with the pass on.
@@ -288,6 +291,17 @@ differs between them: the same code passed this scenario one hour and failed it 
 evaluation run is one sample. The rule above does not depend on which claim the model writes, which
 is why it was chosen over another prompt change; but a different invented claim, citing a line that
 *does* hold its values, would still need verification to catch it.
+
+**Phase 41 found exactly that, twice** (BUG-027). Two negative cases reported "two different
+completion dates: 30 April 2026 and 20 April 2026", citing `Date: 20 April 2026` (the report's own
+date), and "the minutes state [the handover] as 1 April", citing the installation line. Both values
+were on the cited lines, and the verifiers passed the first. Now a value is discarded when its cited
+line shares nothing with the claim **and** its own document says something different on a line that
+does - the report's completion line says 30 April, the minutes' handover line 6 April. The first
+version used only the first condition, and the next 3-run baseline lost two real contradictions in
+every run; the second condition keeps them, because the document confirms their value. Measured on
+the full suite, three times: every negative case produces nothing and every positive scenario finds
+its contradiction.
 
 **Every positive scenario reports its planted findings.** `aurora_contradiction` finds both planted
 contradictions (completion date and budget), each citing both documents. `shipment_arrival_conflict`

@@ -47,7 +47,7 @@ accounts for that.
 | 38 | Member 2 (A): formats, provenance, adding files | One parser per file type (Word, Excel, CSV, PDF, text, subtitles, images, video); provenance; New Mission adds files, typed context and earlier uploads | M | D7 | **DONE** 2026-10-05 |
 | 39 | Seeing and hearing | Read (OCR: images, scans, frames), seen (a vision model, `[seen]` lines, weaker evidence), heard (speech-to-text: video, audio); cached once per file | L | 38 | **DONE** 2026-10-05 |
 | 40 | Member 2 (C): stored, workspace-scoped retrieval | pgvector with an in-memory fallback; `/context/ingest` and `/context/retrieve`; their 600/80 chunker beside ours, chosen by measurement | L | D9-D11 | **DONE** 2026-10-06 |
-| 41 | Evaluation and hardening | Three new scenarios (14), recall@k, Experiment 006 (chunking), repeated runs with spread, CI, invariants, a new baseline | M | 36-40 | TODO |
+| 41 | Evaluation and hardening | Three new scenarios (14), recall@k, Experiment 006 (chunking), repeated runs with spread, CI, invariants, a new baseline | M | 36-40 | **DONE** 2026-10-06 |
 | 42 | Documentation and handover | README, contribution (Member 2), port inventory, ADR-012 (OCR), ADR-013 (retrieval), demos, clean clone with and without OCR | S | 41 | TODO |
 
 **Minimum, if time runs short:** 36, 38, 39.
@@ -187,3 +187,18 @@ not the chunk's first line, after the live check showed first lines were heading
 
 **Verified:** 20 new tests (16 unit, 4 against Postgres and memory alike), 5 Vitest; the full suite
 with Docker up, 999 passed; mypy, ruff, tsc, build; **one live check** (development log).
+
+### Phase 41 — Evaluation and hardening
+
+**As built:** three Orion scenarios (14 in all; suite `formats`) through Word, Excel, an OCR-only
+image and subtitles; `eval --repeat N` with spread and per-scenario stability; Experiment 006
+(`eval-retrieval`, `.agent/evals/retrieval/queries.yaml`); CI checks for migrations, repeated runs and
+retrieval reports; invariants (evaluation lexical, tools reach no store); the chunker recorded per
+stored document.
+
+**Found and fixed by the measurement:** BUG-027 (values from unrelated lines, refined once after it
+cost two real contradictions), BUG-028 (spreadsheet amounts), BUG-029 (page citation text), and
+derived differences grounded. Recall@k is measured for retrieval (Experiment 006) rather than for
+missions, whose recall stays lexical by design.
+
+**Verified:** baseline `20261006T095620`, three identical runs, every threshold passing; 1036 tests.

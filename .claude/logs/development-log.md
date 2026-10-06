@@ -6,6 +6,45 @@ and what is still broken.
 
 ---
 
+# 2026-10-06 - Phase 41: evaluation and hardening
+
+**What the new scenarios were for, and what they found.** The three Orion scenarios read through the
+Phase 38-39 parsers; the first 3-run baseline (all runs identical) failed three thresholds, each a
+real defect, none a model whim:
+
+- `aurora_no_contradiction` and `orion_meeting_consistent` reported contradictions built from values
+  on unrelated lines (BUG-027): `Date: 20 April 2026`, and the minutes' installation date given as the
+  handover.
+- `orion_ledger_overrun` found nothing because every ledger amount was misread: `2026-03-19,162000`
+  became `19,162000` (BUG-028). With amounts fixed, the correct overrun claim was discarded because
+  the page citation's text had been replaced by a later tool's rows (BUG-029), and because 37,500 is
+  a difference, not a figure in any document (now grounded when it is the difference of two cited
+  figures).
+
+**The first BUG-027 fix was too blunt, and the measurement caught it.** "A value whose line shares no
+word with the claim" also removed "the approved completion date is 30 April 2026" citing "- M4
+Production readiness: 30 April 2026" - a correct citation - and the second baseline lost two real
+contradictions in every run. The rule now also needs the value's own document to say otherwise on a
+line about the claim's subject, which separates the two cases exactly: the report's completion line
+says 30 April (keep), says 30 April against "20 April" (discard), the minutes' handover line says
+6 April against "1 April" (discard). Each version was checked live on the affected scenarios before
+the full 3-run baseline.
+
+**Experiment 006** (retrieval, embeddings only): semantic line chunks hit@5 0.938 vs lexical 0.562;
+Member 2's 600/80 chunks hold the answer more often but cite the right line less often; rank fusion
+lost to semantic alone; no score threshold separates answers from non-answers (0.802 for a query
+nothing answers). Decisions in ADR-013.
+
+**Interruptions handled during the phase:** the owner's uploads stalled behind embedding (indexing
+now runs after the response), a long objective was rejected without saying why (now named, counted,
+and movable into a context document), Ollama stopped mid-baseline once (the run was restarted, not
+patched), and four editor type warnings in the verifier were made explicit.
+
+**Final baseline `20261006T095620`**, three runs, identical except latency: all thresholds pass.
+1036 tests, 90% coverage, mypy and ruff clean; Vitest 40, tsc, build.
+
+---
+
 # 2026-10-06 - Phase 40: stored, workspace-scoped retrieval
 
 Member 2's ingest-and-search on this codebase's stores (D9 pgvector, D10 `nomic-embed-text`, D11
