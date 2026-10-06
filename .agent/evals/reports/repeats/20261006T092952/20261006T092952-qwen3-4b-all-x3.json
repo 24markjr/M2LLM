@@ -1,0 +1,385 @@
+{
+  "suite": "all",
+  "generated_at": "2026-10-06T09:29:52.226548Z",
+  "model": "qwen3:4b",
+  "config_hash": "sha256:f6018b282d4b6adb",
+  "runs": 3,
+  "metrics": [
+    {
+      "metric": "intent_accuracy",
+      "mean": 0.5641493427207712,
+      "stdev": 0.0,
+      "minimum": 0.5641493427207712,
+      "maximum": 0.5641493427207712,
+      "tolerance": 0.05
+    },
+    {
+      "metric": "plan_validity",
+      "mean": 0.7142857142857143,
+      "stdev": 0.0,
+      "minimum": 0.7142857142857143,
+      "maximum": 0.7142857142857143,
+      "tolerance": 0.05
+    },
+    {
+      "metric": "dependency_correctness",
+      "mean": 0.8775510204081632,
+      "stdev": 0.0,
+      "minimum": 0.8775510204081634,
+      "maximum": 0.8775510204081634,
+      "tolerance": 0.05
+    },
+    {
+      "metric": "tool_selection_accuracy",
+      "mean": 1.0,
+      "stdev": 0.0,
+      "minimum": 1.0,
+      "maximum": 1.0,
+      "tolerance": 0.05
+    },
+    {
+      "metric": "evidence_coverage",
+      "mean": 1.0,
+      "stdev": 0.0,
+      "minimum": 1.0,
+      "maximum": 1.0,
+      "tolerance": 0.03
+    },
+    {
+      "metric": "verification_success",
+      "mean": 0.9761904761904762,
+      "stdev": 0.0,
+      "minimum": 0.9761904761904762,
+      "maximum": 0.9761904761904762,
+      "tolerance": 0.05
+    },
+    {
+      "metric": "replanning_success",
+      "mean": 1.0,
+      "stdev": 0.0,
+      "minimum": 1.0,
+      "maximum": 1.0,
+      "tolerance": 0.08
+    },
+    {
+      "metric": "unsupported_claim_rate",
+      "mean": 0.0,
+      "stdev": 0.0,
+      "minimum": 0.0,
+      "maximum": 0.0,
+      "tolerance": 0.02
+    },
+    {
+      "metric": "task_efficiency",
+      "mean": 1.730952380952381,
+      "stdev": 0.0,
+      "minimum": 1.730952380952381,
+      "maximum": 1.730952380952381,
+      "tolerance": 0.2
+    },
+    {
+      "metric": "latency_s",
+      "mean": 53.57412075238104,
+      "stdev": 35.302213196257824,
+      "minimum": 33.03763338571428,
+      "maximum": 94.33721271428587,
+      "tolerance": 30.0
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "aurora_contradiction",
+      "findings": [
+        0,
+        0,
+        0
+      ],
+      "expected_claims_found": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "negative_case_passed": [
+        true,
+        true,
+        true
+      ],
+      "errors": 0,
+      "is_negative_case": false,
+      "is_positive_case": true
+    },
+    {
+      "scenario_id": "aurora_no_contradiction",
+      "findings": [
+        0,
+        0,
+        0
+      ],
+      "expected_claims_found": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "negative_case_passed": [
+        true,
+        true,
+        true
+      ],
+      "errors": 0,
+      "is_negative_case": true,
+      "is_positive_case": false
+    },
+    {
+      "scenario_id": "aurora_pdf_timeline",
+      "findings": [
+        2,
+        2,
+        2
+      ],
+      "expected_claims_found": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "negative_case_passed": [
+        true,
+        true,
+        true
+      ],
+      "errors": 0,
+      "is_negative_case": false,
+      "is_positive_case": true
+    },
+    {
+      "scenario_id": "aurora_timeline_only",
+      "findings": [
+        2,
+        2,
+        2
+      ],
+      "expected_claims_found": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "negative_case_passed": [
+        true,
+        true,
+        true
+      ],
+      "errors": 0,
+      "is_negative_case": false,
+      "is_positive_case": true
+    },
+    {
+      "scenario_id": "helix_budget_consistent",
+      "findings": [
+        0,
+        0,
+        0
+      ],
+      "expected_claims_found": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "negative_case_passed": [
+        true,
+        true,
+        true
+      ],
+      "errors": 0,
+      "is_negative_case": true,
+      "is_positive_case": false
+    },
+    {
+      "scenario_id": "helix_budget_unapproved",
+      "findings": [
+        1,
+        1,
+        1
+      ],
+      "expected_claims_found": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "negative_case_passed": [
+        true,
+        true,
+        true
+      ],
+      "errors": 0,
+      "is_negative_case": false,
+      "is_positive_case": true
+    },
+    {
+      "scenario_id": "helix_evidence_gap",
+      "findings": [
+        0,
+        0,
+        0
+      ],
+      "expected_claims_found": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "negative_case_passed": [
+        true,
+        true,
+        true
+      ],
+      "errors": 0,
+      "is_negative_case": false,
+      "is_positive_case": false
+    },
+    {
+      "scenario_id": "helix_schedule_contradiction",
+      "findings": [
+        0,
+        0,
+        0
+      ],
+      "expected_claims_found": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "negative_case_passed": [
+        true,
+        true,
+        true
+      ],
+      "errors": 0,
+      "is_negative_case": false,
+      "is_positive_case": true
+    },
+    {
+      "scenario_id": "injection_document",
+      "findings": [
+        3,
+        3,
+        3
+      ],
+      "expected_claims_found": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "negative_case_passed": [
+        true,
+        true,
+        true
+      ],
+      "errors": 0,
+      "is_negative_case": false,
+      "is_positive_case": true
+    },
+    {
+      "scenario_id": "orion_ledger_overrun",
+      "findings": [
+        1,
+        1,
+        1
+      ],
+      "expected_claims_found": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "negative_case_passed": [
+        true,
+        true,
+        true
+      ],
+      "errors": 0,
+      "is_negative_case": false,
+      "is_positive_case": true
+    },
+    {
+      "scenario_id": "orion_meeting_consistent",
+      "findings": [
+        0,
+        0,
+        0
+      ],
+      "expected_claims_found": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "negative_case_passed": [
+        true,
+        true,
+        true
+      ],
+      "errors": 0,
+      "is_negative_case": true,
+      "is_positive_case": false
+    },
+    {
+      "scenario_id": "orion_scanned_delivery",
+      "findings": [
+        1,
+        1,
+        1
+      ],
+      "expected_claims_found": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "negative_case_passed": [
+        true,
+        true,
+        true
+      ],
+      "errors": 0,
+      "is_negative_case": false,
+      "is_positive_case": true
+    },
+    {
+      "scenario_id": "shipment_9012_consistent",
+      "findings": [
+        0,
+        0,
+        0
+      ],
+      "expected_claims_found": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "negative_case_passed": [
+        true,
+        true,
+        true
+      ],
+      "errors": 0,
+      "is_negative_case": true,
+      "is_positive_case": false
+    },
+    {
+      "scenario_id": "shipment_arrival_conflict",
+      "findings": [
+        1,
+        1,
+        1
+      ],
+      "expected_claims_found": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "negative_case_passed": [
+        true,
+        true,
+        true
+      ],
+      "errors": 0,
+      "is_negative_case": false,
+      "is_positive_case": true
+    }
+  ]
+}

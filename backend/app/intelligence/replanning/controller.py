@@ -334,6 +334,7 @@ class ReplanningController:
             intent=self._intent,
             page_starts=self._page_starts,
             evidence_text=text,
+            documents=self._documents,
         )
 
         await self._event(EventType.VERIFICATION_STARTED, {"findings": len(findings)})

@@ -1036,11 +1036,20 @@ handover] as 1 April 2026", citing the minutes' installation line. Both values w
 lines, so BUG-019's rule (values must be in evidence) passed them, and the composite verifier let the
 first through with both verifiers agreeing.
 
-**Fix.** For a comparative objective, a value counts only if some cited line holding it shares a
-content word with the claim (words cut to six letters, generic words like "date" and month names
-ignored, identifiers kept; table rows exempt). The rerun then produced "30 April 2026 at r10, but
-also 30 April 2026 at r15, indicating a single date" - agreement written as a finding - so a claim
-whose every value is the same is discarded too. Tests: the two real claims, five legitimate ones.
+**Fix.** For a comparative objective, a value is discarded when two things hold: the cited line
+holding it shares no content word with the claim (words cut to six letters, generic words like
+"date" and month names ignored, identifiers kept; table rows exempt), **and** its own document has a
+line that does share the claim's words and gives a different value - the report's completion line
+says 30 April, the minutes' handover line says 6 April.
+
+**The first version was too blunt, and the baseline showed it.** It used the first condition alone,
+and the next 3-run baseline lost two real contradictions in every run: "the approved completion date
+is 30 April 2026" correctly cites "- M4 Production readiness: 30 April 2026", which shares no word
+with it. The document's own completion line confirms the value, so the second condition keeps it.
+The rerun also produced "30 April 2026 at r10, but also 30 April 2026 at r15, indicating a single
+date" - agreement written as a finding - so a claim whose every value is the same is discarded too.
+Tests: both confabulations and the dropped contradiction on the real fixtures, four legitimate
+claims, no documents, and inflected words.
 
 ## BUG-028 — A spreadsheet row's date and column separator read as one amount
 

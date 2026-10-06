@@ -221,84 +221,87 @@ def _ev(source: str, content: str) -> EvidenceText:
     return EvidenceText(source=source, content=content)
 
 
-def test_the_two_phase41_confabulations_are_out_of_context() -> None:
-    aurora = values_out_of_context(
+def _fixtures(*names: str) -> dict[str, str]:
+    documents, _ = load_documents([resolve_document(name) for name in names])
+    return documents
+
+
+def _cite(documents: dict[str, str], ref: str) -> EvidenceText:
+    document, _, row = ref.rpartition(":r")
+    line = documents[document].splitlines()[int(row) - 1]
+    return _ev(ref, f"{ref}: {line}")
+
+
+def test_the_two_phase41_confabulations_are_contradicted_by_their_own_documents() -> None:
+    aurora = _fixtures("aurora_project_report.txt")
+    assert values_out_of_context(
         "The Aurora project report states two different completion dates: 30 April 2026 and "
         "20 April 2026",
         [
-            _ev(
-                "aurora_project_report.txt:r10",
-                "The approved baseline completion date is 30 April 2026.",
-            ),
-            _ev(
-                "aurora_project_report.txt:r4", "aurora_project_report.txt:r4: Date: 20 April 2026"
-            ),
+            _cite(aurora, "aurora_project_report.txt:r10"),
+            _cite(aurora, "aurora_project_report.txt:r4"),  # "Date: 20 April 2026"
         ],
-    )
-    assert aurora == ["20 April 2026"]
-    orion = values_out_of_context(
+        aurora,
+    ) == ["20 April 2026"]
+
+    orion = _fixtures("orion_meeting.srt", "orion_minutes.docx")
+    assert values_out_of_context(
         "The Orion site readiness meeting recording states the handover date as 6 April 2026, "
         "while the written minutes state it as 1 April 2026",
         [
-            _ev(
-                "orion_meeting.srt:r3",
-                "So we confirm the site handover to operations on 6 April 2026.",
-            ),
-            _ev(
-                "orion_minutes.docx:r3",
-                "1. Installation completed on 1 April 2026; commissioning passed.",
-            ),
+            _cite(orion, "orion_meeting.srt:r3"),
+            _cite(orion, "orion_minutes.docx:r3"),  # the installation line
         ],
+        orion,
+    ) == ["1 April 2026"]
+
+
+def test_an_unrelated_line_whose_value_its_document_confirms_is_kept() -> None:
+    """The first version of BUG-027's rule dropped this real contradiction (Phase 41 baseline):
+    "- M4 Production readiness: 30 April 2026" shares no word with "approved completion date",
+    but the report's completion line says 30 April too."""
+    documents = _fixtures("aurora_project_report.txt", "aurora_financial_report.txt")
+    claim = (
+        "The project's approved completion date is 30 April 2026 according to the project report, "
+        "but the financial report states the completion date as 14 May 2026"
     )
-    assert orion == ["1 April 2026"]
+    cited = [
+        _cite(documents, "aurora_project_report.txt:r15"),
+        _cite(documents, "aurora_financial_report.txt:r12"),
+    ]
+    assert values_out_of_context(claim, cited, documents) == []
 
 
 @pytest.mark.parametrize(
-    ("claim", "evidence"),
+    ("claim", "refs"),
     [
-        # The real contradictions of the existing scenarios: every value is on a line about it.
+        # The real contradictions of the existing scenarios.
         (
             "Shipment 4821 arrived on 14 September according to one report and on 16 September "
             "according to the other",
-            [
-                (
-                    "shipment_report_a.txt:r1",
-                    "Shipment 4821 arrived on 14 September at the Mumbai warehouse.",
-                ),
-                (
-                    "shipment_report_b.txt:r1",
-                    "Shipment 4821 arrived on 16 September at the Mumbai facility.",
-                ),
-            ],
+            ["shipment_report_a.txt:r1", "shipment_report_b.txt:r1"],
         ),
         (
             "The target completion date is 2026-04-30 but milestone M4 closed on 2026-05-14",
-            [
-                ("project_report.txt:r10", "The target completion date is 2026-04-30."),
-                ("milestone_report.txt:r7", "M4 go-live closed 2026-05-14."),
-            ],
+            ["project_report.txt:r10", "milestone_report.txt:r7"],
         ),
         # A table row carries its meaning in the header: never judged by its own words.
+        ("Helix spend of 450,000 was never approved", ["budget.csv:r2"]),
         (
-            "Helix spend of 450,000 was never approved",
-            [("budget.csv:r2", "migration,450000,no")],
-        ),
-        (
-            "Orion's recorded spend of INR 287,500 exceeds the approved INR 250,000",
-            [
-                ("orion_ledger.xlsx:p1", "Total spend,,,287500"),
-                (
-                    "orion_budget_memo.docx:r4",
-                    "The steering committee approved a total budget of INR 250,000",
-                ),
-            ],
+            "The recorded spend of INR 287,500 exceeds the approved INR 250,000",
+            ["orion_ledger.xlsx:r7", "orion_budget_memo.docx:r4"],
         ),
     ],
 )
-def test_values_on_lines_about_them_are_in_context(
-    claim: str, evidence: list[tuple[str, str]]
-) -> None:
-    assert values_out_of_context(claim, [_ev(s, c) for s, c in evidence]) == []
+def test_values_on_lines_about_them_are_in_context(claim: str, refs: list[str]) -> None:
+    documents = _fixtures(*{ref.rpartition(":r")[0] for ref in refs})
+    cited = [_cite(documents, ref) for ref in refs]
+    assert values_out_of_context(claim, cited, documents) == []
+
+
+def test_without_documents_nothing_can_be_contradicted() -> None:
+    cited = [_ev("a.txt:r1", "Date: 20 April 2026")]
+    assert values_out_of_context("x on 20 April 2026", cited) == []
 
 
 # --- BUG-028: a spreadsheet row's date and column separator read as one amount --------------------
@@ -357,11 +360,15 @@ def test_the_same_value_on_every_side_is_agreement(claim: str, value: str) -> No
 
 def test_inflections_of_the_same_word_are_shared_context() -> None:
     claim = "The report gives 30 April 2026 and the finance file 14 May 2026 for completion."
+    documents = {
+        "report.txt": "Date: 1 March 2026\nTarget completion 30 April 2026.",
+        "finance.txt": "Delivery completed 14 May 2026.\nIssued 2 June 2026.",
+    }
     evidence = [
-        _ev("report.txt:r1", "Target completion 30 April 2026."),
+        _ev("report.txt:r2", "Target completion 30 April 2026."),
         _ev("finance.txt:r1", "Delivery completed 14 May 2026."),
     ]
-    assert values_out_of_context(claim, evidence) == []
+    assert values_out_of_context(claim, evidence, documents) == []
 
 
 def test_the_text_at_a_page_merges_every_observation_that_cited_it() -> None:

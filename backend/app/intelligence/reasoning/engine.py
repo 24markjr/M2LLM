@@ -212,7 +212,10 @@ MIN_REFS_FOR_COMPARATIVE = 2
 
 
 def unevidenced_values(
-    claim: str, finding: Finding, evidence_text: dict[str, str] | None
+    claim: str,
+    finding: Finding,
+    evidence_text: dict[str, str] | None,
+    documents: dict[str, str] | None = None,
 ) -> list[str]:
     """The dates and figures `claim` states that its own cited lines do not contain (BUG-019),
     any bare number it gives as a date (BUG-021), and any value its cited lines hold only on lines
@@ -229,7 +232,7 @@ def unevidenced_values(
             [
                 *ungrounded_specifics(claim, cited),
                 *numbers_as_dates(claim),
-                *values_out_of_context(claim, cited),
+                *values_out_of_context(claim, cited, documents),
             ]
         )
     )
@@ -259,6 +262,7 @@ class ReasoningEngine:
         intent: Intent | None = None,
         page_starts: dict[str, list[int]] | None = None,
         evidence_text: dict[str, str] | None = None,
+        documents: dict[str, str] | None = None,
     ) -> list[Finding]:
         """Findings from observations, each bound to real evidence.
 
@@ -347,7 +351,7 @@ class ReasoningEngine:
             # citing two lines, neither of which holds 31 January). Fully cited only, as above: a
             # claim with unresolved citations is kept, and verification rejects it visibly.
             unevidenced: list[str] = (
-                unevidenced_values(claim, finding, evidence_text)
+                unevidenced_values(claim, finding, evidence_text, documents)
                 if comparative
                 and evidence_text is not None
                 and finding.resolved_evidence_count == len(finding.evidence)

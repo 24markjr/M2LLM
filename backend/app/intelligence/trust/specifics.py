@@ -19,8 +19,11 @@ match by value (`450,000` = `450000`).
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
+from decimal import Decimal
 
 from app.intelligence.temporal import find_dates, find_figures
+from app.schemas.knowledge import PartialDate
 from app.schemas.trust import EvidenceText
 
 # A bare number of three or more digits right after a word that introduces a date. "On 2026-04-30"
@@ -171,47 +174,90 @@ def _context_words(text: str) -> set[str]:
     return {w if any(c.isdigit() for c in w) else w[:6] for w in words}
 
 
-def values_out_of_context(claim: str, evidence: list[EvidenceText]) -> list[str]:
-    """Dates and figures that a claim's evidence contains only on lines about something else.
+def values_out_of_context(
+    claim: str, evidence: list[EvidenceText], documents: dict[str, str] | None = None
+) -> list[str]:
+    """Dates and figures cited from a line about something else, which their own document
+    contradicts on a line about the claim's subject (BUG-027).
 
     Found by Phase 41's negative cases, deterministically, in every run:
 
         claim:    "two different completion dates: 30 April 2026 and 20 April 2026"
-        evidence: aurora_project_report.txt:r4  "Date: 20 April 2026"
+        cited:    aurora_project_report.txt:r4   "Date: 20 April 2026"
+        same doc: aurora_project_report.txt:r10  "The approved baseline completion date is 30 April
+                                                   2026."
 
         claim:    "... the written minutes state it [the handover] as 1 April 2026"
-        evidence: orion_minutes.docx:r3  "1. Installation completed on 1 April 2026; ..."
+        cited:    orion_minutes.docx:r3  "1. Installation completed on 1 April 2026; ..."
+        same doc: orion_minutes.docx:r4  "2. Site handover to operations confirmed for 6 April
+                                           2026."
 
-    Both values are on the cited lines, so `ungrounded_specifics` is satisfied - but the first is
-    the report's own date and the second the installation date. A value is out of context when every
-    cited line holding it shares no word with the claim beyond the value itself: no subject, no
-    event, no identifier (`M4`, `PO-7741`). Generic words ("date", "report", month names) do not
-    count. Table rows are exempt: their meaning is in the column header, which the row does not
-    repeat. Like the rest of this module it reads no meaning; it asks only whether the line is
-    about anything the claim is about.
+    Both values are on the cited lines, so `ungrounded_specifics` is satisfied. What gives them away
+    is two facts together: the cited line shares no word with the claim (no subject, no event, no
+    identifier like `M4`; generic words such as "date", "report" and month names do not count), and
+    the same document has a line that *does* share the claim's words and gives a different value.
+
+    The first fact alone is not enough, as the first version of this rule showed: "the approved
+    completion date is 30 April 2026" correctly cites "- M4 Production readiness: 30 April 2026",
+    which shares no word with it - and the report's completion line says 30 April too, so the value
+    is consistent and kept. When the document has no related line with a value of that kind, the
+    claim keeps the benefit of the doubt. Table rows are exempt: their meaning is in the column
+    header. Without `documents` nothing can be contradicted, and nothing is returned.
     """
+    if not documents:
+        return []
     claim_words = _context_words(claim)
-    holders: list[tuple[EvidenceText, set[str]]] = [
+    holders: list[tuple[EvidenceText, str, set[str]]] = []
+    for item in evidence:
         # The locator is not evidence: "aurora_project_report.txt:r4: Date: ..." would otherwise
         # share "aurora" with any claim naming the project.
-        (item, _context_words(item.content.removeprefix(f"{item.source}: ")))
-        for item in evidence
-    ]
+        body = item.content.removeprefix(f"{item.source}: ")
+        holders.append((item, item.source.rpartition(":")[0] or item.source, _context_words(body)))
+
+    def misattributed(holds: Callable[[str], bool], related_values: Callable[[str], bool]) -> bool:
+        found = [(item, doc, words) for item, doc, words in holders if holds(item.content)]
+        if not found:
+            return False
+        if any(doc.lower().endswith(_TABULAR) or words & claim_words for _, doc, words in found):
+            return False
+        for _, doc, _ in found:
+            related = [
+                line
+                for line in documents.get(doc, "").splitlines()
+                if _context_words(line) & claim_words
+            ]
+            with_values = [line for line in related if related_values(line)]
+            if with_values and not any(holds(line) for line in with_values):
+                return True
+        return False
+
     out: list[str] = []
-
-    def lines_with(found: list[EvidenceText]) -> bool:
-        return bool(found) and all(
-            not item.source.split(":")[0].lower().endswith(_TABULAR) and not (words & claim_words)
-            for item, words in holders
-            if item in found
-        )
-
     for (start, end), date in find_dates(claim):
-        found = [i for i, _ in holders if any(date.compatible(d) for _, d in find_dates(i.content))]
-        if lines_with(found):
+        if misattributed(_holds_date(date), _has_dates):
             out.append(claim[start:end])
     for written, value in find_figures(claim):
-        found = [i for i, _ in holders if any(value == v for _, v in find_figures(i.content))]
-        if lines_with(found):
+        if misattributed(_holds_figure(value), _has_figures):
             out.append(written)
     return list(dict.fromkeys(out))
+
+
+def _holds_date(date: PartialDate) -> Callable[[str], bool]:
+    def holds(text: str) -> bool:
+        return any(date.compatible(other) for _, other in find_dates(text))
+
+    return holds
+
+
+def _holds_figure(value: Decimal) -> Callable[[str], bool]:
+    def holds(text: str) -> bool:
+        return any(value == other for _, other in find_figures(text))
+
+    return holds
+
+
+def _has_dates(text: str) -> bool:
+    return bool(find_dates(text))
+
+
+def _has_figures(text: str) -> bool:
+    return bool(find_figures(text))
