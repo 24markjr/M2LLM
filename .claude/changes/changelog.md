@@ -5,6 +5,37 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-06 - Phase 42: documentation and handover
+
+### Added
+
+- **Member 2 credited** in the contribution statement (what they built, where it lives, what changed)
+  and closed out in the port inventory, with what was deliberately not ported
+- **ADR-013** (stored retrieval: pgvector, workspaces, defaults set by Experiment 006); Experiment 006
+  in the experiment log
+- **Demo script:** Demo 10 (Word, Excel and an OCR-only scan) and Demo 11 (a workspace searched by
+  meaning, a hit starting an investigation); the replay fallback now shows the graph
+- **README:** Member 2, every file type, the Documents page, the 14-scenario baseline, the plans
+- **The v2 plan** (`.claude/implementation/v2-plan-phases-43-55.md`), with D13-D19 recorded as
+  recommended, not started
+
+### Fixed (found by the clean-clone check)
+
+- With the base install the README describes, eight media tests failed on a missing module (`av`,
+  `numpy`, OCR) instead of being skipped. They are now marked `requires_media` and skip with the
+  install command; CI installs the extra and still runs them
+- The Documents page reported every upload as "stored but not searchable yet": indexing moved after
+  the response (Phase 41), so `ingested` is always empty there. It now lists what is still indexing
+  and refreshes until done, and only files without text are reported. `docs/openapi.json`
+  regenerated for the indexing fields (it had gone stale with that change)
+
+### Verified
+
+- A fresh clone, twice: base install 987 passed, 41 skipped; with the media extra 995 passed, 33
+  skipped (database tests, no `.env`); frontend `npm ci`, tsc, Vitest 40, build
+
+---
+
 ## 2026-10-06 - Phase 41: evaluation and hardening
 
 ### Added

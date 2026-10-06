@@ -52,3 +52,19 @@ def _unit_tests_have_no_database(request: pytest.FixtureRequest) -> Iterator[Non
     yield
     persistence.reset_persistence_probe()
     context_integration.reset_context_store_probe()
+
+
+def _media_installed() -> bool:
+    from importlib.util import find_spec
+
+    return all(find_spec(m) is not None for m in ("rapidocr_onnxruntime", "pypdfium2", "av"))
+
+
+# Tests that run OCR, render a scanned page or decode audio need the optional `media` extra.
+# Found by the Phase 42 clean-clone check: with the base install the README describes, eight tests
+# failed on a missing module instead of saying what to install. CI installs the extra, so they still
+# run there.
+requires_media = pytest.mark.skipif(
+    not _media_installed(),
+    reason='needs the media extra: pip install -e "backend[media]"',
+)

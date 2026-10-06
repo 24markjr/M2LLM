@@ -48,7 +48,7 @@ accounts for that.
 | 39 | Seeing and hearing | Read (OCR: images, scans, frames), seen (a vision model, `[seen]` lines, weaker evidence), heard (speech-to-text: video, audio); cached once per file | L | 38 | **DONE** 2026-10-05 |
 | 40 | Member 2 (C): stored, workspace-scoped retrieval | pgvector with an in-memory fallback; `/context/ingest` and `/context/retrieve`; their 600/80 chunker beside ours, chosen by measurement | L | D9-D11 | **DONE** 2026-10-06 |
 | 41 | Evaluation and hardening | Three new scenarios (14), recall@k, Experiment 006 (chunking), repeated runs with spread, CI, invariants, a new baseline | M | 36-40 | **DONE** 2026-10-06 |
-| 42 | Documentation and handover | README, contribution (Member 2), port inventory, ADR-012 (OCR), ADR-013 (retrieval), demos, clean clone with and without OCR | S | 41 | TODO |
+| 42 | Documentation and handover | README, contribution (Member 2), port inventory, ADR-012 (OCR), ADR-013 (retrieval), demos, clean clone with and without OCR | S | 41 | **DONE** 2026-10-06 |
 
 **Minimum, if time runs short:** 36, 38, 39.
 
@@ -202,3 +202,16 @@ derived differences grounded. Recall@k is measured for retrieval (Experiment 006
 missions, whose recall stays lexical by design.
 
 **Verified:** baseline `20261006T095620`, three identical runs, every threshold passing; 1036 tests.
+
+### Phase 42 — Documentation and handover
+
+**As built:** Member 2 credited (contribution statement) and closed out (port inventory, with what was
+not ported and why); ADR-013; Demos 10 and 11; README brought up to date; Experiment 006 in the
+experiment log; the v2 plan saved (`v2-plan-phases-43-55.md`). ADR-012 was written in Phase 39.
+
+**Found by the clean-clone check:** eight media tests failed without the optional extra; now skipped
+with the install command.
+
+**Verified:** a fresh clone, base install and with the media extra; frontend from `npm ci`.
+
+**The integration plan (Phases 36-42) is complete.**

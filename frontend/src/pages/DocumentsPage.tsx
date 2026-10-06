@@ -46,9 +46,11 @@ export function DocumentsPage({ workspace = DEFAULT_WORKSPACE }: { workspace?: s
     api
       .uploadDocuments(Array.from(files), workspace)
       .then((results) => {
-        const failed = results.filter((r) => r.has_text && !r.ingested);
-        if (failed.length) {
-          setError(`Stored but not searchable yet: ${failed.map((r) => `${r.name} (${r.note})`).join(", ")}`);
+        // Indexing runs after the response (2026-10-06), so `ingested` is empty here by design; the
+        // workspace lists what is still indexing, and this page refreshes until it is done.
+        const unreadable = results.filter((r) => !r.has_text);
+        if (unreadable.length) {
+          setError(`Stored but without text yet: ${unreadable.map((r) => `${r.name} (${r.note})`).join(", ")}`);
         }
         refresh();
       })
@@ -58,6 +60,15 @@ export function DocumentsPage({ workspace = DEFAULT_WORKSPACE }: { workspace?: s
 
   const documents = view?.documents ?? [];
   const all = documents.map((d) => d.document_id);
+  const indexing = view?.indexing ?? [];
+
+  // While anything is still being embedded, look again every few seconds. Stops by itself when the
+  // list is empty; leaving the page clears the timer.
+  useEffect(() => {
+    if (!indexing.length) return undefined;
+    const timer = window.setTimeout(refresh, 3000);
+    return () => window.clearTimeout(timer);
+  }, [indexing.length, view, refresh]);
 
   return (
     <>
@@ -99,6 +110,12 @@ export function DocumentsPage({ workspace = DEFAULT_WORKSPACE }: { workspace?: s
       </div>
 
       {error ? <div className="notice error">{error}</div> : null}
+      {indexing.length ? (
+        <div className="notice">
+          Indexing for search: <span className="mono">{indexing.join(", ")}</span>. Long documents take a
+          while; they appear below when done, and missions can use them already (by matching words).
+        </div>
+      ) : null}
 
       <div className="panel">
         <h2>

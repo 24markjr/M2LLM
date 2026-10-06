@@ -17,6 +17,7 @@ from httpx import ASGITransport, AsyncClient
 from app.api.app import create_app
 from app.api.v1 import documents as documents_api
 from app.core.config import get_settings
+from tests.conftest import requires_media
 
 
 @pytest.fixture(autouse=True)
@@ -81,6 +82,7 @@ async def test_with_understanding_off_an_image_is_kept_and_says_why(
     assert (_uploads_in_tmp / "scan.png").exists()
 
 
+@requires_media
 async def test_an_uploaded_image_is_understood_on_upload(
     _uploads_in_tmp: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

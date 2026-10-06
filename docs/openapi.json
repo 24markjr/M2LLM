@@ -3148,6 +3148,11 @@
             "title": "Has Text",
             "type": "boolean"
           },
+          "indexing": {
+            "default": false,
+            "title": "Indexing",
+            "type": "boolean"
+          },
           "ingested": {
             "anyOf": [
               {
@@ -3431,6 +3436,13 @@
               "$ref": "#/components/schemas/app__intelligence__context__store__StoredDocument"
             },
             "title": "Documents",
+            "type": "array"
+          },
+          "indexing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Indexing",
             "type": "array"
           },
           "store": {

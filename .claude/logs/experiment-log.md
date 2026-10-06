@@ -165,6 +165,30 @@ inputs to reasoning and verification (Phase 30), never findings by themselves.
 Neo4j held 1 run, 6 documents, 14 entities, 16 claims, 3 conflicts and 3 `CONFLICTS_WITH` edges.
 The arrival-date conflict was found again, so it held across three runs.
 
+### Experiment 006 — Retrieval: lexical vs semantic, two chunkers, hybrid (Phase 41)
+
+**Question.** Which search should stored retrieval use, with which chunks, and is there a score
+threshold that separates answers from non-answers?
+
+**Method.** `python -m app.cli eval-retrieval`: 18 fixture documents searched together, 20 queries
+with the exact lines a reader would cite (6 keyword, 10 paraphrase, 4 unanswerable); a hit counts
+only at the exact line. `nomic-embed-text`. Reports in `.agent/evals/experiments/exp-006-retrieval/`.
+
+| Arm | hit@1 | hit@5 | recall@5 | MRR | passage hit@5 |
+|---|---|---|---|---|---|
+| lexical | 0.375 | 0.562 | 0.400 | 0.458 | 0.562 |
+| semantic, line chunks | 0.562 | 0.938 | 0.680 | 0.729 | 0.938 |
+| semantic, 600/80 chunks | 0.438 | 0.750 | 0.600 | 0.552 | 1.000 |
+| hybrid (rank fusion) | 0.438 | 0.875 | 0.680 | 0.604 | 0.875 |
+
+**Decided.** Line chunks stay the default (600/80 holds the answer more often but cites the right
+line less often); no hybrid (it gained on three keyword queries and lost more on paraphrases); no
+`min_score` (a query nothing answers scored 0.802, above 37.5% of real answers); missions keep word
+matching unless they name a workspace, so the baseline stays comparable. ADR-013.
+
+**Limits.** Twenty queries over small documents: a direction, not a benchmark. Embeddings were
+deterministic across two runs.
+
 ### Experiment 003 (preliminary, Phase 30) — the knowledge pass, off vs on
 
 **Date:** 2026-10-03/04. **Model:** `qwen3:4b`. The full 8-scenario suite twice, back to back in one

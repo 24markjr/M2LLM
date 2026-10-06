@@ -24,6 +24,7 @@ from app.schemas.finding import Finding
 from app.schemas.verification import IssueType, VerificationResult, VerificationStatus
 from app.tools import media
 from app.tools.formats import parse, prepare
+from tests.conftest import requires_media
 
 VISION = json.dumps(
     {
@@ -62,6 +63,7 @@ def _echo() -> EchoProvider:
 # --- read -----------------------------------------------------------------------------------------
 
 
+@requires_media
 def test_text_in_an_image_is_read_as_lines() -> None:
     lines = media.read_text(_picture("Shipment 4821 arrived 14 September"))
     assert lines and "4821" in lines[0] and "September" in lines[0]
@@ -83,6 +85,7 @@ async def test_what_an_image_shows_is_written_as_seen_lines() -> None:
     assert call.model == get_settings().vision_model
 
 
+@requires_media
 async def test_an_image_is_read_and_seen_then_cached(tmp_path: Path) -> None:
     path = tmp_path / "dock.png"
     _picture("DOCK 7 BAY 2").save(path)
@@ -114,6 +117,7 @@ async def test_without_understanding_an_image_says_why_it_has_no_text(
 # --- scanned PDFs -------------------------------------------------------------------------------
 
 
+@requires_media
 async def test_a_scanned_pdf_page_is_read_by_ocr(tmp_path: Path) -> None:
     path = tmp_path / "scan.pdf"
     _picture("Approved budget INR 380000", (900, 300)).save(path, format="PDF")
@@ -161,6 +165,7 @@ def _video(path: Path, seconds: int = 3) -> Path:
     return path
 
 
+@requires_media
 async def test_a_video_is_a_timeline_of_on_screen_text_and_what_frames_show(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -177,6 +182,7 @@ async def test_a_video_is_a_timeline_of_on_screen_text_and_what_frames_show(
     assert len({line[:10] for line in on_screen}) <= get_settings().max_video_frames
 
 
+@requires_media
 async def test_a_persons_transcript_is_preferred_to_speech_recognition(tmp_path: Path) -> None:
     path = _video(tmp_path / "gate.mp4", seconds=1)
     (tmp_path / "gate.srt").write_text(
@@ -242,6 +248,7 @@ def test_the_vision_role_has_its_own_model() -> None:
     assert config.params_for("reasoning").model == get_settings().ollama_model
 
 
+@requires_media
 async def test_a_failing_vision_model_never_loses_what_was_read(tmp_path: Path) -> None:
     """The bug found writing these tests: one failed vision call discarded the whole video."""
     path = _video(tmp_path / "gate.mp4", seconds=1)
@@ -252,6 +259,7 @@ async def test_a_failing_vision_model_never_loses_what_was_read(tmp_path: Path) 
     assert SEEN_MARKER not in text
 
 
+@requires_media
 def test_audio_is_decoded_to_16khz_mono_for_speech_recognition(tmp_path: Path) -> None:
     """Our decoder, not faster-whisper's: theirs passes PyAV 19 an option it no longer accepts."""
     import math

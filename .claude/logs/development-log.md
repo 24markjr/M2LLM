@@ -6,6 +6,20 @@ and what is still broken.
 
 ---
 
+# 2026-10-06 - Phase 42: documentation and handover
+
+No features. The handover documents were brought up to what exists: Member 2 credited and closed
+out (contribution statement, port inventory, ADR-013, README), two demos added for what Phases 38-41
+built, Experiment 006 recorded, and the v2 plan saved with its decisions marked as recommendations.
+
+**The clean-clone check found one real defect.** A fresh clone with the base install - exactly what
+the README tells a newcomer to run - failed eight tests on missing modules: the media tests need the
+optional extra. They now skip with the install command (`requires_media` in `tests/conftest.py`).
+Checked both ways in a fresh clone: base 987 passed, 41 skipped; with the extra 995 passed, 33
+skipped; the frontend from `npm ci` typechecks, tests and builds.
+
+---
+
 # 2026-10-06 - Phase 41: evaluation and hardening
 
 **What the new scenarios were for, and what they found.** The three Orion scenarios read through the

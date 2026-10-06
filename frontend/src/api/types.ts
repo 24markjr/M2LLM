@@ -537,6 +537,8 @@ export interface UploadedDocument {
   understood: string;
   /** Stored retrieval (Phase 40): where the file was ingested. Null without text, or when the store failed. */
   ingested?: Ingested | null;
+  /** Being embedded for search after the response (2026-10-06); listed by the workspace until done. */
+  indexing?: boolean;
 }
 
 // --- stored, workspace-scoped retrieval (Phase 40) ---
@@ -566,6 +568,8 @@ export interface WorkspaceView {
   documents: WorkspaceDocument[];
   /** `pgvector`, or `memory` when the database is down. */
   store: string;
+  /** Uploads still being indexed in the background, by name (any workspace). */
+  indexing: string[];
 }
 
 export interface RetrievalHit {

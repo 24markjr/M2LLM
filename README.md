@@ -10,10 +10,11 @@ replanning when the evidence is insufficient.
 It is not a chat interface. You give it an objective; it works out how to accomplish it, and it
 shows its work.
 
-Built as Member 1's orchestration engine, it now also carries the work of **Member 3** (a knowledge
-graph of entities, relationships and claims, with cross-document conflicts, a timeline and search)
-and **Member 4** (a lexical verifier, a prompt-injection scanner, a trust benchmark and three tiers
-of memory), ported into the same process and held to the same rules
+Built as Member 1's orchestration engine, it now also carries the work of **Member 2** (a parser
+per file type, provenance, OCR, and workspaces searched by meaning), **Member 3** (a knowledge graph
+of entities, relationships and claims, with cross-document conflicts, a timeline and search) and
+**Member 4** (a lexical verifier, a prompt-injection scanner, a trust benchmark and three tiers of
+memory), ported into the same process and held to the same rules
 ([ADR-009](.claude/decisions/ADR-009-port-teammates-in-process.md)). Who built what is in
 [`docs/contribution.md`](docs/contribution.md).
 
@@ -64,9 +65,10 @@ does:
 
 ## Quickstart
 
-Verified from a clean clone, most recently on 2026-10-05 on Windows 11: a fresh virtualenv and an
-empty database, every step below, including a mission, its 3D graph and the trust benchmark. If any
-step here does not work, that is a bug in this file.
+Verified from a clean clone, most recently on 2026-10-06 on Windows 11 (Phase 42): a fresh
+virtualenv, the base install, then the media extra - the tests pass both ways, the media tests
+skipping without the extra and saying what to install - and a clean frontend install, typecheck,
+tests and build. If any step here does not work, that is a bug in this file.
 
 ### Prerequisites
 
@@ -145,7 +147,8 @@ which tasks run in parallel, tool routing decisions, findings with their evidenc
 verdicts, and the final report.
 
 Document names resolve inside [`.agent/fixtures/`](.agent/fixtures/), or you can pass a path to
-your own `.txt`, `.md`, `.csv` or `.pdf`.
+your own file: text, Markdown, CSV, PDF (scanned pages read by OCR), Word, Excel, subtitles, images,
+video or audio. `GET /api/v1/documents/formats` lists every type and which parser reads it.
 
 ### 5. The web console (optional)
 
@@ -165,9 +168,15 @@ reduced motion), claims and documents unfolding beneath them. Hover a node for i
 one to light up everything related, click a finding to light up the evidence it rests on
 ([ADR-011](.claude/decisions/ADR-011-3d-knowledge-explorer.md)).
 
-The other pages: `#/memory` (findings and entities across past missions, with Docker up),
-`#/knowledge` (a knowledge graph from documents, no mission), `#/replay` (a recorded run replayed at
-up to 20x), and `#/evaluation` (the committed evaluation reports, charted).
+**New mission** takes files of any supported kind (drop them in, or pick earlier uploads), typed or
+pasted context, and optionally a workspace to search by meaning. Each file says what it parsed as
+before the mission starts.
+
+The other pages: `#/documents` (workspaces: files with their parser, hash and chunks, and search by
+meaning, every hit starting an investigation), `#/memory` (findings and entities across past
+missions, with Docker up), `#/knowledge` (a knowledge graph from documents, no mission), `#/replay`
+(a recorded run replayed at up to 20x, including its knowledge graph), and `#/evaluation` (the
+committed evaluation reports, charted).
 
 ### 6. The tests
 
@@ -191,10 +200,11 @@ python scripts/check_trust_reports.py          # compares a fresh run with the c
 
 ## The demo
 
-[`docs/demo-script.md`](docs/demo-script.md) has nine demos with exact commands, what each one
+[`docs/demo-script.md`](docs/demo-script.md) has eleven demos with exact commands, what each one
 proves, and a recorded fallback for when local inference stalls — which it occasionally does, and
-which a presentation should not depend on. Demos 7-9 are the knowledge graph, a planted prompt
-injection, and memory across missions.
+which a presentation should not depend on. Demos 7-11 are the knowledge graph, a planted prompt
+injection, memory across missions, files that are not text (a Word memo, an Excel ledger, a scanned
+note read by OCR), and a workspace searched by meaning.
 
 ---
 
@@ -327,19 +337,22 @@ A **modular monolith** with custom orchestration — no agent framework.
 
 ```
 backend/app/
-├── schemas/          15 modules, 116 types — every boundary is typed
+├── schemas/          15 modules, 118 types — every boundary is typed
 ├── llm/              the ONLY package that speaks to a model (invariant 1)
-├── tools/            registry, loader, document tools, the knowledge-graph tool
+├── tools/            registry, a parser per file type, media understanding (OCR, vision,
+│                     speech), document tools, the knowledge-graph tool
 ├── intelligence/     intent · planner · graph · router · execution · context
 │                     reasoning · evidence_gap · replanning · planning_policy · synthesis
 │                     knowledge (Member 3) · trust (Member 4) · temporal
 ├── security/         prompt-injection scanning and safe wrapping (Member 4)
 ├── memory/           working · episodic · semantic memory across missions (Member 4)
 ├── integrations/     verifiers (baseline · lexical · composite) · Neo4j store (the only
-│                     module that imports the driver) · context provider
+│                     module that imports the driver) · stored retrieval (pgvector or memory)
 ├── orchestration/    the headless pipeline. CLI, API and UI all render one run
-├── api/              FastAPI + SSE  (ADR-008): missions, knowledge, memory, replay
-├── evaluation/       the metrics harness, the trust and security benchmarks
+├── api/              FastAPI + SSE  (ADR-008): missions, documents, context, knowledge,
+│                     memory, replay
+├── evaluation/       the metrics harness, repeated runs, the retrieval experiment, the trust
+│                     and security benchmarks
 ├── database/         async SQLAlchemy, 17 tables
 └── core/             config, events, logging
 
@@ -358,6 +371,7 @@ frontend/src/         React + TypeScript — Mission Control, the 3D knowledge e
 | **Verification** (Member 4) | The `composite` verifier, the default by experiment: the model check, Member 4's lexical rule, and a check that every date and figure a claim states is in its cited lines | [`verification.md`](.claude/architecture/verification.md) |
 | **Security** (Member 4) | Every document is scanned for prompt injection; a flag is reported, never used to drop evidence; untrusted text is wrapped in the prompts | [`security.md`](.claude/architecture/security.md) |
 | **Seeing and hearing** | Images, scans, video and audio are understood, not only stored: text **read** (OCR), speech **heard** (Whisper), and what they show **seen** by a local vision model - the last marked `[seen]` and weaker evidence than anything read | [ADR-012](.claude/decisions/ADR-012-seeing-and-hearing.md) |
+| **Files and retrieval** (Member 2) | A parser per file type behind one registry, provenance (hash, parser) on every upload, and workspaces whose passages are embedded in pgvector and searched by meaning - each hit a citation. Defaults chosen by Experiment 006 | [ADR-013](.claude/decisions/ADR-013-stored-retrieval.md) · [`retrieval.md`](.claude/architecture/retrieval.md) |
 | **Memory** (Member 4) | Past missions' findings (every status) and facts (only from verified findings, with their support, no confidence). Written after a run; never read back into one | [`memory.md`](.claude/architecture/memory.md) |
 
 ### Invariants
@@ -393,6 +407,8 @@ silently-ignored setting is impossible.
 |---|---|
 | The build order and status of all 36 phases | [`.claude/implementation/implementation-plan.md`](.claude/implementation/implementation-plan.md) |
 | How Members 3 and 4 were integrated, phase by phase | [`.claude/implementation/integration-plan-phases-25-35.md`](.claude/implementation/integration-plan-phases-25-35.md) |
+| Member 2, the remaining Members 3 and 4 work, and evaluation hardening | [`.claude/implementation/integration-plan-phases-36-42.md`](.claude/implementation/integration-plan-phases-36-42.md) |
+| What comes next: cases, evidence custody, review, reports, cyber | [`.claude/implementation/v2-plan-phases-43-55.md`](.claude/implementation/v2-plan-phases-43-55.md) |
 | Every teammate feature, and what became of it | [`.claude/integrations/teammate-port.md`](.claude/integrations/teammate-port.md) |
 | Why the reasoning engine is shaped this way | [`.claude/architecture/reasoning-engine.md`](.claude/architecture/reasoning-engine.md) |
 | Why verification sits outside the plan | [`.claude/architecture/verification.md`](.claude/architecture/verification.md) |
@@ -410,18 +426,20 @@ silently-ignored setting is impossible.
 This repository began as **Member 1** of a four-person system: intent, planning, tool selection
 and reasoning — the orchestration brain.
 
-Members 3 and 4 built their parts as separate prototypes. They were **ported into this codebase**,
+Members 2, 3 and 4 built their parts as separate prototypes. They were **ported into this codebase**,
 with the same logic, typed and tested, rather than called as services
 ([ADR-009](.claude/decisions/ADR-009-port-teammates-in-process.md)): every feature, the original
 file it came from and what changed is in
 [`teammate-port.md`](.claude/integrations/teammate-port.md), and the originals are archived in
-[`.claude/integrations/originals/`](.claude/integrations/originals/). Member 2's context retrieval
-is still reached through a `Protocol` with a local fallback. See
+[`.claude/integrations/originals/`](.claude/integrations/originals/). Member 2's design was ported
+from their build report (their code was not in this repository). See
 [`.claude/context/member-1-scope.md`](.claude/context/member-1-scope.md).
 
 ## Status
 
-Phases 0–24 built, and Phases 25–35 of the Members 3 and 4 integration complete
-([plan](.claude/implementation/integration-plan-phases-25-35.md)). The evaluation gate passes on
-the committed baseline since the BUG-019 fix. It was red until then, deliberately, and was never
-weakened to make it green.
+Phases 0–24 built; Phases 25–35 (Members 3 and 4) and 36–42 (Member 2, the remaining teammate
+work, evaluation hardening and handover) complete
+([plans](.claude/implementation/integration-plan-phases-36-42.md)). The evaluation gate passes on the
+committed 14-scenario baseline, run three times with identical results. It has been red more than
+once - most recently when Phase 41's new scenarios exposed three defects - and was never weakened to
+make it green. Next: [the v2 plan](.claude/implementation/v2-plan-phases-43-55.md), not started.
