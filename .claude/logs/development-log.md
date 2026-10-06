@@ -6,6 +6,42 @@ and what is still broken.
 
 ---
 
+# 2026-10-06 - Phase 40: stored, workspace-scoped retrieval
+
+Member 2's ingest-and-search on this codebase's stores (D9 pgvector, D10 `nomic-embed-text`, D11
+workspaces). The `documents` and `document_chunks` tables had existed since Phase 3, unwritten.
+
+**Design choices.** The retriever is handed to `context_retrieval` when the registry is built, not
+placed in `ToolContext`, which stays data only (a change from the announced design, for that
+reason). The store falls back to memory when the database is down, unlike semantic memory, because
+retrieval splits nothing durable and names its store. The database probe is cached per process,
+and unit tests set it off (`tests/conftest.py`) so they never write to a developer's Postgres - the
+same rule as run persistence. Ingest hashes the parsed text (what was embedded), so a file is
+re-embedded only when what it says changed.
+
+**Live check, once** (Ollama `nomic-embed-text`, pgvector, Docker up). Three Aurora reports, 18
+chunks, ingested in 2.3-3.6 s; re-ingest of an unchanged file 0.01 s; search about 0.6 s.
+Paraphrases without shared keywords found the right sections. **It found a defect:** hits were cited
+at their chunk's first line, a heading ("2. CURRENT STATUS", "3. DATES") the evidence binder would
+resolve to nothing useful. Fixed: the top hits' lines are embedded in one call and each hit is cited
+at its closest line; rerun, the over-budget query cites `aurora_financial_report.txt:r9`, the line
+that says expenditure exceeded the approved budget (search now 1.2-1.3 s). **It also showed** scores
+cluster at 0.71-0.84, with 0.73 for a query nothing answers: `min_score` needs a measured threshold
+(Experiment 006, Phase 41). The char chunker's line was also corrected to the line of its first kept
+character (a window starting on a newline cited the line before).
+
+**Files:** `app/intelligence/context/store.py`, `app/database/context_store.py`,
+`app/integrations/context.py`, `app/api/v1/context.py`, `app/api/v1/{documents,missions,schemas}.py`,
+`app/api/registry.py`, `app/orchestration/mission.py`, `app/tools/{base,builtin}.py`,
+`app/core/config.py`, `app/models/tables.py`, migration `c6e375938463`; frontend
+`pages/DocumentsPage.tsx`, `components/workspaces.ts` (+test), `pages.tsx`, `DocumentPicker.tsx`,
+`App.tsx`, `api/{client,types}.ts`; `docs/openapi.json`.
+
+**Tests:** `tests/unit/test_context_store.py` (16), `tests/integration/test_context_store.py` (4, both
+stores); `workspaces.test.ts` (5). Full suite 999 passed with Docker up; Vitest 40.
+
+---
+
 # 2026-10-05 - Two known gaps closed (before Phase 40)
 
 The owner asked to resolve all bugs before Phase 40. The bug log had none open; the changelog's known

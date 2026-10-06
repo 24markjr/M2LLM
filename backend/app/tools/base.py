@@ -145,12 +145,18 @@ class ToolRegistry:
         return len(self._tools)
 
 
-def build_default_registry() -> ToolRegistry:
-    """The standard tool set. Imported lazily to keep this module dependency-free."""
-    from app.tools.builtin import DEFAULT_TOOLS
+def build_default_registry(retriever: Any = None) -> ToolRegistry:
+    """The standard tool set. Imported lazily to keep this module dependency-free.
+
+    `retriever` (Phase 40) is a mission's workspace retrieval; given one, `context_retrieval`
+    searches the stored, embedded passages instead of matching words.
+    """
+    from app.tools.builtin import DEFAULT_TOOLS, ContextRetrievalTool
     from app.tools.knowledge import KnowledgeGraphTool
 
     registry = ToolRegistry()
     for tool in [*DEFAULT_TOOLS, KnowledgeGraphTool()]:
+        if retriever is not None and isinstance(tool, ContextRetrievalTool):
+            tool = ContextRetrievalTool(retriever)
         registry.register(tool)
     return registry

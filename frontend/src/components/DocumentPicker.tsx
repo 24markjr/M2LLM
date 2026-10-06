@@ -27,10 +27,13 @@ export function DocumentPicker({
   examples,
   selected,
   onChange,
+  workspace,
 }: {
   examples: string[];
   selected: string[];
   onChange: (names: string[]) => void;
+  /** Uploads are ingested into this workspace for search by meaning (Phase 40); `default` if absent. */
+  workspace?: string | undefined;
 }) {
   const [formats, setFormats] = useState<FormatSpec[]>([]);
   const [earlier, setEarlier] = useState<StoredDocument[]>([]);
@@ -63,7 +66,7 @@ export function DocumentPicker({
     if (!accepted.length) return;
     setBusy(true);
     try {
-      const results = await api.uploadDocuments(accepted);
+      const results = await api.uploadDocuments(accepted, workspace);
       const readable = results.filter((r) => r.has_text);
       setInfo((current) => {
         const next = { ...current };

@@ -20,6 +20,7 @@ import pytest
 
 from app.api import persistence
 from app.core.config import GraphStoreName, get_settings
+from app.integrations import context as context_integration
 from app.integrations import graph_store
 
 
@@ -47,5 +48,7 @@ def _no_media_understanding_by_default(monkeypatch: pytest.MonkeyPatch) -> Itera
 def _unit_tests_have_no_database(request: pytest.FixtureRequest) -> Iterator[None]:
     if request.node.get_closest_marker("integration") is None:
         persistence._available = False
+        context_integration._database = False
     yield
     persistence.reset_persistence_probe()
+    context_integration.reset_context_store_probe()

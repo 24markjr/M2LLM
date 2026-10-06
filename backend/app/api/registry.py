@@ -135,6 +135,7 @@ class MissionRegistry:
         loaded: dict[str, str],
         page_starts: dict[str, list[int]],
         provider: object,
+        retriever: object = None,
     ) -> MissionRecord:
         """Register a mission and start it. Returns as soon as the task is scheduled.
 
@@ -160,7 +161,7 @@ class MissionRegistry:
         emitter = RunEventEmitter(EventBus(sinks), record.run_id)  # type: ignore[arg-type]
 
         record.task = asyncio.create_task(
-            self._run(record, emitter, loaded, page_starts, provider),
+            self._run(record, emitter, loaded, page_starts, provider, retriever),
             name=f"mission-{record.run_id}",
         )
         return record
@@ -178,6 +179,7 @@ class MissionRegistry:
         documents: dict[str, str],
         page_starts: dict[str, list[int]],
         provider: object,
+        retriever: object = None,
     ) -> None:
         from app.llm.provider import LLMProvider
 
@@ -204,6 +206,7 @@ class MissionRegistry:
                 emitter=emitter,
                 page_starts=page_starts,
                 on_stage=on_stage,
+                retriever=retriever,
             )
             record.status = record.result.status
         except asyncio.CancelledError:

@@ -46,7 +46,7 @@ accounts for that.
 | 37 | Member 4's answer evaluator, wired in | The final report checked sentence by sentence, deterministically | S | - | **DONE** 2026-10-05 |
 | 38 | Member 2 (A): formats, provenance, adding files | One parser per file type (Word, Excel, CSV, PDF, text, subtitles, images, video); provenance; New Mission adds files, typed context and earlier uploads | M | D7 | **DONE** 2026-10-05 |
 | 39 | Seeing and hearing | Read (OCR: images, scans, frames), seen (a vision model, `[seen]` lines, weaker evidence), heard (speech-to-text: video, audio); cached once per file | L | 38 | **DONE** 2026-10-05 |
-| 40 | Member 2 (C): stored, workspace-scoped retrieval | pgvector with an in-memory fallback; `/context/ingest` and `/context/retrieve`; their 600/80 chunker beside ours, chosen by measurement | L | D9-D11 | TODO |
+| 40 | Member 2 (C): stored, workspace-scoped retrieval | pgvector with an in-memory fallback; `/context/ingest` and `/context/retrieve`; their 600/80 chunker beside ours, chosen by measurement | L | D9-D11 | **DONE** 2026-10-06 |
 | 41 | Evaluation and hardening | Three new scenarios (14), recall@k, Experiment 006 (chunking), repeated runs with spread, CI, invariants, a new baseline | M | 36-40 | TODO |
 | 42 | Documentation and handover | README, contribution (Member 2), port inventory, ADR-012 (OCR), ADR-013 (retrieval), demos, clean clone with and without OCR | S | 41 | TODO |
 
@@ -167,3 +167,23 @@ missions, analyses, CLI and evaluation read a file), the `vision` role and `VISI
 provider as the vision model; speech stubbed except the decoder); the full suite with Docker up, 967
 passed and none skipped; **one live check** with the real models (development log): a delivery note
 read and seen in 15.5 s, a spoken sentence heard in 2.4 s. The live check found BUG-025.
+
+### Phase 40 — Member 2 (C): stored, workspace-scoped retrieval
+
+**As built** (`.claude/architecture/retrieval.md`): a `ContextStore` protocol with two stores,
+pgvector (`documents` / `document_chunks`, written for the first time) and memory, chosen by whether
+the database answers and always named; ingest idempotent per text hash, embedded 32 chunks per call
+with `nomic-embed-text`; workspaces (`documents.workspace_id`, migration `c6e375938463`); both
+chunkers (`CONTEXT_CHUNKER=lines|chars`); `POST /context/ingest`, `POST /context/retrieve` (with
+`min_score`), `GET /context/workspaces[/{id}]`; uploads take `?workspace=` and are ingested on
+arrival; a mission may name `workspace_id`, its documents are ingested and `context_retrieval`
+searches them by meaning, restricted to the mission's files, falling back to lexical. UI: a
+Documents page (workspaces, files with parser, hash and chunks, search by meaning, every hit and
+workspace leading to a filled-in New Mission) and a workspace field in New Mission.
+
+**Changed from the plan:** the retriever is given to the tool when the registry is built, not put in
+`ToolContext`, so `ToolContext` stays data only. A hit is cited at its line closest to the query,
+not the chunk's first line, after the live check showed first lines were headings.
+
+**Verified:** 20 new tests (16 unit, 4 against Postgres and memory alike), 5 Vitest; the full suite
+with Docker up, 999 passed; mypy, ruff, tsc, build; **one live check** (development log).

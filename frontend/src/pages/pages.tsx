@@ -22,7 +22,9 @@ import {
 import type { MissionView } from "../hooks/useMission";
 import { useMission, useMissionList } from "../hooks/useMission";
 import { SPEEDS, useReplay } from "../hooks/useReplay";
-import { DocumentPicker } from "../components/DocumentPicker";
+import { DocumentPicker } from "../components/DocumentPicker";
+import { documentsLink, validWorkspace } from "../components/workspaces";
+import type { MissionDraft } from "../components/workspaces";
 import { EvaluationDashboard } from "../components/evaluation";
 
 // The 3D explorer pulls in three.js; loaded only when a replay opens its graph.
@@ -114,12 +116,21 @@ function MissionRow({
 export function NewMission({
   onStarted,
   onCancel,
+  draft = {},
 }: {
   onStarted: (mission: MissionDetail) => void;
   onCancel: () => void;
+  /** Filled in by a link from the Documents page: a search hit, a file, or a whole workspace. */
+  draft?: Partial<MissionDraft>;
 }) {
-  const [objective, setObjective] = useState(SUGGESTED_OBJECTIVE);
-  const [documents, setDocuments] = useState<string[]>(SUGGESTED);
+  const [objective, setObjective] = useState(draft.objective ?? SUGGESTED_OBJECTIVE);
+  const [documents, setDocuments] = useState<string[]>(draft.documents ?? SUGGESTED);
+  // The workspace searched by meaning (Phase 40). Empty: recall matches words, as before.
+  const [workspace, setWorkspace] = useState(draft.workspace ?? "");
+  const [workspaces, setWorkspaces] = useState<string[]>([]);
+  useEffect(() => {
+    api.listWorkspaces().then(setWorkspaces).catch(() => setWorkspaces([]));
+  }, []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -127,7 +138,7 @@ export function NewMission({
     setBusy(true);
     setError("");
     api
-      .createMission(objective.trim(), documents)
+      .createMission(objective.trim(), documents, workspace || undefined)
       .then(onStarted)
       .catch((exc: unknown) => {
         // Codes, not prose. Each of these is a distinct thing for the user to do next.
@@ -172,10 +183,39 @@ export function NewMission({
 
           <div className="field">
             <label>Documents</label>
-            <DocumentPicker examples={SUGGESTED} selected={documents} onChange={setDocuments} />
+            <DocumentPicker
+              examples={SUGGESTED}
+              selected={documents}
+              onChange={setDocuments}
+              workspace={workspace || undefined}
+            />
             <div className="hint">
               Word, Excel, CSV, PDF, text, subtitles, images and video. Every line is citable;
               anything unreadable is excluded and reported rather than silently skipped.
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="workspace">Search by meaning in workspace</label>
+            <input
+              id="workspace"
+              list="workspace-names"
+              value={workspace}
+              placeholder="none - recall matches words"
+              onChange={(event) => setWorkspace(event.target.value.trim())}
+            />
+            <datalist id="workspace-names">
+              {workspaces.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
+            <div className="hint">
+              Named, the mission's documents are added to that workspace and its recall finds passages by
+              meaning, each still a citation; a new name starts a new workspace.{" "}
+              <a href={documentsLink(workspace && validWorkspace(workspace) ? workspace : undefined)}>
+                See the workspaces
+              </a>
+              .{workspace && !validWorkspace(workspace) ? " Letters, digits, - and _ only." : ""}
             </div>
           </div>
 
@@ -183,7 +223,7 @@ export function NewMission({
             <button
               className="primary"
               onClick={start}
-              disabled={busy || objective.trim().length < 8}
+              disabled={busy || objective.trim().length < 8 || (workspace !== "" && !validWorkspace(workspace))}
             >
               {busy ? "Starting." : "Start mission"}
             </button>

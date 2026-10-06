@@ -291,12 +291,27 @@ class ExecutionEvent(Base):
 
 
 class Document(Base):
+    """A document ingested for retrieval, in one workspace (Phase 40, Member 2's ingest).
+
+    One row per document per workspace: ingesting the same name again replaces it, and an
+    unchanged file (same SHA-256) is not re-embedded. The hash and parser are Member 2's
+    provenance, stored.
+    """
+
     __tablename__ = "documents"
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "document_id", name="uq_documents_workspace_document"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    workspace_id: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="default", index=True
+    )
     document_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     kind: Mapped[str] = mapped_column(String(32), default="text")
+    sha256: Mapped[str] = mapped_column(String(64), default="")
+    parser: Mapped[str] = mapped_column(String(32), default="")
     page_count: Mapped[int] = mapped_column(Integer, default=0)
     line_count: Mapped[int] = mapped_column(Integer, default=0)
     size_bytes: Mapped[int] = mapped_column(Integer, default=0)

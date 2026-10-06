@@ -154,6 +154,7 @@ async def run_mission(
     page_starts: dict[str, list[int]] | None = None,
     on_stage: StageCallback | None = None,
     synthesize: bool = True,
+    retriever: object = None,
 ) -> MissionResult:
     """Run one mission end to end and return what it established.
 
@@ -161,6 +162,9 @@ async def run_mission(
     too ambiguous to plan against, are outcomes of a run and are reported in the result.
     `CancelledError` is the one exception that propagates - after the result has been
     marked, so a caller holding the result still sees what the run reached.
+
+    `retriever` (Phase 40): the workspace's stored retrieval, when the mission named one. Its
+    documents are already ingested; `context_retrieval` then searches by meaning.
     """
     result = MissionResult(
         run_id=_run_id(emitter), objective=objective, status=MissionStatus.RUNNING
@@ -206,7 +210,7 @@ async def run_mission(
             await _finish(result, emitter, on_stage, EventType.RUN_COMPLETED)
             return result
 
-        registry = build_default_registry()
+        registry = build_default_registry(retriever)
         graph = TaskGraph.from_plan(result.plan)
         ctx = ToolContext(
             run_id=result.run_id,

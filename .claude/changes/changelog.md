@@ -5,6 +5,47 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-06 - Phase 40: stored, workspace-scoped retrieval (Member 2)
+
+### Added
+
+- **Workspaces searched by meaning.** Documents are chunked, embedded with `nomic-embed-text` and
+  stored in pgvector (the in-memory store when the database is down, and every answer says which).
+  Ingest is skipped for unchanged text. `POST /context/ingest`, `POST /context/retrieve`,
+  `GET /context/workspaces[/{id}]`
+- **Uploads go to a workspace** (`?workspace=`, default `default`) and are ingested on arrival
+- **A mission may name a workspace:** its documents are ingested there and `context_retrieval`
+  finds passages by meaning, only in the mission's own files, each cited at a line
+- **Member 2's 600/80 chunker** beside ours (`CONTEXT_CHUNKER=chars`); the default is Experiment
+  006's to decide
+- **Documents page** (`#/documents`): workspaces, each file's parser, hash and chunks, adding files,
+  search by meaning; every hit, file and workspace opens a filled-in New Mission. New Mission has a
+  workspace field and can arrive filled in (`#/new?objective=&documents=&workspace=`)
+- Migration `c6e375938463`: `documents.workspace_id`, `sha256`, `parser`, unique per workspace
+
+### Changed
+
+- `context_retrieval` searches stored passages when a mission named a workspace, and falls back to
+  the lexical search (saying so) when the store fails or finds nothing. Evaluation runs are
+  unchanged: no workspace, lexical recall
+
+### Fixed (found by the live check)
+
+- A hit was cited at its chunk's first line, usually a heading that supports nothing. Hits are now
+  cited at their line closest in meaning to the query
+
+### Known issues
+
+- Similarity scores cluster high (0.71-0.84 on the Aurora reports, 0.73 for a query nothing
+  answers), so `min_score` has no measured threshold yet: Experiment 006
+
+### Verified
+
+- 20 new backend tests (4 run on Postgres and memory alike), 5 Vitest; 999 passed with Docker up;
+  mypy, ruff, tsc, build; one live check (development log)
+
+---
+
 ## 2026-10-05 - Two known gaps closed (before Phase 40)
 
 The bug log had no open bugs (BUG-001 to BUG-026 all fixed). Two known limitations a person would

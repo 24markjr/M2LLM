@@ -29,6 +29,7 @@ from app.api.v1.schemas import (
 )
 from app.api.v1.stream import stream_mission
 from app.core.logging import get_logger
+from app.integrations.context import workspace_retriever
 from app.intelligence.planner.engine import execution_levels
 from app.intelligence.synthesis.renderers import to_markdown
 from app.llm import get_provider
@@ -77,12 +78,19 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
         # investigating a subset would let a partial read pass for a full one.
         log.warning("documents_excluded", missing=missing)
 
+    retriever = None
+    if body.workspace_id and documents:
+        # Ingested before the run starts (unchanged files are skipped by hash), so the mission's
+        # first recall already searches them. A store or embedding failure leaves recall lexical.
+        retriever = await workspace_retriever(body.workspace_id, documents, loaded, get_provider())
+
     record = await registry.create(
         objective=_objective(body),
         documents=sorted(documents),
         loaded=documents,
         page_starts={d.document_id: d.page_starts for d in loaded if d.page_starts},
         provider=get_provider(),
+        retriever=retriever,
     )
     return _detail(record)
 

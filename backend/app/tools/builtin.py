@@ -14,7 +14,7 @@ import csv
 import io
 import re
 import time
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar, Protocol
 
 from pydantic import Field
 
@@ -22,6 +22,9 @@ from app.schemas.common import CostHint, FailureClass, JarvisModel
 from app.schemas.tool import ToolCall, ToolCapability, ToolResult
 from app.tools.base import Tool, ToolContext
 from app.tools.loader import MAX_CSV_ROWS, ResultCap, cap, source_ref
+
+if TYPE_CHECKING:
+    from app.intelligence.context.manager import RetrievedChunk
 
 
 class UnsafeExpressionError(ValueError):
@@ -410,14 +413,32 @@ class ContextInput(JarvisModel):
 
 class ContextOutput(JarvisModel):
     passages: list[Passage] = Field(default_factory=list)
+    # Which search answered: `local` (lexical, over the run's documents), or the store that held
+    # the embedded passages (`pgvector`, `memory`).
     provider: str = "local"
+    note: str = ""
+
+
+class Retriever(Protocol):
+    """What the tool needs of a `ContextProvider` (Phase 40), named here so tools import nothing
+    from the integrations layer."""
+
+    @property
+    def name(self) -> str: ...
+
+    async def retrieve(
+        self, query: str, *, k: int = 5, scope: list[str] | None = None
+    ) -> list[RetrievedChunk]: ...
 
 
 class ContextRetrievalTool(Tool):
     """Recall from the run's accumulated documents.
 
-    The local fallback behind `ContextProvider`. Member 2's service swaps in at this seam in
-    Phase 12; nothing outside `app/integrations/` will need to change.
+    Phase 40: given a retriever (a mission that named a workspace), passages are found by
+    meaning - embedded chunks in the context store, restricted to this mission's documents, each
+    cited at the line its chunk starts on. Without one, or when the store finds nothing or fails,
+    the lexical search answers, and `provider` says which did. Evaluation runs pass no retriever,
+    so their recall stays lexical and the baseline comparable (Experiment 006 measures the switch).
     """
 
     name = "context_retrieval"
@@ -430,14 +451,43 @@ class ContextRetrievalTool(Tool):
     output_schema = ContextOutput
     cost_hint = CostHint.LOW
 
-    def __init__(self) -> None:
+    def __init__(self, retriever: Retriever | None = None) -> None:
         self._search = DocumentSearchTool()
+        self._retriever = retriever
 
     async def execute(self, call: ToolCall, ctx: ToolContext) -> ToolResult:
         try:
             payload = ContextInput.model_validate(call.arguments)
         except Exception as exc:  # noqa: BLE001
             return self.failure(call, FailureClass.SCHEMA_VIOLATION, str(exc))
+
+        note = ""
+        if self._retriever is not None and ctx.documents:
+            try:
+                hits = await self._retriever.retrieve(
+                    payload.query, k=payload.k, scope=list(ctx.documents)
+                )
+            except Exception as exc:  # noqa: BLE001 - a store failure falls back, never fails
+                hits = []
+                note = f"semantic search failed ({type(exc).__name__}); lexical search answered"
+            passages = [
+                Passage(
+                    document_id=h.chunk.locator.document_id,
+                    line=h.chunk.locator.row or 1,
+                    text=h.chunk.text[:300],
+                    score=round(h.score, 4),
+                )
+                for h in hits
+                if h.chunk.locator.document_id in ctx.documents
+            ]
+            if passages:
+                output = ContextOutput(passages=passages, provider=self._retriever.name)
+                return self.success(
+                    call,
+                    output.model_dump(),
+                    sources=[source_ref(p.document_id, p.line, ctx.page_starts) for p in passages],
+                )
+            note = note or "no stored passage matched; lexical search answered"
 
         inner = ToolCall(
             tool_name=self.name,
@@ -448,7 +498,7 @@ class ContextRetrievalTool(Tool):
             return result
 
         output = ContextOutput.model_validate(
-            {"passages": result.output.get("passages", []), "provider": "local"}
+            {"passages": result.output.get("passages", []), "provider": "local", "note": note}
         )
         return self.success(call, output.model_dump(), sources=result.sources)
 

@@ -18,6 +18,8 @@ import {
   ReplayPage,
 } from "./pages/pages";
 import { MemoryPage } from "./pages/MemoryPage";
+import { DocumentsPage } from "./pages/DocumentsPage";
+import { draftFromHash } from "./components/workspaces";
 import { hashQuery } from "./components/graph3d/investigation";
 
 // The knowledge graph pages pull in three.js (~600 kB). Loaded only when opened (Phase 32).
@@ -26,7 +28,8 @@ const AnalyzePage = lazy(() => import("./components/graph3d/AnalyzePage"));
 
 type Route =
   | { name: "list" }
-  | { name: "new" }
+  | { name: "new"; key: string }
+  | { name: "documents"; workspace: string }
   | { name: "mission"; runId: string }
   | { name: "graph"; runId: string; focus: string; search: string }
   | { name: "knowledge" }
@@ -45,7 +48,9 @@ function parse(full: string): Route {
   if (hash === "#/memory") return { name: "memory", entity: query.entity ?? "" };
   const match = /^#\/mission\/([\w-]+)$/.exec(hash);
   if (match?.[1]) return { name: "mission", runId: match[1] };
-  if (hash === "#/new") return { name: "new" };
+  // New Mission may arrive filled in, from a search hit or a workspace (Phase 40).
+  if (hash === "#/new") return { name: "new", key: full };
+  if (hash === "#/documents") return { name: "documents", workspace: query.workspace ?? "default" };
   if (hash === "#/replay") return { name: "replay" };
   if (hash === "#/evaluation") return { name: "evaluation" };
   return { name: "list" };
@@ -92,6 +97,9 @@ export default function App() {
           <a className={route.name === "knowledge" ? "on" : ""} href="#/knowledge">
             Knowledge
           </a>
+          <a className={route.name === "documents" ? "on" : ""} href="#/documents">
+            Documents
+          </a>
           <a className={route.name === "memory" ? "on" : ""} href="#/memory">
             Memory
           </a>
@@ -123,6 +131,8 @@ export default function App() {
 
       {route.name === "new" ? (
         <NewMission
+          key={route.key}
+          draft={draftFromHash(route.key)}
           onStarted={(mission: MissionDetail) => go(`#/mission/${mission.run_id}`)}
           onCancel={() => go("#/")}
         />
@@ -159,6 +169,8 @@ export default function App() {
           <AnalyzePage />
         </Suspense>
       ) : null}
+
+      {route.name === "documents" ? <DocumentsPage key={route.workspace} workspace={route.workspace} /> : null}
 
       {route.name === "memory" ? <MemoryPage key={route.entity} entity={route.entity} /> : null}
     </div>

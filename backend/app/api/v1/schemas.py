@@ -23,6 +23,9 @@ from app.schemas.trust import InjectionScan
 class CreateMissionRequest(JarvisModel):
     objective: str = Field(min_length=8, max_length=2000)
     documents: list[str] = Field(default_factory=list, max_length=64)
+    # The workspace whose stored retrieval the mission searches (Phase 40). The mission's documents
+    # are ingested into it first. Absent: no stored retrieval, recall is lexical as before.
+    workspace_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{1,64}$")
 
 
 class MissionSummary(JarvisModel):

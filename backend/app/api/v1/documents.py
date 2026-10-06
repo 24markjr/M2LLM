@@ -20,12 +20,14 @@ import asyncio
 from datetime import UTC, datetime
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile, status
+from fastapi import APIRouter, Query, UploadFile, status
 from pydantic import Field
 
 from app.api.errors import ApiError
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.integrations.context import get_context_store, ingest_document
+from app.intelligence.context.store import DEFAULT_WORKSPACE, Ingested
 from app.llm import get_provider
 from app.schemas.common import JarvisModel
 from app.schemas.trust import InjectionScan
@@ -38,7 +40,7 @@ from app.tools.formats import (
     spec_for,
     supported_extensions,
 )
-from app.tools.loader import DocumentLoadError, load_document
+from app.tools.loader import DocumentLoadError, LoadedDocument, load_document
 
 log = get_logger(__name__)
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -74,6 +76,9 @@ class UploadedDocument(JarvisModel):
     # What an image, scan, video or audio file was understood to contain (Phase 39): lines read,
     # spoken segments heard, lines seen and by which model. Empty for plain documents.
     understood: str = ""
+    # Stored retrieval (Phase 40): the workspace the file was ingested into, its chunks and the
+    # store. None when it has no text yet or the store or embedding model failed (`note` says).
+    ingested: Ingested | None = None
 
 
 class StoredDocument(JarvisModel):
@@ -86,7 +91,10 @@ class StoredDocument(JarvisModel):
 
 
 @router.post("", response_model=list[UploadedDocument], status_code=status.HTTP_201_CREATED)
-async def upload_documents(files: list[UploadFile]) -> list[UploadedDocument]:
+async def upload_documents(
+    files: list[UploadFile],
+    workspace: str = Query(default=DEFAULT_WORKSPACE, pattern=r"^[A-Za-z0-9_-]{1,64}$"),
+) -> list[UploadedDocument]:
     """Store uploads and report what each one parsed as.
 
     The response is the parse result, not an acknowledgement. A client that only learns a
@@ -135,6 +143,7 @@ async def upload_documents(files: list[UploadFile]) -> list[UploadedDocument]:
                 details={"name": name},
             ) from exc
 
+        ingested, ingest_note = await _ingest(workspace, document)
         results.append(
             UploadedDocument(
                 document_id=document.document_id,
@@ -147,8 +156,9 @@ async def upload_documents(files: list[UploadFile]) -> list[UploadedDocument]:
                 parser=document.parser,
                 sha256=document.sha256,
                 has_text=document.has_text,
-                note="" if document.has_text else document.text.splitlines()[-1],
+                note=(ingest_note if document.has_text else document.text.splitlines()[-1]),
                 understood=_understood(document.sha256),
+                ingested=ingested,
             )
         )
         log.info(
@@ -161,6 +171,28 @@ async def upload_documents(files: list[UploadFile]) -> list[UploadedDocument]:
         )
 
     return results
+
+
+async def _ingest(workspace: str, document: LoadedDocument) -> tuple[Ingested | None, str]:
+    """Ingest an upload into its workspace. Never fails the upload: a file is still usable by
+    missions (lexically) when the store or embedding model is down."""
+    if not document.has_text:
+        return None, ""
+    try:
+        store = await get_context_store()
+        done = await ingest_document(
+            store,
+            get_provider(),
+            workspace_id=workspace,
+            document_id=document.document_id,
+            text=document.text,
+            kind=str(document.kind),
+            parser=document.parser,
+        )
+    except Exception as exc:  # noqa: BLE001 - stored retrieval is optional
+        log.warning("upload_ingest_failed", name=document.document_id, error=str(exc))
+        return None, f"not ingested for search ({type(exc).__name__})"
+    return done, ""
 
 
 def _understood(sha256: str) -> str:

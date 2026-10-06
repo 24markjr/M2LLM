@@ -10,6 +10,7 @@ from __future__ import annotations
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -98,6 +99,9 @@ class Settings(BaseSettings):
     # --- Embeddings ---
     embedding_model: str = "nomic-embed-text"
     embedding_dim: int = 768
+    # How documents are cut for stored retrieval (Phase 40): `lines` (four lines or a paragraph,
+    # ours) or `chars` (Member 2's 600 characters, 80 overlapping). Experiment 006 decides.
+    context_chunker: Literal["lines", "chars"] = "lines"
 
     # --- Agent bounds ---
     max_replan_iterations: int = Field(default=3, ge=0, le=10)

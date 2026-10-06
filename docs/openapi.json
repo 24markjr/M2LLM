@@ -363,6 +363,18 @@
             "minLength": 8,
             "title": "Objective",
             "type": "string"
+          },
+          "workspace_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workspace Id"
           }
         },
         "required": [
@@ -1496,6 +1508,93 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "IngestRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "documents": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "minItems": 1,
+            "title": "Documents",
+            "type": "array"
+          },
+          "workspace_id": {
+            "default": "default",
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "documents"
+        ],
+        "title": "IngestRequest",
+        "type": "object"
+      },
+      "IngestResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "ingested": {
+            "items": {
+              "$ref": "#/components/schemas/Ingested"
+            },
+            "title": "Ingested",
+            "type": "array"
+          },
+          "skipped": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Skipped",
+            "type": "array"
+          },
+          "store": {
+            "title": "Store",
+            "type": "string"
+          }
+        },
+        "required": [
+          "store"
+        ],
+        "title": "IngestResponse",
+        "type": "object"
+      },
+      "Ingested": {
+        "additionalProperties": false,
+        "properties": {
+          "chunks": {
+            "default": 0,
+            "title": "Chunks",
+            "type": "integer"
+          },
+          "document_id": {
+            "title": "Document Id",
+            "type": "string"
+          },
+          "store": {
+            "default": "",
+            "title": "Store",
+            "type": "string"
+          },
+          "unchanged": {
+            "default": false,
+            "title": "Unchanged",
+            "type": "boolean"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "document_id"
+        ],
+        "title": "Ingested",
+        "type": "object"
+      },
       "InjectionScan": {
         "additionalProperties": false,
         "description": "What a scan of one untrusted text found.\n\nA hit is not a verdict that the document is malicious. A security report quoting an attack\nmatches too. Hits are reported and the content is still read, as data, because dropping a\ndocument on a pattern match would let an attacker delete evidence by quoting a phrase.",
@@ -2521,6 +2620,119 @@
         "title": "ResolutionStatus",
         "type": "string"
       },
+      "RetrievalHit": {
+        "additionalProperties": false,
+        "description": "One passage, citable, with the score that ranked it.",
+        "properties": {
+          "document_id": {
+            "title": "Document Id",
+            "type": "string"
+          },
+          "line": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line"
+          },
+          "score": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "number"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "document_id",
+          "text",
+          "score"
+        ],
+        "title": "RetrievalHit",
+        "type": "object"
+      },
+      "RetrieveRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "documents": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Documents",
+            "type": "array"
+          },
+          "k": {
+            "default": 5,
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "K",
+            "type": "integer"
+          },
+          "min_score": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Min Score",
+            "type": "number"
+          },
+          "query": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Query",
+            "type": "string"
+          },
+          "workspace_id": {
+            "default": "default",
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "RetrieveRequest",
+        "type": "object"
+      },
+      "RetrieveResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "hits": {
+            "items": {
+              "$ref": "#/components/schemas/RetrievalHit"
+            },
+            "title": "Hits",
+            "type": "array"
+          },
+          "store": {
+            "title": "Store",
+            "type": "string"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "store",
+          "workspace_id"
+        ],
+        "title": "RetrieveResponse",
+        "type": "object"
+      },
       "SearchHit": {
         "additionalProperties": false,
         "description": "A claim ranked by the original's explainable score. Every point has a reason.",
@@ -2697,37 +2909,6 @@
         ],
         "title": "Stage",
         "type": "string"
-      },
-      "StoredDocument": {
-        "additionalProperties": false,
-        "description": "An earlier upload, offered again to a new mission.",
-        "properties": {
-          "bytes": {
-            "title": "Bytes",
-            "type": "integer"
-          },
-          "kind": {
-            "title": "Kind",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "uploaded_at": {
-            "format": "date-time",
-            "title": "Uploaded At",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "kind",
-          "bytes",
-          "uploaded_at"
-        ],
-        "title": "StoredDocument",
-        "type": "object"
       },
       "TaskGraphResponse": {
         "additionalProperties": false,
@@ -2966,6 +3147,16 @@
             "default": true,
             "title": "Has Text",
             "type": "boolean"
+          },
+          "ingested": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Ingested"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "injection": {
             "$ref": "#/components/schemas/InjectionScan"
@@ -3231,6 +3422,103 @@
         ],
         "title": "WorkingMemorySnapshot",
         "type": "object"
+      },
+      "Workspace": {
+        "additionalProperties": false,
+        "properties": {
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/app__intelligence__context__store__StoredDocument"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "store": {
+            "title": "Store",
+            "type": "string"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "store"
+        ],
+        "title": "Workspace",
+        "type": "object"
+      },
+      "app__api__v1__documents__StoredDocument": {
+        "additionalProperties": false,
+        "description": "An earlier upload, offered again to a new mission.",
+        "properties": {
+          "bytes": {
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "uploaded_at": {
+            "format": "date-time",
+            "title": "Uploaded At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "bytes",
+          "uploaded_at"
+        ],
+        "title": "StoredDocument",
+        "type": "object"
+      },
+      "app__intelligence__context__store__StoredDocument": {
+        "additionalProperties": false,
+        "description": "A document as a workspace holds it.",
+        "properties": {
+          "chunks": {
+            "default": 0,
+            "title": "Chunks",
+            "type": "integer"
+          },
+          "document_id": {
+            "title": "Document Id",
+            "type": "string"
+          },
+          "kind": {
+            "default": "text",
+            "title": "Kind",
+            "type": "string"
+          },
+          "parser": {
+            "default": "",
+            "title": "Parser",
+            "type": "string"
+          },
+          "sha256": {
+            "default": "",
+            "title": "Sha256",
+            "type": "string"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "document_id"
+        ],
+        "title": "StoredDocument",
+        "type": "object"
       }
     }
   },
@@ -3241,6 +3529,159 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/context/ingest": {
+      "post": {
+        "description": "Chunk, embed and store documents in a workspace. Unchanged files are not re-embedded.",
+        "operationId": "ingest_api_v1_context_ingest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ingest",
+        "tags": [
+          "context"
+        ]
+      }
+    },
+    "/api/v1/context/retrieve": {
+      "post": {
+        "description": "The workspace's passages closest in meaning to the query, each a citation.",
+        "operationId": "retrieve_api_v1_context_retrieve_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetrieveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetrieveResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retrieve",
+        "tags": [
+          "context"
+        ]
+      }
+    },
+    "/api/v1/context/workspaces": {
+      "get": {
+        "description": "Every workspace that holds a document, and `default` always.",
+        "operationId": "workspaces_api_v1_context_workspaces_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Response Workspaces Api V1 Context Workspaces Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Workspaces",
+        "tags": [
+          "context"
+        ]
+      }
+    },
+    "/api/v1/context/workspaces/{workspace_id}": {
+      "get": {
+        "description": "A workspace's documents, with their parser, hash and chunk count.",
+        "operationId": "workspace_api_v1_context_workspaces__workspace_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Workspace",
+        "tags": [
+          "context"
+        ]
+      }
+    },
     "/api/v1/documents": {
       "get": {
         "description": "Earlier uploads, newest first, so a new mission can reuse them without uploading again.",
@@ -3251,7 +3692,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/StoredDocument"
+                    "$ref": "#/components/schemas/app__api__v1__documents__StoredDocument"
                   },
                   "title": "Response List Uploads Api V1 Documents Get",
                   "type": "array"
@@ -3269,6 +3710,19 @@
       "post": {
         "description": "Store uploads and report what each one parsed as.\n\nThe response is the parse result, not an acknowledgement. A client that only learns a\nfile was accepted still does not know whether it will contribute anything to a run -\na 12-page scanned PDF with no text layer uploads perfectly and yields nothing.",
         "operationId": "upload_documents_api_v1_documents_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "workspace",
+            "required": false,
+            "schema": {
+              "default": "default",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "multipart/form-data": {

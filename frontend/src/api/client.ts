@@ -28,6 +28,7 @@ import type {
 import type { EntityMemory, Episode, Fact, InvestigationMemory, MemoryStatus } from "./types";
 import type { ClaimComparison, ClaimConflict, EntityInvestigation, SearchHit, TimelineEvent } from "./types";
 import type { FormatSpec, StoredDocument, UploadedDocument } from "./types";
+import type { RetrieveResponse, WorkspaceView } from "./types";
 
 const BASE = "/api/v1";
 
@@ -82,10 +83,13 @@ export const api = {
   health: () =>
     request<{ status: string; model: string; provider_healthy: boolean }>("/health"),
 
-  createMission: (objective: string, documents: string[]) =>
+  /** `workspaceId` (Phase 40): the mission's documents are ingested there and searched by meaning. */
+  createMission: (objective: string, documents: string[], workspaceId?: string) =>
     request<MissionDetail>(`${BASE}/missions`, {
       method: "POST",
-      body: JSON.stringify({ objective, documents }),
+      body: JSON.stringify(
+        workspaceId ? { objective, documents, workspace_id: workspaceId } : { objective, documents },
+      ),
     }),
 
   listMissions: () => request<MissionSummary[]>(`${BASE}/missions`),
@@ -177,11 +181,21 @@ export const api = {
 
   listUploads: () => request<StoredDocument[]>(`${BASE}/documents`),
 
-  uploadDocuments: (files: File[]) => {
+  uploadDocuments: (files: File[], workspace?: string) => {
     const form = new FormData();
     for (const file of files) form.append("files", file, file.name);
-    return request<UploadedDocument[]>(`${BASE}/documents`, { method: "POST", body: form });
+    const query = workspace ? `?workspace=${encodeURIComponent(workspace)}` : "";
+    return request<UploadedDocument[]>(`${BASE}/documents${query}`, { method: "POST", body: form });
   },
+
+  // --- stored retrieval (Phase 40) ---
+  listWorkspaces: () => request<string[]>(`${BASE}/context/workspaces`),
+
+  getWorkspace: (workspaceId: string) =>
+    request<WorkspaceView>(`${BASE}/context/workspaces/${encodeURIComponent(workspaceId)}`),
+
+  retrieveContext: (body: { workspace_id: string; query: string; k?: number; min_score?: number; documents?: string[] }) =>
+    request<RetrieveResponse>(`${BASE}/context/retrieve`, { method: "POST", body: JSON.stringify(body) }),
 
   // --- memory (Phase 33) ---
   getMemoryStatus: () => request<MemoryStatus>(`${BASE}/memory`),

@@ -535,6 +535,50 @@ export interface UploadedDocument {
   note: string;
   /** For images, scans, video, audio (Phase 39): lines read, segments heard, lines seen and by which model. */
   understood: string;
+  /** Stored retrieval (Phase 40): where the file was ingested. Null without text, or when the store failed. */
+  ingested?: Ingested | null;
+}
+
+// --- stored, workspace-scoped retrieval (Phase 40) ---
+
+export interface Ingested {
+  workspace_id: string;
+  document_id: string;
+  chunks: number;
+  /** Same SHA-256 as last time: nothing was re-embedded. */
+  unchanged: boolean;
+  store: string;
+}
+
+export interface WorkspaceDocument {
+  workspace_id: string;
+  document_id: string;
+  kind: string;
+  sha256: string;
+  parser: string;
+  chunks: number;
+}
+
+export interface WorkspaceView {
+  workspace_id: string;
+  documents: WorkspaceDocument[];
+  /** `pgvector`, or `memory` when the database is down. */
+  store: string;
+}
+
+export interface RetrievalHit {
+  /** A citation, e.g. `report.txt:r12`. */
+  source: string;
+  document_id: string;
+  line: number | null;
+  text: string;
+  score: number;
+}
+
+export interface RetrieveResponse {
+  store: string;
+  workspace_id: string;
+  hits: RetrievalHit[];
 }
 
 /** An earlier upload, offered again to a new mission. */

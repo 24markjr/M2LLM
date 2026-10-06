@@ -20,6 +20,7 @@ code is a guess, and one written after the code is a record.
 | `knowledge-layer.md` | Entities, relationships, claims; grounding, resolution, conflicts, timeline, search | 28 |
 | `memory.md` | Working, episodic and semantic memory across missions; why it never feeds a run | 33 |
 | `media.md` | Images, scans, video and audio: read (OCR), seen (vision model, weaker evidence), heard (speech) | 39 |
+| `retrieval.md` | Stored, workspace-scoped retrieval: pgvector or memory, two chunkers, hits cited at their closest line | 40 |
 
 ## What belongs in an architecture document
 

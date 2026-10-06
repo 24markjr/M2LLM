@@ -43,7 +43,11 @@ kept current while the run proceeds.
 | GET | `/api/v1/missions/{id}/report.md` | The same report as Markdown |
 | POST | `/api/v1/missions/{id}/cancel` | `202`; cancellation is cooperative |
 | GET | `/api/v1/missions/{id}/stream` | SSE. See [ADR-008](../decisions/ADR-008-sse-over-websocket.md) |
-| POST | `/api/v1/documents` | Multipart upload; returns the **parse result**, not an ack |
+| POST | `/api/v1/documents` | Multipart upload; returns the **parse result**, not an ack. `?workspace=` (default `default`): each file with text is ingested there for search by meaning (`ingested`, Phase 40) |
+| POST | `/api/v1/context/ingest` | `{workspace_id, documents}`: chunk, embed and store; `unchanged` when the text's hash is the same; `skipped` names files that could not be read; 503 `CONTEXT_UNAVAILABLE` (Phase 40) |
+| POST | `/api/v1/context/retrieve` | `{workspace_id, query, k, min_score, documents}`: passages by meaning, each a citation with its score, and the `store` that answered (Phase 40) |
+| GET | `/api/v1/context/workspaces` | Workspace names, `default` always |
+| GET | `/api/v1/context/workspaces/{id}` | A workspace's documents: kind, parser, SHA-256, chunks; and the store |
 | GET | `/api/v1/missions/{id}/knowledge...` | The mission's knowledge base; see **Knowledge** below (Phase 31) |
 | GET | `/api/v1/missions/{id}/findings/{finding_id}/trail` | The subgraph a finding rests on |
 | POST | `/api/v1/knowledge/analyze` | Documents in, a knowledge base out, no mission, nothing stored |
