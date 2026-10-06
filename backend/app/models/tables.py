@@ -496,3 +496,51 @@ class CustodyEventRow(Base):
     actor: Mapped[str] = mapped_column(String(128), default="system")
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
     details: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+
+
+# --- Cases (Phase 44) ----------------------------------------------------------------------------
+
+
+class CaseRow(Base):
+    __tablename__ = "cases"
+
+    case_id: Mapped[str] = mapped_column(String(24), primary_key=True)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str] = mapped_column(Text, default="")
+    severity: Mapped[str] = mapped_column(String(16), default="MEDIUM", index=True)
+    status: Mapped[str] = mapped_column(String(16), default="OPEN", index=True)
+    owner: Mapped[str] = mapped_column(String(128), default="unassigned")
+    mode: Mapped[str] = mapped_column(String(16), default="GENERAL")
+    opened_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class CaseInvestigationRow(Base):
+    """A mission in a case, with the outcome it reached. Not a foreign key to `agent_runs`: a run is
+    stored only when the database was up while it ran, and a case must still list it."""
+
+    __tablename__ = "case_investigations"
+
+    run_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    case_id: Mapped[str] = mapped_column(
+        String(24), ForeignKey("cases.case_id"), nullable=False, index=True
+    )
+    objective: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="PENDING")
+    findings: Mapped[int] = mapped_column(Integer, default=0)
+    verified: Mapped[int] = mapped_column(Integer, default=0)
+    contradictions: Mapped[int] = mapped_column(Integer, default=0)
+    open_gaps: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class CaseEvidenceRow(Base):
+    __tablename__ = "case_evidence"
+
+    case_id: Mapped[str] = mapped_column(String(24), ForeignKey("cases.case_id"), primary_key=True)
+    evidence_id: Mapped[str] = mapped_column(
+        String(16), ForeignKey("evidence_items.evidence_id"), primary_key=True, index=True
+    )
+    added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    added_by: Mapped[str] = mapped_column(String(128), default="system")

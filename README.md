@@ -160,8 +160,10 @@ cd backend && uvicorn app.api.app:create_app --factory --reload
 cd frontend && npm install && npm run dev
 ```
 
-Open <http://localhost:5173>. The Aurora objective and documents are prefilled — click **New
-mission** then **Start mission** and watch it run live over SSE.
+Open <http://localhost:5173>. The home page is **Cases**: open one, then **New investigation in this
+case** (or **Missions** → **New mission** for a run outside any case). The Aurora objective and
+documents are prefilled — **Start mission** and watch it run live over SSE, in the Professional view
+(plain steps and the conclusion so far) or the Technical trace.
 
 When it finishes, press **Knowledge graph** on the mission page: the run's entities in 3D (2D with
 reduced motion), claims and documents unfolding beneath them. Hover a node for its details, click

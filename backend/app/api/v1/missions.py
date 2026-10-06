@@ -14,7 +14,7 @@ from fastapi import APIRouter, Query, Request, Response, status
 from fastapi.responses import PlainTextResponse
 
 from app.api.errors import ApiError, MissionNotFinishedError, MissionNotFoundError
-from app.api.registry import MissionRecord, get_registry
+from app.api.registry import MissionRecord, case_investigation, get_registry
 from app.api.v1.schemas import (
     CancelResponse,
     CreateMissionRequest,
@@ -28,13 +28,16 @@ from app.api.v1.schemas import (
     TaskNode,
 )
 from app.api.v1.stream import stream_mission
+from app.cases.service import file_evidence, file_investigation, get_case_store, start_investigating
 from app.core.logging import get_logger
 from app.evidence.service import admit_for_mission, record_analysed
 from app.integrations.context import workspace_retriever
 from app.intelligence.planner.engine import execution_levels
 from app.intelligence.synthesis.renderers import to_markdown
 from app.llm import get_provider
+from app.orchestration.labels import step_label
 from app.orchestration.mission import MissionStatus
+from app.schemas.case import Case, CaseStatus
 from app.schemas.objective import AttachedDocument, DocumentKind, Objective, ObjectiveScope
 from app.schemas.result import FinalReport
 from app.tools.formats import prepare
@@ -64,6 +67,7 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
 
     # Images, scans, video and audio are understood before they are read (Phase 39): once per
     # file, cached, so a file uploaded earlier costs nothing here.
+    case = await _require_case(body.case_id) if body.case_id else None
     paths = {name: resolve_document(name) for name in body.documents}
     # Every document is evidence (Phase 43): registered on first use, and checked against its hash
     # before the mission reads it. A file whose bytes changed is left out, and the mission says so.
@@ -102,6 +106,12 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
     record.evidence = {name: admitted[name] for name in documents if name in admitted}
     record.excluded = excluded
     await record_analysed(record.run_id, record.evidence)
+    if case is not None:
+        # Filed in its case with its evidence (Phase 44). An open case is now being investigated.
+        record.case_id = case.case_id
+        await file_investigation(case_investigation(record))
+        await file_evidence(case.case_id, list(admitted.values()))
+        await start_investigating(case)
     return _detail(record)
 
 
@@ -135,6 +145,7 @@ async def get_tasks(run_id: str) -> TaskGraphResponse:
             depends_on=list(task.depends_on),
             tool_id=task.selection.tool_name if task.selection else "",
             inserted_by_replan=task.created_by_revision > 0,
+            label=step_label(task.task_type, task.status),
         )
         for task in plan.tasks
     ]
@@ -254,6 +265,29 @@ def _report(run_id: str) -> FinalReport:
     return report
 
 
+async def _require_case(case_id: str) -> Case:
+    try:
+        store = await get_case_store()
+        case = await store.get(case_id)
+    except Exception as exc:
+        raise ApiError(
+            "CASES_UNAVAILABLE",
+            f"the case store could not be read: {type(exc).__name__}",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        ) from exc
+    if case is None:
+        raise ApiError(
+            "CASE_NOT_FOUND", f"no case {case_id}", status_code=status.HTTP_404_NOT_FOUND
+        )
+    if case.status is CaseStatus.CLOSED:
+        raise ApiError(
+            "CASE_CLOSED",
+            f"{case_id} is closed; reopen it to investigate further",
+            status_code=status.HTTP_409_CONFLICT,
+        )
+    return case
+
+
 def _objective(body: CreateMissionRequest) -> Objective:
     attached = [
         AttachedDocument(
@@ -279,6 +313,7 @@ def _summary(record: MissionRecord) -> MissionSummary:
         finding_count=len(result.findings) if result else 0,
         verified_count=len(result.verified_findings) if result else 0,
         unresolved_gap_count=len(result.unresolved_gaps) if result else 0,
+        case_id=record.case_id,
     )
 
 
@@ -348,6 +383,7 @@ def snapshot_payloads(record: MissionRecord) -> dict[str, object]:
                 depends_on=list(task.depends_on),
                 tool_id=task.selection.tool_name if task.selection else "",
                 inserted_by_replan=task.created_by_revision > 0,
+                label=step_label(task.task_type, task.status),
             )
             for task in result.plan.tasks
         ]

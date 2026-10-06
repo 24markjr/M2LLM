@@ -20,6 +20,8 @@ from pathlib import Path
 import pytest
 
 from app.api import persistence
+from app.cases import service as case_service
+from app.cases.store import MemoryCaseStore
 from app.core.config import GraphStoreName, get_settings
 from app.evidence import service as evidence_service
 from app.evidence import store as evidence_store
@@ -60,6 +62,9 @@ def _evidence_stays_in_the_test(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setattr(evidence_store, "evidence_root", lambda: tmp_path / "evidence-store")
     monkeypatch.setattr(evidence_service, "_memory_locker", MemoryEvidenceLocker())
     monkeypatch.setattr(evidence_service, "_database", False)
+    # Cases too (Phase 44): a fresh memory store per test, never a developer's database.
+    monkeypatch.setattr(case_service, "_memory_store", MemoryCaseStore())
+    monkeypatch.setattr(case_service, "_database", False)
     yield
 
 

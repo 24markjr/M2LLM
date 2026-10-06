@@ -1512,3 +1512,66 @@ ol.custody li.failed strong {
   gap: 10px;
   margin-bottom: 12px;
 }
+
+/* Phase 44: cases and the Professional view. */
+a.case-row {
+  display: block;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: inherit;
+  text-decoration: none;
+}
+a.case-row:hover {
+  border-color: var(--accent);
+}
+a.case-row .row {
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.severity {
+  font-family: var(--mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.severity.high,
+.severity.critical {
+  color: var(--bad);
+  font-weight: 600;
+}
+.view-switch {
+  gap: 8px;
+  margin: 12px 0 16px;
+  flex-wrap: wrap;
+}
+ol.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+ol.steps li {
+  padding: 4px 0;
+}
+ol.steps li .mark {
+  display: inline-block;
+  width: 1.2em;
+  font-family: var(--mono, monospace);
+}
+ol.steps li.done .mark {
+  color: var(--good, #3fb950);
+}
+ol.steps li.failed {
+  color: var(--bad);
+}
+ol.steps li.todo,
+ol.steps li.skipped {
+  color: var(--text-dim);
+}
+ol.steps li .badge {
+  margin-left: 8px;
+}
+ul.conclusion {
+  margin: 0;
+  padding-left: 18px;
+}

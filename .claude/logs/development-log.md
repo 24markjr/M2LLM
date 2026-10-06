@@ -6,6 +6,24 @@ and what is still broken.
 
 ---
 
+# 2026-10-07 - Phase 44: cases and the professional hierarchy
+
+Before starting: Docker was started and Phase 43's database half verified (migration round-trip,
+five Postgres tests, 0 rows left), then Phase 43 was committed.
+
+**Decisions.** A case keeps its own record of each investigation and its outcome, because missions
+live in the engine's memory and a case must still list them after a restart; not a foreign key to
+`agent_runs`, which holds only runs made while the database was up. Evidence belongs to cases through
+a link table, since the same bytes can matter to two cases. Counters are computed on read. Step labels
+are deterministic text per task type and status - the Professional view must not describe a run in a
+model's words. Cases are the home page; the flat list stays at `#/missions`.
+
+**Small fixes found on the way:** the mission page's back button still pointed at `#/`, now the cases
+page; a test that redirected `.agent` to a temporary folder could not see the repository fixtures it
+used.
+
+---
+
 # 2026-10-07 - Phase 43: the Evidence Locker
 
 The first phase of the v2 plan. Documents become evidence items identified by their hash, with an

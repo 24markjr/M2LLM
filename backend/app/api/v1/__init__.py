@@ -7,7 +7,16 @@ makes such a change possible without a flag day.
 
 from fastapi import APIRouter
 
-from app.api.v1 import context, documents, evidence, knowledge, memory, missions, replay
+from app.api.v1 import (
+    cases,
+    context,
+    documents,
+    evidence,
+    knowledge,
+    memory,
+    missions,
+    replay,
+)
 
 router = APIRouter(prefix="/api/v1")
 router.include_router(missions.router)
@@ -17,5 +26,6 @@ router.include_router(knowledge.router)
 router.include_router(memory.router)
 router.include_router(context.router)
 router.include_router(evidence.router)
+router.include_router(cases.router)
 
 __all__ = ["router"]

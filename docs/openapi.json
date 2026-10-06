@@ -120,6 +120,408 @@
         "title": "CancelResponse",
         "type": "object"
       },
+      "Case": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "pattern": "^CASE-\\d{4}-\\d{5,}$",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Description",
+            "type": "string"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/CaseMode",
+            "default": "GENERAL"
+          },
+          "opened_at": {
+            "format": "date-time",
+            "title": "Opened At",
+            "type": "string"
+          },
+          "owner": {
+            "default": "unassigned",
+            "maxLength": 128,
+            "title": "Owner",
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/CaseSeverity",
+            "default": "MEDIUM"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CaseStatus",
+            "default": "OPEN"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "title"
+        ],
+        "title": "Case",
+        "type": "object"
+      },
+      "CaseCounters": {
+        "additionalProperties": false,
+        "properties": {
+          "contradictions": {
+            "default": 0,
+            "title": "Contradictions",
+            "type": "integer"
+          },
+          "evidence": {
+            "default": 0,
+            "title": "Evidence",
+            "type": "integer"
+          },
+          "failed_integrity": {
+            "default": 0,
+            "title": "Failed Integrity",
+            "type": "integer"
+          },
+          "findings": {
+            "default": 0,
+            "title": "Findings",
+            "type": "integer"
+          },
+          "investigations": {
+            "default": 0,
+            "title": "Investigations",
+            "type": "integer"
+          },
+          "open_gaps": {
+            "default": 0,
+            "title": "Open Gaps",
+            "type": "integer"
+          },
+          "running": {
+            "default": 0,
+            "title": "Running",
+            "type": "integer"
+          },
+          "verified": {
+            "default": 0,
+            "title": "Verified",
+            "type": "integer"
+          }
+        },
+        "title": "CaseCounters",
+        "type": "object"
+      },
+      "CaseCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Description",
+            "type": "string"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/CaseMode",
+            "default": "GENERAL"
+          },
+          "owner": {
+            "default": "",
+            "maxLength": 128,
+            "title": "Owner",
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/CaseSeverity",
+            "default": "MEDIUM"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "CaseCreate",
+        "type": "object"
+      },
+      "CaseDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "case": {
+            "$ref": "#/components/schemas/Case"
+          },
+          "counters": {
+            "$ref": "#/components/schemas/CaseCounters"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/CaseEvidenceItem"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "investigations": {
+            "items": {
+              "$ref": "#/components/schemas/CaseInvestigation"
+            },
+            "title": "Investigations",
+            "type": "array"
+          },
+          "store": {
+            "title": "Store",
+            "type": "string"
+          }
+        },
+        "required": [
+          "store",
+          "case",
+          "counters"
+        ],
+        "title": "CaseDetail",
+        "type": "object"
+      },
+      "CaseEvidenceItem": {
+        "additionalProperties": false,
+        "properties": {
+          "added_at": {
+            "title": "Added At",
+            "type": "string"
+          },
+          "added_by": {
+            "title": "Added By",
+            "type": "string"
+          },
+          "item": {
+            "$ref": "#/components/schemas/EvidenceItem"
+          }
+        },
+        "required": [
+          "item",
+          "added_at",
+          "added_by"
+        ],
+        "title": "CaseEvidenceItem",
+        "type": "object"
+      },
+      "CaseInvestigation": {
+        "additionalProperties": false,
+        "description": "A mission run in a case, with the outcome it reached (kept when the run ends, so a case still\nknows its investigations after the engine restarts).",
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "contradictions": {
+            "default": 0,
+            "title": "Contradictions",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "findings": {
+            "default": 0,
+            "title": "Findings",
+            "type": "integer"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "objective": {
+            "title": "Objective",
+            "type": "string"
+          },
+          "open_gaps": {
+            "default": 0,
+            "title": "Open Gaps",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "default": "PENDING",
+            "title": "Status",
+            "type": "string"
+          },
+          "verified": {
+            "default": 0,
+            "title": "Verified",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "case_id",
+          "run_id",
+          "objective"
+        ],
+        "title": "CaseInvestigation",
+        "type": "object"
+      },
+      "CaseList": {
+        "additionalProperties": false,
+        "properties": {
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/CaseSummary"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "store": {
+            "title": "Store",
+            "type": "string"
+          }
+        },
+        "required": [
+          "store"
+        ],
+        "title": "CaseList",
+        "type": "object"
+      },
+      "CaseMode": {
+        "enum": [
+          "GENERAL",
+          "CYBER"
+        ],
+        "title": "CaseMode",
+        "type": "string"
+      },
+      "CaseSeverity": {
+        "enum": [
+          "LOW",
+          "MEDIUM",
+          "HIGH",
+          "CRITICAL"
+        ],
+        "title": "CaseSeverity",
+        "type": "string"
+      },
+      "CaseStatus": {
+        "enum": [
+          "OPEN",
+          "INVESTIGATING",
+          "REVIEW",
+          "CLOSED"
+        ],
+        "title": "CaseStatus",
+        "type": "string"
+      },
+      "CaseSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "case": {
+            "$ref": "#/components/schemas/Case"
+          },
+          "counters": {
+            "$ref": "#/components/schemas/CaseCounters"
+          }
+        },
+        "required": [
+          "case",
+          "counters"
+        ],
+        "title": "CaseSummary",
+        "type": "object"
+      },
+      "CaseUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CaseSeverity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CaseStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 3,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "CaseUpdate",
+        "type": "object"
+      },
       "ClaimComparison": {
         "additionalProperties": false,
         "description": "The temporal order of two claims.",
@@ -350,6 +752,18 @@
       "CreateMissionRequest": {
         "additionalProperties": false,
         "properties": {
+          "case_id": {
+            "anyOf": [
+              {
+                "pattern": "^CASE-\\d{4}-\\d{5,}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
           "documents": {
             "items": {
               "type": "string"
@@ -1274,6 +1688,44 @@
           "support_count"
         ],
         "title": "FactView",
+        "type": "object"
+      },
+      "FileEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "title": "Evidence Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "evidence_ids"
+        ],
+        "title": "FileEvidence",
+        "type": "object"
+      },
+      "Filed": {
+        "additionalProperties": false,
+        "properties": {
+          "added": {
+            "title": "Added",
+            "type": "integer"
+          },
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "added"
+        ],
+        "title": "Filed",
         "type": "object"
       },
       "FinalReport": {
@@ -2470,6 +2922,11 @@
         "additionalProperties": false,
         "description": "A mission's current state, without the full event log.",
         "properties": {
+          "case_id": {
+            "default": "",
+            "title": "Case Id",
+            "type": "string"
+          },
           "clarification_question": {
             "default": "",
             "title": "Clarification Question",
@@ -2638,6 +3095,11 @@
         "additionalProperties": false,
         "description": "One row in the mission list.",
         "properties": {
+          "case_id": {
+            "default": "",
+            "title": "Case Id",
+            "type": "string"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -3358,6 +3820,11 @@
             "title": "Inserted By Replan",
             "type": "boolean"
           },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          },
           "status": {
             "$ref": "#/components/schemas/TaskStatus"
           },
@@ -3941,6 +4408,235 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/cases": {
+      "get": {
+        "operationId": "list_cases_api_v1_cases_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Cases",
+        "tags": [
+          "cases"
+        ]
+      },
+      "post": {
+        "operationId": "open_case_api_v1_cases_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Case"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Open Case",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}": {
+      "get": {
+        "operationId": "get_case_api_v1_cases__case_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Case",
+        "tags": [
+          "cases"
+        ]
+      },
+      "patch": {
+        "operationId": "update_case_api_v1_cases__case_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Case"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Case",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/evidence": {
+      "post": {
+        "description": "File existing evidence items in a case (from the locker, or another case).",
+        "operationId": "file_case_evidence_api_v1_cases__case_id__evidence_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileEvidence"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Filed"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "File Case Evidence",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
     "/api/v1/context/ingest": {
       "post": {
         "description": "Chunk, embed and store documents in a workspace. Unchanged files are not re-embedded.",
@@ -4132,6 +4828,23 @@
               "pattern": "^[A-Za-z0-9_-]{1,64}$",
               "title": "Workspace",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "case",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^CASE-\\d{4}-\\d{5,}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Case"
             }
           },
           {

@@ -17,6 +17,8 @@ export interface MissionDraft {
   objective: string;
   documents: string[];
   workspace: string;
+  /** The case the investigation is opened in (Phase 44). */
+  caseId: string;
 }
 
 /** New Mission, filled in: from a search hit ("investigate this file") or a whole workspace. */
@@ -25,6 +27,7 @@ export function newMissionLink(draft: Partial<MissionDraft>): string {
   if (draft.objective) parts.push(`objective=${encodeURIComponent(draft.objective)}`);
   if (draft.documents?.length) parts.push(`documents=${draft.documents.map(encodeURIComponent).join(",")}`);
   if (draft.workspace) parts.push(`workspace=${encodeURIComponent(draft.workspace)}`);
+  if (draft.caseId) parts.push(`case=${encodeURIComponent(draft.caseId)}`);
   return `#/new${parts.length ? `?${parts.join("&")}` : ""}`;
 }
 
@@ -40,6 +43,7 @@ export function draftFromHash(hash: string): Partial<MissionDraft> {
     if (names.length) draft.documents = names;
   }
   if (query.workspace && validWorkspace(query.workspace)) draft.workspace = query.workspace;
+  if (query.case && /^CASE-\d{4}-\d{5,}$/.test(query.case)) draft.caseId = query.case;
   return draft;
 }
 

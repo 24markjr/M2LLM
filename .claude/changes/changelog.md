@@ -5,6 +5,35 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-07 - Phase 44: cases and the professional hierarchy
+
+### Added
+
+- **Cases** (`CASE-2026-00001`): title, description, severity, status, owner, mode. A case holds its
+  investigations (with the outcome each reached, kept across restarts) and its evidence (an item can
+  be in several cases); every counter is computed from what it holds, including evidence that failed
+  integrity. Migration `a44c0de50001`
+- **Filing follows the work:** a mission started in a case files itself and the evidence it read; an
+  upload with `?case=` files its item; existing items can be filed. An open case becomes
+  INVESTIGATING when its first investigation starts; a closed case refuses new ones (409)
+- `/api/v1/cases` (open, list, detail, update, file evidence); `case_id` on missions
+- **Cases are the home page**: open a case, see what each holds; a case page with its investigations,
+  evidence (with integrity), status and severity, "New investigation in this case" and "Add files to
+  this case". Every mission in a case links back to it; the flat list moved to `#/missions`
+- **The Professional view** (the mission page's default): the investigation as plain steps
+  ("Cross-checked the sources against each other"), tasks the loop added marked as such, and the
+  current conclusion - only what passed verification. The technical trace is one click away.
+  Step labels come from the engine, one per task type in three tenses (`TaskNode.label`)
+
+### Verified
+
+- 15 unit tests (numbering, closing and reopening, filing by upload, mission and request, a missing
+  or closed case refused, counters computed, labels for every task type), 1 Postgres test in a
+  rolled-back transaction (0 rows left), 4 Vitest; migration round-trip; full suite 1070 passed with
+  Docker up; mypy, ruff, tsc, build
+
+---
+
 ## 2026-10-07 - Phase 43: the Evidence Locker and chain of custody
 
 ### Added

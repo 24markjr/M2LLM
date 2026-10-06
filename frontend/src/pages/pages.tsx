@@ -9,7 +9,7 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 
 import { ApiError, api } from "../api/client";
-import type { MissionDetail, MissionSummary, RecordingSummary } from "../api/types";
+import type { MissionDetail, MissionSummary, RecordingSummary, TaskNode } from "../api/types";
 import {
   EventTimeline,
   ExecutionStats,
@@ -25,6 +25,7 @@ import { SPEEDS, useReplay } from "../hooks/useReplay";
 import { DocumentPicker } from "../components/DocumentPicker";
 import { documentsLink, validWorkspace } from "../components/workspaces";
 import { evidenceLink } from "../components/evidence";
+import { STEP_MARK, caseLink, conclusion, stepsFrom } from "../components/cases";
 import type { MissionDraft } from "../components/workspaces";
 import { EvaluationDashboard } from "../components/evaluation";
 
@@ -148,7 +149,7 @@ export function NewMission({
     setError("");
     const name = `mission-brief-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "")}.txt`;
     api
-      .uploadDocuments([new File([text], name, { type: "text/plain" })], workspace || undefined)
+      .uploadDocuments([new File([text], name, { type: "text/plain" })], workspace || undefined, draft.caseId || undefined)
       .then((results) => {
         const added = results.filter((r) => r.has_text).map((r) => r.name);
         setDocuments((current) => [...current, ...added.filter((n) => !current.includes(n))]);
@@ -162,7 +163,7 @@ export function NewMission({
     setBusy(true);
     setError("");
     api
-      .createMission(objective.trim(), documents, workspace || undefined)
+      .createMission(objective.trim(), documents, workspace || undefined, draft.caseId || undefined)
       .then(onStarted)
       .catch((exc: unknown) => {
         // Codes, not prose. Each of these is a distinct thing for the user to do next.
@@ -188,7 +189,14 @@ export function NewMission({
       {error ? <div className="notice error">{error}</div> : null}
 
       <div className="panel">
-        <h2>New mission</h2>
+        <h2>
+          New {draft.caseId ? "investigation" : "mission"}
+          {draft.caseId ? (
+            <span className="count">
+              in <a href={caseLink(draft.caseId)}>{draft.caseId}</a>
+            </span>
+          ) : null}
+        </h2>
         <div className="panel-body">
           <div className="field">
             <label htmlFor="objective">Objective</label>
@@ -228,6 +236,7 @@ export function NewMission({
               selected={documents}
               onChange={setDocuments}
               workspace={workspace || undefined}
+              caseId={draft.caseId || undefined}
             />
             <div className="hint">
               Word, Excel, CSV, PDF, text, subtitles, images and video. Every line is citable;
@@ -287,7 +296,13 @@ export function MissionDetailPage({ runId, onBack }: { runId: string; onBack: ()
   return (
     <>
       <div className="row" style={{ marginBottom: 20 }}>
-        <button onClick={onBack}>&larr; Missions</button>
+        {mission?.case_id ? (
+          <a className="button" href={caseLink(mission.case_id)}>
+            &larr; {mission.case_id}
+          </a>
+        ) : (
+          <button onClick={onBack}>&larr; Missions</button>
+        )}
         <span className="spacer" />
         {mission && (mission.knowledge_store || !done) ? (
           <a className="button" href={`#/mission/${runId}/graph`}>
@@ -328,6 +343,7 @@ export function isFinished(mission: MissionDetail | null): boolean {
 export function MissionViewPanels({ view }: { view: MissionView }) {
   const { mission } = view;
   const done = isFinished(mission);
+  const [technical, setTechnical] = useState(readTechnical);
 
   return (
     <>
@@ -427,12 +443,24 @@ export function MissionViewPanels({ view }: { view: MissionView }) {
           ) : null}
 
           <PhaseTracker stage={view.liveStage ?? mission.stage} done={done} />
-          <TaskGraph graph={view.tasks} />
-          <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} />
-          <Gaps gaps={view.gaps} />
-          <Report report={view.report} />
-          <ExecutionStats report={view.report} />
-          <EventTimeline events={view.events} />
+          <ViewSwitch technical={technical} onChange={setTechnical} />
+          {technical ? (
+            <>
+              <TaskGraph graph={view.tasks} />
+              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} />
+              <Gaps gaps={view.gaps} />
+              <Report report={view.report} />
+              <ExecutionStats report={view.report} />
+              <EventTimeline events={view.events} />
+            </>
+          ) : (
+            <>
+              <Steps nodes={view.tasks?.nodes ?? []} />
+              <Conclusion lines={conclusion(view.findings, done)} />
+              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} />
+              <Report report={view.report} />
+            </>
+          )}
         </>
       ) : (
         <div className="panel">
@@ -440,6 +468,97 @@ export function MissionViewPanels({ view }: { view: MissionView }) {
         </div>
       )}
     </>
+  );
+}
+
+// --- the Professional view (Phase 44) -------------------------------------------------------------
+
+const VIEW_KEY = "jarvis.missionView";
+
+function readTechnical(): boolean {
+  try {
+    return window.localStorage.getItem(VIEW_KEY) === "technical";
+  } catch {
+    return false;
+  }
+}
+
+/** Professional (what a person follows) or the technical trace (what an engineer debugs). */
+function ViewSwitch({ technical, onChange }: { technical: boolean; onChange: (technical: boolean) => void }) {
+  const pick = (value: boolean) => {
+    onChange(value);
+    try {
+      window.localStorage.setItem(VIEW_KEY, value ? "technical" : "professional");
+    } catch {
+      // A remembered preference is a convenience; without storage the default holds.
+    }
+  };
+  return (
+    <div className="row view-switch" role="group" aria-label="View">
+      <button className={technical ? "" : "primary"} onClick={() => pick(false)} aria-pressed={!technical}>
+        Professional view
+      </button>
+      <button className={technical ? "primary" : ""} onClick={() => pick(true)} aria-pressed={technical}>
+        Technical trace
+      </button>
+      <span className="dim">
+        {technical
+          ? "Task graph, routing, events and timings, as the engine recorded them."
+          : "The investigation in plain steps. Every detail is under Technical trace."}
+      </span>
+    </div>
+  );
+}
+
+function Steps({ nodes }: { nodes: TaskNode[] }) {
+  const steps = stepsFrom(nodes);
+  if (!steps.length) return null;
+  return (
+    <div className="panel">
+      <h2>
+        Investigation steps{" "}
+        <span className="count">
+          {steps.filter((s) => s.state === "done").length} of {steps.length} done
+        </span>
+      </h2>
+      <div className="panel-body">
+        <ol className="steps">
+          {steps.map((step) => (
+            <li key={step.id} className={`step ${step.state}`}>
+              <span className="mark" aria-hidden="true">
+                {STEP_MARK[step.state]}
+              </span>{" "}
+              {step.label}
+              {step.added ? (
+                <span className="badge" title="Added by JARVIS when the evidence called for more work">
+                  added while investigating
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  );
+}
+
+function Conclusion({ lines }: { lines: string[] }) {
+  if (!lines.length) return null;
+  return (
+    <div className="panel">
+      <h2>Current conclusion</h2>
+      <div className="panel-body">
+        <ul className="conclusion">
+          {lines.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+        <div className="hint">
+          Only findings that passed independent verification are stated here; each one, with its evidence, is
+          below.
+        </div>
+      </div>
+    </div>
   );
 }
 

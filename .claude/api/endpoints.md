@@ -43,10 +43,13 @@ kept current while the run proceeds.
 | GET | `/api/v1/missions/{id}/report.md` | The same report as Markdown |
 | POST | `/api/v1/missions/{id}/cancel` | `202`; cancellation is cooperative |
 | GET | `/api/v1/missions/{id}/stream` | SSE. See [ADR-008](../decisions/ADR-008-sse-over-websocket.md) |
-| POST | `/api/v1/documents` | Multipart upload; returns the **parse result**, not an ack. `?workspace=` (default `default`): each file with text is ingested there for search by meaning (`ingested`, Phase 40) |
+| POST | `/api/v1/documents` | `?case=` files each upload in that case (Phase 44). Multipart upload; returns the **parse result**, not an ack. `?workspace=` (default `default`): each file with text is ingested there for search by meaning (`ingested`, Phase 40) |
 | POST | `/api/v1/context/ingest` | `{workspace_id, documents}`: chunk, embed and store; `unchanged` when the text's hash is the same; `skipped` names files that could not be read; 503 `CONTEXT_UNAVAILABLE` (Phase 40) |
 | POST | `/api/v1/context/retrieve` | `{workspace_id, query, k, min_score, documents}`: passages by meaning, each a citation with its score, and the `store` that answered (Phase 40) |
 | GET | `/api/v1/context/workspaces` | Workspace names, `default` always |
+| POST · GET | `/api/v1/cases` | Open a case (`CASE-2026-00001`, owner from `X-Jarvis-User`); list cases with computed counters and the store (`postgres` or `memory`) (Phase 44) |
+| GET · PATCH | `/api/v1/cases/{id}` | A case with its counters, investigations (with outcomes) and evidence items; change title, description, severity, status (CLOSED records when), owner |
+| POST | `/api/v1/cases/{id}/evidence` | File existing evidence items in a case; returns how many were new to it |
 | GET | `/api/v1/evidence` | The Evidence Locker: every item, its integrity and how many findings cite it, and the locker (`postgres` or `memory`); uploads that predate the locker are registered (IMPORTED) (Phase 43) |
 | GET | `/api/v1/evidence/{id}` | An item, its full custody (append-only), the findings that cited it, and other versions under its name |
 | GET | `/api/v1/evidence/{id}/custody` · `/findings` | The chain alone; the citing findings alone |

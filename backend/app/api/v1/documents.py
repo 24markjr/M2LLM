@@ -24,6 +24,7 @@ from fastapi import APIRouter, Header, Query, UploadFile, status
 from pydantic import Field
 
 from app.api.errors import ApiError
+from app.cases.service import file_evidence
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.evidence import service as evidence
@@ -105,6 +106,7 @@ async def upload_documents(
     files: list[UploadFile],
     workspace: str = Query(default=DEFAULT_WORKSPACE, pattern=r"^[A-Za-z0-9_-]{1,64}$"),
     actor: str = Header(default="console", alias="X-Jarvis-User", max_length=128),
+    case: str | None = Query(default=None, pattern=r"^CASE-\d{4}-\d{5,}$"),
 ) -> list[UploadedDocument]:
     """Store uploads and report what each one parsed as.
 
@@ -140,6 +142,8 @@ async def upload_documents(
         # Into the Evidence Locker before anything reads it (Phase 43): the original is stored under
         # its hash, and acquired, hashed and stored are the first links of its custody.
         evidence_id, locker = await _acquire(path, name, actor)
+        if case and evidence_id:
+            await file_evidence(case, [evidence_id], actor=actor)  # filed in its case (Phase 44)
 
         # Understand an image, scan, video or audio file now (Phase 39), so the response says what
         # was read, seen and heard and a mission using it later waits for nothing.

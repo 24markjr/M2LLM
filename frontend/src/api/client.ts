@@ -30,6 +30,7 @@ import type { ClaimComparison, ClaimConflict, EntityInvestigation, SearchHit, Ti
 import type { FormatSpec, StoredDocument, UploadedDocument } from "./types";
 import type { RetrieveResponse, WorkspaceView } from "./types";
 import type { EvidenceDetail, EvidenceItem, EvidenceList, IntegrityCheck } from "./types";
+import type { Case, CaseDetail, CaseList, CaseSeverity, CaseStatus } from "./types";
 
 const BASE = "/api/v1";
 
@@ -85,12 +86,15 @@ export const api = {
     request<{ status: string; model: string; provider_healthy: boolean }>("/health"),
 
   /** `workspaceId` (Phase 40): the mission's documents are ingested there and searched by meaning. */
-  createMission: (objective: string, documents: string[], workspaceId?: string) =>
+  createMission: (objective: string, documents: string[], workspaceId?: string, caseId?: string) =>
     request<MissionDetail>(`${BASE}/missions`, {
       method: "POST",
-      body: JSON.stringify(
-        workspaceId ? { objective, documents, workspace_id: workspaceId } : { objective, documents },
-      ),
+      body: JSON.stringify({
+        objective,
+        documents,
+        ...(workspaceId ? { workspace_id: workspaceId } : {}),
+        ...(caseId ? { case_id: caseId } : {}),
+      }),
     }),
 
   listMissions: () => request<MissionSummary[]>(`${BASE}/missions`),
@@ -182,12 +186,29 @@ export const api = {
 
   listUploads: () => request<StoredDocument[]>(`${BASE}/documents`),
 
-  uploadDocuments: (files: File[], workspace?: string) => {
+  uploadDocuments: (files: File[], workspace?: string, caseId?: string) => {
     const form = new FormData();
     for (const file of files) form.append("files", file, file.name);
-    const query = workspace ? `?workspace=${encodeURIComponent(workspace)}` : "";
+    const params = [
+      workspace ? `workspace=${encodeURIComponent(workspace)}` : "",
+      caseId ? `case=${encodeURIComponent(caseId)}` : "",
+    ].filter(Boolean);
+    const query = params.length ? `?${params.join("&")}` : "";
     return request<UploadedDocument[]>(`${BASE}/documents${query}`, { method: "POST", body: form });
   },
+
+  // --- cases (Phase 44) ---
+  listCases: () => request<CaseList>(`${BASE}/cases`),
+
+  openCase: (body: { title: string; description?: string; severity?: CaseSeverity }) =>
+    request<Case>(`${BASE}/cases`, { method: "POST", body: JSON.stringify(body) }),
+
+  getCase: (caseId: string) => request<CaseDetail>(`${BASE}/cases/${caseId}`),
+
+  updateCase: (
+    caseId: string,
+    body: { title?: string; description?: string; severity?: CaseSeverity; status?: CaseStatus; owner?: string },
+  ) => request<Case>(`${BASE}/cases/${caseId}`, { method: "PATCH", body: JSON.stringify(body) }),
 
   // --- the Evidence Locker (Phase 43) ---
   listEvidence: () => request<EvidenceList>(`${BASE}/evidence`),

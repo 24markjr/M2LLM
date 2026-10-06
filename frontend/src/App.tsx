@@ -19,6 +19,8 @@ import {
 } from "./pages/pages";
 import { MemoryPage } from "./pages/MemoryPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
+import { CasePage, CasesPage } from "./pages/CasesPage";
+import { caseIdFromHash } from "./components/cases";
 import { EvidenceItemPage, EvidenceLockerPage } from "./pages/EvidencePage";
 import { evidenceIdFromHash } from "./components/evidence";
 import { draftFromHash } from "./components/workspaces";
@@ -29,6 +31,8 @@ const KnowledgeExplorer = lazy(() => import("./components/graph3d/KnowledgeExplo
 const AnalyzePage = lazy(() => import("./components/graph3d/AnalyzePage"));
 
 type Route =
+  | { name: "cases" }
+  | { name: "case"; caseId: string }
   | { name: "list" }
   | { name: "new"; key: string }
   | { name: "documents"; workspace: string }
@@ -59,7 +63,10 @@ function parse(full: string): Route {
   if (hash === "#/documents") return { name: "documents", workspace: query.workspace ?? "default" };
   if (hash === "#/replay") return { name: "replay" };
   if (hash === "#/evaluation") return { name: "evaluation" };
-  return { name: "list" };
+  // Cases are the home page (Phase 44); the flat list of every investigation is `#/missions`.
+  if (caseIdFromHash(hash)) return { name: "case", caseId: caseIdFromHash(hash) };
+  if (hash === "#/missions") return { name: "list" };
+  return { name: "cases" };
 }
 
 export default function App() {
@@ -91,7 +98,10 @@ export default function App() {
           JARVIS<span>//</span>MISSION CONTROL
         </div>
         <nav className="nav">
-          <a className={route.name === "list" ? "on" : ""} href="#/">
+          <a className={route.name === "cases" || route.name === "case" ? "on" : ""} href="#/">
+            Cases
+          </a>
+          <a className={route.name === "list" ? "on" : ""} href="#/missions">
             Missions
           </a>
           <a className={route.name === "replay" ? "on" : ""} href="#/replay">
@@ -131,6 +141,9 @@ export default function App() {
         </div>
       ) : null}
 
+      {route.name === "cases" ? <CasesPage /> : null}
+      {route.name === "case" ? <CasePage key={route.caseId} caseId={route.caseId} /> : null}
+
       {route.name === "list" ? (
         <MissionList
           onOpen={(runId) => go(`#/mission/${runId}`)}
@@ -148,7 +161,7 @@ export default function App() {
       ) : null}
 
       {route.name === "mission" ? (
-        <MissionDetailPage runId={route.runId} onBack={() => go("#/")} />
+        <MissionDetailPage runId={route.runId} onBack={() => go("#/missions")} />
       ) : null}
 
       {route.name === "replay" ? <ReplayPage onBack={() => go("#/")} /> : null}

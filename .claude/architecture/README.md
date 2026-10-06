@@ -22,6 +22,7 @@ code is a guess, and one written after the code is a record.
 | `media.md` | Images, scans, video and audio: read (OCR), seen (vision model, weaker evidence), heard (speech) | 39 |
 | `retrieval.md` | Stored, workspace-scoped retrieval: pgvector or memory, two chunkers, hits cited at their closest line | 40 |
 | `evidence-locker.md` | Every input an evidence item: content-addressed originals, append-only custody, integrity before every mission | 43 |
+| `cases.md` | Cases holding investigations and evidence; counters computed; the Professional view and plain step labels | 44 |
 
 ## What belongs in an architecture document
 

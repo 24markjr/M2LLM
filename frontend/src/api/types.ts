@@ -58,6 +58,8 @@ export interface MissionSummary {
   finding_count: number;
   verified_count: number;
   unresolved_gap_count: number;
+  /** The case the investigation belongs to (Phase 44); "" or absent outside any case. */
+  case_id?: string;
 }
 
 export interface MissionDetail extends MissionSummary {
@@ -104,6 +106,8 @@ export interface TaskNode {
   tool_id: string;
   /** The replanning loop inserted this task; the planner did not. */
   inserted_by_replan: boolean;
+  /** The step in plain language, in the tense of its status (Phase 44). Absent in older recordings. */
+  label?: string;
 }
 
 export interface TaskGraphResponse {
@@ -723,4 +727,59 @@ export interface IntegrityCheck {
   stored: string | null;
   working: string | null;
   reason: string;
+}
+
+// --- cases (Phase 44) ---
+
+export type CaseSeverity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+export type CaseStatus = "OPEN" | "INVESTIGATING" | "REVIEW" | "CLOSED";
+
+export interface Case {
+  case_id: string;
+  title: string;
+  description: string;
+  severity: CaseSeverity;
+  status: CaseStatus;
+  owner: string;
+  mode: "GENERAL" | "CYBER";
+  opened_at: string;
+  closed_at: string | null;
+}
+
+export interface CaseCounters {
+  investigations: number;
+  running: number;
+  evidence: number;
+  failed_integrity: number;
+  findings: number;
+  verified: number;
+  contradictions: number;
+  open_gaps: number;
+}
+
+export interface CaseInvestigation {
+  case_id: string;
+  run_id: string;
+  objective: string;
+  status: string;
+  findings: number;
+  verified: number;
+  contradictions: number;
+  open_gaps: number;
+  created_at: string;
+  finished_at: string | null;
+}
+
+export interface CaseList {
+  /** `postgres`, or `memory` when the database is down: cases then are not durable. */
+  store: string;
+  cases: { case: Case; counters: CaseCounters }[];
+}
+
+export interface CaseDetail {
+  store: string;
+  case: Case;
+  counters: CaseCounters;
+  investigations: CaseInvestigation[];
+  evidence: { item: EvidenceItem; added_at: string; added_by: string }[];
 }

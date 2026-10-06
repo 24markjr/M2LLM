@@ -26,6 +26,8 @@ class CreateMissionRequest(JarvisModel):
     # The workspace whose stored retrieval the mission searches (Phase 40). The mission's documents
     # are ingested into it first. Absent: no stored retrieval, recall is lexical as before.
     workspace_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{1,64}$")
+    # The case the investigation belongs to (Phase 44). Its documents are filed in the case too.
+    case_id: str | None = Field(default=None, pattern=r"^CASE-\d{4}-\d{5,}$")
 
 
 class MissionSummary(JarvisModel):
@@ -42,6 +44,8 @@ class MissionSummary(JarvisModel):
     finding_count: int = 0
     verified_count: int = 0
     unresolved_gap_count: int = 0
+    # The case this investigation belongs to (Phase 44); empty for one run outside any case.
+    case_id: str = ""
 
 
 class MissionDetail(MissionSummary):
@@ -77,6 +81,8 @@ class TaskNode(JarvisModel):
     status: TaskStatus
     depends_on: list[str] = Field(default_factory=list)
     tool_id: str = ""
+    # The step in plain language, in the tense its status calls for (Phase 44).
+    label: str = ""
     # True when the replanning loop inserted this task rather than the planner. This is the
     # adaptive behaviour made visible: without it an inserted task is indistinguishable from
     # one that was planned from the start.

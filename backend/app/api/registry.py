@@ -32,6 +32,7 @@ from app.core.logging import get_logger
 from app.database.event_sink import DatabaseEventSink
 from app.memory.service import record_run
 from app.orchestration.mission import MissionResult, MissionStatus, Stage, run_mission
+from app.schemas.case import CaseInvestigation
 from app.schemas.common import RunId, new_run_id, utcnow
 from app.schemas.event import ExecutionEvent
 from app.schemas.objective import Objective
@@ -68,6 +69,8 @@ class MissionRecord:
         # The Evidence Locker (Phase 43): name -> evidence id read, and name -> why it was left out.
         self.evidence: dict[str, str] = {}
         self.excluded: dict[str, str] = {}
+        # The case the mission belongs to (Phase 44).
+        self.case_id: str = ""
 
     def is_finished(self) -> bool:
         """Whether the run has reached a terminal status.
@@ -234,6 +237,7 @@ class MissionRegistry:
             if record.result is not None:
                 await _record_memory(record.result, record.started_at)
                 await _record_citations(record)
+            await _file_outcome(record)
 
 
 async def _capture_knowledge(record: MissionRecord) -> None:
@@ -262,6 +266,33 @@ async def _record_memory(result: MissionResult, started_at: datetime | None) -> 
         await record_run(result, started_at=started_at)
     except Exception:  # the boundary: memory must never fail a run
         log.exception("memory_record_failed", run_id=result.run_id)
+
+
+async def _file_outcome(record: MissionRecord) -> None:
+    """Record what the mission reached in its case (Phase 44), so the case keeps it after a
+    restart. Never raises."""
+    if not record.case_id:
+        return
+    from app.cases.service import file_investigation
+
+    await file_investigation(case_investigation(record))
+
+
+def case_investigation(record: MissionRecord) -> CaseInvestigation:
+    result = record.result
+    knowledge = result.knowledge if result is not None else None
+    return CaseInvestigation(
+        case_id=record.case_id,
+        run_id=record.run_id,
+        objective=record.objective.text,
+        status=record.status.value,
+        findings=len(result.findings) if result else 0,
+        verified=len(result.verified_findings) if result else 0,
+        contradictions=len(knowledge.conflicts) if knowledge else 0,
+        open_gaps=len(result.unresolved_gaps) if result else 0,
+        created_at=record.created_at,
+        finished_at=record.finished_at,
+    )
 
 
 async def _record_citations(record: MissionRecord) -> None:

@@ -1,6 +1,6 @@
 # JARVIS v2 — implementation plan, Phases 43–55
 
-**Status:** Phase 43 done (2026-10-07); Phases 44-55 planned, not started.
+**Status:** Phases 43-44 done (2026-10-07); Phases 45-55 planned, not started.
 
 **Why this plan exists.** A product review of the demo (2026-10-06) judged JARVIS a strong
 investigation engine but not yet an investigation *platform*: no cases, no evidence custody, no
@@ -75,7 +75,7 @@ read) and `excluded_documents`. Changed from the plan: integrity is checked agai
 acquired under a name (tampering fails; a changed fixture is a new version). Details:
 `architecture/evidence-locker.md`, ADR-014.
 
-### Phase 44 — Cases and the professional hierarchy (M–L)
+### Phase 44 — Cases and the professional hierarchy (M–L) — **DONE** 2026-10-07
 
 - `Case` (`CASE-2026-00001`, title, severity, status, owner, opened/closed, mode); `case_id` on runs
   and evidence; existing work moved into `CASE-LEGACY`; counters computed, never stored.
@@ -84,6 +84,11 @@ acquired under a name (tampering fails; a changed fixture is a new version). Det
   Audit); New Investigation inside a case; a **Professional view** of a run by default (plain steps,
   current conclusion) with the technical trace under Advanced.
 - **Acceptance:** a newcomer follows a run without seeing a task ID; an engineer still reaches all of it.
+
+**As built (Phase 44):** as planned, with two changes. Existing missions were not moved into a
+`CASE-LEGACY` case: they stay outside any case, listed at `#/missions`, which needed no migration of
+in-memory runs. Investigations are recorded per case with their outcome (`case_investigations`), so a
+case survives a restart. Details: `architecture/cases.md`.
 
 ### Phase 45 — Statement types and source authority (M)
 
