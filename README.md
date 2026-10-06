@@ -172,6 +172,10 @@ one to light up everything related, click a finding to light up the evidence it 
 pasted context, and optionally a workspace to search by meaning. Each file says what it parsed as
 before the mission starts.
 
+`#/evidence` is the Evidence Locker: every file as an item identified by its SHA-256, with its
+chain of custody (acquired, read, analysed, cited), an integrity check, and the findings that rest on
+it. Every citation in a finding links there.
+
 The other pages: `#/documents` (workspaces: files with their parser, hash and chunks, and search by
 meaning, every hit starting an investigation), `#/memory` (findings and entities across past
 missions, with Docker up), `#/knowledge` (a knowledge graph from documents, no mission), `#/replay`
@@ -392,6 +396,8 @@ These are not aspirations. Each one has a test that fails if it is violated — 
 9. **Memory never feeds a run.** No module a mission executes may import `app.memory`.
 10. **Optional infrastructure never fails a run.** Postgres, Neo4j and memory each degrade to
     "not stored", contained and logged.
+11. **Custody is append-only.** A database trigger refuses to update, delete or truncate the chain
+    of custody, and only the evidence store writes the evidence folder (Phase 43).
 
 ### Two configuration surfaces
 

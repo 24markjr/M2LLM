@@ -24,6 +24,7 @@ import { useMission, useMissionList } from "../hooks/useMission";
 import { SPEEDS, useReplay } from "../hooks/useReplay";
 import { DocumentPicker } from "../components/DocumentPicker";
 import { documentsLink, validWorkspace } from "../components/workspaces";
+import { evidenceLink } from "../components/evidence";
 import type { MissionDraft } from "../components/workspaces";
 import { EvaluationDashboard } from "../components/evaluation";
 
@@ -392,6 +393,30 @@ export function MissionViewPanels({ view }: { view: MissionView }) {
             </div>
           ) : null}
 
+          {/* The Evidence Locker (Phase 43): what the mission read, and what it left out. */}
+          {Object.keys(mission.excluded_documents ?? {}).length > 0 ? (
+            <div className="notice error">
+              <strong>Left out: failed integrity.</strong>
+              <ul>
+                {Object.entries(mission.excluded_documents ?? {}).map(([name, reason]) => (
+                  <li key={name}>
+                    <span className="mono">{name}</span> - {reason}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {Object.keys(mission.evidence ?? {}).length > 0 ? (
+            <div className="row evidence-read">
+              <span className="dim">Evidence read:</span>
+              {Object.entries(mission.evidence ?? {}).map(([name, id]) => (
+                <a key={id} className="mono" href={evidenceLink(id)} title={name}>
+                  {id} <span className="dim">{name}</span>
+                </a>
+              ))}
+            </div>
+          ) : null}
+
           {mission.status === "FAILED" ? (
             <div className="notice error">
               <strong>
@@ -403,7 +428,7 @@ export function MissionViewPanels({ view }: { view: MissionView }) {
 
           <PhaseTracker stage={view.liveStage ?? mission.stage} done={done} />
           <TaskGraph graph={view.tasks} />
-          <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} />
+          <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} />
           <Gaps gaps={view.gaps} />
           <Report report={view.report} />
           <ExecutionStats report={view.report} />

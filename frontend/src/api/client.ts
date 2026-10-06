@@ -29,6 +29,7 @@ import type { EntityMemory, Episode, Fact, InvestigationMemory, MemoryStatus } f
 import type { ClaimComparison, ClaimConflict, EntityInvestigation, SearchHit, TimelineEvent } from "./types";
 import type { FormatSpec, StoredDocument, UploadedDocument } from "./types";
 import type { RetrieveResponse, WorkspaceView } from "./types";
+import type { EvidenceDetail, EvidenceItem, EvidenceList, IntegrityCheck } from "./types";
 
 const BASE = "/api/v1";
 
@@ -187,6 +188,19 @@ export const api = {
     const query = workspace ? `?workspace=${encodeURIComponent(workspace)}` : "";
     return request<UploadedDocument[]>(`${BASE}/documents${query}`, { method: "POST", body: form });
   },
+
+  // --- the Evidence Locker (Phase 43) ---
+  listEvidence: () => request<EvidenceList>(`${BASE}/evidence`),
+
+  getEvidence: (evidenceId: string) => request<EvidenceDetail>(`${BASE}/evidence/${evidenceId}`),
+
+  verifyEvidence: (evidenceId: string) =>
+    request<IntegrityCheck>(`${BASE}/evidence/${evidenceId}/verify`, { method: "POST" }),
+
+  updateEvidence: (evidenceId: string, body: { classification?: string; source?: string }) =>
+    request<EvidenceItem>(`${BASE}/evidence/${evidenceId}`, { method: "PATCH", body: JSON.stringify(body) }),
+
+  evidenceDownloadUrl: (evidenceId: string) => `${BASE}/evidence/${evidenceId}/download`,
 
   // --- stored retrieval (Phase 40) ---
   listWorkspaces: () => request<string[]>(`${BASE}/context/workspaces`),

@@ -74,7 +74,7 @@ export function DocumentPicker({
           next[r.name] = {
             name: r.name,
             kind: r.kind,
-            detail: `${sizeLabel(r.bytes)} · ${r.understood || r.summary}`,
+            detail: [r.evidence_id, sizeLabel(r.bytes), r.understood || r.summary].filter(Boolean).join(" · "),
             injection: Object.keys(r.injection.hits).length > 0,
           };
         }
@@ -238,5 +238,12 @@ export function DocumentPicker({
 
 function earlierInfo(earlier: StoredDocument[], name: string): Attached | null {
   const doc = earlier.find((e) => e.name === name);
-  return doc ? { name, kind: doc.kind, detail: sizeLabel(doc.bytes), injection: false } : null;
+  return doc
+    ? {
+        name,
+        kind: doc.kind,
+        detail: [doc.evidence_id, sizeLabel(doc.bytes)].filter(Boolean).join(" · "),
+        injection: false,
+      }
+    : null;
 }

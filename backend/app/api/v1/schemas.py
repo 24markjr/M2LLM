@@ -64,6 +64,10 @@ class MissionDetail(MissionSummary):
     knowledge_entities: int = 0
     knowledge_claims: int = 0
     knowledge_conflicts: int = 0
+    # The Evidence Locker (Phase 43): document name to the evidence item the mission read, and the
+    # documents left out because they failed their integrity check, with the reason.
+    evidence: dict[str, str] = Field(default_factory=dict)
+    excluded_documents: dict[str, str] = Field(default_factory=dict)
 
 
 class TaskNode(JarvisModel):

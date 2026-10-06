@@ -32,6 +32,8 @@ frontend/.vite/
 .agent/uploads/
 # What images, scans, video and audio were understood to contain (Phase 39): derived from them.
 .agent/media-cache/
+# The Evidence Locker's stored originals (Phase 43): evidence, not source code.
+.agent/evidence/
 
 # --- Editors / OS ---
 .idea/

@@ -383,6 +383,66 @@
         "title": "CreateMissionRequest",
         "type": "object"
       },
+      "CustodyAction": {
+        "description": "What can happen to evidence. A closed vocabulary, like every other in the system.",
+        "enum": [
+          "ACQUIRED",
+          "HASHED",
+          "STORED",
+          "IMPORTED",
+          "PARSED",
+          "PARSE_FAILED",
+          "UNDERSTOOD",
+          "INDEXED",
+          "ANALYSED",
+          "CITED",
+          "REPORTED",
+          "VERIFIED",
+          "INTEGRITY_FAILED",
+          "METADATA_CHANGED"
+        ],
+        "title": "CustodyAction",
+        "type": "string"
+      },
+      "CustodyEvent": {
+        "additionalProperties": false,
+        "description": "One link in the chain. Never updated, never deleted.",
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/CustodyAction"
+          },
+          "actor": {
+            "default": "system",
+            "title": "Actor",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "event_id": {
+            "default": 0,
+            "title": "Event Id",
+            "type": "integer"
+          },
+          "evidence_id": {
+            "title": "Evidence Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evidence_id",
+          "action"
+        ],
+        "title": "CustodyEvent",
+        "type": "object"
+      },
       "EntityInvestigation": {
         "additionalProperties": false,
         "description": "Everything known about one entity, in one response.\n\nThe original `/investigation/{name}` endpoint, which its README called the main one.",
@@ -627,6 +687,92 @@
         "title": "EventRecord",
         "type": "object"
       },
+      "EvidenceCitation": {
+        "additionalProperties": false,
+        "description": "A finding that cited this evidence, from its CITED custody event.",
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "claim": {
+            "default": "",
+            "title": "Claim",
+            "type": "string"
+          },
+          "finding_id": {
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "locator": {
+            "title": "Locator",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "finding_id",
+          "locator",
+          "at"
+        ],
+        "title": "EvidenceCitation",
+        "type": "object"
+      },
+      "EvidenceClassification": {
+        "description": "Handling sensitivity, set by a person. Enforced by access control in Phase 55.",
+        "enum": [
+          "UNCLASSIFIED",
+          "INTERNAL",
+          "CONFIDENTIAL",
+          "RESTRICTED"
+        ],
+        "title": "EvidenceClassification",
+        "type": "string"
+      },
+      "EvidenceDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceCitation"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "custody": {
+            "items": {
+              "$ref": "#/components/schemas/CustodyEvent"
+            },
+            "title": "Custody",
+            "type": "array"
+          },
+          "item": {
+            "$ref": "#/components/schemas/EvidenceItem"
+          },
+          "locker": {
+            "title": "Locker",
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceItem"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "locker",
+          "item"
+        ],
+        "title": "EvidenceDetail",
+        "type": "object"
+      },
       "EvidenceGap": {
         "additionalProperties": false,
         "description": "A specific missing piece of support, and what would close it.\n\n`missing` is written for a human to read: it appears in the UI and in the report's\nLimitations section. A gap that says \"more evidence needed\" has failed at its job.",
@@ -704,6 +850,120 @@
         "title": "EvidenceGap",
         "type": "object"
       },
+      "EvidenceItem": {
+        "additionalProperties": false,
+        "properties": {
+          "bytes": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/EvidenceClassification",
+            "default": "UNCLASSIFIED"
+          },
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "collected_by": {
+            "default": "unknown",
+            "title": "Collected By",
+            "type": "string"
+          },
+          "evidence_id": {
+            "pattern": "^EV-\\d{6,}$",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "integrity": {
+            "$ref": "#/components/schemas/IntegrityStatus",
+            "default": "UNCHECKED"
+          },
+          "integrity_checked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Integrity Checked At"
+          },
+          "kind": {
+            "default": "",
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "parser": {
+            "default": "",
+            "title": "Parser",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          },
+          "source": {
+            "default": "",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evidence_id",
+          "sha256",
+          "name"
+        ],
+        "title": "EvidenceItem",
+        "type": "object"
+      },
+      "EvidenceList": {
+        "additionalProperties": false,
+        "properties": {
+          "imported": {
+            "default": 0,
+            "title": "Imported",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "locker": {
+            "title": "Locker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "locker"
+        ],
+        "title": "EvidenceList",
+        "type": "object"
+      },
       "EvidenceRef": {
         "additionalProperties": false,
         "description": "A pointer from a claim to a source location.\n\nProduced when a claim is made. Resolution happens afterwards, in the binder (Phase 13) \u2014\nwhich is precisely why `resolution` defaults to `UNRESOLVED`: nothing counts as resolved\nuntil something has checked it.",
@@ -737,6 +997,53 @@
           "locator"
         ],
         "title": "EvidenceRef",
+        "type": "object"
+      },
+      "EvidenceSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "citations": {
+            "default": 0,
+            "title": "Citations",
+            "type": "integer"
+          },
+          "item": {
+            "$ref": "#/components/schemas/EvidenceItem"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "title": "EvidenceSummary",
+        "type": "object"
+      },
+      "EvidenceUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "classification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidenceClassification"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          }
+        },
+        "title": "EvidenceUpdate",
         "type": "object"
       },
       "ExecutionSummary": {
@@ -1632,6 +1939,65 @@
         "title": "InjectionSeverity",
         "type": "string"
       },
+      "IntegrityCheck": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_id": {
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "expected": {
+            "title": "Expected",
+            "type": "string"
+          },
+          "integrity": {
+            "$ref": "#/components/schemas/IntegrityStatus"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          },
+          "stored": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stored"
+          },
+          "working": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Working"
+          }
+        },
+        "required": [
+          "evidence_id",
+          "integrity",
+          "expected"
+        ],
+        "title": "IntegrityCheck",
+        "type": "object"
+      },
+      "IntegrityStatus": {
+        "enum": [
+          "VERIFIED",
+          "FAILED",
+          "UNCHECKED"
+        ],
+        "title": "IntegrityStatus",
+        "type": "string"
+      },
       "InvestigationMemory": {
         "additionalProperties": false,
         "properties": {
@@ -2130,6 +2496,20 @@
             "default": "",
             "title": "Error Message",
             "type": "string"
+          },
+          "evidence": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Evidence",
+            "type": "object"
+          },
+          "excluded_documents": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Excluded Documents",
+            "type": "object"
           },
           "finding_count": {
             "default": 0,
@@ -3139,8 +3519,18 @@
             "title": "Bytes",
             "type": "integer"
           },
+          "custody": {
+            "default": "",
+            "title": "Custody",
+            "type": "string"
+          },
           "document_id": {
             "title": "Document Id",
+            "type": "string"
+          },
+          "evidence_id": {
+            "default": "",
+            "title": "Evidence Id",
             "type": "string"
           },
           "has_text": {
@@ -3469,6 +3859,11 @@
             "title": "Bytes",
             "type": "integer"
           },
+          "evidence_id": {
+            "default": "",
+            "title": "Evidence Id",
+            "type": "string"
+          },
           "kind": {
             "title": "Kind",
             "type": "string"
@@ -3738,6 +4133,17 @@
               "title": "Workspace",
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3857,6 +4263,387 @@
         "summary": "Get Evaluation Reports",
         "tags": [
           "replay"
+        ]
+      }
+    },
+    "/api/v1/evidence": {
+      "get": {
+        "description": "Every evidence item, newest first. Uploads that predate the locker are registered here.",
+        "operationId": "list_evidence_api_v1_evidence_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Evidence",
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/api/v1/evidence/by-name/{name}": {
+      "get": {
+        "description": "The current item for a document name: the version a new mission naming it would read.",
+        "operationId": "evidence_by_name_api_v1_evidence_by_name__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceItem"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evidence By Name",
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/api/v1/evidence/{evidence_id}": {
+      "get": {
+        "operationId": "get_evidence_api_v1_evidence__evidence_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "evidence_id",
+            "required": true,
+            "schema": {
+              "title": "Evidence Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Evidence",
+        "tags": [
+          "evidence"
+        ]
+      },
+      "patch": {
+        "description": "Change what a person decides about an item. Recorded as METADATA_CHANGED, old and new.",
+        "operationId": "update_evidence_api_v1_evidence__evidence_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "evidence_id",
+            "required": true,
+            "schema": {
+              "title": "Evidence Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvidenceUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceItem"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Evidence",
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/api/v1/evidence/{evidence_id}/custody": {
+      "get": {
+        "operationId": "get_custody_api_v1_evidence__evidence_id__custody_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "evidence_id",
+            "required": true,
+            "schema": {
+              "title": "Evidence Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CustodyEvent"
+                  },
+                  "title": "Response Get Custody Api V1 Evidence  Evidence Id  Custody Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Custody",
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/api/v1/evidence/{evidence_id}/download": {
+      "get": {
+        "description": "The stored original, byte for byte, under its original name.",
+        "operationId": "download_evidence_api_v1_evidence__evidence_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "evidence_id",
+            "required": true,
+            "schema": {
+              "title": "Evidence Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Evidence",
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/api/v1/evidence/{evidence_id}/findings": {
+      "get": {
+        "description": "The findings that cited this item, from its CITED custody events.",
+        "operationId": "get_citations_api_v1_evidence__evidence_id__findings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "evidence_id",
+            "required": true,
+            "schema": {
+              "title": "Evidence Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EvidenceCitation"
+                  },
+                  "title": "Response Get Citations Api V1 Evidence  Evidence Id  Findings Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Citations",
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/api/v1/evidence/{evidence_id}/verify": {
+      "post": {
+        "description": "Re-hash the stored original and, for the current version of a name, the working copy.",
+        "operationId": "verify_evidence_api_v1_evidence__evidence_id__verify_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "evidence_id",
+            "required": true,
+            "schema": {
+              "title": "Evidence Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrityCheck"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify Evidence",
+        "tags": [
+          "evidence"
         ]
       }
     },

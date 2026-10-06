@@ -21,6 +21,7 @@ code is a guess, and one written after the code is a record.
 | `memory.md` | Working, episodic and semantic memory across missions; why it never feeds a run | 33 |
 | `media.md` | Images, scans, video and audio: read (OCR), seen (vision model, weaker evidence), heard (speech) | 39 |
 | `retrieval.md` | Stored, workspace-scoped retrieval: pgvector or memory, two chunkers, hits cited at their closest line | 40 |
+| `evidence-locker.md` | Every input an evidence item: content-addressed originals, append-only custody, integrity before every mission | 43 |
 
 ## What belongs in an architecture document
 

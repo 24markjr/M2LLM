@@ -1,6 +1,6 @@
 # JARVIS v2 — implementation plan, Phases 43–55
 
-**Status:** planned, not started (written 2026-10-06, after Phase 42). Nothing here is built.
+**Status:** Phase 43 done (2026-10-07); Phases 44-55 planned, not started.
 
 **Why this plan exists.** A product review of the demo (2026-10-06) judged JARVIS a strong
 investigation engine but not yet an investigation *platform*: no cases, no evidence custody, no
@@ -51,7 +51,7 @@ commit, then report and pause.
 
 ## Track A — Evidence foundation (P0)
 
-### Phase 43 — Evidence Locker and chain of custody (M)
+### Phase 43 — Evidence Locker and chain of custody (M) — **DONE** 2026-10-07
 
 - `EvidenceItem` (`EV-000001`, SHA-256, original name, kind, parser, bytes, collected at/by, source
   description, classification, integrity, case) and `CustodyEvent` (ACQUIRED, HASHED, STORED, PARSED,
@@ -68,6 +68,12 @@ commit, then report and pause.
 - Tests: trigger immutability; tampering detected and excluded; the custody sequence; only the store
   writes to the evidence folder. Docs: `evidence-locker.md`, ADR-014.
 - **Acceptance:** finding → evidence → full custody → re-verified hash, in two clicks.
+
+**As built (Phase 43):** as planned, plus PARSE_FAILED and IMPORTED actions, `by-name` lookup,
+other versions on an item's page, and `MissionDetail.evidence` (the exact item each document name
+read) and `excluded_documents`. Changed from the plan: integrity is checked against the item last
+acquired under a name (tampering fails; a changed fixture is a new version). Details:
+`architecture/evidence-locker.md`, ADR-014.
 
 ### Phase 44 — Cases and the professional hierarchy (M–L)
 

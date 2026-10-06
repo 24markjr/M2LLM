@@ -15,11 +15,15 @@ the database; they create what they need and remove it.
 from __future__ import annotations
 
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 
 from app.api import persistence
 from app.core.config import GraphStoreName, get_settings
+from app.evidence import service as evidence_service
+from app.evidence import store as evidence_store
+from app.evidence.locker import MemoryEvidenceLocker
 from app.integrations import context as context_integration
 from app.integrations import graph_store
 
@@ -41,6 +45,21 @@ def _no_media_understanding_by_default(monkeypatch: pytest.MonkeyPatch) -> Itera
     provider and a temporary cache.
     """
     monkeypatch.setattr(get_settings(), "media_understanding", False)
+    yield
+
+
+@pytest.fixture(autouse=True)
+def _evidence_stays_in_the_test(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """No test writes to the real Evidence Locker (Phase 43).
+
+    Custody is append-only - in Postgres a trigger refuses to delete it - so a test that recorded
+    custody in a developer's database could never be cleaned up. Every test gets a fresh in-memory
+    locker and a temporary evidence folder; the Postgres locker's own tests construct it with a
+    transaction they roll back (tests/integration/test_evidence_locker.py).
+    """
+    monkeypatch.setattr(evidence_store, "evidence_root", lambda: tmp_path / "evidence-store")
+    monkeypatch.setattr(evidence_service, "_memory_locker", MemoryEvidenceLocker())
+    monkeypatch.setattr(evidence_service, "_database", False)
     yield
 
 

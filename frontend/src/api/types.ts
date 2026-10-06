@@ -79,6 +79,11 @@ export interface MissionDetail extends MissionSummary {
   knowledge_entities?: number;
   knowledge_claims?: number;
   knowledge_conflicts?: number;
+  /** The Evidence Locker (Phase 43): document name -> the evidence item the mission read. Optional:
+   *  recordings made before Phase 43 do not carry it. */
+  evidence?: Record<string, string>;
+  /** Documents left out because they failed their integrity check, with the reason. */
+  excluded_documents?: Record<string, string>;
 }
 
 export type InjectionSeverity = "NONE" | "MEDIUM" | "HIGH";
@@ -539,6 +544,9 @@ export interface UploadedDocument {
   ingested?: Ingested | null;
   /** Being embedded for search after the response (2026-10-06); listed by the workspace until done. */
   indexing?: boolean;
+  /** The Evidence Locker item this upload is (Phase 43), and the locker holding its custody. */
+  evidence_id?: string;
+  custody?: string;
 }
 
 // --- stored, workspace-scoped retrieval (Phase 40) ---
@@ -593,6 +601,7 @@ export interface StoredDocument {
   kind: string;
   bytes: number;
   uploaded_at: string;
+  evidence_id?: string;
 }
 
 // --- memory across investigations (Phase 33) ------------------------------------------------
@@ -653,4 +662,65 @@ export interface KnownEntity {
 export interface EntityMemory {
   entity: KnownEntity;
   facts: Fact[];
+}
+
+// --- the Evidence Locker (Phase 43) ---
+
+export type IntegrityStatus = "VERIFIED" | "FAILED" | "UNCHECKED";
+
+export interface EvidenceItem {
+  evidence_id: string;
+  sha256: string;
+  name: string;
+  kind: string;
+  parser: string;
+  bytes: number;
+  collected_at: string;
+  collected_by: string;
+  source: string;
+  classification: "UNCLASSIFIED" | "INTERNAL" | "CONFIDENTIAL" | "RESTRICTED";
+  integrity: IntegrityStatus;
+  integrity_checked_at: string | null;
+  case_id: string | null;
+}
+
+export interface CustodyEvent {
+  event_id: number;
+  evidence_id: string;
+  action: string;
+  actor: string;
+  at: string;
+  details: Record<string, unknown>;
+}
+
+export interface EvidenceCitation {
+  run_id: string;
+  finding_id: string;
+  locator: string;
+  claim: string;
+  at: string;
+}
+
+export interface EvidenceList {
+  /** `postgres`, or `memory` when the database is down: custody then is not durable. */
+  locker: string;
+  items: { item: EvidenceItem; citations: number }[];
+  imported: number;
+}
+
+export interface EvidenceDetail {
+  locker: string;
+  item: EvidenceItem;
+  custody: CustodyEvent[];
+  citations: EvidenceCitation[];
+  versions: EvidenceItem[];
+}
+
+export interface IntegrityCheck {
+  evidence_id: string;
+  integrity: IntegrityStatus;
+  expected: string;
+  stored: string | null;
+  working: string | null;
+  reason: string;
 }

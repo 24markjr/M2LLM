@@ -80,7 +80,8 @@ export function DocumentsPage({ workspace = DEFAULT_WORKSPACE }: { workspace?: s
           <div className="dim">
             Each workspace keeps its documents chunked and embedded, so they can be searched by meaning, not
             only by the words in them. Every passage found is a citation. A mission that names a workspace
-            searches it the same way.
+            searches it the same way. Every file is also an item in the{" "}
+            <a href="#/evidence">Evidence Locker</a>, with its hash and chain of custody.
             {view?.store === "memory" ? " The database is not reachable: this workspace lives in memory and is lost on restart." : ""}
           </div>
           <div className="row" style={{ marginTop: 12, flexWrap: "wrap", gap: 8 }}>

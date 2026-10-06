@@ -23,6 +23,7 @@ from typing import Any
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     DateTime,
     Float,
@@ -445,3 +446,53 @@ class MemoryFactSupport(Base):
         String(32), ForeignKey("agent_runs.id", ondelete="CASCADE"), primary_key=True
     )
     source: Mapped[str] = mapped_column(String(255), primary_key=True)
+
+
+# --- The Evidence Locker (Phase 43) ------------------------------------------------------------
+
+
+class EvidenceItemRow(Base):
+    """An evidence item: identified by the SHA-256 of its bytes, numbered `EV-000001`.
+
+    Deliberately not linked to `documents` (retrieval's table) or `evidence` (a finding's citation):
+    those are uses of evidence, and they come and go - a workspace is re-indexed, a mission is
+    forgotten - while the item and its custody stay.
+    """
+
+    __tablename__ = "evidence_items"
+
+    evidence_id: Mapped[str] = mapped_column(String(16), primary_key=True)
+    sha256: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    kind: Mapped[str] = mapped_column(String(32), default="")
+    parser: Mapped[str] = mapped_column(String(32), default="")
+    bytes: Mapped[int] = mapped_column(BigInteger, default=0)
+    collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    collected_by: Mapped[str] = mapped_column(String(128), default="unknown")
+    source: Mapped[str] = mapped_column(Text, default="")
+    classification: Mapped[str] = mapped_column(String(16), default="UNCLASSIFIED")
+    integrity: Mapped[str] = mapped_column(String(16), default="UNCHECKED")
+    integrity_checked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    case_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+
+
+class CustodyEventRow(Base):
+    """One link in an item's chain of custody.
+
+    Append-only, and not by convention: a database trigger (migration `a43e0c1d0001`) rejects every
+    UPDATE, DELETE and TRUNCATE on this table. The foreign key has no cascade, so an item with a
+    history cannot be deleted either.
+    """
+
+    __tablename__ = "custody_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    evidence_id: Mapped[str] = mapped_column(
+        String(16), ForeignKey("evidence_items.evidence_id"), nullable=False, index=True
+    )
+    action: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    actor: Mapped[str] = mapped_column(String(128), default="system")
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    details: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)

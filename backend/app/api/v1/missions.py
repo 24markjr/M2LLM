@@ -29,6 +29,7 @@ from app.api.v1.schemas import (
 )
 from app.api.v1.stream import stream_mission
 from app.core.logging import get_logger
+from app.evidence.service import admit_for_mission, record_analysed
 from app.integrations.context import workspace_retriever
 from app.intelligence.planner.engine import execution_levels
 from app.intelligence.synthesis.renderers import to_markdown
@@ -63,15 +64,21 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
 
     # Images, scans, video and audio are understood before they are read (Phase 39): once per
     # file, cached, so a file uploaded earlier costs nothing here.
-    await prepare([resolve_document(n) for n in body.documents], get_provider())
-    documents, loaded = load_by_name(body.documents)
-    missing = [name for name in body.documents if name not in documents]
+    paths = {name: resolve_document(name) for name in body.documents}
+    # Every document is evidence (Phase 43): registered on first use, and checked against its hash
+    # before the mission reads it. A file whose bytes changed is left out, and the mission says so.
+    admitted, excluded = await admit_for_mission(paths)
+    readable = [name for name in body.documents if name not in excluded]
+    await prepare([paths[n] for n in readable], get_provider())
+    documents, loaded = load_by_name(readable)
+    missing = [name for name in readable if name not in documents]
     if body.documents and not documents:
         raise ApiError(
             "NO_READABLE_DOCUMENTS",
-            "none of the attached documents could be read",
+            "none of the attached documents could be read"
+            + (" (failed integrity: " + "; ".join(excluded.values()) + ")" if excluded else ""),
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            details={"requested": body.documents},
+            details={"requested": body.documents, "excluded": excluded},
         )
     if missing:
         # The run proceeds on what was readable, and says what it excluded. Silently
@@ -92,6 +99,9 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
         provider=get_provider(),
         retriever=retriever,
     )
+    record.evidence = {name: admitted[name] for name in documents if name in admitted}
+    record.excluded = excluded
+    await record_analysed(record.run_id, record.evidence)
     return _detail(record)
 
 
@@ -301,6 +311,8 @@ def _detail(record: MissionRecord) -> MissionDetail:
         knowledge_entities=len(result.knowledge.entities) if result and result.knowledge else 0,
         knowledge_claims=len(result.knowledge.claims) if result and result.knowledge else 0,
         knowledge_conflicts=(len(result.knowledge.conflicts) if result and result.knowledge else 0),
+        evidence=dict(record.evidence),
+        excluded_documents=dict(record.excluded),
     )
 
 

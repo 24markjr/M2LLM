@@ -47,6 +47,13 @@ kept current while the run proceeds.
 | POST | `/api/v1/context/ingest` | `{workspace_id, documents}`: chunk, embed and store; `unchanged` when the text's hash is the same; `skipped` names files that could not be read; 503 `CONTEXT_UNAVAILABLE` (Phase 40) |
 | POST | `/api/v1/context/retrieve` | `{workspace_id, query, k, min_score, documents}`: passages by meaning, each a citation with its score, and the `store` that answered (Phase 40) |
 | GET | `/api/v1/context/workspaces` | Workspace names, `default` always |
+| GET | `/api/v1/evidence` | The Evidence Locker: every item, its integrity and how many findings cite it, and the locker (`postgres` or `memory`); uploads that predate the locker are registered (IMPORTED) (Phase 43) |
+| GET | `/api/v1/evidence/{id}` | An item, its full custody (append-only), the findings that cited it, and other versions under its name |
+| GET | `/api/v1/evidence/{id}/custody` · `/findings` | The chain alone; the citing findings alone |
+| GET | `/api/v1/evidence/by-name/{name}` | The current item for a document name |
+| POST | `/api/v1/evidence/{id}/verify` | Re-hash the stored original (and the working copy); records VERIFIED or INTEGRITY_FAILED, actor from `X-Jarvis-User` |
+| PATCH | `/api/v1/evidence/{id}` | Classification and source; recorded as METADATA_CHANGED with from and to |
+| GET | `/api/v1/evidence/{id}/download` | The stored original, byte for byte |
 | GET | `/api/v1/context/workspaces/{id}` | A workspace's documents: kind, parser, SHA-256, chunks; and the store |
 | GET | `/api/v1/missions/{id}/knowledge...` | The mission's knowledge base; see **Knowledge** below (Phase 31) |
 | GET | `/api/v1/missions/{id}/findings/{finding_id}/trail` | The subgraph a finding rests on |

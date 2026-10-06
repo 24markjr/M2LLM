@@ -5,6 +5,40 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-07 - Phase 43: the Evidence Locker and chain of custody
+
+### Added
+
+- **Every input is an evidence item:** `EV-000001`, identified by the SHA-256 of its bytes, with its
+  source, who collected it, classification and integrity. The original is kept content-addressed and
+  write-once in `.agent/evidence/` (gitignored)
+- **Chain of custody**, append-only and enforced by a Postgres trigger (UPDATE, DELETE and TRUNCATE
+  raise): acquired, hashed, stored, parsed, understood, indexed, analysed by a mission, cited by a
+  finding, verified, metadata changed. Fixtures and earlier uploads enter as IMPORTED, their earlier
+  history stated as unknown
+- **Integrity before every mission:** a file whose bytes changed is left out, recorded, and the
+  mission says why (`excluded_documents`); missions record which exact item they read (`evidence`)
+- `/api/v1/evidence` (list, detail, custody, findings, by-name, verify, metadata, download); uploads
+  return their `evidence_id`; migration `a43e0c1d0001`
+- **Evidence Locker page** (`#/evidence`) and item page (custody timeline, citing findings, versions,
+  re-verify, classification, download). Linked from every finding's citations, the mission page
+  ("Evidence read", and what was left out), the Documents page and the New Mission picker
+- ADR-014, `architecture/evidence-locker.md`
+
+### Fixed (found by the phase's own tests)
+
+- A tampered upload was registered as a new item instead of failing integrity: a mission now checks a
+  working copy against the item last acquired under its name (fixtures excepted: they change through
+  version control, so changed bytes there are a new version)
+
+### Verified
+
+- 13 new unit tests and 5 Postgres tests (custody round trip; UPDATE, DELETE and TRUNCATE refused; an
+  item with custody cannot be deleted - all inside rolled-back transactions, leaving 0 rows); 4
+  Vitest; migration round-trip; full suite 1054 passed with Docker up; mypy, ruff, tsc, build
+
+---
+
 ## 2026-10-06 - Phase 42: documentation and handover
 
 ### Added

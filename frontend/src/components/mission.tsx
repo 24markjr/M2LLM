@@ -7,6 +7,7 @@
  * thing worth demonstrating, and a UI that rounds it off throws that away.
  */
 
+import { evidenceForCitation, evidenceLink } from "./evidence";
 import { useState } from "react";
 
 import type {
@@ -131,8 +132,11 @@ export function FindingCard({
   finding,
   gaps = [],
   spawned = [],
+  evidence,
 }: {
   finding: Finding;
+  /** Document name -> the evidence item the mission read (Phase 43), for citation links. */
+  evidence?: Record<string, string> | undefined;
   /** Gaps detected against this finding. */
   gaps?: GapRecord[];
   /** Tasks the replanning loop inserted to close those gaps. */
@@ -185,6 +189,15 @@ export function FindingCard({
                       : "✗"}
                 </span>
                 <span className="loc">{formatLocator(ref)}</span>
+                {evidenceForCitation(evidence, ref.locator.document_id) ? (
+                  <a
+                    className="mono evidence-link"
+                    href={evidenceLink(evidenceForCitation(evidence, ref.locator.document_id))}
+                    title="This document in the Evidence Locker: its hash, integrity and custody"
+                  >
+                    {evidenceForCitation(evidence, ref.locator.document_id)}
+                  </a>
+                ) : null}
                 <span className={`res ${ref.resolution.toLowerCase()}`}>{ref.resolution}</span>
                 {ref.resolution_note ? <span className="note">{ref.resolution_note}</span> : null}
               </div>
@@ -259,10 +272,12 @@ export function Findings({
   findings,
   gaps = [],
   tasks = null,
+  evidence,
 }: {
   findings: Finding[];
   gaps?: GapRecord[];
   tasks?: TaskGraphResponse | null;
+  evidence?: Record<string, string> | undefined;
 }) {
   const verified = findings.filter((f) => f.verification?.status === "SUPPORTED").length;
 
@@ -299,6 +314,7 @@ export function Findings({
               finding={f}
               gaps={gapsByFinding.get(f.finding_id) ?? []}
               spawned={insertedTasks}
+              evidence={evidence}
             />
           ))
         )}

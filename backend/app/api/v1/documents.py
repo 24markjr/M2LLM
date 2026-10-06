@@ -20,16 +20,19 @@ import asyncio
 from datetime import UTC, datetime
 from pathlib import Path
 
-from fastapi import APIRouter, Query, UploadFile, status
+from fastapi import APIRouter, Header, Query, UploadFile, status
 from pydantic import Field
 
 from app.api.errors import ApiError
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.evidence import service as evidence
+from app.evidence.locker import EvidenceLocker
 from app.integrations.context import get_context_store, ingest_document
 from app.intelligence.context.store import DEFAULT_WORKSPACE, Ingested
 from app.llm import get_provider
 from app.schemas.common import JarvisModel
+from app.schemas.evidence_locker import CustodyAction
 from app.schemas.trust import InjectionScan
 from app.security.injection import scan
 from app.tools.formats import (
@@ -81,6 +84,10 @@ class UploadedDocument(JarvisModel):
     # None): embedding a long document took minutes and held the upload with it.
     ingested: Ingested | None = None
     indexing: bool = False
+    # The Evidence Locker (Phase 43): the item this upload is, and which locker holds its custody
+    # (`postgres`, or `memory` - not durable). Empty when the locker could not be reached.
+    evidence_id: str = ""
+    custody: str = ""
 
 
 class StoredDocument(JarvisModel):
@@ -90,12 +97,14 @@ class StoredDocument(JarvisModel):
     kind: str
     bytes: int
     uploaded_at: datetime
+    evidence_id: str = ""
 
 
 @router.post("", response_model=list[UploadedDocument], status_code=status.HTTP_201_CREATED)
 async def upload_documents(
     files: list[UploadFile],
     workspace: str = Query(default=DEFAULT_WORKSPACE, pattern=r"^[A-Za-z0-9_-]{1,64}$"),
+    actor: str = Header(default="console", alias="X-Jarvis-User", max_length=128),
 ) -> list[UploadedDocument]:
     """Store uploads and report what each one parsed as.
 
@@ -128,6 +137,9 @@ async def upload_documents(
         spec = spec_for(path)
         limit = MAX_VIDEO_BYTES if spec and spec.kind is FormatKind.VIDEO else MAX_UPLOAD_BYTES
         written = await _write(upload, path, name, limit)
+        # Into the Evidence Locker before anything reads it (Phase 43): the original is stored under
+        # its hash, and acquired, hashed and stored are the first links of its custody.
+        evidence_id, locker = await _acquire(path, name, actor)
 
         # Understand an image, scan, video or audio file now (Phase 39), so the response says what
         # was read, seen and heard and a mission using it later waits for nothing.
@@ -138,6 +150,11 @@ async def upload_documents(
             # Remove it. A stored file the loader cannot read would be offered to the next
             # mission as a valid attachment and contribute nothing.
             await asyncio.to_thread(path.unlink, True)
+            if locker is not None:
+                # The item stays: it was acquired, and custody says what became of it.
+                await evidence.note(
+                    locker, evidence_id, CustodyAction.PARSE_FAILED, reason=str(exc)
+                )
             raise ApiError(
                 "DOCUMENT_UNREADABLE",
                 f"{name} was uploaded but could not be parsed: {exc}",
@@ -148,9 +165,12 @@ async def upload_documents(
         # Indexed for search after the response, not before it. Measured 2026-10-06: eight files
         # (a 3,155-line Markdown file among them) held one upload request for minutes while their
         # passages were embedded, and the page showed nothing but "Uploading and reading.".
+        understood = _understood(document.sha256)
+        if locker is not None:
+            await _record_parse(locker, evidence_id, document, understood)
         indexing = document.has_text
         if indexing:
-            _start_indexing(workspace, document)
+            _start_indexing(workspace, document, evidence_id)
         results.append(
             UploadedDocument(
                 document_id=document.document_id,
@@ -164,8 +184,10 @@ async def upload_documents(
                 sha256=document.sha256,
                 has_text=document.has_text,
                 note="" if document.has_text else document.text.splitlines()[-1],
-                understood=_understood(document.sha256),
+                understood=understood,
                 indexing=indexing,
+                evidence_id=evidence_id,
+                custody=locker.name if locker is not None else "",
             )
         )
         log.info(
@@ -185,8 +207,10 @@ async def upload_documents(
 _indexing: set[asyncio.Task[Ingested | None]] = set()
 
 
-def _start_indexing(workspace: str, document: LoadedDocument) -> None:
-    task = asyncio.create_task(_ingest(workspace, document), name=f"index-{document.document_id}")
+def _start_indexing(workspace: str, document: LoadedDocument, evidence_id: str = "") -> None:
+    task = asyncio.create_task(
+        _ingest(workspace, document, evidence_id), name=f"index-{document.document_id}"
+    )
     _indexing.add(task)
     task.add_done_callback(_indexing.discard)
 
@@ -202,7 +226,9 @@ def indexing_now() -> list[str]:
     return sorted(t.get_name().removeprefix("index-") for t in _indexing if not t.done())
 
 
-async def _ingest(workspace: str, document: LoadedDocument) -> Ingested | None:
+async def _ingest(
+    workspace: str, document: LoadedDocument, evidence_id: str = ""
+) -> Ingested | None:
     """Ingest an upload into its workspace. Never fails anything: a file is still usable by
     missions (lexically) when the store or embedding model is down, and the log says why."""
     try:
@@ -220,7 +246,52 @@ async def _ingest(workspace: str, document: LoadedDocument) -> Ingested | None:
         log.warning("upload_ingest_failed", name=document.document_id, error=str(exc))
         return None
     log.info("upload_indexed", name=document.document_id, chunks=done.chunks, store=done.store)
+    if evidence_id:
+        try:
+            locker = await evidence.get_locker()
+        except Exception:  # noqa: BLE001 - custody never fails the work it records
+            return done
+        await evidence.note(
+            locker,
+            evidence_id,
+            CustodyAction.INDEXED,
+            workspace=workspace,
+            chunks=done.chunks,
+            store=done.store,
+            unchanged=done.unchanged,
+        )
     return done
+
+
+async def _acquire(path: Path, name: str, actor: str) -> tuple[str, EvidenceLocker | None]:
+    """Put an upload in the Evidence Locker. Never fails the upload (invariant 10)."""
+    try:
+        locker = await evidence.get_locker()
+        item = await evidence.intake(locker, path, name=name, actor=actor)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("evidence_intake_failed", name=name, error=f"{type(exc).__name__}: {exc}")
+        return "", None
+    return item.evidence_id, locker
+
+
+async def _record_parse(
+    locker: EvidenceLocker, evidence_id: str, document: LoadedDocument, understood: str
+) -> None:
+    try:
+        await locker.update(evidence_id, kind=str(document.kind), parser=document.parser)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("evidence_update_failed", evidence_id=evidence_id, error=str(exc))
+    await evidence.note(
+        locker,
+        evidence_id,
+        CustodyAction.PARSED,
+        parser=document.parser,
+        kind=str(document.kind),
+        has_text=document.has_text,
+        lines=len(document.text.splitlines()),
+    )
+    if understood:
+        await evidence.note(locker, evidence_id, CustodyAction.UNDERSTOOD, summary=understood)
 
 
 def _understood(sha256: str) -> str:
@@ -242,18 +313,24 @@ async def list_uploads() -> list[StoredDocument]:
     target = get_settings().agent_dir / "uploads"
     if not target.is_dir():
         return []
+    try:
+        locker: EvidenceLocker | None = await evidence.get_locker()
+    except Exception:  # noqa: BLE001 - the list still answers without evidence ids
+        locker = None
     stored = []
     for path in target.iterdir():
         spec = spec_for(path)
         if not path.is_file() or spec is None or path.name.startswith("."):
             continue
         stat = path.stat()
+        item = await locker.current_for_name(path.name) if locker is not None else None
         stored.append(
             StoredDocument(
                 name=path.name,
                 kind=spec.kind.value,
                 bytes=stat.st_size,
                 uploaded_at=datetime.fromtimestamp(stat.st_mtime, tz=UTC),
+                evidence_id=item.evidence_id if item is not None else "",
             )
         )
     return sorted(stored, key=lambda d: (d.uploaded_at, d.name), reverse=True)

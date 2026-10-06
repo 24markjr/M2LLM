@@ -6,6 +6,30 @@ and what is still broken.
 
 ---
 
+# 2026-10-07 - Phase 43: the Evidence Locker
+
+The first phase of the v2 plan. Documents become evidence items identified by their hash, with an
+append-only chain of custody.
+
+**Decisions made in the phase.** Same bytes, one item (identity is the hash, not the name); the
+original stored content-addressed beside the working copy the parsers read; custody append-only by a
+database trigger rather than by convention (ADR-014); Postgres when available, a named memory locker
+otherwise, as for retrieval; tests never write custody to a real database (a trigger-protected table
+cannot be cleaned up), so every test gets a memory locker and the Postgres tests roll back; file work
+on a worker thread (ruff caught the blocking calls).
+
+**What the tests found.** The tamper test failed on the first implementation: a mission looked a
+working copy up by its *new* hash, found nothing, and registered the tampered bytes as a fresh item -
+tampering became a version. Now a mission checks an upload against the item last acquired under its
+name; only fixtures, which change through version control, become new versions.
+
+**Verified with Docker up:** the migration round-trips (upgrade, downgrade, upgrade) and matches the
+models; the five Postgres tests pass - UPDATE, DELETE and TRUNCATE on custody are refused by the
+trigger, and an item with custody cannot be deleted; afterwards `evidence_items` and `custody_events`
+hold 0 rows, so the rolled-back tests left nothing behind. Full suite 1054 passed, none skipped.
+
+---
+
 # 2026-10-06 - Phase 42: documentation and handover
 
 No features. The handover documents were brought up to what exists: Member 2 credited and closed

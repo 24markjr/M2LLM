@@ -19,6 +19,8 @@ import {
 } from "./pages/pages";
 import { MemoryPage } from "./pages/MemoryPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
+import { EvidenceItemPage, EvidenceLockerPage } from "./pages/EvidencePage";
+import { evidenceIdFromHash } from "./components/evidence";
 import { draftFromHash } from "./components/workspaces";
 import { hashQuery } from "./components/graph3d/investigation";
 
@@ -30,6 +32,7 @@ type Route =
   | { name: "list" }
   | { name: "new"; key: string }
   | { name: "documents"; workspace: string }
+  | { name: "evidence"; evidenceId: string }
   | { name: "mission"; runId: string }
   | { name: "graph"; runId: string; focus: string; search: string }
   | { name: "knowledge" }
@@ -50,6 +53,9 @@ function parse(full: string): Route {
   if (match?.[1]) return { name: "mission", runId: match[1] };
   // New Mission may arrive filled in, from a search hit or a workspace (Phase 40).
   if (hash === "#/new") return { name: "new", key: full };
+  if (hash === "#/evidence" || evidenceIdFromHash(hash)) {
+    return { name: "evidence", evidenceId: evidenceIdFromHash(hash) };
+  }
   if (hash === "#/documents") return { name: "documents", workspace: query.workspace ?? "default" };
   if (hash === "#/replay") return { name: "replay" };
   if (hash === "#/evaluation") return { name: "evaluation" };
@@ -99,6 +105,9 @@ export default function App() {
           </a>
           <a className={route.name === "documents" ? "on" : ""} href="#/documents">
             Documents
+          </a>
+          <a className={route.name === "evidence" ? "on" : ""} href="#/evidence">
+            Evidence
           </a>
           <a className={route.name === "memory" ? "on" : ""} href="#/memory">
             Memory
@@ -171,6 +180,14 @@ export default function App() {
       ) : null}
 
       {route.name === "documents" ? <DocumentsPage key={route.workspace} workspace={route.workspace} /> : null}
+
+      {route.name === "evidence" ? (
+        route.evidenceId ? (
+          <EvidenceItemPage key={route.evidenceId} evidenceId={route.evidenceId} />
+        ) : (
+          <EvidenceLockerPage />
+        )
+      ) : null}
 
       {route.name === "memory" ? <MemoryPage key={route.entity} entity={route.entity} /> : null}
     </div>

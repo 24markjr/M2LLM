@@ -1464,3 +1464,51 @@ button.link:focus-visible {
   font-size: 13px;
   color: var(--text);
 }
+
+/* Phase 43: the Evidence Locker. Integrity in words, with colour as a second cue. */
+.integrity {
+  font-family: var(--mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.integrity.verified {
+  color: var(--good, #3fb950);
+}
+.integrity.failed {
+  color: var(--bad);
+  font-weight: 600;
+}
+.integrity.unchecked {
+  color: var(--text-dim);
+}
+dl.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0;
+}
+dl.facts dt {
+  color: var(--text-dim);
+}
+dl.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+ol.custody {
+  margin: 0;
+  padding-left: 20px;
+}
+ol.custody li {
+  margin-bottom: 8px;
+}
+ol.custody li.failed strong {
+  color: var(--bad);
+}
+.evidence-link {
+  margin-left: 6px;
+}
+.row.evidence-read {
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}

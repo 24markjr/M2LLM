@@ -65,6 +65,9 @@ class MissionRecord:
         # ends so a recording can carry them: replay then opens the 3D graph with no server.
         self.knowledge_view: dict[str, object] | None = None
         self.knowledge_timeline: list[dict[str, object]] | None = None
+        # The Evidence Locker (Phase 43): name -> evidence id read, and name -> why it was left out.
+        self.evidence: dict[str, str] = {}
+        self.excluded: dict[str, str] = {}
 
     def is_finished(self) -> bool:
         """Whether the run has reached a terminal status.
@@ -230,6 +233,7 @@ class MissionRegistry:
             # once the run is over and never read back into one.
             if record.result is not None:
                 await _record_memory(record.result, record.started_at)
+                await _record_citations(record)
 
 
 async def _capture_knowledge(record: MissionRecord) -> None:
@@ -258,6 +262,28 @@ async def _record_memory(result: MissionResult, started_at: datetime | None) -> 
         await record_run(result, started_at=started_at)
     except Exception:  # the boundary: memory must never fail a run
         log.exception("memory_record_failed", run_id=result.run_id)
+
+
+async def _record_citations(record: MissionRecord) -> None:
+    """CITED in the custody of every evidence item a finding rests on (Phase 43). Never raises."""
+    result = record.result
+    if result is None or not record.evidence:
+        return
+    from app.evidence.service import record_citations
+
+    try:
+        await record_citations(
+            record.run_id,
+            record.evidence,
+            [
+                (finding.finding_id, finding.claim, ref.locator.document_id, ref.as_ref())
+                for finding in result.findings
+                for ref in finding.evidence
+                if ref.is_resolved
+            ],
+        )
+    except Exception:  # the run is over; lost custody links are logged, never fatal
+        log.exception("evidence_citations_failed", run_id=record.run_id)
 
 
 class _HistorySink:
