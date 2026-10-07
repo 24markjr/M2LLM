@@ -1140,3 +1140,19 @@ sections not read, sections that failed, claims not found on their line, searche
 nothing, candidates discarded and why - states what was examined in the Investigation Scope, and an
 empty Confidence explains itself. The console no longer shows "overall confidence 0.00" when nothing
 was verified.
+
+## BUG-031 — A contradiction in the knowledge graph could be missing from the report
+
+**Found:** 2026-10-07, while diagnosing the twelve-document AURORA mission
+**Severity:** Medium. The graph showed a contradiction the report did not
+**Status:** Fixed (`intelligence/reasoning/conflict_findings.py`, the replanning controller)
+
+**Symptom.** The knowledge pass hands conflicting claim pairs to reasoning, but a contradiction became
+a finding only if the reasoning model restated it, and a 4B model often does not (BUG-005/012).
+
+**Fix.** After reasoning, each contradiction that is reportable - dates or numbers, across two
+documents, not a document's own date or version, not already covered by a finding that cites two of
+its sides, for a question that asks for a comparison - becomes a finding built from its two cited
+lines, without a model. Both citations must resolve against what the run retrieved. It is then
+verified like every other finding. Fixed only after BUG-033: done first, it would have reported six
+false contradictions on the AURORA mission.

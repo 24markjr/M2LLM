@@ -6,6 +6,18 @@ and what is still broken.
 
 ---
 
+# 2026-10-07 - Demo step 4: contradictions in the graph become findings (BUG-031)
+
+Deterministic and narrow on purpose. A model is not asked to restate what the graph already holds;
+the finding is built from the two cited lines and then goes through the same binder (both sides must
+resolve against what the run retrieved) and the same verifier as any finding. Limited to dates and
+numbers across two documents, for comparison questions, excluding document metadata - each limit
+answering a failure already seen: text descriptions (BUG-033), a planned and an actual date in one
+document, a report's own date (BUG-027). Not measured live on its own: it changes what comparison
+missions report, so the 14-scenario baseline after Step 5 measures Steps 4 and 5 together.
+
+---
+
 # 2026-10-07 - Demo steps 2 and 3: coverage, and a report that says what it could not see
 
 Paused once for the owner's presentation (the API and console were started for it, with the models

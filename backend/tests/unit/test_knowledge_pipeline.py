@@ -348,3 +348,64 @@ async def test_a_finding_can_cite_both_sides_of_a_knowledge_conflict(
     )
     [finding] = result.findings  # type: ignore[attr-defined]
     assert finding.resolved_evidence_count == 2
+
+
+# --- BUG-031: a contradiction the graph found becomes a finding, even if reasoning misses it ---
+
+
+async def test_a_contradiction_reasoning_missed_is_still_reported_and_verified(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The model proposes nothing; the graph holds 30 April against 14 May across two documents.
+    The contradiction becomes a finding from its two cited lines, and is verified like any other."""
+    _policy(monkeypatch, CrossSourcePass.COMPARATIVE)
+    result, memory = await _run(
+        COMPARATIVE,
+        PLAN,
+        {
+            "knowledge": [
+                _knowledge([("Project Aurora", "completion_date", "30 April 2026", 1)]),
+                _knowledge([("Project Aurora", "completion_date", "14 May 2026", 1)]),
+            ],
+            "reasoning": [json.dumps({"findings": []})],
+            "verification": [json.dumps({"status": "SUPPORTED"})],
+        },
+    )
+    [finding] = result.findings  # type: ignore[attr-defined]
+    assert finding.claim == (
+        "The documents disagree on the completion date of Project Aurora: "
+        "report.txt:r1 gives 30 April 2026; finance.txt:r1 gives 14 May 2026."
+    )
+    assert finding.resolved_evidence_count == 2
+    assert finding.verification is not None  # checked like every finding
+    created = [e.payload for e in memory.of_type(EventType.FINDING_CREATED)]
+    assert any(p.get("origin") == "knowledge_conflict" for p in created)
+
+
+async def test_a_contradiction_reasoning_already_reported_is_not_added_twice(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _policy(monkeypatch, CrossSourcePass.COMPARATIVE)
+    claim = "The report gives 30 April 2026 and the finance file 14 May 2026 for completion."
+    result, _ = await _run(
+        COMPARATIVE,
+        PLAN,
+        {
+            "knowledge": [
+                _knowledge([("Project Aurora", "completion_date", "30 April 2026", 1)]),
+                _knowledge([("Project Aurora", "completion_date", "14 May 2026", 1)]),
+            ],
+            "reasoning": [
+                json.dumps(
+                    {
+                        "findings": [
+                            {"claim": claim, "citations": ["report.txt:r1", "finance.txt:r1"]}
+                        ]
+                    }
+                )
+            ],
+            "relevance": [json.dumps({"verdicts": [{"index": 1, "keep": True}]})],
+            "verification": [json.dumps({"status": "SUPPORTED"})],
+        },
+    )
+    assert [f.claim for f in result.findings] == [claim]  # type: ignore[attr-defined]

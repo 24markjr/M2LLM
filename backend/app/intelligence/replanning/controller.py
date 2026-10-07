@@ -35,7 +35,8 @@ from app.intelligence.evidence_gap.detector import EvidenceGapDetector, emit_gap
 from app.intelligence.execution.engine import ExecutionEngine
 from app.intelligence.graph.task_graph import TaskGraph
 from app.intelligence.planning_policy.scoring import ActionScore, score_action, select_actions
-from app.intelligence.reasoning.engine import ReasoningEngine
+from app.intelligence.reasoning.conflict_findings import conflict_findings
+from app.intelligence.reasoning.engine import ReasoningEngine, requires_comparison
 from app.intelligence.router.engine import ToolRouter
 from app.schemas.common import JarvisModel, SourceLocator
 from app.schemas.event import EventType
@@ -247,6 +248,7 @@ class ReplanningController:
         result = ReplanResult(observations=list(observations))
         self._documents = ctx.documents
         self._page_starts = ctx.page_starts
+        self._knowledge = ctx.knowledge
 
         findings = await self._reason_and_verify(objective, result.observations)
         result.findings = findings
@@ -336,6 +338,24 @@ class ReplanningController:
             evidence_text=text,
             documents=self._documents,
         )
+        # Contradictions the knowledge graph found that no finding reports (BUG-031): added here,
+        # before verification, so they are checked exactly as every other finding is.
+        for added in conflict_findings(
+            self._knowledge, findings, observations, comparative=requires_comparison(self._intent)
+        ):
+            findings.append(added)
+            await self._event(
+                EventType.FINDING_CREATED,
+                {
+                    "claim": added.claim[:160],
+                    "classification": added.classification.value,
+                    "confidence": round(added.confidence.value, 3),
+                    "resolved_evidence": added.resolved_evidence_count,
+                    "cited": len(added.evidence),
+                    "origin": "knowledge_conflict",
+                    "finding_id": added.finding_id,
+                },
+            )
 
         await self._event(EventType.VERIFICATION_STARTED, {"findings": len(findings)})
         for finding in findings:

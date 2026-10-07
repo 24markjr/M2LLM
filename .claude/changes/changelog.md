@@ -5,6 +5,26 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-07 - Demo step 4: contradictions in the graph reach the report (BUG-031)
+
+### Fixed
+
+- A contradiction the knowledge graph found reached the report only if the reasoning model restated
+  it. Now each reportable contradiction - dates or numbers across two documents, not a document's own
+  date or version, not already reported, for a comparison question - becomes a finding from its two
+  cited lines ("The documents disagree on the completion date of Project Aurora: report.txt:r10 gives
+  30 April 2026; finance.txt:r12 gives 14 May 2026."), and is verified like every other finding.
+  The creation event says `origin: knowledge_conflict`
+
+### Verified
+
+- 13 new tests (what is reportable, the claim text, both sides resolving, no duplicate of a finding
+  reasoning already made, ids never reused; through the full mission pipeline with the model
+  proposing nothing); full unit suite. Its effect on the 14 scenarios is measured with Step 5's
+  baseline
+
+---
+
 ## 2026-10-07 - Demo steps 2 and 3: read every document; a report that states its limits
 
 ### Fixed
