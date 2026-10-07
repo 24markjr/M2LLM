@@ -17,6 +17,7 @@ nowhere in the type system to put one.
 from __future__ import annotations
 
 import re
+from collections import Counter
 
 from pydantic import Field
 
@@ -211,6 +212,17 @@ COMPARATIVE_OPERATIONS: frozenset[Operation] = frozenset(
 MIN_REFS_FOR_COMPARATIVE = 2
 
 
+# Why a candidate finding was discarded before verification, in words a report can print (BUG-032).
+DISCARD_SINGLE_SOURCE = (
+    "it rested on one source while the question asked for a comparison between sources"
+)
+DISCARD_UNEVIDENCED = (
+    "a value it stated was not on its cited lines, or only on a line about something else"
+)
+DISCARD_AGREEMENT = "it stated the same value on every side: agreement, not a conflict"
+DISCARD_IRRELEVANT = "it was judged not to bear on the question asked"
+
+
 def unevidenced_values(
     claim: str,
     finding: Finding,
@@ -251,6 +263,9 @@ class ReasoningEngine:
     def __init__(self, provider: LLMProvider) -> None:
         self._provider = provider
         self._prompts = get_prompt_library()
+        # Candidates thrown away before verification, by reason (BUG-032). A report with no findings
+        # must say whether nothing was proposed or everything proposed was discarded, and why.
+        self.discarded: Counter[str] = Counter()
 
     async def derive_findings(
         self,
@@ -343,6 +358,7 @@ class ReasoningEngine:
                     },
                 )
                 log.info("restatement_discarded", claim=claim[:80])
+                self.discarded[DISCARD_SINGLE_SOURCE] += 1
                 continue
 
             # A conflict is its two values. When the objective asks for a comparison and a fully
@@ -373,6 +389,7 @@ class ReasoningEngine:
                     },
                 )
                 log.info("unevidenced_conflict_discarded", claim=claim[:80], values=unevidenced)
+                self.discarded[DISCARD_UNEVIDENCED] += 1
                 continue
 
             # Agreement written as a finding (Phase 41): both sides of the "conflict" are one value.
@@ -390,6 +407,7 @@ class ReasoningEngine:
                     },
                 )
                 log.info("agreement_discarded", claim=claim[:80], value=agreed)
+                self.discarded[DISCARD_AGREEMENT] += 1
                 continue
 
             findings.append(finding)
@@ -464,6 +482,7 @@ class ReasoningEngine:
                     },
                 )
                 log.info("finding_discarded", claim=candidate.claim.strip()[:80])
+                self.discarded[DISCARD_IRRELEVANT] += 1
                 continue
             kept.append(candidate)
 

@@ -12,6 +12,7 @@ import type { GraphLink, GraphNode, KnowledgeGraphView } from "../../api/types";
 import {
   NO_FILTERS,
   colourOf,
+  coverageText,
   family,
   highlightSet,
   highlightedLinks,
@@ -228,5 +229,27 @@ describe("link colours (BUG-033)", () => {
     expect(particlesOf("CONFLICTS_WITH")).toBeGreaterThan(0);
     expect(linkColourOf("DIFFERS_FROM")).not.toBe(linkColourOf("CONFLICTS_WITH"));
     expect(particlesOf("DIFFERS_FROM")).toBe(0);
+  });
+});
+
+describe("coverage (BUG-034)", () => {
+  it("says what the graph was built from", () => {
+    const text = coverageText({
+      conflicts: 1,
+      differences: 6,
+      stats: {
+        documents: 12,
+        chunks: 412,
+        chunks_skipped: 400,
+        failed_chunks: 1,
+        claims: 86,
+        ungrounded_claims: 64,
+        documents_read: 12,
+      },
+    });
+    expect(text).toBe(
+      "read 12 of 412 section(s) across 12 of 12 document(s) · 64 of 86 claim(s) not found on their source line · 1 section(s) failed · 1 contradiction(s) · 6 differing description(s)",
+    );
+    expect(coverageText({ conflicts: 0 })).toBe("");
   });
 });

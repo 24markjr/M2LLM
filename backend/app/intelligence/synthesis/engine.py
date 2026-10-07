@@ -30,6 +30,7 @@ from app.schemas.event import EventType
 from app.schemas.evidence import EvidenceGap
 from app.schemas.execution import Observation, TerminationReason
 from app.schemas.finding import Finding
+from app.schemas.knowledge import KnowledgeSnapshot
 from app.schemas.objective import Objective
 from app.schemas.result import (
     ExecutionSummary,
@@ -70,6 +71,8 @@ class SynthesisEngine:
         emit: object | None = None,
         security: list[InjectionScan] | None = None,
         evidence_text: dict[str, str] | None = None,
+        knowledge: KnowledgeSnapshot | None = None,
+        discarded: dict[str, int] | None = None,
     ) -> FinalReport:
         """The report, from settled state. With `evidence_text` (the text at each locator), the two
         model-written paragraphs are also checked sentence by sentence (Phase 37)."""
@@ -84,6 +87,9 @@ class SynthesisEngine:
             objective, verified, uncertain, rejected, unresolved, execution
         )
 
+        limitations = self._limitations(
+            findings, unresolved, observations, execution, termination, security or []
+        ) + coverage_limitations(knowledge, observations, discarded or {}, findings)
         report = FinalReport(
             run_id=run_id,
             objective=objective.text,
@@ -92,12 +98,19 @@ class SynthesisEngine:
             rejected_findings=rejected,
             unresolved_gaps=unresolved,
             execution=execution,
-            limitations=self._limitations(
-                findings, unresolved, observations, execution, termination, security or []
-            ),
+            limitations=limitations,
             overall_confidence=self._overall_confidence(verified),
             sections=self._sections(
-                objective, verified, uncertain, rejected, unresolved, execution, narrative
+                objective,
+                verified,
+                uncertain,
+                rejected,
+                unresolved,
+                execution,
+                narrative,
+                limitations=limitations,
+                examined=examined(knowledge, observations, execution),
+                discarded=sum((discarded or {}).values()),
             ),
         )
 
@@ -182,6 +195,10 @@ class SynthesisEngine:
         gaps: list[EvidenceGap],
         execution: ExecutionSummary,
         narrative: ReportNarrative,
+        *,
+        limitations: list[Limitation] | None = None,
+        examined: list[str] | None = None,
+        discarded: int = 0,
     ) -> list[ReportSection]:
         """All eleven sections, in presentation order. None is optional."""
         return [
@@ -195,7 +212,9 @@ class SynthesisEngine:
                 kind=SectionKind.INVESTIGATION_SCOPE,
                 heading="Investigation Scope",
                 items=[f"Objective: {objective.text}"]
-                + [f"Document: {d.name}" for d in objective.scope.documents],
+                + [f"Document: {d.name}" for d in objective.scope.documents]
+                # What was actually examined, before any conclusion (BUG-032).
+                + [f"Examined: {line}" for line in examined or []],
             ),
             ReportSection(
                 kind=SectionKind.EXECUTION_SUMMARY,
@@ -254,12 +273,19 @@ class SynthesisEngine:
             ReportSection(
                 kind=SectionKind.CONFIDENCE,
                 heading="Confidence",
-                items=[_confidence_line(f) for f in verified + uncertain] or ["None."],
+                items=[_confidence_line(f) for f in verified + uncertain]
+                or [no_confidence_line(discarded)],
             ),
+            # The limitations themselves, computed from the run (BUG-032). This printed a
+            # placeholder string before 2026-10-07.
             ReportSection(
                 kind=SectionKind.LIMITATIONS,
                 heading="Limitations",
-                items=["(generated from run facts - see the limitations list)"],
+                items=[
+                    f"{lim.description} ({lim.cause})" if lim.cause else lim.description
+                    for lim in limitations or []
+                ]
+                or ["None found by the run's own checks."],
             ),
         ]
 
@@ -446,3 +472,115 @@ class ReportField(JarvisModel):
 
     label: str = ""
     value: str = ""
+
+
+# --- coverage: what the run could examine, and what it set aside (BUG-032, 2026-10-07) ------------
+#
+# A mission over twelve AURORA documents reported no findings and a confidence of "None.", and
+# said nothing about why: its knowledge pass had read 12 of 191 sections, five of seven searches
+# had found nothing, and all 22 candidate findings had been discarded before verification. Each of
+# those is a fact of the run; the report now states them.
+
+
+def examined(
+    knowledge: KnowledgeSnapshot | None,
+    observations: list[Observation],
+    execution: ExecutionSummary,
+) -> list[str]:
+    """What the run looked at, in a line each - stated before any conclusion."""
+    lines = [f"{execution.documents_processed} document(s) attached"]
+    if knowledge is not None and knowledge.stats.chunks:
+        stats = knowledge.stats
+        read = stats.chunks - stats.chunks_skipped
+        across = (
+            f" across {stats.documents_read} of {stats.documents} document(s)"
+            if stats.documents_read
+            else ""
+        )
+        lines.append(f"the knowledge pass read {read} of {stats.chunks} section(s){across}")
+    searched = [o for o in observations if o.task_type != "extract_claims"]
+    if searched:
+        found = sum(1 for o in searched if o.sources)
+        lines.append(
+            f"{found} of {len(searched)} evidence-gathering step(s) found matching passages"
+        )
+    return lines
+
+
+def coverage_limitations(
+    knowledge: KnowledgeSnapshot | None,
+    observations: list[Observation],
+    discarded: dict[str, int],
+    findings: list[Finding],
+) -> list[Limitation]:
+    out: list[Limitation] = []
+    if knowledge is not None:
+        stats = knowledge.stats
+        if stats.chunks_skipped:
+            out.append(
+                Limitation(
+                    description=(
+                        f"The knowledge pass read {stats.chunks - stats.chunks_skipped} of "
+                        f"{stats.chunks} document section(s); the other {stats.chunks_skipped} "
+                        "were not examined for claims or contradictions"
+                    ),
+                    cause="the knowledge.max_chunks budget (one model call per section)",
+                )
+            )
+        if stats.failed_chunks:
+            out.append(
+                Limitation(
+                    description=f"{stats.failed_chunks} section(s) could not be read by the model",
+                    cause="its answer failed validation after repair",
+                )
+            )
+        if stats.ungrounded_claims:
+            out.append(
+                Limitation(
+                    description=(
+                        f"{stats.ungrounded_claims} of {stats.claims} extracted claim(s) were not "
+                        "found on their source line and were not used as evidence"
+                    ),
+                    cause="the model wrote values it did not read",
+                )
+            )
+    empty = [o for o in observations if not o.sources and o.task_type != "extract_claims"]
+    if empty:
+        out.append(
+            Limitation(
+                description=(
+                    f"{len(empty)} evidence-gathering step(s) found no matching passage "
+                    f"({', '.join(sorted({o.task_type for o in empty}))})"
+                ),
+                cause="the documents did not contain the words searched for",
+            )
+        )
+    total = sum(discarded.values())
+    if total:
+        reasons = "; ".join(
+            f"{n} because {why}" for why, n in sorted(discarded.items(), key=lambda kv: -kv[1])
+        )
+        out.append(
+            Limitation(
+                description=(
+                    f"{total} candidate finding(s) were discarded before verification"
+                    + (" - none survived" if not findings else "")
+                    + f": {reasons}"
+                ),
+                cause="the reasoning rules that keep unsupported claims out of the report",
+            )
+        )
+    return out
+
+
+def no_confidence_line(discarded: int) -> str:
+    """The Confidence section when nothing was established (BUG-032)."""
+    if discarded:
+        return (
+            f"No finding was established, so there is no confidence to report: {discarded} "
+            "candidate(s) were proposed and discarded before verification (see Limitations)."
+        )
+    return (
+        "No finding was established, so there is no confidence to report: nothing was proposed "
+        "that the cited evidence supports (see Limitations for what was examined)."
+    )

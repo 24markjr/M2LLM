@@ -1105,3 +1105,38 @@ contradictions the scenarios depend on (Aurora dates, Helix budget, Member 3's "
 contradictions; both stores round-trip differences (Neo4j live); live extraction on Member 3's
 shipment documents still finds 14 vs 16 September, and on the Aurora reports no longer reports Q2
 against 14 May. Graphs stored before the fix read back unchanged (their conflicts stay conflicts).
+
+## BUG-034 — The knowledge pass read the first document and little else
+
+**Found:** 2026-10-07, on the same twelve-document AURORA mission as BUG-033
+**Severity:** High. A graph built from one document looked like a graph of twelve
+**Status:** Fixed (`intelligence/knowledge/selection.py`, `extraction.py`)
+
+**Symptom.** The pass reads at most `knowledge.max_chunks` sections (twelve: one model call each)
+and took them in order, so the first document filled the budget: 12 of 191 sections read, nearly all
+from one PDF. It also extracted contact details ("ARCAISYS.phone = 9137815600") as if they were
+evidence.
+
+**Fix.** The budget is dealt round-robin across documents (every document read before any is read
+twice); within each document the sections with the most words of the objective - plus a half point
+each for a date and a figure - come first; what is read is put back in document order. Phone
+numbers, e-mail and postal addresses are dropped as claims unless the objective asks about them (IP
+and MAC addresses are not contact details). `documents_read` and `contact_claims_skipped` are counted,
+and the knowledge explorer states what the graph was built from.
+
+## BUG-032 — A report with no findings did not say why
+
+**Found:** 2026-10-07, same mission
+**Severity:** Medium. The report looked empty rather than limited
+**Status:** Fixed (`intelligence/synthesis/engine.py`, `reasoning/engine.py`)
+
+**Symptom.** No findings, Confidence "None.", and a Limitations section printing the placeholder
+"(generated from run facts - see the limitations list)". Nothing said that 179 of 191 sections were
+never read, that five of seven searches found nothing, or that all 22 candidate findings had been
+discarded before verification.
+
+**Fix.** Reasoning counts what it discards, by reason. The report lists its real limitations -
+sections not read, sections that failed, claims not found on their line, searches that found
+nothing, candidates discarded and why - states what was examined in the Investigation Scope, and an
+empty Confidence explains itself. The console no longer shows "overall confidence 0.00" when nothing
+was verified.

@@ -32,6 +32,7 @@ import type { Links, WorkbenchTab } from "./Workbench";
 import { entityOfSelection } from "./investigation";
 import type { Filters } from "./model";
 import {
+  coverageText,
   NO_FILTERS,
   highlightSet,
   highlightedLinks,
@@ -97,6 +98,15 @@ export default function KnowledgeExplorer({
   );
   // Bumped whenever the graph is (re)loaded, so open views refetch while a mission grows.
   const [version, setVersion] = useState(0);
+  // What the graph was built from (BUG-034), for a mission's graph.
+  const [coverage, setCoverage] = useState("");
+  useEffect(() => {
+    if (!runId) return;
+    api
+      .getKnowledgeSummary(runId)
+      .then((summary) => setCoverage(coverageText(summary)))
+      .catch(() => setCoverage(""));
+  }, [runId, version]);
   const [workbenchTab, setWorkbenchTab] = useState<WorkbenchTab>(initialSearch ? "search" : "conflicts");
   const [workbenchQuery, setWorkbenchQuery] = useState(initialSearch);
   const focusApplied = useRef(false);
@@ -373,6 +383,11 @@ export default function KnowledgeExplorer({
   return (
     <div className="explorer">
       {status ? <div className={`notice ${status.tone === "error" ? "error" : ""}`}>{status.text}</div> : null}
+      {coverage ? (
+        <div className="hint coverage" title="Each section is one model call; the budget is knowledge.max_chunks">
+          Built from: {coverage}
+        </div>
+      ) : null}
 
       <div className="explorer-controls">
         <input

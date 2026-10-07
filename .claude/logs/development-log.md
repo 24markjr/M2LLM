@@ -6,6 +6,30 @@ and what is still broken.
 
 ---
 
+# 2026-10-07 - Demo steps 2 and 3: coverage, and a report that says what it could not see
+
+Paused once for the owner's presentation (the API and console were started for it, with the models
+warmed), then finished.
+
+**Step 2 (BUG-034).** Chunk selection is deterministic: round-robin across documents, then by a
+relevance score (objective words, half a point each for a date and a figure), then back into document
+order so names carry forward. The contact filter was first written too broadly - "address" would have
+dropped IP and MAC addresses (needed for the cyber phases) and any ten-digit number would have been
+a phone number (purchase orders are ten digits too); both were narrowed before testing. A heredoc
+wrote literal backspace characters into two regular expressions; found by inspecting the bytes, fixed,
+and every source file scanned for control characters.
+
+**Measured once** on the twelve AURORA documents with the original objective: every document read
+(one section each), claims off their source line down from 74% to 33%, no false contradictions, 11
+minutes for twelve sections. Three sections failed the structured answer and four yielded nothing:
+on dense documents the 4B model, not the selection, is the limit now.
+
+**Step 3 (BUG-032).** The report's Limitations, Investigation Scope and Confidence now come from the
+run's numbers, including the candidates reasoning discarded, counted by reason. Steps 2 and 3 are
+one commit because `orchestration/mission.py` carries both.
+
+---
+
 # 2026-10-07 - Demo step 1: false contradictions (BUG-033)
 
 The owner ran a broad trust question over twelve AURORA documents and asked why the report was empty

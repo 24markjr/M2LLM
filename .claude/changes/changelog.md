@@ -5,6 +5,40 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-07 - Demo steps 2 and 3: read every document; a report that states its limits
+
+### Fixed
+
+- **BUG-034: the knowledge pass read the first document and little else.** Its budget (twelve
+  sections, one model call each) is now dealt across documents, most relevant sections first
+  (objective words, dates, figures); contact details are dropped unless asked for. The explorer
+  shows what the graph was built from ("read 12 of 191 sections across 12 of 12 documents")
+- **BUG-032: a report with no findings did not say why.** Reasoning counts the candidates it
+  discards, by reason; the report lists its real limitations (sections not read or failed, claims not
+  on their line, searches that found nothing, candidates discarded and why), states what was examined,
+  and explains an empty Confidence. The placeholder "(generated from run facts...)" is gone; the
+  console no longer shows "overall confidence 0.00" when nothing was verified
+
+### Measured (once, the owner's twelve AURORA documents, same objective and budget)
+
+| | Before | After |
+|---|---|---|
+| Documents the pass read | about 1 | 12 of 12 |
+| Claims not on their source line | 64 of 86 (74%) | 13 of 40 (33%) |
+| Documents claims came from | about 1 | 5 |
+| False red contradictions | 6 | 0 |
+| Time | - | 677 s (about 56 s per section) |
+
+3 of the 12 sections failed the model's structured answer and 4 yielded nothing: a 4B model on
+dense 50-page documents.
+
+### Verified
+
+- 20 new tests (selection, the contact filter, coverage text, limitations and confidence from the
+  run's own numbers); full suite 1110 passed; Vitest 50, tsc, build
+
+---
+
 ## 2026-10-07 - Demo step 1: differences are not contradictions (BUG-033)
 
 ### Fixed

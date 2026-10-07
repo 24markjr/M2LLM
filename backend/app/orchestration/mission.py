@@ -234,11 +234,12 @@ async def run_mission(
         # four stages in sequence. The stage is announced as REASONING because that is
         # where the loop starts; the controller emits its own events throughout.
         await _advance(result, Stage.REASONING, on_stage)
+        reasoner = ReasoningEngine(provider)
         controller = ReplanningController(
             graph=graph,
             registry=registry,
             router=router,
-            reasoner=ReasoningEngine(provider),
+            reasoner=reasoner,
             verifier=build_verification_provider(provider),
             emit=emitter,
             intent=result.intent,
@@ -280,6 +281,9 @@ async def run_mission(
                 termination=result.termination_reason,
                 emit=emitter,
                 security=result.security,
+                # What the run could and could not examine, and what reasoning discarded (BUG-032).
+                knowledge=result.knowledge,
+                discarded=dict(reasoner.discarded),
                 # The text at each cited line, for checking the narrative (Phase 37): the same map
                 # verification reads.
                 evidence_text=evidence_text_map(
@@ -365,7 +369,9 @@ async def _build_knowledge(
     provider: LLMProvider,
     emitter: object,
 ) -> None:
-    snapshot = await KnowledgeExtractor(provider).build(documents, page_starts, emit=emitter)
+    snapshot = await KnowledgeExtractor(provider).build(
+        documents, page_starts, emit=emitter, objective=result.objective.text
+    )
     base = await open_knowledge_base(result.run_id, snapshot)
     result.knowledge = snapshot
     result.knowledge_store = base.store
@@ -383,6 +389,8 @@ async def _build_knowledge(
             "differences": len(snapshot.differences),
             "chunks": stats.chunks,
             "chunks_skipped": stats.chunks_skipped,
+            "documents_read": stats.documents_read,
+            "contact_claims_skipped": stats.contact_claims_skipped,
             "failed_chunks": stats.failed_chunks,
             "llm_calls": stats.llm_calls,
         },

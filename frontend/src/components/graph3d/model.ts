@@ -306,3 +306,34 @@ export function recallText(runs: readonly string[] | null, current: string | nul
   const missions = earlier === 1 ? "mission" : "missions";
   return current ? `seen in ${earlier} earlier ${missions}` : `seen in ${earlier} stored ${missions}`;
 }
+
+/**
+ * What the knowledge graph was built from, in one line (BUG-034). A graph built from twelve parts of
+ * four hundred must say so, or it reads as the whole of the documents.
+ */
+export function coverageText(summary: {
+  conflicts: number;
+  differences?: number;
+  stats?: {
+    documents: number;
+    chunks: number;
+    chunks_skipped: number;
+    failed_chunks: number;
+    claims: number;
+    ungrounded_claims: number;
+    documents_read?: number;
+  };
+}): string {
+  const s = summary.stats;
+  if (!s) return "";
+  const read = s.chunks - s.chunks_skipped;
+  const parts = [
+    `read ${read} of ${s.chunks} section(s)` +
+      (s.documents_read !== undefined ? ` across ${s.documents_read} of ${s.documents} document(s)` : ""),
+    s.claims ? `${s.ungrounded_claims} of ${s.claims} claim(s) not found on their source line` : "",
+    s.failed_chunks ? `${s.failed_chunks} section(s) failed` : "",
+    `${summary.conflicts} contradiction(s)`,
+    summary.differences ? `${summary.differences} differing description(s)` : "",
+  ];
+  return parts.filter(Boolean).join(" · ");
+}

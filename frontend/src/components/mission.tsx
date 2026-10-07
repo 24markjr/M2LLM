@@ -424,7 +424,11 @@ export function Report({ report }: { report: FinalReport | null }) {
       <h2>
         Report
         <span className="count">
-          overall confidence {report.overall_confidence.toFixed(2)} &middot;{" "}
+          {/* Nothing verified is no score at all, not a score of zero (BUG-032). */}
+          {report.verified_findings.length
+            ? `overall confidence ${report.overall_confidence.toFixed(2)}`
+            : "no confidence to report: nothing verified"}{" "}
+          &middot;{" "}
           {report.verified_findings.length} verified, {report.uncertain_findings.length} uncertain,{" "}
           {report.rejected_findings.length} rejected
         </span>

@@ -1561,10 +1561,22 @@
             "title": "Claims Capped",
             "type": "integer"
           },
+          "contact_claims_skipped": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Contact Claims Skipped",
+            "type": "integer"
+          },
           "documents": {
             "default": 0,
             "minimum": 0.0,
             "title": "Documents",
+            "type": "integer"
+          },
+          "documents_read": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Documents Read",
             "type": "integer"
           },
           "duplicate_claims": {

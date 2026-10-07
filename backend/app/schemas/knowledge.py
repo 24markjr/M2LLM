@@ -264,6 +264,12 @@ class ExtractionStats(JarvisModel):
     entities_ungrounded: int = Field(default=0, ge=0)
     # Identical claims (same entity, attribute, value and citation) stored once.
     duplicate_claims: int = Field(default=0, ge=0)
+    # Documents at least one chunk of which was read (BUG-034): with a fair share per document,
+    # every document is read before any is read twice.
+    documents_read: int = Field(default=0, ge=0)
+    # Phone numbers, e-mail and postal addresses dropped as claims because the objective did not
+    # ask for them (BUG-034): contact details are not evidence about the matter.
+    contact_claims_skipped: int = Field(default=0, ge=0)
 
 
 class KnowledgeSnapshot(JarvisModel):

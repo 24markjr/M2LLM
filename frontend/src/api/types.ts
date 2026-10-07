@@ -431,7 +431,24 @@ export interface KnowledgeSummary {
   relationships: number;
   claims: number;
   conflicts: number;
+  /** Differing descriptions (BUG-033): not contradictions. */
+  differences?: number;
+  stats?: ExtractionStats;
   knowledge_pass_task_id: string | null;
+}
+
+/** What building the knowledge base read and could not do. */
+export interface ExtractionStats {
+  documents: number;
+  chunks: number;
+  chunks_skipped: number;
+  llm_calls: number;
+  failed_chunks: number;
+  claims: number;
+  ungrounded_claims: number;
+  /** Documents at least one part of which was read (BUG-034). */
+  documents_read?: number;
+  contact_claims_skipped?: number;
 }
 
 export interface AnalyzeResponse {

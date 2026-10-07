@@ -20,6 +20,8 @@ answer was not valid JSON. The same three outputs are extracted here, with four 
 
 Bounded (invariant 7): at most `knowledge.max_chunks` model calls per run. Chunks past it are
 counted as `chunks_skipped`, so a knowledge base built from part of the input never looks complete.
+Which chunks are read is `selection.py`'s: a fair share per document, the parts most relevant to the
+objective first (BUG-034). Contact details are dropped unless the objective asks for them.
 """
 
 from __future__ import annotations
@@ -33,6 +35,7 @@ from pydantic import Field
 from app.core.agent_config import KnowledgePolicy, get_knowledge_policy
 from app.core.logging import get_logger
 from app.intelligence.knowledge.conflicts import detect_disagreements
+from app.intelligence.knowledge.selection import select_chunks
 from app.intelligence.knowledge.store import KnowledgeAccumulator, normalize_name
 from app.intelligence.temporal import find_dates, find_figures, parse_date, parse_number
 from app.llm.errors import LLMError
@@ -172,6 +175,34 @@ def _mention_lines(name: str, chunk: Chunk) -> list[int]:
     return [n for n, text in chunk.lines if key and key in normalize_name(text)]
 
 
+# --- contact details ------------------------------------------------------------------
+#
+# Phone numbers, e-mail and postal addresses are not evidence about the matter under investigation,
+# and they filled the AURORA knowledge graph ("ARCAISYS.phone = 9137815600"). Dropped unless the
+# objective asks about them.
+
+_CONTACT_ATTRIBUTE = re.compile(
+    r"\b(phone|telephone|tel|mobile|fax|e-?mail|address|contact|website|url|pin ?code|postal"
+    r"|zip)\b",
+    re.IGNORECASE,
+)
+# An IP or MAC address is technical evidence, not a contact detail.
+_TECHNICAL_ADDRESS = re.compile(r"\b(ip|mac|ipv4|ipv6|memory|network)\s*address", re.IGNORECASE)
+# Values that are unambiguously contact details. A bare ten-digit number is not one of them: it
+# is as often an order or account number.
+_CONTACT_VALUE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+|https?://")
+_CONTACT_REQUEST = re.compile(
+    r"\b(contact|phone|e-?mail|address|who to call|reach)\b", re.IGNORECASE
+)
+
+
+def _is_contact(attribute: str, value: str) -> bool:
+    words = attribute.replace("_", " ")
+    if _TECHNICAL_ADDRESS.search(words):
+        return False
+    return bool(_CONTACT_ATTRIBUTE.search(words) or _CONTACT_VALUE.search(value))
+
+
 # --- the extractor -------------------------------------------------------------------
 
 
@@ -182,6 +213,7 @@ class KnowledgeExtractor:
         self._provider = provider
         self._policy = policy or get_knowledge_policy()
         self._prompts = get_prompt_library()
+        self._keep_contacts = False
 
     async def build(
         self,
@@ -189,8 +221,11 @@ class KnowledgeExtractor:
         page_starts: dict[str, list[int]] | None = None,
         *,
         emit: object | None = None,
+        objective: str = "",
     ) -> KnowledgeSnapshot:
+        """`objective` decides which chunks are read first when they cannot all be (BUG-034)."""
         pages = page_starts or {}
+        self._keep_contacts = bool(_CONTACT_REQUEST.search(objective))
         store = KnowledgeAccumulator(max_claims=self._policy.max_claims)
         store.stats.documents = len(documents)
 
@@ -202,7 +237,10 @@ class KnowledgeExtractor:
                 chunks.extend(chunk_document(document_id, text, self._policy.chunk_chars))
 
         store.stats.chunks = len(chunks)
-        sent = chunks[: self._policy.max_chunks]
+        sent = select_chunks(chunks, self._policy.max_chunks, objective)
+        store.stats.documents_read = len(
+            {c.document_id for c in sent} | {d for d in documents if d.lower().endswith(".csv")}
+        )
         store.stats.chunks_skipped = len(chunks) - len(sent)
         if store.stats.chunks_skipped:
             log.warning(
@@ -269,6 +307,9 @@ class KnowledgeExtractor:
             store.relationship(rel.subject, rel.predicate, rel.object, ref(line))
 
         for claim in response.claims:
+            if not self._keep_contacts and _is_contact(claim.attribute, claim.value):
+                store.stats.contact_claims_skipped += 1
+                continue
             line, grounded = ground(claim.value, claim.line, chunk)
             store.claim(
                 entity_name=claim.entity,

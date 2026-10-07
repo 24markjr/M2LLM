@@ -242,3 +242,12 @@ MATCH (n) WHERE n.run_id IS NOT NULL AND n.run_id <> 'run_00000000a3a3' DETACH D
 `same_document` marks a contradiction whose sides all cite one document. Neo4j stores both as
 `:Conflict` nodes (`difference: true` for descriptions) with `CONFLICTS_WITH` or `DIFFERS_FROM` edges;
 graphs stored earlier read back as contradictions, as they were.
+
+## What the pass reads when it cannot read everything (2026-10-07, BUG-034)
+
+`knowledge.max_chunks` sections are read, one model call each. `selection.select_chunks` deals them
+round-robin across documents, each document's sections ranked by the objective's words (plus half a
+point for a date and for a figure), then restores document order. Contact details (phone, e-mail,
+postal address, web links) are not kept as claims unless the objective asks; IP and MAC addresses
+are kept. `ExtractionStats.documents_read` and `contact_claims_skipped` record what happened, and the
+explorer shows it ("Built from: ...").
