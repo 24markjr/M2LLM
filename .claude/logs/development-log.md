@@ -6,6 +6,27 @@ and what is still broken.
 
 ---
 
+# 2026-10-07 - Demo step 1: false contradictions (BUG-033)
+
+The owner ran a broad trust question over twelve AURORA documents and asked why the report was empty
+and whether the knowledge graph could be trusted. The run's own events answered the first (every
+candidate finding discarded by the comparative rule - Step 5) and its knowledge data the second: all
+six conflicts were one document in other words, 64 of 86 claims ungrounded, 179 of 191 chunks never
+read. That changed the plan: turning conflicts into findings first would have produced six false
+contradictions, so the detector was fixed first.
+
+The rule chosen is structural, not a model judgement: dates and numbers can contradict; long text can
+only describe differently; short categorical text contradicts only across documents. The live check
+found one more false contradiction the rule had not covered (a quarter against a date) and that was
+fixed in the same step. It also showed the knowledge pass did not extract the Aurora reports' real
+completion-date pair on this run - an extraction recall limit that missions cover through their
+document tools.
+
+The owner has since added technical and financial documents of hundreds of pages each; Step 2
+(reading every document, most relevant parts first) will be measured on them.
+
+---
+
 # 2026-10-07 - Phase 44: cases and the professional hierarchy
 
 Before starting: Docker was started and Phase 43's database half verified (migration round-trip,

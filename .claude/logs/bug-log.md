@@ -1077,3 +1077,31 @@ citation to text was a plain dict, so the date extraction's rows replaced the bu
 **Fix.** The text for a citation merges every observation that cited it. Also new in the same work: a
 difference of two cited figures counts as grounded (37,500 = 287,500 - 250,000), since the objective
 asked for exactly that comparison.
+
+## BUG-033 — Every difference between two claims was reported as a contradiction
+
+**Found:** 2026-10-07, by the owner, on a real mission over twelve AURORA project documents
+(`run_9b03bd99041a`)
+**Severity:** High. The knowledge graph showed six red contradictions; none was one
+**Status:** Fixed (`intelligence/knowledge/conflicts.py`)
+
+**Symptom.** All six "conflicts" were one document (`AURORA_Annexure-1_PS-71.pdf`) describing the
+system in other words on different pages: "description = Automated Unified Reasoning and Optimization
+Architecture" against "Automated Compliance Validation"; "synchronization_method = continuously
+reconciles CAD assemblies with BOM records" against "CAD-BOM Sync". Text values were compared like
+dates: any two wordings differed, so any two wordings conflicted. Turning the graph's conflicts into
+findings (planned as BUG-031) would have reported six false contradictions.
+
+**Fix.** Disagreements are split. **Contradictions** (`conflicts`): dates and numbers that differ, and
+short categorical text (four words at most: a name, a status) from different documents.
+**Differing descriptions** (`differences`, new): every other text difference - stored, shown in grey in
+the graph and the side panel, never red, never counted as a conflict. A date or number contradiction
+within one document is kept and marked `same_document` (check the context). Quarters are periods:
+"Q2 2026" matches any date in April-June 2026 - found by the step's own live check, where "production
+readiness Q2 2026" against "closed 14 May 2026" was a false contradiction across documents.
+
+**Verified.** The six real false conflicts are test cases (all now differing descriptions); the
+contradictions the scenarios depend on (Aurora dates, Helix budget, Member 3's "on duty") stay
+contradictions; both stores round-trip differences (Neo4j live); live extraction on Member 3's
+shipment documents still finds 14 vs 16 September, and on the Aurora reports no longer reports Q2
+against 14 May. Graphs stored before the fix read back unchanged (their conflicts stay conflicts).

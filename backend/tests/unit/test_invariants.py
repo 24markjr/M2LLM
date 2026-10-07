@@ -45,7 +45,7 @@ PORT_VOCABULARIES: list[tuple[type, int]] = [
     (EntityType, 7),
     (ConflictKind, 3),
     (GraphNodeKind, 4),
-    (GraphLinkKind, 6),
+    (GraphLinkKind, 7),  # DIFFERS_FROM (BUG-033): differing descriptions, apart from conflicts
     (FactKind, 2),
     (CrossSourcePass, 3),
 ]

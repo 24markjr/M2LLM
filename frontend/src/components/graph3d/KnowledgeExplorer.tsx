@@ -727,6 +727,21 @@ function NodePanel({
                 <li key={k.conflict_id}>
                   <span className="bad">{k.attribute}</span>:{" "}
                   {k.sides.map((s) => `${s.value} (${s.sources.join(", ")})`).join(" vs ")}
+                  {k.same_document ? (
+                    <span className="dim"> · same document: check the context (planned vs actual?)</span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
+        {detail?.differences?.length ? (
+          <>
+            <h3>Described differently (not contradictions)</h3>
+            <ul className="detail-list">
+              {detail.differences.map((k) => (
+                <li key={k.conflict_id} className="dim">
+                  {k.attribute}: {k.sides.map((s) => `${s.value} (${s.sources.join(", ")})`).join(" / ")}
                 </li>
               ))}
             </ul>
@@ -767,6 +782,7 @@ function Legend() {
       <span>◆ document</span>
       <span>▲ finding</span>
       <span className="bad">― conflict (moving)</span>
+      <span className="dim">― described differently</span>
       <span className="ok">― cites</span>
     </div>
   );

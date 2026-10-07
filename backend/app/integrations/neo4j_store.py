@@ -18,6 +18,7 @@ database).
     (:Entity)-[:HAS_CLAIM]->(:Claim)-[:CITED_IN {source}]->(:Document)
     (:Entity)-[:HAS_CONFLICT]->(:Conflict)<-[:SIDE_OF {value}]-(:Claim)
     (:Claim)-[:CONFLICTS_WITH {conflict_id, attribute, kind}]->(:Claim)
+    (:Claim)-[:DIFFERS_FROM {conflict_id, attribute, kind}]->(:Claim)   differing descriptions
     (:Finding {run_id, finding_id, seq, claim, classification, status})
         -[:CITES {source}]->(:Claim | :Document)                      (Phase 30)
 
@@ -216,6 +217,7 @@ class Neo4jGraphStore:
             relationships=await base.relationships(),
             claims=await base.claims(),
             conflicts=await base.conflicts(),
+            differences=await base.differences(),
             stats=ExtractionStats.model_validate_json(rows[0]["stats"]),
         )
 
@@ -310,18 +312,25 @@ async def _write_run(tx: AsyncManagedTransaction, run_id: str, snapshot: Knowled
         rows=[{**c.model_dump(), "seq": i} for i, c in enumerate(snapshot.claims)],
     )
 
-    for i, conflict in enumerate(snapshot.conflicts):
+    # Contradictions are `:Conflict` nodes; differing descriptions (BUG-033) the same shape with
+    # `difference: true`, so a query for contradictions never returns one.
+    disagreements = [(c, False) for c in snapshot.conflicts] + [
+        (c, True) for c in snapshot.differences
+    ]
+    for i, (conflict, difference) in enumerate(disagreements):
         await tx.run(
             "MATCH (e:Entity {run_id: $r, entity_id: $entity_id}) "
             "CREATE (k:Conflict {run_id: $r, conflict_id: $conflict_id, seq: $seq, "
             "entity_id: $entity_id, entity_name: $entity_name, attribute: $attribute, "
-            "kind: $kind, sides: $sides}) "
+            "kind: $kind, sides: $sides, same_document: $same_document, difference: $difference}) "
             "CREATE (e)-[:HAS_CONFLICT]->(k) "
             "WITH k UNWIND $members AS member "
             "MATCH (c:Claim {run_id: $r, claim_id: member.claim_id}) "
             "CREATE (c)-[:SIDE_OF {value: member.value}]->(k)",
             r=run_id,
             seq=i,
+            same_document=conflict.same_document,
+            difference=difference,
             conflict_id=conflict.conflict_id,
             entity_id=conflict.entity_id,
             entity_name=conflict.entity_name,
@@ -335,11 +344,13 @@ async def _write_run(tx: AsyncManagedTransaction, run_id: str, snapshot: Knowled
             ],
         )
         heads = [side.claim_ids[0] for side in conflict.sides]
+        # A relationship type cannot be a query parameter; it is one of two constants here.
+        edge = "DIFFERS_FROM" if difference else "CONFLICTS_WITH"
         await tx.run(
             "UNWIND $pairs AS pair "
             "MATCH (a:Claim {run_id: $r, claim_id: pair[0]}) "
             "MATCH (b:Claim {run_id: $r, claim_id: pair[1]}) "
-            "CREATE (a)-[:CONFLICTS_WITH {conflict_id: $conflict_id, attribute: $attribute, "
+            f"CREATE (a)-[:{edge} {{conflict_id: $conflict_id, attribute: $attribute, "
             "kind: $kind}]->(b)",
             r=run_id,
             pairs=[[a, b] for n, a in enumerate(heads) for b in heads[n + 1 :]],
@@ -453,13 +464,25 @@ class Neo4jKnowledgeBase:
         return _claim(rows[0]) if rows else None
 
     async def conflicts(self, entity_id: str | None = None) -> list[ClaimConflict]:
+        return await self._disagreements(entity_id, difference=False)
+
+    async def differences(self, entity_id: str | None = None) -> list[ClaimConflict]:
+        return await self._disagreements(entity_id, difference=True)
+
+    async def _disagreements(
+        self, entity_id: str | None, *, difference: bool
+    ) -> list[ClaimConflict]:
+        # `coalesce`: graphs stored before 2026-10-07 have no `difference` property - every one of
+        # their conflicts was stored as a contradiction, and is read back as one.
         rows = await self._graph.read(
-            "MATCH (k:Conflict {run_id: $r}) WHERE $e IS NULL OR k.entity_id = $e "
+            "MATCH (k:Conflict {run_id: $r}) WHERE ($e IS NULL OR k.entity_id = $e) "
+            "AND coalesce(k.difference, false) = $d "
             "RETURN k.conflict_id AS conflict_id, k.entity_id AS entity_id, "
             "k.entity_name AS entity_name, k.attribute AS attribute, k.kind AS kind, "
-            "k.sides AS sides ORDER BY k.seq",
+            "k.sides AS sides, coalesce(k.same_document, false) AS same_document ORDER BY k.seq",
             r=self._run_id,
             e=entity_id,
+            d=difference,
         )
         return [
             ClaimConflict(
@@ -469,6 +492,7 @@ class Neo4jKnowledgeBase:
                 attribute=row["attribute"],
                 kind=row["kind"],
                 sides=[ConflictSide.model_validate(s) for s in json.loads(row["sides"])],
+                same_document=row["same_document"],
             )
             for row in rows
         ]

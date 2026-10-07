@@ -56,7 +56,11 @@ def _status(finding: Finding) -> str:
     return finding.verification.status.value if finding.verification else ""
 
 
-def _conflict_links(conflicts: list[ClaimConflict], keep: set[str]) -> list[GraphLink]:
+def _conflict_links(
+    conflicts: list[ClaimConflict],
+    keep: set[str],
+    kind: GraphLinkKind = GraphLinkKind.CONFLICTS_WITH,
+) -> list[GraphLink]:
     links: list[GraphLink] = []
     for conflict in conflicts:
         heads = [side.claim_ids[0] for side in conflict.sides]
@@ -67,7 +71,7 @@ def _conflict_links(conflicts: list[ClaimConflict], keep: set[str]) -> list[Grap
                         GraphLink(
                             source=a,
                             target=b,
-                            kind=GraphLinkKind.CONFLICTS_WITH,
+                            kind=kind,
                             label=conflict.attribute,
                         )
                     )
@@ -155,6 +159,7 @@ async def build_view(
         for d in sorted({_document_of(s) for s in e.sources})
     ]
     links += _conflict_links(conflicts, claim_ids)
+    links += _conflict_links(await base.differences(), claim_ids, GraphLinkKind.DIFFERS_FROM)
 
     by_source: dict[str, list[str]] = {}
     for claim in claims:
@@ -288,6 +293,11 @@ async def node_detail(
             entity=owner,
             claims=[claim],
             conflicts=[k for k in conflicts if any(claim.claim_id in s.claim_ids for s in k.sides)],
+            differences=[
+                k
+                for k in await base.differences()
+                if any(claim.claim_id in s.claim_ids for s in k.sides)
+            ],
             documents=[claim.document_id],
         )
 
@@ -301,6 +311,7 @@ async def node_detail(
         entity=entity,
         claims=claims,
         conflicts=entity_conflicts,
+        differences=await base.differences(entity.entity_id),
         relationships=await base.relationships(entity.entity_id),
         documents=sorted(
             {_document_of(s) for s in entity.sources} | {c.document_id for c in claims}

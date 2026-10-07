@@ -21,7 +21,7 @@ from app.core.config import GraphStoreName, get_settings
 from app.integrations import graph_store
 from app.integrations.neo4j_store import Neo4jGraphStore
 from app.intelligence.knowledge.base import MAX_DEPTH, InMemoryKnowledgeBase, KnowledgeBase
-from app.intelligence.knowledge.conflicts import detect_conflicts
+from app.intelligence.knowledge.conflicts import detect_disagreements
 from app.schemas.knowledge import (
     ClaimOrder,
     EntityType,
@@ -99,12 +99,17 @@ CLAIMS = [
     _claim(2, "ENT-001", "arrival_date", "16 September", "b.txt:r1"),
     _claim(3, "ENT-002", "works_for", "ABC Logistics", "c.txt:r1"),
     _claim(4, "ENT-002", "present_at", "Mumbai warehouse", "d.txt:r1"),
+    # One document describing the same thing in other words: a differing description (BUG-033).
+    _claim(5, "ENT-002", "role", "receives shipments at the Mumbai warehouse", "c.txt:r2"),
+    _claim(6, "ENT-002", "role", "handles inbound logistics for ABC", "c.txt:r5"),
 ]
+CONFLICTS, DIFFERENCES = detect_disagreements(CLAIMS, ENTITIES)
 SNAPSHOT = KnowledgeSnapshot(
     entities=ENTITIES,
     relationships=RELATIONSHIPS,
     claims=CLAIMS,
-    conflicts=detect_conflicts(CLAIMS, ENTITIES),
+    conflicts=CONFLICTS,
+    differences=DIFFERENCES,
     stats=ExtractionStats(documents=4, chunks=4, llm_calls=4, claims=4),
 )
 
@@ -178,6 +183,13 @@ async def test_conflicts_round_trip_with_every_side(base: KnowledgeBase) -> None
         ("16 September", ["b.txt:r1"]),
     ]
     assert await base.conflicts("ENT-002") == []
+
+
+async def test_differing_descriptions_round_trip_apart_from_conflicts(base: KnowledgeBase) -> None:
+    [difference] = await base.differences()
+    assert difference == SNAPSHOT.differences[0] and difference.same_document
+    assert difference.conflict_id.startswith("DIF-")
+    assert await base.differences("ENT-001") == []
 
 
 async def test_timeline_and_compare(base: KnowledgeBase) -> None:
@@ -264,7 +276,7 @@ async def test_two_runs_in_one_database_never_see_each_other() -> None:
     try:
         await store.save(first, SNAPSHOT)
         await store.save(second, other)
-        assert len(await store.base(first).claims()) == 4
+        assert len(await store.base(first).claims()) == len(CLAIMS)
         assert len(await store.base(second).claims()) == 1
         assert await store.base(second).conflicts() == []
         network = await store.base(second).network("ENT-002", 3)

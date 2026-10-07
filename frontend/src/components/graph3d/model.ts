@@ -258,6 +258,8 @@ export function sizeOf(node: GraphNode): number {
 
 export function linkColourOf(kind: GraphLinkKind): string {
   if (kind === "CONFLICTS_WITH") return "#f0616d";
+  // A differing description is shown, quietly: two wordings of one thing are not a contradiction.
+  if (kind === "DIFFERS_FROM") return "#8a93a6";
   if (kind === "CITES") return "#3ecf8e";
   if (kind === "RELATES") return "#4da3ff";
   return "#333d52";

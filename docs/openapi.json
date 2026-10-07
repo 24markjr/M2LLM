@@ -596,6 +596,11 @@
           "kind": {
             "$ref": "#/components/schemas/ConflictKind"
           },
+          "same_document": {
+            "default": false,
+            "title": "Same Document",
+            "type": "boolean"
+          },
           "sides": {
             "items": {
               "$ref": "#/components/schemas/ConflictSide"
@@ -2136,7 +2141,8 @@
           "CITED_IN",
           "MENTIONED_IN",
           "CONFLICTS_WITH",
-          "CITES"
+          "CITES",
+          "DIFFERS_FROM"
         ],
         "title": "GraphLinkKind",
         "type": "string"
@@ -2701,6 +2707,13 @@
             "title": "Conflicts",
             "type": "array"
           },
+          "differences": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimConflict"
+            },
+            "title": "Differences",
+            "type": "array"
+          },
           "entities": {
             "items": {
               "$ref": "#/components/schemas/KnowledgeEntity"
@@ -2731,6 +2744,11 @@
           },
           "conflicts": {
             "title": "Conflicts",
+            "type": "integer"
+          },
+          "differences": {
+            "default": 0,
+            "title": "Differences",
             "type": "integer"
           },
           "entities": {
@@ -3263,6 +3281,13 @@
               "$ref": "#/components/schemas/ClaimConflict"
             },
             "title": "Conflicts",
+            "type": "array"
+          },
+          "differences": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimConflict"
+            },
+            "title": "Differences",
             "type": "array"
           },
           "documents": {
@@ -6301,6 +6326,69 @@
           }
         },
         "summary": "Conflicts",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/knowledge/differences": {
+      "get": {
+        "description": "The same attribute described in other words (BUG-033): shown, never a contradiction.",
+        "operationId": "differences_api_v1_missions__run_id__knowledge_differences_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entity_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClaimConflict"
+                  },
+                  "title": "Response Differences Api V1 Missions  Run Id  Knowledge Differences Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Differences",
         "tags": [
           "knowledge"
         ]

@@ -5,6 +5,31 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-07 - Demo step 1: differences are not contradictions (BUG-033)
+
+### Fixed
+
+- **The knowledge graph reported wording differences as contradictions.** On twelve AURORA documents,
+  all six red "conflicts" were one document describing the system in other words. Disagreements are
+  now split: contradictions (dates and numbers that differ; short names or statuses that differ across
+  documents) and **differing descriptions** (other text), shown grey, never counted as conflicts
+- A date contradiction inside one document is kept and marked "same document: check the context"
+- Quarters are periods: "Q2 2026" is consistent with 14 May 2026
+
+### Added
+
+- `KnowledgeSnapshot.differences`, `/missions/{id}/knowledge/differences`, `differences` in the
+  knowledge summary and the extraction event; `DIFFERS_FROM` links (grey, no motion) and a "Described
+  differently (not contradictions)" list in the explorer's side panel
+
+### Verified
+
+- 18 new tests (the run's six false conflicts, the real contradictions, quarters, same-document,
+  both stores with Neo4j live); one live extraction check on the shipment and Aurora fixtures; full
+  suite 1090 passed; Vitest 49, tsc, build
+
+---
+
 ## 2026-10-07 - Phase 44: cases and the professional hierarchy
 
 ### Added

@@ -32,7 +32,7 @@ from pydantic import Field
 
 from app.core.agent_config import KnowledgePolicy, get_knowledge_policy
 from app.core.logging import get_logger
-from app.intelligence.knowledge.conflicts import detect_conflicts
+from app.intelligence.knowledge.conflicts import detect_disagreements
 from app.intelligence.knowledge.store import KnowledgeAccumulator, normalize_name
 from app.intelligence.temporal import find_dates, find_figures, parse_date, parse_number
 from app.llm.errors import LLMError
@@ -216,9 +216,8 @@ class KnowledgeExtractor:
             await self._extract(chunk, store, pages, emit)
 
         snapshot = store.snapshot()
-        return snapshot.model_copy(
-            update={"conflicts": detect_conflicts(snapshot.claims, snapshot.entities)}
-        )
+        conflicts, differences = detect_disagreements(snapshot.claims, snapshot.entities)
+        return snapshot.model_copy(update={"conflicts": conflicts, "differences": differences})
 
     async def _extract(
         self,

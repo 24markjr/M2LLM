@@ -229,3 +229,16 @@ and browsable. To clear everything except the Member 3 sample:
 ```cypher
 MATCH (n) WHERE n.run_id IS NOT NULL AND n.run_id <> 'run_00000000a3a3' DETACH DELETE n
 ```
+
+## Contradictions and differing descriptions (2026-10-07, BUG-033)
+
+`detect_disagreements` splits what `detect_conflicts` used to report as one list:
+
+| | When | Shown as |
+|---|---|---|
+| **Contradiction** (`conflicts`, `CON-`) | Dates or numbers that differ (a quarter matches any date inside it); short categorical text (four words at most) from different documents | red, moving; counted as conflicts; read by reasoning |
+| **Differing description** (`differences`, `DIF-`) | Any other text difference, and any text difference inside one document | grey link, "Described differently" in the side panel; never a conflict |
+
+`same_document` marks a contradiction whose sides all cite one document. Neo4j stores both as
+`:Conflict` nodes (`difference: true` for descriptions) with `CONFLICTS_WITH` or `DIFFERS_FROM` edges;
+graphs stored earlier read back as contradictions, as they were.

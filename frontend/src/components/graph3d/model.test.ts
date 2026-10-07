@@ -16,6 +16,7 @@ import {
   highlightSet,
   highlightedLinks,
   initialMode,
+  linkColourOf,
   linkKey,
   listOrder,
   parentsToExpand,
@@ -218,5 +219,14 @@ describe("memory across missions in the pop-up", () => {
   it("without a mission (analyze), counts every stored mission", () => {
     expect(recallText(["run_a"], null)).toBe("seen in 1 stored mission");
     expect(recallText([], null)).toBe("not seen in any stored mission");
+  });
+});
+
+describe("link colours (BUG-033)", () => {
+  it("draws a contradiction red and moving, and a differing description quietly", () => {
+    expect(linkColourOf("CONFLICTS_WITH")).toBe("#f0616d");
+    expect(particlesOf("CONFLICTS_WITH")).toBeGreaterThan(0);
+    expect(linkColourOf("DIFFERS_FROM")).not.toBe(linkColourOf("CONFLICTS_WITH"));
+    expect(particlesOf("DIFFERS_FROM")).toBe(0);
   });
 });

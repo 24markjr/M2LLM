@@ -323,7 +323,9 @@ export type GraphLinkKind =
   | "CITED_IN"
   | "MENTIONED_IN"
   | "CONFLICTS_WITH"
-  | "CITES";
+  | "CITES"
+  /** The same attribute described in other words: not a contradiction (BUG-033). */
+  | "DIFFERS_FROM";
 
 export interface GraphNode {
   id: string;
@@ -388,6 +390,8 @@ export interface ClaimConflict {
   attribute: string;
   kind: "DATE" | "NUMBER" | "TEXT";
   sides: ConflictSide[];
+  /** Every side from one document: check the context (a planned and an actual date, say). */
+  same_document?: boolean;
 }
 
 export interface KnowledgeRelationship {
@@ -403,6 +407,7 @@ export interface NodeDetail {
   entity: KnowledgeEntity | null;
   claims: KnowledgeClaim[];
   conflicts: ClaimConflict[];
+  differences?: ClaimConflict[];
   relationships: KnowledgeRelationship[];
   documents: string[];
   entities: KnowledgeEntity[];
@@ -444,6 +449,8 @@ export interface KnowledgeSnapshot {
   relationships: KnowledgeRelationship[];
   claims: KnowledgeClaim[];
   conflicts: ClaimConflict[];
+  /** Differing descriptions (BUG-033). Absent in knowledge built before 2026-10-07. */
+  differences?: ClaimConflict[];
 }
 
 /** A date as far as the text gives it: a year may be missing, and a day. */

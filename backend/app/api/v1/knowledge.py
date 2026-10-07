@@ -78,6 +78,8 @@ class KnowledgeSummary(JarvisModel):
     relationships: int
     claims: int
     conflicts: int
+    # Differing descriptions (BUG-033): the same attribute in other words, not contradictions.
+    differences: int = 0
     stats: ExtractionStats
     knowledge_pass_task_id: str | None = None
 
@@ -163,6 +165,7 @@ async def summary(run_id: str) -> KnowledgeSummary:
         relationships=len(await base.relationships()),
         claims=len(await base.claims()),
         conflicts=len(await base.conflicts()),
+        differences=len(await base.differences()),
         stats=run.stats,
         knowledge_pass_task_id=run.knowledge_pass_task_id,
     )
@@ -223,6 +226,13 @@ async def claim(run_id: str, claim_id: str) -> KnowledgeClaim:
 async def conflicts(run_id: str, entity_id: str | None = None) -> list[ClaimConflict]:
     base, _ = await _open(run_id)
     return await base.conflicts(entity_id)
+
+
+@router.get(f"{PREFIX}/differences", response_model=list[ClaimConflict])
+async def differences(run_id: str, entity_id: str | None = None) -> list[ClaimConflict]:
+    """The same attribute described in other words (BUG-033): shown, never a contradiction."""
+    base, _ = await _open(run_id)
+    return await base.differences(entity_id)
 
 
 @router.get(f"{PREFIX}/timeline", response_model=list[TimelineEvent])

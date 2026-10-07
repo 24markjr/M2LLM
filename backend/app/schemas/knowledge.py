@@ -151,6 +151,9 @@ class ClaimConflict(JarvisModel):
     attribute: NonEmptyStr
     kind: ConflictKind
     sides: list[ConflictSide]
+    # Every side cites the same document (BUG-033). Kept, and said: a document can legitimately give
+    # a planned and an actual date for one thing, so a reader should check the context.
+    same_document: bool = False
 
     @model_validator(mode="after")
     def _a_conflict_has_two_sides(self) -> ClaimConflict:
@@ -273,7 +276,11 @@ class KnowledgeSnapshot(JarvisModel):
     entities: list[KnowledgeEntity] = Field(default_factory=list)
     relationships: list[KnowledgeRelationship] = Field(default_factory=list)
     claims: list[KnowledgeClaim] = Field(default_factory=list)
+    # Contradictions: dates, numbers, or short categorical values that differ across documents.
     conflicts: list[ClaimConflict] = Field(default_factory=list)
+    # Differing descriptions (BUG-033): the same attribute described in other words. Kept and shown,
+    # never treated as a contradiction. Absent in knowledge built before 2026-10-07.
+    differences: list[ClaimConflict] = Field(default_factory=list)
     stats: ExtractionStats = Field(default_factory=ExtractionStats)
 
 
@@ -297,6 +304,8 @@ class GraphLinkKind(StrEnum):
     MENTIONED_IN = "MENTIONED_IN"
     CONFLICTS_WITH = "CONFLICTS_WITH"
     CITES = "CITES"
+    # Two descriptions of one attribute in other words (BUG-033): drawn apart from a contradiction.
+    DIFFERS_FROM = "DIFFERS_FROM"
 
 
 class GraphNode(JarvisModel):
@@ -339,6 +348,7 @@ class NodeDetail(JarvisModel):
     entity: KnowledgeEntity | None = None
     claims: list[KnowledgeClaim] = Field(default_factory=list)
     conflicts: list[ClaimConflict] = Field(default_factory=list)
+    differences: list[ClaimConflict] = Field(default_factory=list)
     relationships: list[KnowledgeRelationship] = Field(default_factory=list)
     documents: list[str] = Field(default_factory=list)
     entities: list[KnowledgeEntity] = Field(default_factory=list)

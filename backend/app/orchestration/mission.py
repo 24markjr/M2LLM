@@ -380,6 +380,7 @@ async def _build_knowledge(
             "claims": len(snapshot.claims),
             "ungrounded_claims": stats.ungrounded_claims,
             "conflicts": len(snapshot.conflicts),
+            "differences": len(snapshot.differences),
             "chunks": stats.chunks,
             "chunks_skipped": stats.chunks_skipped,
             "failed_chunks": stats.failed_chunks,
