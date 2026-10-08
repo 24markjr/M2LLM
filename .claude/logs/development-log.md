@@ -6,6 +6,24 @@ and what is still broken.
 
 ---
 
+# 2026-10-08 - Demo step 5: single-source findings for broad questions (BUG-030)
+
+The comparative rule (a claim needs two sources when the question compares) was right for "do these
+documents contradict each other" and wrong for "can this be trusted - contradictions, risks, gaps":
+the second half is answered by what one document says or omits. The check uses every operation the
+intent lists, optional ones included - the AURORA trust objective had `assess_impact` only as
+optional, and the mandatory-only first version missed it.
+
+**Measured, and one change withdrawn.** The first baseline x3 failed: Helix's schedule contradiction
+went unreported and the shipment negative case reported an agreement, identically in all three runs.
+Neither scenario's intent asks for an assessment, so the new code path never ran there; a diagnostic
+run of both scenarios showed the intent and the discards, and a second with the v5 prompt restored
+both. The one-line prompt rule had shifted what the 4B model proposes on unrelated questions. It was
+reverted; the graph-copy rule in code covers the same case deterministically. Re-run x3: thresholds
+passed, spread zero, figures as before. The failed report is kept, as earlier failed baselines are.
+
+---
+
 # 2026-10-07 - Demo step 4: contradictions in the graph become findings (BUG-031)
 
 Deterministic and narrow on purpose. A model is not asked to restate what the graph already holds;

@@ -106,3 +106,36 @@ def test_a_new_finding_never_reuses_an_existing_id() -> None:
         KnowledgeSnapshot(conflicts=[_conflict()]), [existing], OBSERVATIONS, comparative=True
     )
     assert added.finding_id == "F-002"
+
+
+# --- BUG-030: graph copies, and findings resting on one document ---
+
+
+@pytest.mark.parametrize(
+    ("claim", "copy"),
+    [
+        ("AURORA.description = Automated Unified Reasoning and Optimization Architecture", True),
+        ("XML / CSV.supported_formats = BOM ingestion, schedule export", True),
+        ("Mazagon Dock Shipbuilders Limited (MDL).plm = PLM/ERP ecosystem", True),
+        ("The SoW specifies no penetration testing before deployment.", False),
+        ("Spend of 287,500 exceeds the approved 250,000.", False),
+        ("Version 1.2 of the report = the final one", False),
+    ],
+)
+def test_a_copied_graph_entry_is_recognised(claim: str, copy: bool) -> None:
+    from app.intelligence.reasoning.engine import is_graph_copy
+
+    assert is_graph_copy(claim) is copy
+
+
+def test_a_finding_knows_when_it_rests_on_one_document() -> None:
+    def ref(document: str, row: int) -> EvidenceRef:
+        return EvidenceRef(
+            evidence_id=f"E-{row:03d}",
+            locator=SourceLocator(document_id=document, document_name=document, row=row),
+            resolution=ResolutionStatus.RESOLVED,
+        )
+
+    one = Finding(finding_id="F-001", claim="x", evidence=[ref("a.txt", 1), ref("a.txt", 2)])
+    two = Finding(finding_id="F-002", claim="y", evidence=[ref("a.txt", 1), ref("b.txt", 2)])
+    assert one.single_source and not two.single_source

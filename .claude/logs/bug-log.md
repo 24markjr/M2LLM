@@ -1156,3 +1156,31 @@ its sides, for a question that asks for a comparison - becomes a finding built f
 lines, without a model. Both citations must resolve against what the run retrieved. It is then
 verified like every other finding. Fixed only after BUG-033: done first, it would have reported six
 false contradictions on the AURORA mission.
+
+## BUG-030 — A question asking for risks as well as contradictions could only report contradictions
+
+**Found:** 2026-10-07, the twelve-document AURORA mission: all 22 candidate findings discarded
+**Severity:** High. A broad trust review produced an empty report
+**Status:** Fixed (`intelligence/reasoning/engine.py`; the prompt stays at v5 - see below)
+
+**Symptom.** The objective asked for contradictions *and* cybersecurity risks, implementation gaps and
+missing evidence. Because it asked for contradictions, the comparative rule discarded every claim
+resting on one source - including the kind that answers "risks" ("the SoW specifies no penetration
+testing"). The 22 candidates were also, every one, a knowledge-graph entry copied as a claim
+("AURORA.description = Automated Unified Reasoning and Optimization Architecture").
+
+**Fix.** When the objective also asks for an assessment (`assess_impact` or `summarize` among the
+operations it asks for, optional or not), a single-source claim is kept and labelled SINGLE SOURCE
+(`Finding.single_source`, in the report and the console). A question that only compares is unchanged,
+which is what the negative cases depend on. A claim that copies a graph entry ("X.attribute =
+value") is discarded with its own reason.
+
+**A prompt change that was measured and withdrawn.** The first version also added a rule to the
+reasoning prompt (v6: "a knowledge item is not a finding by itself"). The 14-scenario baseline x3
+failed with it: `helix_schedule_contradiction` reported nothing in all three runs (the model stopped
+proposing the milestone-date pair) and `shipment_9012_consistent` reported an agreement. Neither
+scenario takes the new code path (their objectives ask for no assessment), so the prompt was the
+only change that reached them. Re-run with v5 and the same code, Helix found its contradiction and
+the shipment case reported nothing. The prompt was reverted to v5; the graph-copy rule in code does
+the same job deterministically. A one-line prompt rule moved a 4B model's output on unrelated
+questions - the reason prompt changes are measured on the whole suite, not on the case they target.

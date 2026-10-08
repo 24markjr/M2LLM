@@ -440,7 +440,9 @@ def _finding_line(finding: Finding) -> str:
     sources = ", ".join(r.as_ref() for r in finding.evidence if r.is_resolved) or "no source"
     return (
         f"[{finding.finding_id}] {finding.claim} "
-        f"({finding.classification.value}, confidence {finding.confidence.value:.2f}; {sources})"
+        f"({finding.classification.value}"
+        + (", single source" if finding.single_source else "")
+        + f", confidence {finding.confidence.value:.2f}; {sources})"
     )
 
 

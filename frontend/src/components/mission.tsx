@@ -154,6 +154,11 @@ export function FindingCard({
 
       <div className="badges">
         <span className="badge">{finding.classification}</span>
+        {singleSource(finding) ? (
+          <span className="badge" title="Every citation is in one document: what it states, not corroborated">
+            SINGLE SOURCE
+          </span>
+        ) : null}
         <span className={`badge v-${status.toLowerCase()}`}>{status}</span>
         {finding.verification?.degraded ? (
           <span className="badge degraded" title={finding.verification.degraded_reason}>
@@ -524,4 +529,12 @@ export function ExecutionStats({ report }: { report: FinalReport | null }) {
       </div>
     </div>
   );
+}
+
+/** Every resolved citation in one document (BUG-030): computed here as the engine computes it. */
+export function singleSource(finding: Finding): boolean {
+  const documents = new Set(
+    finding.evidence.filter((e) => e.resolution === "RESOLVED").map((e) => e.locator.document_id),
+  );
+  return documents.size === 1;
 }

@@ -409,3 +409,56 @@ async def test_a_contradiction_reasoning_already_reported_is_not_added_twice(
         },
     )
     assert [f.claim for f in result.findings] == [claim]  # type: ignore[attr-defined]
+
+
+# --- BUG-030: a question that asks for an assessment keeps single-source findings ---
+
+ASSESSING = ["extract_timeline", "detect_inconsistencies", "assess_impact"]
+
+
+def _single_source_run(claim: str) -> dict[str, list[str]]:
+    return {
+        "knowledge": [
+            _knowledge([("Project Aurora", "completion_date", "30 April 2026", 1)]),
+            _knowledge([("Project Aurora", "spend", "450,000", 2)]),
+        ],
+        "reasoning": [json.dumps({"findings": [{"claim": claim, "citations": ["report.txt:r1"]}]})],
+        "relevance": [json.dumps({"verdicts": [{"index": 1, "keep": True}]})],
+        "verification": [json.dumps({"status": "SUPPORTED"})],
+    }
+
+
+async def test_an_assessment_question_keeps_a_single_source_finding_labelled_so(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _policy(monkeypatch, CrossSourcePass.COMPARATIVE)
+    claim = "The project report commits to completion by 30 April 2026 with no stated contingency."
+    result, _ = await _run(ASSESSING, PLAN, _single_source_run(claim))
+    [finding] = result.findings  # type: ignore[attr-defined]
+    assert finding.claim == claim and finding.single_source
+
+
+async def test_a_pure_comparison_still_discards_a_single_source_claim(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The negative cases depend on this: unchanged for a question that only compares."""
+    _policy(monkeypatch, CrossSourcePass.COMPARATIVE)
+    claim = "The project report commits to completion by 30 April 2026 with no stated contingency."
+    result, memory = await _run(COMPARATIVE, PLAN, _single_source_run(claim))
+    assert result.findings == []  # type: ignore[attr-defined]
+    assert any(
+        "restates a source" in str(e.payload.get("reason", ""))
+        for e in memory.of_type(EventType.FINDING_DISCARDED)
+    )
+
+
+async def test_a_copied_graph_entry_is_not_a_finding(monkeypatch: pytest.MonkeyPatch) -> None:
+    _policy(monkeypatch, CrossSourcePass.COMPARATIVE)
+    result, memory = await _run(
+        ASSESSING, PLAN, _single_source_run("Project Aurora.completion_date = 30 April 2026")
+    )
+    assert result.findings == []  # type: ignore[attr-defined]
+    assert any(
+        "copied a knowledge-graph entry" in str(e.payload.get("reason", ""))
+        for e in memory.of_type(EventType.FINDING_DISCARDED)
+    )

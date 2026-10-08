@@ -221,6 +221,9 @@ DISCARD_UNEVIDENCED = (
 )
 DISCARD_AGREEMENT = "it stated the same value on every side: agreement, not a conflict"
 DISCARD_IRRELEVANT = "it was judged not to bear on the question asked"
+DISCARD_GRAPH_COPY = (
+    'it copied a knowledge-graph entry ("X.attribute = value") instead of saying what it means'
+)
 
 
 def unevidenced_values(
@@ -255,6 +258,33 @@ def requires_comparison(intent: Intent | None) -> bool:
     if intent is None:
         return False
     return any(op in COMPARATIVE_OPERATIONS for op in intent.mandatory_operations)
+
+
+# Operations whose answer can rest on one source: an assessment of risk or impact, a summary.
+ASSESSMENT_OPERATIONS = frozenset({Operation.ASSESS_IMPACT, Operation.SUMMARIZE})
+
+
+def requires_assessment(intent: Intent | None) -> bool:
+    """Whether the objective also asks for an assessment, not only a comparison (BUG-030).
+
+    "Determine whether AURORA can be trusted, investigating contradictions, cybersecurity risks and
+    implementation gaps" asks for contradictions and for risks; "the SoW specifies no penetration
+    testing" answers the second from one document. The comparative rule discarded every such claim.
+    """
+    if intent is None:
+        return False
+    # Every operation asked for, not only the mandatory ones: an assessment the objective asks for
+    # is part of the question even when the planner treats it as optional.
+    return any(op in ASSESSMENT_OPERATIONS for op in intent.operations)
+
+
+# A knowledge-graph entry copied as a claim: "AURORA.description = Automated ...". Not a finding:
+# it says what a document states, not what that means for the question (BUG-030).
+_GRAPH_COPY = re.compile(r"^[^=\n]{1,120}\.[A-Za-z_][\w ]{0,60}\s=\s")
+
+
+def is_graph_copy(claim: str) -> bool:
+    return bool(_GRAPH_COPY.match(claim.strip()))
 
 
 class ReasoningEngine:
@@ -304,6 +334,7 @@ class ReasoningEngine:
         candidates = await self._ask_model(objective, bounded, emit, page_starts)
         candidates = await self._filter_irrelevant(objective, candidates, emit)
         comparative = requires_comparison(intent)
+        assessing = requires_assessment(intent)
         binder = EvidenceBinder(observations)
         findings: list[Finding] = []
 
@@ -339,11 +370,23 @@ class ReasoningEngine:
             # document B gives 14 May" - a real contradiction whose citations happened not to
             # resolve because the model wrote placeholder document names. Verification already
             # rejects that claim, and it does so visibly. Dropping it hid a model problem.
-            restatement = (
-                comparative
-                and finding.resolved_evidence_count < MIN_REFS_FOR_COMPARATIVE
+            single_source = (
+                finding.resolved_evidence_count < MIN_REFS_FOR_COMPARATIVE
                 and finding.resolved_evidence_count == len(finding.evidence)
             )
+            # A question that asks for an assessment as well as a comparison is answered in part by
+            # one source (BUG-030): such a claim is kept - labelled single-source - unless it is a
+            # knowledge-graph entry copied as a claim.
+            if comparative and single_source and assessing and is_graph_copy(claim):
+                await self._event(
+                    emit,
+                    EventType.FINDING_DISCARDED,
+                    {"claim": claim[:160], "reason": DISCARD_GRAPH_COPY},
+                )
+                log.info("graph_copy_discarded", claim=claim[:80])
+                self.discarded[DISCARD_GRAPH_COPY] += 1
+                continue
+            restatement = comparative and single_source and not assessing
             if restatement:
                 await self._event(
                     emit,

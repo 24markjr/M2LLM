@@ -212,6 +212,13 @@ class Finding(JarvisModel):
 
     # --- Recomputation ---------------------------------------------------------
 
+    @property
+    def single_source(self) -> bool:
+        """Every resolved citation is in one document (BUG-030): what that document states, not
+        corroborated by another. Labelled so in the report and the console."""
+        documents = {e.locator.document_id for e in self.evidence if e.is_resolved}
+        return len(documents) == 1
+
     def classify(self) -> FindingClassification:
         """Derive the classification from the evidence, ignoring any prior claim to one.
 

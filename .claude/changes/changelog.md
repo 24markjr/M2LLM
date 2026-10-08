@@ -5,6 +5,31 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-08 - Demo step 5: a broad question keeps its single-source findings (BUG-030)
+
+### Fixed
+
+- A question that asks for risks or gaps as well as contradictions ("determine whether AURORA can be
+  trusted, investigating contradictions, cybersecurity risks and implementation gaps") could only
+  report contradictions: every claim resting on one document was discarded as a restatement. When the
+  objective asks for an assessment (`assess_impact` or `summarize`), such a claim is now kept and
+  labelled **single source** - in the report ("..., single source") and on the console (a SINGLE
+  SOURCE badge). A question that only compares is unchanged
+- A claim that copies a knowledge-graph entry ("AURORA.description = Automated ...") is discarded with
+  its own reason, counted in the report's limitations
+
+### Verified
+
+- 14-scenario baseline x3 (`20261008T070849`, spread `repeats/20261008T071625`): every threshold
+  passed, all three runs identical; aggregate unchanged from the previous baseline except latency
+  (32.5 s). Covers Step 4 (BUG-031) as well
+- A reasoning-prompt rule tried alongside (v6, "a knowledge item is not a finding") failed the
+  baseline - `helix_schedule_contradiction` found nothing, `shipment_9012_consistent` reported an
+  agreement (report `20261008T055221`, kept as the record) - and was withdrawn; the prompt stays at v5
+- 7 new unit tests; unit suite 1078 passed
+
+---
+
 ## 2026-10-07 - Demo step 4: contradictions in the graph reach the report (BUG-031)
 
 ### Fixed
