@@ -195,6 +195,18 @@ async def test_a_report_with_nothing_verified_has_zero_overall_confidence() -> N
     assert report.overall_confidence == 0.0
 
 
+async def test_the_markdown_header_does_not_print_a_zero_confidence_it_never_measured() -> None:
+    """Nothing verified: "0.00" would read as a measured zero (BUG-032, the header)."""
+    empty = await _report(
+        findings=[_finding("F-001", "Unsupported.", status=VerificationStatus.UNSUPPORTED)]
+    )
+    assert "**Overall confidence:** not established (no verified finding)" in to_markdown(empty)
+    assert "0.00" not in to_markdown(empty).split("---", 1)[0]
+
+    verified = await _report(findings=[_finding("F-001", "Verified.")])
+    assert "(mean across 1 verified finding(s))" in to_markdown(verified)
+
+
 # --- limitations are derived from run facts ------------------------------------
 
 

@@ -200,6 +200,73 @@ def repair(
     return fixed, dependencies, repairs
 
 
+def _task_type_for(operation: Operation) -> TaskType | None:
+    """The task type that implements an operation - one per operation in the catalogue."""
+    for task_type, satisfies in TASK_SATISFIES.items():
+        if operation in satisfies:
+            return task_type
+    return None
+
+
+def cover_operations(
+    tasks: list[Task], operations: list[Operation], max_tasks: int
+) -> tuple[list[Task], list[PlanRepair]] | None:
+    """Add a task for each required operation the plan leaves out (BUG-035, 2026-10-08).
+
+    Used only after every re-prompt has failed on coverage alone. A broad trust question over
+    twelve documents asked for contradictions, risks and evidence; the 4B planner left out the same
+    three operations on all three attempts and the mission failed before reading a line. Which task
+    implements an operation is fixed by the catalogue, so adding it takes no judgement: the new task
+    reads what the report task was going to read, and the report task then consumes it. The repair
+    is recorded, so such a plan is never counted as clean.
+
+    Returns None when the additions would exceed the plan's cap.
+    """
+    needed: list[TaskType] = []
+    for operation in operations:
+        task_type = _task_type_for(operation)
+        if task_type is not None and task_type not in needed:
+            needed.append(task_type)
+    if not needed or len(tasks) + len(needed) > max_tasks:
+        return None
+
+    fixed = [t.model_copy(update={"depends_on": list(t.depends_on)}) for t in tasks]
+    terminal = next((t for t in reversed(fixed) if t.task_type in TERMINAL_TYPES), None)
+    if terminal is not None:
+        inputs = list(terminal.depends_on)
+    else:
+        depended_on = {d for t in fixed for d in t.depends_on}
+        inputs = [t.task_id for t in fixed if t.task_id not in depended_on]
+
+    highest = max((int(t.task_id.rsplit("_", 1)[1]) for t in fixed), default=0)
+    added: list[Task] = []
+    for offset, task_type in enumerate(needed, start=1):
+        added.append(
+            Task(
+                task_id=f"task_{highest + offset:03d}",
+                task_type=task_type,
+                description=task_type.value.replace("_", " ").capitalize()
+                + " (added: a required operation the plan left out)",
+                depends_on=inputs,
+            )
+        )
+    if terminal is not None:
+        terminal.depends_on = list(
+            dict.fromkeys([*terminal.depends_on, *(t.task_id for t in added)])
+        )
+    repairs = [
+        PlanRepair(
+            action=RepairAction.ADDED_UNCOVERED_OPERATION,
+            detail=(
+                f"after every re-prompt the plan still left out {[o.value for o in operations]}; "
+                f"added {[t.task_id + ' ' + t.task_type.value for t in added]}"
+            ),
+            task_ids=[t.task_id for t in added],
+        )
+    ]
+    return [*fixed, *added], repairs
+
+
 def validate(
     tasks: list[Task],
     intent: Intent,

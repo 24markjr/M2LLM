@@ -5,6 +5,27 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-08 - A plan missing a required operation is completed, not failed (BUG-035)
+
+### Fixed
+
+- **BUG-035.** The AURORA trust question over twelve documents failed in 40 seconds with
+  `PLAN_INVALID`: the planner left out the same three required operations on all three attempts.
+  Now, after the last re-prompt and only when coverage is the plan's sole fault, a task is added for
+  each missing operation (the task type is fixed by the catalogue), reading what the report task was
+  going to read. Recorded as the repair `ADDED_UNCOVERED_OPERATION`, so the plan never counts as
+  clean. Bounded by the plan ceiling (20), not the size asked of the model (10), which the model
+  fills. The same mission then completed in 5.5 minutes
+- A report with nothing verified printed "Overall confidence: 0.00 (mean across 0 verified
+  finding(s))" in its Markdown header; it now says "not established (no verified finding)"
+
+### Verified
+
+- 8 new or changed tests (planner completion, cap, one task for two operations, cycles still fail;
+  the header); unit suite 1084 passed. The baseline is unaffected: no scenario failed planning
+
+---
+
 ## 2026-10-08 - Demo step 5: a broad question keeps its single-source findings (BUG-030)
 
 ### Fixed

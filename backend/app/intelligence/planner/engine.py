@@ -14,8 +14,9 @@ from __future__ import annotations
 from pydantic import Field
 
 from app.core.agent_config import get_agent_bounds
+from app.core.config import get_settings
 from app.core.logging import get_logger
-from app.intelligence.planner.validator import repair, validate
+from app.intelligence.planner.validator import cover_operations, repair, validate
 from app.llm.errors import StructuredOutputError
 from app.llm.prompts import get_prompt_library
 from app.llm.provider import LLMProvider
@@ -24,8 +25,8 @@ from app.schemas.common import JarvisModel
 from app.schemas.event import EventType
 from app.schemas.intent import Intent
 from app.schemas.objective import Objective
-from app.schemas.plan import Plan, PlanValidationResult
-from app.schemas.task import TASK_SATISFIES, Task, TaskType
+from app.schemas.plan import Plan, PlanValidationResult, ViolationCode
+from app.schemas.task import TASK_SATISFIES, Task, TaskDependency, TaskType
 
 log = get_logger(__name__)
 
@@ -107,6 +108,7 @@ class Planner:
     ) -> Plan:
         bounds = get_agent_bounds()
         last: PlanValidationResult | None = None
+        last_tasks: list[Task] = []
         feedback = ""
 
         for attempt in range(max_reprompts + 1):
@@ -119,6 +121,7 @@ class Planner:
             )
             result = result.model_copy(update={"repairs": repairs})
             last = result
+            last_tasks = tasks
 
             if result.valid:
                 plan = Plan(tasks=tasks, dependencies=dependencies, validation=result)
@@ -136,6 +139,30 @@ class Planner:
             feedback = "\n".join(f"- {v.message}" for v in result.violations)
 
         assert last is not None
+        # Every re-prompt failed. If coverage was the only fault, add the missing tasks rather than
+        # fail the mission before it reads a line (BUG-035). Any other fault still fails cleanly.
+        if last.violations and all(
+            v.code is ViolationCode.UNCOVERED_OPERATION for v in last.violations
+        ):
+            # The plan size asked of the model (`planning.max_tasks`) is a request, set well under
+            # the ceiling; the model fills it, leaving no room. The added tasks are bounded by the
+            # ceiling itself (`Settings.max_plan_tasks`), the limit execution is sized for.
+            ceiling = get_settings().max_plan_tasks
+            covered = cover_operations(last_tasks, last.uncovered_operations, ceiling)
+            if covered is not None:
+                tasks, added = covered
+                result = validate(tasks, intent, max_tasks=ceiling, reprompt_count=max_reprompts)
+                if result.valid:
+                    result = result.model_copy(update={"repairs": [*last.repairs, *added]})
+                    dependencies = [
+                        TaskDependency(task_id=t.task_id, depends_on_task_id=d)
+                        for t in tasks
+                        for d in t.depends_on
+                    ]
+                    log.warning("plan_completed_by_repair", added=added[0].task_ids)
+                    plan = Plan(tasks=tasks, dependencies=dependencies, validation=result)
+                    await self._emit_plan(plan, emit)
+                    return plan
         raise PlanInvalidError(last)
 
     async def _ask_model(

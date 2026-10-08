@@ -16,7 +16,13 @@ from app.intelligence.planner.engine import (
     Planner,
     execution_levels,
 )
-from app.intelligence.planner.validator import find_cycle, repair, uncovered_operations, validate
+from app.intelligence.planner.validator import (
+    cover_operations,
+    find_cycle,
+    repair,
+    uncovered_operations,
+    validate,
+)
 from app.llm.echo import EchoProvider
 from app.schemas.intent import Intent, Operation, RequiredOperation
 from app.schemas.objective import Objective
@@ -305,7 +311,8 @@ async def test_planner_produces_a_validated_plan() -> None:
 
 
 async def test_an_invented_task_type_is_dropped_and_surfaces_as_uncovered() -> None:
-    """An invented type becomes a specific violation rather than vanishing silently."""
+    """An invented type becomes a specific violation rather than vanishing silently. The plan left
+    is one task - too small to complete by adding coverage alone - so it still fails (BUG-035)."""
     provider = EchoProvider(
         responses={
             "planner": [
@@ -351,10 +358,113 @@ async def test_an_invalid_plan_is_re_prompted_with_the_reasons() -> None:
 async def test_a_persistently_invalid_plan_fails_cleanly() -> None:
     """Executing a bad plan is never an option: a cycle would hang the scheduler."""
     provider = EchoProvider(
-        responses={"planner": [_plan_json(("task_001", "extract_timeline", []))]}
+        responses={
+            "planner": [
+                _plan_json(
+                    ("task_001", "compare_sources", ["task_002"]),
+                    ("task_002", "compare_sources", ["task_001"]),
+                    ("task_003", "synthesize", ["task_001"]),
+                )
+            ]
+        }
     )
-    with pytest.raises(PlanInvalidError):
-        await Planner(provider).create_plan(_intent(), Objective(text="Do something."))
+    with pytest.raises(PlanInvalidError) as exc_info:
+        await Planner(provider).create_plan(
+            _intent(Operation.COMPARE_SOURCES), Objective(text="Compare.")
+        )
+    assert ViolationCode.CYCLE in {v.code for v in exc_info.value.result.violations}
+
+
+# --- a required operation the planner keeps leaving out (BUG-035) --------------
+
+
+def _trust_intent() -> Intent:
+    return _intent(
+        Operation.EXTRACT_TIMELINE,
+        Operation.DETECT_INCONSISTENCIES,
+        Operation.RETRIEVE_EVIDENCE,
+        Operation.ASSESS_IMPACT,
+    )
+
+
+async def test_a_plan_that_keeps_leaving_out_operations_is_completed_and_recorded() -> None:
+    """The AURORA trust mission: three attempts, the same three operations missing every time,
+    and the mission failed before reading a line."""
+    provider = EchoProvider(
+        responses={
+            "planner": [
+                _plan_json(
+                    ("task_001", "extract_timeline", []),
+                    ("task_002", "assess_impact", ["task_001"]),
+                    ("task_003", "synthesize", ["task_002"]),
+                )
+            ]
+        }
+    )
+    plan = await Planner(provider).create_plan(_trust_intent(), Objective(text="Trust it?"))
+
+    assert len(provider.calls) == 3, "the model is re-prompted first"
+    assert plan.validation is not None and plan.validation.valid
+    assert not plan.validation.clean, "a completed plan never counts as a clean one"
+    assert plan.validation.reprompt_count == 2
+    added = [t for t in plan.tasks if t.task_id in {"task_004", "task_005"}]
+    assert {t.task_type for t in added} == {
+        TaskType.DETECT_INCONSISTENCIES,
+        TaskType.RETRIEVE_EVIDENCE,
+    }
+    synthesize = next(t for t in plan.tasks if t.task_type is TaskType.SYNTHESIZE)
+    assert {"task_004", "task_005"} <= set(synthesize.depends_on)
+    for task in added:
+        assert task.depends_on == ["task_002"], "it reads what the report task was going to read"
+    assert {(d.task_id, d.depends_on_task_id) for d in plan.dependencies} >= {
+        ("task_003", "task_004"),
+        ("task_004", "task_002"),
+    }
+
+
+async def test_a_plan_at_the_requested_size_can_still_be_completed() -> None:
+    """The model fills the plan size it is asked for (10), so the missing tasks go up to the
+    ceiling execution is sized for - the demo plan failed on exactly this the first time."""
+    from app.core.agent_config import get_agent_bounds
+    from app.core.config import get_settings
+
+    requested = get_agent_bounds().max_plan_tasks
+    assert requested < get_settings().max_plan_tasks
+    full = [(f"task_{n:03d}", "extract_timeline", []) for n in range(1, requested)]
+    full.append((f"task_{requested:03d}", "synthesize", [tid for tid, _, _ in full]))
+    provider = EchoProvider(responses={"planner": [_plan_json(*full)]})
+
+    plan = await Planner(provider).create_plan(
+        _intent(Operation.EXTRACT_TIMELINE, Operation.RETRIEVE_EVIDENCE),
+        Objective(text="Trust it?"),
+    )
+
+    assert len(plan.tasks) == requested + 1
+    assert plan.tasks[-1].task_type is TaskType.RETRIEVE_EVIDENCE
+
+
+def test_one_task_covers_operations_it_implements_together() -> None:
+    """detect_inconsistencies implements both inconsistencies and contradictions: one task."""
+    tasks, repairs = cover_operations(
+        _valid_tasks(),
+        [Operation.DETECT_INCONSISTENCIES, Operation.DETECT_CONTRADICTIONS],
+        MAX,
+    ) or ([], [])
+    assert [t.task_type for t in tasks[4:]] == [TaskType.DETECT_INCONSISTENCIES]
+    assert repairs[0].action is RepairAction.ADDED_UNCOVERED_OPERATION
+    assert not uncovered_operations(
+        tasks, _intent(Operation.DETECT_INCONSISTENCIES, Operation.DETECT_CONTRADICTIONS)
+    )
+
+
+def test_operations_are_not_added_past_the_plan_cap() -> None:
+    assert cover_operations(_valid_tasks(), [Operation.ASSESS_IMPACT], max_tasks=4) is None
+
+
+def test_completing_coverage_leaves_the_planned_tasks_untouched() -> None:
+    original = _valid_tasks()
+    cover_operations(original, [Operation.ASSESS_IMPACT], MAX)
+    assert original[3].depends_on == ["task_003"]
 
 
 async def test_plan_creation_is_recorded_on_the_timeline() -> None:

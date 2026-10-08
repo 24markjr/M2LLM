@@ -6,6 +6,22 @@ and what is still broken.
 
 ---
 
+# 2026-10-08 - Demo step 6 found BUG-035: a plan missing an operation failed the mission
+
+Preparing the demo case (CASE-2026-00010, the twelve AURORA documents filed and verified), the
+headline trust question failed at planning on its first run. The fix follows the existing repairs: a
+deterministic completion after re-prompting has failed, recorded so the plan-validity metric still
+sees the planner's failure. Its first version did not fire on the live run - bounded by the requested
+plan size, which the model always fills - and was corrected to the ceiling.
+
+Measured once after the fix (`run_5d0066727bdc`): completed in 5.5 minutes; knowledge read 12 of 12
+documents, 7 of 32 claims off their line (was 64 of 86 before Step 2), no false contradictions, two
+differing descriptions. Reasoning proposed one candidate, a restatement of the question, discarded;
+the report says so. On a question this broad the 4B model proposes nothing citable from these
+documents, and the system declines to invent findings.
+
+---
+
 # 2026-10-08 - Demo step 5: single-source findings for broad questions (BUG-030)
 
 The comparative rule (a claim needs two sources when the question compares) was right for "do these

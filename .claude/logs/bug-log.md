@@ -1184,3 +1184,43 @@ only change that reached them. Re-run with v5 and the same code, Helix found its
 the shipment case reported nothing. The prompt was reverted to v5; the graph-copy rule in code does
 the same job deterministically. A one-line prompt rule moved a 4B model's output on unrelated
 questions - the reason prompt changes are measured on the whole suite, not on the case they target.
+
+---
+
+## BUG-035 — A planner that kept leaving out an operation failed the mission before it read a line
+
+**Found:** 2026-10-08, demo step 6 (the AURORA trust question over twelve documents, in the demo case)
+**Severity:** High. The headline demo failed in 40 seconds with `PLAN_INVALID`
+**Status:** Fixed (`intelligence/planner/validator.py` `cover_operations`, `planner/engine.py`)
+
+**Symptom.** "Determine whether the AURORA platform can be trusted ... investigating contradictions,
+cybersecurity risks, implementation gaps and missing evidence." The intent required six operations;
+the 4B planner left out the same three (`detect_inconsistencies`, `retrieve_evidence`,
+`detect_contradictions`) on all three attempts, though the re-prompt named them each time. The
+mission failed before any document was read.
+
+**Cause.** The planner's only answer to an uncovered operation was to re-prompt, and then fail. The
+other deterministic repairs (a missing report task, an orphan) existed because re-prompting did not
+reliably fix those either; coverage had no such repair.
+
+**Fix.** After the last re-prompt, and only when coverage is the plan's *only* fault, a task is added
+for each missing operation. Which task type implements an operation is fixed by the catalogue
+(`TASK_SATISFIES`), so no judgement is involved: the new task reads what the report task was going to
+read, and the report task then consumes it. Recorded as the repair `ADDED_UNCOVERED_OPERATION`, so the
+plan is never counted as clean and the plan-validity metric still sees the planner's failure. A cycle,
+a plan below the minimum size, or additions past the task ceiling still fail the run as before.
+
+The first version bounded the additions by the plan size asked of the model (`planning.max_tasks`,
+10) and did not fire on the demo: the model fills the size it is asked for, so there was never room.
+That size is a request kept well under the ceiling; the additions are bounded by the ceiling itself
+(`Settings.max_plan_tasks`, 20), the limit execution is sized for.
+
+**Also found in this step:** a report with no verified finding still printed "Overall confidence:
+0.00 (mean across 0 verified finding(s))" in its Markdown header - BUG-032 had fixed the console and
+the Confidence section but not the header. It now says "not established (no verified finding)".
+
+**Tests.** The trust plan completed after three attempts, the added tasks wired in and recorded, one
+task covering two operations it implements together, the cap respected, the planner's own tasks left
+untouched; a two-task cycle still fails the run. The orchestration test that used a self-loop as its
+"unrepairable" plan was relying on the coverage failure (the self-loop is repaired) and now uses a
+real cycle.

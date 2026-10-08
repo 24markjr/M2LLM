@@ -39,6 +39,17 @@ def _section_name(section: SectionKind) -> str:
     return section.value.replace("_", " ").lower()
 
 
+def _overall_confidence_line(report: FinalReport) -> str:
+    """The header's confidence. With nothing verified there is no mean to give: "0.00" would read as
+    a measured zero (BUG-032's console fix, applied to the Markdown header as well)."""
+    if not report.verified_findings:
+        return "**Overall confidence:** not established (no verified finding)"
+    return (
+        f"**Overall confidence:** {report.overall_confidence:.2f} "
+        f"(mean across {len(report.verified_findings)} verified finding(s))"
+    )
+
+
 def to_markdown(report: FinalReport) -> str:
     """Render the report as Markdown, ASCII only (BUG-001)."""
     lines: list[str] = [
@@ -47,8 +58,7 @@ def to_markdown(report: FinalReport) -> str:
         f"**Run:** `{report.run_id}`  ",
         f"**Objective:** {report.objective}  ",
         f"**Generated:** {report.generated_at:%Y-%m-%d %H:%M UTC}  ",
-        f"**Overall confidence:** {report.overall_confidence:.2f} "
-        f"(mean across {len(report.verified_findings)} verified finding(s))",
+        _overall_confidence_line(report),
         "",
         "---",
         "",

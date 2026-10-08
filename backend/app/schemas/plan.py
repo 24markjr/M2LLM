@@ -52,6 +52,9 @@ class RepairAction(StrEnum):
     DROPPED_DANGLING_EDGE = "DROPPED_DANGLING_EDGE"
     CONNECTED_ORPHAN = "CONNECTED_ORPHAN"
     APPENDED_TERMINAL_TASK = "APPENDED_TERMINAL_TASK"
+    # Last resort, after every re-prompt: a task for a required operation the model kept leaving
+    # out (BUG-035). Never on a first attempt, and never clean.
+    ADDED_UNCOVERED_OPERATION = "ADDED_UNCOVERED_OPERATION"
 
 
 class PlanViolation(JarvisModel):

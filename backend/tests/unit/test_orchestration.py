@@ -122,15 +122,23 @@ async def test_an_invalid_plan_fails_the_run_rather_than_executing() -> None:
     """Executing a plan known to be wrong is worse than failing: it produces findings that
     look ordinary and rest on work that should never have run."""
     emitter, _ = _emitter()
-    # A task that depends on itself is a cycle, which no repair can resolve.
+    # Two tasks that depend on each other: a cycle, which no repair resolves. (A task depending on
+    # itself is repaired, and since BUG-035 a plan whose only fault is a missing operation is
+    # completed, so neither fails a run any more.)
     broken = _plan(
         tasks=[
             {
                 "id": "task_001",
                 "type": "extract_timeline",
                 "description": "x",
+                "depends_on": ["task_002"],
+            },
+            {
+                "id": "task_002",
+                "type": "extract_timeline",
+                "description": "y",
                 "depends_on": ["task_001"],
-            }
+            },
         ]
     )
     result = await run_mission(
