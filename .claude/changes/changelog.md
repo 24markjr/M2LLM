@@ -5,6 +5,30 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-08 - Demo step 6: the demo package; citations of real file names (BUG-036)
+
+### Added
+
+- The presentation section of `docs/demo-script.md`: the prepared case CASE-2026-00010 (twelve AURORA
+  documents as evidence, 12 of 12 integrity-verified), a focused security question with its measured
+  result, the report's limitations as a talking point, a before/after table for steps 1-6, and the
+  replay fallback (`aurora-security-review.local.json`, local only: it quotes the documents, which are
+  kept out of git)
+
+### Fixed
+
+- **BUG-036.** A document name containing a space could not be cited: the locator pattern allowed no
+  spaces, so no finding on the owner's uploads could be verified. Same question, same documents:
+  0 of 4 verified -> 3 of 3 verified at 0.85, every citation resolved
+
+### Verified
+
+- 5 new tests (the owner's real file names, with trailing text, resolving through the binder); unit
+  suite 1089 passed; rehearsal through the API: the case, its evidence and the replay recording served
+- The demo script's test count corrected (581 -> 1136 tests without a model)
+
+---
+
 ## 2026-10-08 - A plan missing a required operation is completed, not failed (BUG-035)
 
 ### Fixed

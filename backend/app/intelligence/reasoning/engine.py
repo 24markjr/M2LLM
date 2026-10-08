@@ -95,7 +95,9 @@ class RelevanceVerdicts(JarvisModel):
 # splitting on the last colon would read the prose as the position and reject the whole
 # citation. Anchoring at the start and ignoring the remainder accepts the reference the
 # model actually meant, without accepting a reference it did not make.
-_LOCATOR = re.compile(r"^\s*(?P<document>[^\s:]+?)\s*:\s*(?P<kind>[rpc]?)(?P<number>\d+)\b")
+# A document name may contain spaces: "2. Detailed Project Timeline.pdf:p3" (BUG-036). It runs
+# to the first colon followed by a position; anything after the position is ignored.
+_LOCATOR = re.compile(r"^\s*(?P<document>[^:\n]*?[^\s:])\s*:\s*(?P<kind>[rpc]?)(?P<number>\d+)\b")
 
 
 def parse_locator(raw: str) -> SourceLocator | None:

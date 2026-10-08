@@ -295,6 +295,46 @@ def test_a_page_citation_with_trailing_text_parses() -> None:
     assert locator is not None and locator.page == 12
 
 
+@pytest.mark.parametrize(
+    ("raw", "document", "page", "row"),
+    [
+        ("2. Detailed Project Timeline.pdf:p2", "2. Detailed Project Timeline.pdf", 2, None),
+        ("Annexure-I-SoW_iDEX_71 (1).docx:r24", "Annexure-I-SoW_iDEX_71 (1).docx", None, 24),
+        (
+            "Annexure-I-SoW_iDEX_71 (1).docx:r50  Bill of Material (BOM).name = Bill of Material",
+            "Annexure-I-SoW_iDEX_71 (1).docx",
+            None,
+            50,
+        ),
+        ("  6. Return on Investment.pdf : p6 ", "6. Return on Investment.pdf", 6, None),
+    ],
+)
+def test_a_document_name_with_spaces_parses(
+    raw: str, document: str, page: int | None, row: int | None
+) -> None:
+    """BUG-036: names with spaces never parsed, so no citation of an uploaded "2. Detailed Project
+    Timeline.pdf" could resolve - every finding on the AURORA documents stayed unverified."""
+    locator = parse_locator(raw)
+    assert locator is not None
+    assert (locator.document_id, locator.page, locator.row) == (document, page, row)
+
+
+def test_a_citation_of_a_document_with_spaces_resolves() -> None:
+    source = "Annexure-I-SoW_iDEX_71 (1).docx:r50"
+    binder = EvidenceBinder(
+        [
+            Observation(
+                task_id="task_001",
+                task_type="retrieve_evidence",
+                content="Bill of Material (BOM)",
+                sources=[source],
+            )
+        ]
+    )
+    refs, evidence = binder.bind([source + "  Bill of Material (BOM).name = Bill of Material"])
+    assert refs[0].is_resolved and len(evidence) == 1
+
+
 def test_prose_containing_no_locator_is_still_rejected() -> None:
     """Accepting the reference the model meant must not mean accepting one it never made."""
     assert parse_locator("see the project report, somewhere near the top") is None

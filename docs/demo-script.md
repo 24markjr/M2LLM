@@ -45,6 +45,98 @@ Then run something.
 
 ---
 
+## The presentation: the AURORA case (10 minutes)
+
+The demos below use the small planted corpora, where the answer is known. This one uses the twelve
+real AURORA project documents (concept note, statement of work, technical annexures, timeline, ROI
+and market analyses; about 50 pages each), so the audience sees the system on material nobody wrote
+for it. Prepared on 2026-10-08; every number below comes from those runs.
+
+**Prepared:** case **CASE-2026-00010**, "AURORA deployment trust review (demo)", severity HIGH. All
+twelve documents are filed as evidence (EV-000021 to EV-000032), each integrity-checked against its
+SHA-256: 12 of 12 VERIFIED. The case also holds the earlier investigations, including two that failed
+at planning before BUG-035 was fixed - leave them visible; the case history is part of the point.
+
+### 1. The case and its evidence (2 min)
+
+**Cases** -> CASE-2026-00010. Show the counters (investigations, evidence, verified findings, open
+gaps), then open one evidence item: it has a hash, who filed it and when, and a chain of custody that
+the database will not let anyone edit (append-only, enforced by a trigger). Click **Re-verify
+integrity**.
+
+**What to say:** *Before anything is analysed, every input is an evidence item with a fingerprint. If a
+file changes after it was filed, the system says so instead of quietly reading the new version.*
+
+### 2. The investigation (4 min - live, or the replay)
+
+Start from the case: **New investigation in this case**, the four documents below, this objective:
+
+> Assess the cybersecurity and data-security risks of deploying AURORA in a defence shipyard: what the
+> statement of work and the technical compliance questionnaire require for security, testing and
+> access control, and what they leave unaddressed.
+
+Documents: `Annexure-I-SoW_iDEX_71 (1).docx`, `1. ANNEXURE II-Technical evaluation and compliance
+questionnaire.pdf`, `AURORA_Annexure-2_PTS-71.pdf`, `3. Arcaisys_Concept_Note_PS71_AURORA.pdf`.
+
+It takes about **9.5 minutes** live (`run_db0a757fcc62`: 574 s). Start it, talk through the
+Professional view's steps while it runs, and **switch to the replay** if time is short:
+`#/replay` -> **aurora-security-review.local.json** (a recording of that run; the banner says it is a
+replay). The recording is local only - it quotes the documents, which are kept out of git.
+
+**What it produced:** 3 findings, **3 verified**, confidence 0.85 each, every citation resolved, each
+labelled **single source** (one document states it; nothing corroborates or contradicts it):
+
+- the statement of work lists a Bill of Material (BOM) among the deliverables (`SoW .docx:r50`);
+- the technical compliance questionnaire names the Defence Shipyard as the deployment environment
+  (`ANNEXURE II ... .pdf:p2`);
+- the concept note describes an AI design-optimisation tool synchronised with the 3D BOM
+  (`Concept_Note ... .pdf:p26`).
+
+**What to say:** *Each claim cites the line it came from, and the citation links to the evidence item
+it was read from. "Single
+source" means exactly that - the report does not dress one document's statement up as established.*
+
+### 3. The report states its own limits (2 min)
+
+Open the report and scroll to **Limitations**. It says, in numbers, what was not done: the knowledge
+pass read 12 of 73 sections; 28 of 34 extracted claims were not on their source line and were not
+used; three searches found nothing; two candidates were discarded as off the question.
+
+**What to say:** *The findings are true and cited, but they describe the system rather than its risks.
+That is the ceiling of a 4-billion-parameter model on dense 50-page documents, and the report does not
+hide it: it lists what it could not read and what it threw away. A larger model plugs in behind the
+same interface; the checking stays the same.*
+
+### 4. The knowledge graph (1 min)
+
+The mission's knowledge explorer for the same run: entities and claims, with what was read. Since
+BUG-033, differing *descriptions* are shown as differences, not contradictions; on these documents
+there are **no false contradictions** (the first run on them reported six, all one document in other
+words).
+
+### 5. What changed since the first run (1 min, optional)
+
+The first run on these documents (2026-10-06) produced an empty report. In order:
+
+| Step | Bug | Effect on these documents |
+|---|---|---|
+| 1 | BUG-033 | false contradictions 6 -> 0 |
+| 2 | BUG-034 | documents read by the knowledge pass ~1 -> 12 of 12 |
+| 3 | BUG-032 | the report states what it could not see, instead of a placeholder |
+| 4 | BUG-031 | contradictions in the graph become findings (none on these documents) |
+| 5 | BUG-030 | a risk question keeps single-source findings, labelled |
+| 6 | BUG-035 | a plan missing a required step is completed instead of failing in 40 s |
+| 6 | BUG-036 | citations of documents with spaces in their names resolve: 0 -> 3 verified |
+
+### If it goes wrong
+
+- The live run stalls: `#/replay` -> `aurora-security-review.local.json`.
+- A broad question ("can AURORA be trusted ...", all twelve documents) completes in about 5.5 minutes
+  but proposes nothing citable (`run_5d0066727bdc`). Do not run it live; the focused question above is
+  the one that answers.
+
+---
+
 ## Demo 1 — Basic investigation
 
 **Shows:** objective → intent → plan → execution → evidence-backed result.
@@ -421,8 +513,8 @@ In order of preference:
    replay.
 2. **Show the committed report** — `.agent/evals/reports/20260925T104354-qwen3-4b-all.md`. The
    numbers exist whether or not the laptop cooperates.
-3. **Run the tests.** `pytest tests -m "not llm"` — 581 of them, no model required, in about 18
-   seconds. Every invariant is proven there.
+3. **Run the tests.** `pytest tests -m "not llm"` — 1136 of them, no model required, in about
+   three minutes. Every invariant is proven there.
 
 Never re-run a failed live demo hoping for a better result. It looks exactly like what it is, and
 the recording is better anyway.

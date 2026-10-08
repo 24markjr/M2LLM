@@ -6,6 +6,21 @@ and what is still broken.
 
 ---
 
+# 2026-10-08 - Demo step 6: the demo package, and the bug that hid every finding (BUG-036)
+
+The case was prepared through the API with no model: CASE-2026-00010, the twelve uploads filed and
+re-verified. Then four live runs, each for a reason: a focused timeline/cost comparison (completed,
+no contradictions, honest report - which exposed the "0.00" header); the broad trust question (failed
+at planning twice - BUG-035, fixed in its own commit - then completed with nothing citable); a focused
+security question (4 findings, none verified, every citation malformed); and the same question after
+BUG-036 (3 verified). The last is the demo; its recording is the fallback.
+
+BUG-036 matters beyond the demo: every corpus we wrote names files without spaces, and real users do
+not. The 4B model's ceiling is now the honest limit on these documents - verified findings are true
+and cited but describe the system rather than its risks - and the script says so instead of hiding it.
+
+---
+
 # 2026-10-08 - Demo step 6 found BUG-035: a plan missing an operation failed the mission
 
 Preparing the demo case (CASE-2026-00010, the twelve AURORA documents filed and verified), the

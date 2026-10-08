@@ -1224,3 +1224,32 @@ task covering two operations it implements together, the cap respected, the plan
 untouched; a two-task cycle still fails the run. The orchestration test that used a self-loop as its
 "unrepairable" plan was relying on the coverage failure (the self-loop is repaired) and now uses a
 real cycle.
+
+---
+
+## BUG-036 — A citation of a document with a space in its name never resolved
+
+**Found:** 2026-10-08, demo step 6 (the AURORA security question, `run_58c7c97c669f`)
+**Severity:** Critical for real documents. No finding on the owner's uploads could ever be verified
+**Status:** Fixed (`intelligence/reasoning/engine.py`, `_LOCATOR`)
+
+**Symptom.** Four candidate findings, every citation "not a well-formed locator", all four UNKNOWN
+at confidence 0.00, seven evidence gaps opened for words like "Bill" and "Material".
+
+**Cause.** The locator pattern took the document name as `[^\s:]+?` - no spaces. Every evaluation
+corpus uses names like `project_report.txt`, so the suites never saw it; the owner's documents are
+named "2. Detailed Project Timeline.pdf" and "Annexure-I-SoW_iDEX_71 (1).docx". Every citation of
+them failed to parse, whatever the model cited. It explains part of every empty AURORA report so far.
+
+**Fix.** A document name runs to the first colon followed by a position, spaces included; anything
+after the position (a quoted knowledge line, which the model copies) is ignored, as before. Prose
+with no locator still does not parse. A citation that now parses but names nothing retrieved is
+UNRESOLVED as before, so nothing becomes evidence that was not read.
+
+**Measured once,** the same question and documents (`run_db0a757fcc62`): 3 findings, 3 verified at
+0.85, every citation resolved, no open gaps (was 4 findings, 0 verified, 7 gaps). The evaluation
+baseline is unaffected: its document names contain no spaces, and for those the pattern matches
+exactly as before.
+
+**Lesson.** The test corpora were written by us and share a naming habit. Real file names belong in
+the tests: the new cases are the owner's actual file names.
