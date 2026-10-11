@@ -55,7 +55,8 @@ kept current while the run proceeds.
 | GET | `/api/v1/evidence/{id}/custody` · `/findings` | The chain alone; the citing findings alone |
 | GET | `/api/v1/evidence/by-name/{name}` | The current item for a document name |
 | POST | `/api/v1/evidence/{id}/verify` | Re-hash the stored original (and the working copy); records VERIFIED or INTEGRITY_FAILED, actor from `X-Jarvis-User` |
-| PATCH | `/api/v1/evidence/{id}` | Classification and source; recorded as METADATA_CHANGED with from and to |
+| PATCH | `/api/v1/evidence/{id}` | Classification, source and source authority (`authority`, `authority_reason`; an unknown tier is 422 `UNKNOWN_AUTHORITY_TIER`); recorded as METADATA_CHANGED with from and to (Phase 45) |
+| GET | `/api/v1/evidence/authority` | The source authority tiers, highest first, from `.agent/config/authority.yaml` (Phase 45) |
 | GET | `/api/v1/evidence/{id}/download` | The stored original, byte for byte |
 | GET | `/api/v1/context/workspaces/{id}` | A workspace's documents: kind, parser, SHA-256, chunks; and the store |
 | GET | `/api/v1/missions/{id}/knowledge...` | The mission's knowledge base; see **Knowledge** below (Phase 31) |

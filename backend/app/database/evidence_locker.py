@@ -59,6 +59,8 @@ class PgEvidenceLocker:
                     collected_by=item.collected_by,
                     source=item.source,
                     classification=item.classification.value,
+                    authority=item.authority,
+                    authority_reason=item.authority_reason,
                     integrity=item.integrity.value,
                     integrity_checked_at=item.integrity_checked_at,
                     case_id=item.case_id,
@@ -102,6 +104,8 @@ class PgEvidenceLocker:
         integrity: IntegrityStatus | None = None,
         kind: str | None = None,
         parser: str | None = None,
+        authority: str | None = None,
+        authority_reason: str | None = None,
     ) -> EvidenceItem | None:
         async with self._scope() as session:
             row = await session.get(EvidenceItemRow, evidence_id)
@@ -109,6 +113,10 @@ class PgEvidenceLocker:
                 return None
             if classification is not None:
                 row.classification = classification.value
+            if authority is not None:
+                row.authority = authority
+            if authority_reason is not None:
+                row.authority_reason = authority_reason
             if source is not None:
                 row.source = source
             if kind is not None:
@@ -176,6 +184,8 @@ def _item(row: EvidenceItemRow) -> EvidenceItem:
         collected_by=row.collected_by,
         source=row.source,
         classification=EvidenceClassification(row.classification),
+        authority=row.authority or "UNASSESSED",
+        authority_reason=row.authority_reason or "",
         integrity=IntegrityStatus(row.integrity),
         integrity_checked_at=row.integrity_checked_at,
         case_id=row.case_id,

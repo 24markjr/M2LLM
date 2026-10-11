@@ -30,7 +30,8 @@ from app.api.v1.schemas import (
 from app.api.v1.stream import stream_mission
 from app.cases.service import file_evidence, file_investigation, get_case_store, start_investigating
 from app.core.logging import get_logger
-from app.evidence.service import admit_for_mission, record_analysed
+from app.evidence.authority import authority_map
+from app.evidence.service import admit_for_mission, authority_of, record_analysed
 from app.integrations.context import workspace_retriever
 from app.intelligence.planner.engine import execution_levels
 from app.intelligence.synthesis.renderers import to_markdown
@@ -95,6 +96,11 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
         # first recall already searches them. A store or embedding failure leaves recall lexical.
         retriever = await workspace_retriever(body.workspace_id, documents, loaded, get_provider())
 
+    # Each document's source authority (Phase 45): its evidence item's tier, else the intake rules.
+    authority = authority_map(
+        sorted(documents),
+        await authority_of({n: admitted[n] for n in documents if n in admitted}),
+    )
     record = await registry.create(
         objective=_objective(body),
         documents=sorted(documents),
@@ -102,6 +108,7 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
         page_starts={d.document_id: d.page_starts for d in loaded if d.page_starts},
         provider=get_provider(),
         retriever=retriever,
+        authority=authority,
     )
     record.evidence = {name: admitted[name] for name in documents if name in admitted}
     record.excluded = excluded
@@ -348,6 +355,7 @@ def _detail(record: MissionRecord) -> MissionDetail:
         knowledge_conflicts=(len(result.knowledge.conflicts) if result and result.knowledge else 0),
         evidence=dict(record.evidence),
         excluded_documents=dict(record.excluded),
+        authority=dict(record.authority),
     )
 
 

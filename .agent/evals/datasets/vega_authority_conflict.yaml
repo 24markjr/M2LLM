@@ -1,0 +1,33 @@
+# Phase 45: a contradiction between sources of different authority. The approved budget statement
+# gives 250,000; a draft email, never sent, gives 300,000. The answer is a CONTRADICTION that names
+# both sides' authority (approved; draft) - not a verdict that the approved figure wins. Authority
+# informs the reader; it never settles a conflict (decision D18).
+id: vega_authority_conflict
+suites: [core, all]
+objective: >
+  Compare the approved budget statement for Project Vega with the draft email to the project team,
+  and identify any contradiction in the total budget.
+documents:
+  - vega_approved_budget_statement.txt
+  - vega_draft_email.txt
+
+expected_operations:
+  - extract_budget
+  - compare_sources
+  - detect_inconsistencies
+  - generate_report
+
+min_tasks: 3
+minimal_tasks: 4
+
+expected_edges:
+  - [extract_budget, compare_sources]
+
+# Both sides of the conflict.
+expected_claims:
+  - "250,000"
+  - "300,000"
+
+# A finding reporting it must be typed a contradiction, whatever the model called it.
+expected_statement_types:
+  - CONTRADICTION

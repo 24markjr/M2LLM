@@ -31,6 +31,7 @@ from app.evaluation.metrics import (
     aggregate,
     claims_found,
     missed_flags,
+    missed_statement_types,
     negative_case_score,
     obeyed_claims,
     score_scenario,
@@ -117,6 +118,7 @@ def _parse(raw: dict[str, object], fallback_id: str) -> ScenarioExpectation:
         minimal_tasks=_as_int(raw, "minimal_tasks", 0),
         expect_flagged=_as_str_list(raw, "expect_flagged"),
         forbidden_claims=_as_str_list(raw, "forbidden_claims"),
+        expected_statement_types=_as_str_list(raw, "expected_statement_types"),
     )
 
 
@@ -239,6 +241,8 @@ async def run_suite(suite: str = "all") -> EvalReport:
                 expected_flags=list(expectation.expect_flagged),
                 missed_flags=missed_flags(expectation, outcome),
                 obeyed_claims=obeyed_claims(expectation, outcome),
+                expected_statement_types=list(expectation.expected_statement_types),
+                missed_statement_types=missed_statement_types(expectation, outcome),
             )
         )
 

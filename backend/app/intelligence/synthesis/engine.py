@@ -20,6 +20,9 @@ section is mandatory.
 from __future__ import annotations
 
 from app.core.logging import get_logger
+from app.evidence.authority import label as authority_label
+from app.evidence.authority import tier_for_name
+from app.intelligence.reasoning.statements import type_statement
 from app.intelligence.synthesis.grounding import check_narrative, evidence_for
 from app.llm.errors import StructuredOutputError
 from app.llm.prompts import get_prompt_library
@@ -29,7 +32,7 @@ from app.schemas.common import JarvisModel
 from app.schemas.event import EventType
 from app.schemas.evidence import EvidenceGap
 from app.schemas.execution import Observation, TerminationReason
-from app.schemas.finding import Finding
+from app.schemas.finding import Finding, StatementType
 from app.schemas.knowledge import KnowledgeSnapshot
 from app.schemas.objective import Objective
 from app.schemas.result import (
@@ -73,6 +76,7 @@ class SynthesisEngine:
         evidence_text: dict[str, str] | None = None,
         knowledge: KnowledgeSnapshot | None = None,
         discarded: dict[str, int] | None = None,
+        authority: dict[str, str] | None = None,
     ) -> FinalReport:
         """The report, from settled state. With `evidence_text` (the text at each locator), the two
         model-written paragraphs are also checked sentence by sentence (Phase 37)."""
@@ -111,6 +115,7 @@ class SynthesisEngine:
                 limitations=limitations,
                 examined=examined(knowledge, observations, execution),
                 discarded=sum((discarded or {}).values()),
+                authority=authority,
             ),
         )
 
@@ -199,6 +204,7 @@ class SynthesisEngine:
         limitations: list[Limitation] | None = None,
         examined: list[str] | None = None,
         discarded: int = 0,
+        authority: dict[str, str] | None = None,
     ) -> list[ReportSection]:
         """All eleven sections, in presentation order. None is optional."""
         return [
@@ -233,7 +239,7 @@ class SynthesisEngine:
             ReportSection(
                 kind=SectionKind.VERIFIED_FINDINGS,
                 heading="Verified Findings",
-                items=[_finding_line(f) for f in verified] or ["None."],
+                items=[_finding_line(f, authority) for f in verified] or ["None."],
                 finding_ids=[f.finding_id for f in verified],
             ),
             ReportSection(
@@ -244,7 +250,7 @@ class SynthesisEngine:
             ReportSection(
                 kind=SectionKind.UNCERTAIN_FINDINGS,
                 heading="Uncertain Findings",
-                items=[_finding_line(f) for f in uncertain] or ["None."],
+                items=[_finding_line(f, authority) for f in uncertain] or ["None."],
                 finding_ids=[f.finding_id for f in uncertain],
             ),
             # Mandatory. A report showing only what survived is a highlight reel.
@@ -436,14 +442,40 @@ def _claims(findings: list[Finding]) -> str:
     return "\n".join(f"- {f.claim}" for f in findings)
 
 
-def _finding_line(finding: Finding) -> str:
-    sources = ", ".join(r.as_ref() for r in finding.evidence if r.is_resolved) or "no source"
-    return (
-        f"[{finding.finding_id}] {finding.claim} "
-        f"({finding.classification.value}"
-        + (", single source" if finding.single_source else "")
-        + f", confidence {finding.confidence.value:.2f}; {sources})"
+def statement_text(finding: Finding) -> str:
+    """The finding's statement type as the report prints it (Phase 45): "SOURCE_CLAIM", or a
+    proposed kind with what it rests on - "RISK on SOURCE_CLAIM". A finding never typed (built
+    outside a mission) is typed here from its evidence alone."""
+    if finding.statement_type is StatementType.UNKNOWN and finding.has_resolved_evidence:
+        kind, basis = type_statement(finding, comparative=False)
+    else:
+        kind, basis = finding.statement_type, finding.statement_basis
+    if kind is basis or kind is StatementType.CONTRADICTION:
+        return kind.value
+    return f"{kind.value} on {basis.value}"
+
+
+def _finding_line(finding: Finding, authority: dict[str, str] | None = None) -> str:
+    resolved = [r for r in finding.evidence if r.is_resolved]
+    contradiction = finding.statement_type is StatementType.CONTRADICTION
+    # Both sides' authority on a contradiction, never a verdict between them (Phase 45, D18).
+    sources = ", ".join(
+        f"{r.as_ref()} [{authority_label(authority_tier(r.locator.document_id, authority))}]"
+        if contradiction
+        else r.as_ref()
+        for r in resolved
     )
+    return (
+        f"[{finding.finding_id}] {finding.claim} ({statement_text(finding)}"
+        f", confidence {finding.confidence.value:.2f}; {sources or 'no source'})"
+    )
+
+
+def authority_tier(document: str, authority: dict[str, str] | None) -> str:
+    """A document's tier: the one the mission was given, else the intake rules' (Phase 45)."""
+    if authority and document in authority:
+        return authority[document]
+    return tier_for_name(document)[0]
 
 
 def _rejected_line(finding: Finding) -> str:

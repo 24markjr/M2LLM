@@ -28,6 +28,7 @@ from typing import Any
 
 from app.core.logging import get_logger
 from app.evidence import store
+from app.evidence.authority import tier_for_name
 from app.evidence.locker import EvidenceLocker, MemoryEvidenceLocker
 from app.schemas.evidence_locker import (
     CustodyAction,
@@ -93,6 +94,7 @@ async def intake(
     sha, stored_at = await asyncio.to_thread(store.put, path)
     item = await locker.by_sha(sha)
     if item is None:
+        authority, reason = tier_for_name(name)
         item = await locker.add(
             EvidenceItem(
                 evidence_id=await locker.next_id(),
@@ -101,6 +103,8 @@ async def intake(
                 bytes=size,
                 collected_by=actor,
                 source=source,
+                authority=authority,
+                authority_reason=reason,
                 integrity=IntegrityStatus.VERIFIED,
             )
         )
@@ -129,6 +133,7 @@ async def register(locker: EvidenceLocker, path: Path, *, name: str) -> Evidence
     await asyncio.to_thread(store.put, path)
     size = (await asyncio.to_thread(path.stat)).st_size
     fixture = "fixtures" in path.parts
+    authority, reason = tier_for_name(name)
     item = await locker.add(
         EvidenceItem(
             evidence_id=await locker.next_id(),
@@ -137,6 +142,8 @@ async def register(locker: EvidenceLocker, path: Path, *, name: str) -> Evidence
             bytes=size,
             collected_by="system",
             source="repository fixture" if fixture else "found in the uploads folder",
+            authority=authority,
+            authority_reason=reason,
             integrity=IntegrityStatus.VERIFIED,
         )
     )
@@ -243,6 +250,42 @@ async def _expected(locker: EvidenceLocker, path: Path, name: str) -> EvidenceIt
     if current is not None and "fixtures" not in path.parts:
         return current
     return await register(locker, path, name=name)
+
+
+async def assess_unassessed(locker: EvidenceLocker) -> int:
+    """Give items filed before Phase 45 the tier the intake rules give their name, recorded as
+    METADATA_CHANGED. Only items nobody has assessed (no reason recorded); returns how many."""
+    changed = 0
+    for item in await locker.items(limit=10_000):
+        if item.authority_reason:
+            continue
+        tier, reason = tier_for_name(item.name)
+        reason = reason.replace("set at intake", "assessed by the intake rules (filed earlier)")
+        await locker.update(item.evidence_id, authority=tier, authority_reason=reason)
+        await note(
+            locker,
+            item.evidence_id,
+            CustodyAction.METADATA_CHANGED,
+            authority={"from": item.authority, "to": tier},
+            reason=reason,
+        )
+        changed += 1
+    return changed
+
+
+async def authority_of(evidence: dict[str, str]) -> dict[str, str]:
+    """Each admitted document's authority tier, from its evidence item (Phase 45). A document whose
+    item cannot be read is left out, and the mission falls back to the intake rules for it."""
+    tiers: dict[str, str] = {}
+    try:
+        locker = await get_locker()
+        for name, evidence_id in evidence.items():
+            item = await locker.get(evidence_id)
+            if item is not None:
+                tiers[name] = item.authority
+    except Exception as exc:  # noqa: BLE001 - optional infrastructure never fails a run
+        log.warning("authority_lookup_failed", error=f"{type(exc).__name__}: {exc}")
+    return tiers
 
 
 async def record_analysed(run_id: str, evidence: dict[str, str]) -> None:

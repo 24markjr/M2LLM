@@ -176,6 +176,8 @@ class Finding(Base):
     finding_id: Mapped[str] = mapped_column(String(32), nullable=False)
     claim: Mapped[str] = mapped_column(Text, nullable=False)
     classification: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    # What kind of statement it is (Phase 45): FACT, SOURCE_CLAIM, CONTRADICTION, ...
+    statement_type: Mapped[str] = mapped_column(String(24), default="UNKNOWN")
 
     # NUMERIC, not float: a confidence shown in a report must not drift between what was
     # computed and what is displayed.
@@ -471,6 +473,9 @@ class EvidenceItemRow(Base):
     collected_by: Mapped[str] = mapped_column(String(128), default="unknown")
     source: Mapped[str] = mapped_column(Text, default="")
     classification: Mapped[str] = mapped_column(String(16), default="UNCLASSIFIED")
+    # Source authority tier (Phase 45), from `.agent/config/authority.yaml`.
+    authority: Mapped[str] = mapped_column(String(32), default="UNASSESSED")
+    authority_reason: Mapped[str] = mapped_column(Text, default="")
     integrity: Mapped[str] = mapped_column(String(16), default="UNCHECKED")
     integrity_checked_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

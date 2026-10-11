@@ -1,6 +1,6 @@
 # JARVIS v2 — implementation plan, Phases 43–55
 
-**Status:** Phases 43-44 done (2026-10-07); Phases 45-55 planned, not started.
+**Status:** Phases 43-45 done (2026-10-07 to 2026-10-11); Phases 46-55 in progress.
 
 **Why this plan exists.** A product review of the demo (2026-10-06) judged JARVIS a strong
 investigation engine but not yet an investigation *platform*: no cases, no evidence custody, no
@@ -90,7 +90,7 @@ acquired under a name (tampering fails; a changed fixture is a new version). Det
 in-memory runs. Investigations are recorded per case with their outcome (`case_investigations`), so a
 case survives a restart. Details: `architecture/cases.md`.
 
-### Phase 45 — Statement types and source authority (M)
+### Phase 45 — Statement types and source authority (M) — **DONE** 2026-10-11
 
 - Types OBSERVATION, SOURCE_CLAIM, FACT, INFERENCE, HYPOTHESIS, CONTRADICTION, RISK, RECOMMENDATION,
   UNKNOWN, assigned by deterministic rules (one source → SOURCE_CLAIM; two independent agreeing → FACT;
@@ -100,6 +100,14 @@ case survives a restart. Details: `architecture/cases.md`.
 - Scenarios: a draft email against an approved statement (must stay a contradiction, with the
   authority note); two agreeing sources (FACT).
 - **Acceptance:** no single-source FACT; every contradiction names both sides' authority.
+
+**As built (Phase 45):** as planned, with three choices. The statement type is a second field beside
+`FindingClassification`, which still caps confidence (ADR-015). A FACT is two documents with the claim
+supported *or verified* - measured: a verified two-document agreement was not decomposed into
+elements and would otherwise have read INFERENCE. The corroboration scenario requires the date, not
+the FACT type: the model cited both documents in one finding on one run of two, and the guarantee the
+rules make on every run is the downgrade (no single-source FACT, enforced by the schema). Details:
+`architecture/statements-and-authority.md`.
 
 ## Track B — Trustworthy reasoning (P0/P1)
 

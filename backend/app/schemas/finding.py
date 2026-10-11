@@ -49,6 +49,32 @@ class FindingClassification(StrEnum):
     UNKNOWN = "UNKNOWN"
 
 
+class StatementType(StrEnum):
+    """What kind of statement a finding is (Phase 45), as a reader needs to know it.
+
+    Computed from the finding's evidence by `reasoning.statements.type_statement`, never taken from
+    the model: the model may propose a type, and the stricter of its proposal and the evidence wins.
+    `FindingClassification` stays the internal ruling that caps confidence; this is what is shown.
+    """
+
+    # Two or more independent documents state it, every citation resolved.
+    FACT = "FACT"
+    # One document states it. True to the source; not corroborated.
+    SOURCE_CLAIM = "SOURCE_CLAIM"
+    # A conclusion drawn across sources with a reasoning step none of them states outright.
+    INFERENCE = "INFERENCE"
+    # Partly supported: some of what it cites did not resolve.
+    HYPOTHESIS = "HYPOTHESIS"
+    # Two evidenced values that cannot both be true.
+    CONTRADICTION = "CONTRADICTION"
+    # Kinds the model may propose, kept only over a basis of FACT, SOURCE_CLAIM or INFERENCE.
+    RISK = "RISK"
+    RECOMMENDATION = "RECOMMENDATION"
+    OBSERVATION = "OBSERVATION"
+    # Nothing it cites resolved.
+    UNKNOWN = "UNKNOWN"
+
+
 # Relative weight of each evidence strength when scoring support.
 _STRENGTH_WEIGHT: dict[EvidenceStrength, float] = {
     EvidenceStrength.DIRECT: 1.0,
@@ -162,6 +188,14 @@ class Finding(JarvisModel):
 
     verification: VerificationResult | None = None
 
+    # What kind of statement this is, and the evidence basis under it (Phase 45). Set once the
+    # findings are final; `statement_basis` differs from `statement_type` only for a CONTRADICTION
+    # or a proposed RISK, RECOMMENDATION or OBSERVATION. `proposed_type` is the model's word for it,
+    # kept to show that the ruling, not the proposal, decided.
+    statement_type: StatementType = StatementType.UNKNOWN
+    statement_basis: StatementType = StatementType.UNKNOWN
+    proposed_type: str = Field(default="", max_length=40)
+
     # Provenance.
     derived_from_task_ids: list[str] = Field(default_factory=list)
     # Which replan iteration produced or last revised this. 0 = the original pass.
@@ -252,6 +286,19 @@ class Finding(JarvisModel):
                 f"confidence {self.confidence.value:.3f} exceeds the ceiling "
                 f"{ceiling:.2f} for classification {self.classification.value}"
             )
+        return self
+
+    @model_validator(mode="after")
+    def _no_single_source_fact(self) -> Finding:
+        """Phase 45's invariant: a FACT is stated by two independent documents. One document
+        stating something makes it a SOURCE_CLAIM, however certain it sounds."""
+        if StatementType.FACT in (self.statement_type, self.statement_basis):
+            documents = {e.locator.document_id for e in self.evidence if e.is_resolved}
+            if len(documents) < 2:
+                raise ValueError(
+                    "a FACT statement needs resolved evidence from two documents; "
+                    f"this one has {len(documents)}"
+                )
         return self
 
     @model_validator(mode="after")

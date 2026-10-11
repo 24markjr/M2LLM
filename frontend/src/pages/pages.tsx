@@ -447,7 +447,7 @@ export function MissionViewPanels({ view }: { view: MissionView }) {
           {technical ? (
             <>
               <TaskGraph graph={view.tasks} />
-              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} />
+              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} />
               <Gaps gaps={view.gaps} />
               <Report report={view.report} />
               <ExecutionStats report={view.report} />
@@ -457,7 +457,7 @@ export function MissionViewPanels({ view }: { view: MissionView }) {
             <>
               <Steps nodes={view.tasks?.nodes ?? []} />
               <Conclusion lines={conclusion(view.findings, done)} />
-              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} />
+              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} />
               <Report report={view.report} />
             </>
           )}

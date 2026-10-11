@@ -80,6 +80,38 @@
         "title": "ArchivedInvestigation",
         "type": "object"
       },
+      "AuthorityTier": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[A-Z_]{2,32}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "weight": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "weight"
+        ],
+        "title": "AuthorityTier",
+        "type": "object"
+      },
       "Body_upload_documents_api_v1_documents_post": {
         "properties": {
           "files": {
@@ -1272,6 +1304,18 @@
       "EvidenceItem": {
         "additionalProperties": false,
         "properties": {
+          "authority": {
+            "default": "UNASSESSED",
+            "maxLength": 32,
+            "title": "Authority",
+            "type": "string"
+          },
+          "authority_reason": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Authority Reason",
+            "type": "string"
+          },
           "bytes": {
             "default": 0,
             "minimum": 0.0,
@@ -1439,6 +1483,30 @@
       "EvidenceUpdate": {
         "additionalProperties": false,
         "properties": {
+          "authority": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authority"
+          },
+          "authority_reason": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authority Reason"
+          },
           "classification": {
             "anyOf": [
               {
@@ -1885,11 +1953,25 @@
             "title": "Gaps",
             "type": "array"
           },
+          "proposed_type": {
+            "default": "",
+            "maxLength": 40,
+            "title": "Proposed Type",
+            "type": "string"
+          },
           "revision": {
             "default": 0,
             "minimum": 0.0,
             "title": "Revision",
             "type": "integer"
+          },
+          "statement_basis": {
+            "$ref": "#/components/schemas/StatementType",
+            "default": "UNKNOWN"
+          },
+          "statement_type": {
+            "$ref": "#/components/schemas/StatementType",
+            "default": "UNKNOWN"
           },
           "verification": {
             "anyOf": [
@@ -2952,6 +3034,13 @@
         "additionalProperties": false,
         "description": "A mission's current state, without the full event log.",
         "properties": {
+          "authority": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Authority",
+            "type": "object"
+          },
           "case_id": {
             "default": "",
             "title": "Case Id",
@@ -3787,6 +3876,22 @@
           "DONE"
         ],
         "title": "Stage",
+        "type": "string"
+      },
+      "StatementType": {
+        "description": "What kind of statement a finding is (Phase 45), as a reader needs to know it.\n\nComputed from the finding's evidence by `reasoning.statements.type_statement`, never taken from\nthe model: the model may propose a type, and the stricter of its proposal and the evidence wins.\n`FindingClassification` stays the internal ruling that caps confidence; this is what is shown.",
+        "enum": [
+          "FACT",
+          "SOURCE_CLAIM",
+          "INFERENCE",
+          "HYPOTHESIS",
+          "CONTRADICTION",
+          "RISK",
+          "RECOMMENDATION",
+          "OBSERVATION",
+          "UNKNOWN"
+        ],
+        "title": "StatementType",
         "type": "string"
       },
       "TaskGraphResponse": {
@@ -5057,6 +5162,32 @@
           }
         },
         "summary": "List Evidence",
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/api/v1/evidence/authority": {
+      "get": {
+        "description": "The source authority tiers an item can be given, highest first (Phase 45).",
+        "operationId": "authority_tiers_api_v1_evidence_authority_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuthorityTier"
+                  },
+                  "title": "Response Authority Tiers Api V1 Evidence Authority Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Authority Tiers",
         "tags": [
           "evidence"
         ]

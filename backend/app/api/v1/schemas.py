@@ -72,6 +72,8 @@ class MissionDetail(MissionSummary):
     # documents left out because they failed their integrity check, with the reason.
     evidence: dict[str, str] = Field(default_factory=dict)
     excluded_documents: dict[str, str] = Field(default_factory=dict)
+    # Each document's source authority tier (Phase 45), shown on both sides of a contradiction.
+    authority: dict[str, str] = Field(default_factory=dict)
 
 
 class TaskNode(JarvisModel):

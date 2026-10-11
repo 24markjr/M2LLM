@@ -71,6 +71,11 @@ class EvidenceItem(JarvisModel):
     # Where it came from, in words: "uploaded through the console", "repository fixture".
     source: str = ""
     classification: EvidenceClassification = EvidenceClassification.UNCLASSIFIED
+    # How much weight the source carries (Phase 45): a tier from `.agent/config/authority.yaml`, set
+    # at intake by its rules and overridable by a person (recorded as METADATA_CHANGED). Reported on
+    # both sides of a contradiction; it never decides one.
+    authority: str = Field(default="UNASSESSED", max_length=32)
+    authority_reason: str = Field(default="", max_length=300)
     integrity: IntegrityStatus = IntegrityStatus.UNCHECKED
     integrity_checked_at: datetime | None = None
     # Case membership arrives in Phase 44.

@@ -8,6 +8,8 @@
  */
 
 import { evidenceForCitation, evidenceLink } from "./evidence";
+import { authorityText, statementHelp, statementLabel, statementType } from "./statements";
+export { singleSource } from "./statements";
 import { useState } from "react";
 
 import type {
@@ -133,10 +135,13 @@ export function FindingCard({
   gaps = [],
   spawned = [],
   evidence,
+  authority,
 }: {
   finding: Finding;
   /** Document name -> the evidence item the mission read (Phase 43), for citation links. */
   evidence?: Record<string, string> | undefined;
+  /** Document name -> its source authority tier (Phase 45), shown on both sides of a contradiction. */
+  authority?: Record<string, string> | undefined;
   /** Gaps detected against this finding. */
   gaps?: GapRecord[];
   /** Tasks the replanning loop inserted to close those gaps. */
@@ -153,12 +158,9 @@ export function FindingCard({
       <div className="claim">{finding.claim}</div>
 
       <div className="badges">
-        <span className="badge">{finding.classification}</span>
-        {singleSource(finding) ? (
-          <span className="badge" title="Every citation is in one document: what it states, not corroborated">
-            SINGLE SOURCE
-          </span>
-        ) : null}
+        <span className={`badge st-${statementType(finding).toLowerCase()}`} title={statementHelp(finding)}>
+          {statementLabel(finding)}
+        </span>
         <span className={`badge v-${status.toLowerCase()}`}>{status}</span>
         {finding.verification?.degraded ? (
           <span className="badge degraded" title={finding.verification.degraded_reason}>
@@ -194,6 +196,11 @@ export function FindingCard({
                       : "✗"}
                 </span>
                 <span className="loc">{formatLocator(ref)}</span>
+                {statementType(finding) === "CONTRADICTION" && ref.resolution === "RESOLVED" ? (
+                  <span className="badge authority" title="This side's source authority. It informs; it does not decide.">
+                    {authorityText(authority?.[ref.locator.document_id])}
+                  </span>
+                ) : null}
                 {evidenceForCitation(evidence, ref.locator.document_id) ? (
                   <a
                     className="mono evidence-link"
@@ -278,11 +285,13 @@ export function Findings({
   gaps = [],
   tasks = null,
   evidence,
+  authority,
 }: {
   findings: Finding[];
   gaps?: GapRecord[];
   tasks?: TaskGraphResponse | null;
   evidence?: Record<string, string> | undefined;
+  authority?: Record<string, string> | undefined;
 }) {
   const verified = findings.filter((f) => f.verification?.status === "SUPPORTED").length;
 
@@ -320,6 +329,7 @@ export function Findings({
               gaps={gapsByFinding.get(f.finding_id) ?? []}
               spawned={insertedTasks}
               evidence={evidence}
+              authority={authority}
             />
           ))
         )}
@@ -531,10 +541,4 @@ export function ExecutionStats({ report }: { report: FinalReport | null }) {
   );
 }
 
-/** Every resolved citation in one document (BUG-030): computed here as the engine computes it. */
-export function singleSource(finding: Finding): boolean {
-  const documents = new Set(
-    finding.evidence.filter((e) => e.resolution === "RESOLVED").map((e) => e.locator.document_id),
-  );
-  return documents.size === 1;
-}
+

@@ -29,6 +29,7 @@ from pydantic import Field
 
 from app.core.agent_config import CrossSourcePass, get_knowledge_policy
 from app.core.logging import get_logger
+from app.evidence.authority import authority_map
 from app.integrations.graph_store import open_knowledge_base, record_findings
 from app.integrations.verification import build_verification_provider
 from app.intelligence.execution.engine import ExecutionEngine
@@ -37,6 +38,7 @@ from app.intelligence.intent.engine import IntentEngine
 from app.intelligence.knowledge.extraction import KnowledgeExtractor
 from app.intelligence.planner.engine import PlanInvalidError, Planner
 from app.intelligence.reasoning.engine import ReasoningEngine, requires_comparison
+from app.intelligence.reasoning.statements import type_statements
 from app.intelligence.replanning.controller import (
     ReplanningController,
     evidence_from_observations,
@@ -155,6 +157,7 @@ async def run_mission(
     on_stage: StageCallback | None = None,
     synthesize: bool = True,
     retriever: object = None,
+    authority: dict[str, str] | None = None,
 ) -> MissionResult:
     """Run one mission end to end and return what it established.
 
@@ -253,6 +256,9 @@ async def run_mission(
         result.replan_iterations = replan.iterations
         result.termination_reason = replan.termination_reason
 
+        # What kind of statement each finding is, now that its evidence is final (Phase 45).
+        type_statements(result.findings, comparative=requires_comparison(result.intent))
+
         # Carry the *executed* graph, not the planned one. The replanning loop inserts tasks into
         # the graph while it runs, and those tasks are not in the plan the planner produced - so a
         # caller reading `result.plan.tasks` would see the plan as it was written rather than as it
@@ -284,6 +290,9 @@ async def run_mission(
                 # What the run could and could not examine, and what reasoning discarded (BUG-032).
                 knowledge=result.knowledge,
                 discarded=dict(reasoner.discarded),
+                # Each document's source authority, printed on both sides of a contradiction
+                # (Phase 45): the locker's tier where the API gave one, the intake rules otherwise.
+                authority=authority_map(sorted(documents), authority),
                 # The text at each cited line, for checking the narrative (Phase 37): the same map
                 # verification reads.
                 evidence_text=evidence_text_map(

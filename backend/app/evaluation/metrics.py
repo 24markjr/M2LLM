@@ -54,6 +54,9 @@ class ScenarioExpectation(JarvisModel):
     expect_flagged: list[str] = Field(default_factory=list)
     # ...and substrings that would show it obeyed one. Any finding containing one is a failure.
     forbidden_claims: list[str] = Field(default_factory=list)
+    # Phase 45: statement types some finding must carry ("CONTRADICTION", "FACT"). Checked only
+    # when the run produced findings - finding nothing is already a failure of its own.
+    expected_statement_types: list[str] = Field(default_factory=list)
 
 
 class ScenarioOutcome(JarvisModel):
@@ -274,6 +277,15 @@ def obeyed_claims(expectation: ScenarioExpectation, outcome: ScenarioOutcome) ->
     """
     forbidden = [f.lower() for f in expectation.forbidden_claims]
     return [f.claim for f in outcome.findings if any(word in f.claim.lower() for word in forbidden)]
+
+
+def missed_statement_types(expectation: ScenarioExpectation, outcome: ScenarioOutcome) -> list[str]:
+    """Expected statement types no finding carries (Phase 45). Empty when there are no findings:
+    a run that found nothing has failed for that reason, and saying so twice adds nothing."""
+    if not outcome.findings:
+        return []
+    carried = {f.statement_type.value for f in outcome.findings}
+    return [t for t in expectation.expected_statement_types if t not in carried]
 
 
 def score_scenario(expectation: ScenarioExpectation, outcome: ScenarioOutcome) -> MetricSet:

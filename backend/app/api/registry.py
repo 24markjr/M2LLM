@@ -69,6 +69,8 @@ class MissionRecord:
         # The Evidence Locker (Phase 43): name -> evidence id read, and name -> why it was left out.
         self.evidence: dict[str, str] = {}
         self.excluded: dict[str, str] = {}
+        # Each document's source authority tier (Phase 45), fixed when the mission is created.
+        self.authority: dict[str, str] = {}
         # The case the mission belongs to (Phase 44).
         self.case_id: str = ""
 
@@ -142,6 +144,7 @@ class MissionRegistry:
         page_starts: dict[str, list[int]],
         provider: object,
         retriever: object = None,
+        authority: dict[str, str] | None = None,
     ) -> MissionRecord:
         """Register a mission and start it. Returns as soon as the task is scheduled.
 
@@ -149,6 +152,7 @@ class MissionRegistry:
         failed connection on every flush, and a log full of expected errors is a log nobody reads.
         """
         record = MissionRecord(new_run_id(), objective, documents)
+        record.authority = dict(authority or {})
         self._missions[record.run_id] = record
 
         history = _HistorySink(record)
@@ -213,6 +217,7 @@ class MissionRegistry:
                 page_starts=page_starts,
                 on_stage=on_stage,
                 retriever=retriever,
+                authority=record.authority,
             )
             record.status = record.result.status
         except asyncio.CancelledError:

@@ -352,6 +352,9 @@ class ReasoningEngine:
                 classification=FindingClassification.UNKNOWN,
                 evidence=refs,
                 derived_from_task_ids=sorted({o.task_id for o in observations}),
+                # The model's word for what kind of statement this is (Phase 45): kept to show the
+                # ruling, never trusted for it.
+                proposed_type=candidate.classification.strip()[:40],
             )
 
             # Classification is recomputed from what resolved. The model's suggestion is

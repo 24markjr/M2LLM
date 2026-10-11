@@ -152,6 +152,7 @@ class FindingRepository:
                 finding_id=finding.finding_id,
                 claim=finding.claim,
                 classification=finding.classification.value,
+                statement_type=finding.statement_type.value,
                 confidence=finding.confidence.value,
                 resolution_rate=finding.confidence.resolution_rate,
                 evidence_strength=finding.confidence.evidence_strength,

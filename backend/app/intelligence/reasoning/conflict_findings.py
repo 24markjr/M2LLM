@@ -98,6 +98,8 @@ def conflict_findings(
             claim=claim_of(conflict),
             classification=FindingClassification.UNKNOWN,
             evidence=refs,
+            # What the knowledge graph found it to be; typed by the same rule as any finding.
+            proposed_type="CONTRADICTION",
             derived_from_task_ids=sorted(
                 {o.task_id for o in observations if set(o.sources) & set(citations)}
             ),

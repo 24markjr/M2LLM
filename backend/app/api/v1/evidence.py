@@ -21,6 +21,7 @@ from pydantic import Field
 from app.api.errors import ApiError
 from app.core.config import get_settings
 from app.evidence import service, store
+from app.evidence.authority import AuthorityTier, get_authority_config, is_tier
 from app.evidence.locker import EvidenceLocker
 from app.schemas.common import JarvisModel
 from app.schemas.evidence_locker import (
@@ -61,6 +62,9 @@ class EvidenceDetail(JarvisModel):
 class EvidenceUpdate(JarvisModel):
     classification: EvidenceClassification | None = None
     source: str | None = Field(default=None, max_length=500)
+    # A tier id from `.agent/config/authority.yaml` (Phase 45), with the reason a person gives.
+    authority: str | None = Field(default=None, max_length=32)
+    authority_reason: str | None = Field(default=None, max_length=300)
 
 
 @router.get("", response_model=EvidenceList)
@@ -68,12 +72,19 @@ async def list_evidence(limit: int = Query(default=200, ge=1, le=1000)) -> Evide
     """Every evidence item, newest first. Uploads that predate the locker are registered here."""
     locker = await service.get_locker()
     imported = await _import_uploads(locker)
+    await service.assess_unassessed(locker)
     items = await locker.items(limit=limit)
     summaries = [
         EvidenceSummary(item=item, citations=len(await locker.citations(item.evidence_id)))
         for item in items
     ]
     return EvidenceList(locker=locker.name, items=summaries, imported=imported)
+
+
+@router.get("/authority", response_model=list[AuthorityTier])
+async def authority_tiers() -> list[AuthorityTier]:
+    """The source authority tiers an item can be given, highest first (Phase 45)."""
+    return get_authority_config().tiers
 
 
 @router.get("/by-name/{name}", response_model=EvidenceItem)
@@ -151,10 +162,24 @@ async def update_evidence(
         changes["classification"] = {"from": item.classification, "to": body.classification}
     if body.source is not None and body.source != item.source:
         changes["source"] = {"from": item.source, "to": body.source}
+    reason: str | None = None
+    if body.authority is not None and body.authority != item.authority:
+        if not is_tier(body.authority):
+            raise ApiError(
+                "UNKNOWN_AUTHORITY_TIER",
+                f"no authority tier {body.authority}; see GET /api/v1/evidence/authority",
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            )
+        reason = f"set by {actor}" + (f": {body.authority_reason}" if body.authority_reason else "")
+        changes["authority"] = {"from": item.authority, "to": body.authority}
     if not changes:
         return item
     updated = await locker.update(
-        evidence_id, classification=body.classification, source=body.source
+        evidence_id,
+        classification=body.classification,
+        source=body.source,
+        authority=body.authority if reason is not None else None,
+        authority_reason=reason,
     )
     await service.note(locker, evidence_id, CustodyAction.METADATA_CHANGED, actor=actor, **changes)
     return updated or item

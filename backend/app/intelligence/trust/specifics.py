@@ -75,6 +75,18 @@ def single_value(claim: str) -> str:
     return ""
 
 
+def states_two_values(claim: str) -> bool:
+    """Whether a claim states two different dates, or two different figures (Phase 45).
+
+    The shape of a contradiction: "30 April 2026 ... 14 May 2026", "250,000 ... 287,500". One value
+    written twice is agreement (`single_value`), and a single value is a statement.
+    """
+    dates = [date for _, date in find_dates(claim)]
+    if any(not a.compatible(b) for i, a in enumerate(dates) for b in dates[i + 1 :]):
+        return True
+    return len({value for _, value in find_figures(claim)}) >= 2
+
+
 def numbers_as_dates(claim: str) -> list[str]:
     """Numbers a claim puts where a date belongs that cannot be dates (BUG-021).
 

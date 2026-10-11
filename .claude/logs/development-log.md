@@ -6,6 +6,32 @@ and what is still broken.
 
 ---
 
+# 2026-10-11 - Phase 45: statement types and source authority
+
+The owner asked for the remaining phases to be completed; this is the first. Docker had stopped with
+the machine and was restarted; the migration applied to the running Postgres.
+
+**Design.** A second field beside `FindingClassification` rather than a replacement: the
+classification caps confidence and is read by verification, memory and the stored runs, and it was
+right internally - the problem was only what a reader saw. Typing happens once, after replanning,
+because verification and revisions change what resolved.
+
+**Measured once, and two rules changed by it.** The two new scenarios were run alone (about two
+minutes). The contradiction came out right. The agreement came out UNKNOWN: the model's candidate
+leaves `classification` at its default "UNKNOWN", and the stricter-wins rule read that as a claim of
+ignorance - now no proposal. Its basis was INFERENCE: two documents agreeing, verified, but not
+decomposed into supported elements - a verified two-document claim is now a FACT. A second run cited
+each document separately (three SOURCE_CLAIMs, each proposed FACT), so the scenario requires the date
+rather than the FACT type: the downgrade is guaranteed on every run, the upgrade is the model's.
+
+**Authority** is information: printed on both sides of a contradiction, never used to choose. Missing
+config means every source is unassessed, so tests with temporary `.agent` folders run unchanged; the
+config is cached per folder so one test's folder cannot leak into another.
+
+The two scenarios join the baseline at its next full run (Phase 54 re-measures everything).
+
+---
+
 # 2026-10-08 - Demo step 6: the demo package, and the bug that hid every finding (BUG-036)
 
 The case was prepared through the API with no model: CASE-2026-00010, the twelve uploads filed and

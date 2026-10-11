@@ -86,6 +86,8 @@ export interface MissionDetail extends MissionSummary {
   evidence?: Record<string, string>;
   /** Documents left out because they failed their integrity check, with the reason. */
   excluded_documents?: Record<string, string>;
+  /** Each document's source authority tier (Phase 45). */
+  authority?: Record<string, string>;
 }
 
 export type InjectionSeverity = "NONE" | "MEDIUM" | "HIGH";
@@ -184,6 +186,31 @@ export interface Finding {
   verification: VerificationResult | null;
   derived_from_task_ids: string[];
   revision: number;
+  /** What kind of statement it is (Phase 45), computed from its evidence. */
+  statement_type?: StatementType;
+  /** The evidence basis under it; differs for a CONTRADICTION or a proposed RISK. */
+  statement_basis?: StatementType;
+  /** The model's word for it, kept to show the ruling decided. */
+  proposed_type?: string;
+}
+
+export type StatementType =
+  | "FACT"
+  | "SOURCE_CLAIM"
+  | "INFERENCE"
+  | "HYPOTHESIS"
+  | "CONTRADICTION"
+  | "RISK"
+  | "RECOMMENDATION"
+  | "OBSERVATION"
+  | "UNKNOWN";
+
+/** A source authority tier (Phase 45), from `.agent/config/authority.yaml`. */
+export interface AuthorityTier {
+  id: string;
+  label: string;
+  description: string;
+  weight: number;
 }
 
 export interface GapRecord {
@@ -707,6 +734,9 @@ export interface EvidenceItem {
   collected_by: string;
   source: string;
   classification: "UNCLASSIFIED" | "INTERNAL" | "CONFIDENTIAL" | "RESTRICTED";
+  /** Source authority tier (Phase 45) and why it is that tier. */
+  authority?: string;
+  authority_reason?: string;
   integrity: IntegrityStatus;
   integrity_checked_at: string | null;
   case_id: string | null;

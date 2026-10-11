@@ -1,0 +1,28 @@
+# Phase 45: two independent documents agree. The approved budget statement and the finance summary
+# both give the start of Project Vega as 6 April 2026.
+#
+# The statement type depends on how the model cites, and only part of it is the system's to
+# guarantee. A finding citing both documents, verified, is a FACT; a finding citing either alone is a
+# SOURCE_CLAIM - never a FACT, whatever the model called it (the schema refuses one). Measured on
+# 2026-10-11, two runs: once one finding cited both (FACT), once three findings cited one document
+# each, every one proposed as FACT by the model and typed SOURCE_CLAIM. So the scenario requires the
+# date; the type it asks for is the one the rules guarantee on every run - no single-source FACT -
+# which `Finding` enforces and the unit tests prove.
+id: vega_start_corroborated
+suites: [core, all]
+objective: >
+  When does Project Vega start, and which documents state the start date?
+documents:
+  - vega_approved_budget_statement.txt
+  - vega_finance_summary.txt
+
+expected_operations:
+  - extract_timeline
+  - retrieve_evidence
+  - generate_report
+
+min_tasks: 2
+minimal_tasks: 3
+
+expected_claims:
+  - "6 April 2026"

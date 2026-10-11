@@ -29,7 +29,7 @@ import type { EntityMemory, Episode, Fact, InvestigationMemory, MemoryStatus } f
 import type { ClaimComparison, ClaimConflict, EntityInvestigation, SearchHit, TimelineEvent } from "./types";
 import type { FormatSpec, StoredDocument, UploadedDocument } from "./types";
 import type { RetrieveResponse, WorkspaceView } from "./types";
-import type { EvidenceDetail, EvidenceItem, EvidenceList, IntegrityCheck } from "./types";
+import type { AuthorityTier, EvidenceDetail, EvidenceItem, EvidenceList, IntegrityCheck } from "./types";
 import type { Case, CaseDetail, CaseList, CaseSeverity, CaseStatus } from "./types";
 
 const BASE = "/api/v1";
@@ -218,10 +218,16 @@ export const api = {
   verifyEvidence: (evidenceId: string) =>
     request<IntegrityCheck>(`${BASE}/evidence/${evidenceId}/verify`, { method: "POST" }),
 
-  updateEvidence: (evidenceId: string, body: { classification?: string; source?: string }) =>
+  updateEvidence: (
+    evidenceId: string,
+    body: { classification?: string; source?: string; authority?: string; authority_reason?: string },
+  ) =>
     request<EvidenceItem>(`${BASE}/evidence/${evidenceId}`, { method: "PATCH", body: JSON.stringify(body) }),
 
   evidenceDownloadUrl: (evidenceId: string) => `${BASE}/evidence/${evidenceId}/download`,
+
+  /** Source authority tiers, highest first (Phase 45). */
+  authorityTiers: () => request<AuthorityTier[]>(`${BASE}/evidence/authority`),
 
   // --- stored retrieval (Phase 40) ---
   listWorkspaces: () => request<string[]>(`${BASE}/context/workspaces`),

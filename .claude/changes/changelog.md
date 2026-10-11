@@ -5,6 +5,35 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-11 - Phase 45: statement types and source authority
+
+### Added
+
+- **Statement types** on every finding, ruled from its evidence: FACT (two documents), SOURCE_CLAIM
+  (one), INFERENCE, HYPOTHESIS, CONTRADICTION, UNKNOWN; RISK, RECOMMENDATION and OBSERVATION when the
+  model proposes them over a supported basis ("RISK on SOURCE_CLAIM"). The model's word is kept as
+  `proposed_type`; the stricter answer wins. A single-source FACT cannot be constructed
+- **Source authority** per evidence item: tiers in `.agent/config/authority.yaml` (approved,
+  official, report, draft, correspondence, not assessed), set at intake by name rules, changed on the
+  item's page with a reason recorded in custody; `GET /api/v1/evidence/authority`. Every
+  contradiction in the report and the console names both sides' authority and chooses neither
+- Two scenarios (16 in all): `vega_authority_conflict` (an approved statement against a draft email)
+  and `vega_start_corroborated` (two agreeing documents); scenarios can require statement types
+- Migration `a45a0711e001`; ADR-015; `architecture/statements-and-authority.md`
+
+### Changed
+
+- Report finding lines print the statement type instead of the classification and ", single source"
+- The console's finding badge shows the statement type; the separate SINGLE SOURCE badge is gone
+
+### Verified
+
+- 44 new backend tests, 6 new frontend tests; unit and integration suites, tsc, build
+- The two scenarios run once live: the conflict typed CONTRADICTION with both sides cited; the
+  agreement typed FACT on one run and as three SOURCE_CLAIMs (each proposed FACT) on the other
+
+---
+
 ## 2026-10-08 - Demo step 6: the demo package; citations of real file names (BUG-036)
 
 ### Added

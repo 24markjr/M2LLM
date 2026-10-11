@@ -1,0 +1,56 @@
+# Source authority (Phase 45, decision D18).
+#
+# How much weight a source carries, as a tier. Set on every evidence item at intake by the rules
+# below, from its file name; a person can change it on the item's page, and the change is recorded
+# in its chain of custody (METADATA_CHANGED, old and new).
+#
+# Authority is reported, never used to settle anything. A contradiction between an approved
+# statement and a draft email stays a contradiction: the report names both sides' tiers and leaves
+# the judgement to the reader. Phase 46 records it as one factor of confidence.
+#
+# Consumed by: app/evidence/authority.py.
+
+version: 1
+
+# Highest first. `weight` is the factor Phase 46 records; nothing reads it before then.
+tiers:
+  - id: APPROVED
+    label: Approved or signed
+    description: Formally approved, signed or issued as final.
+    weight: 1.0
+  - id: OFFICIAL
+    label: Official document
+    description: An issued document - contract, statement of work, annexure, order, invoice.
+    weight: 0.9
+  - id: REPORT
+    label: Report or analysis
+    description: An internal report, study, analysis or plan.
+    weight: 0.75
+  - id: DRAFT
+    label: Draft
+    description: Marked as a draft or work in progress.
+    weight: 0.5
+  - id: CORRESPONDENCE
+    label: Correspondence
+    description: An email, chat, message or meeting note.
+    weight: 0.4
+  - id: UNASSESSED
+    label: Not assessed
+    description: No rule matched and nobody has assessed it. Neutral, not low.
+    weight: 0.75
+
+# Applied to the file name at intake, first match wins; case is ignored. Order matters: a file
+# named "draft_approved_budget" is a draft until someone says otherwise.
+rules:
+  - pattern: "draft|wip|work[ _-]in[ _-]progress"
+    tier: DRAFT
+  - pattern: "e-?mail|\\.eml$|\\.msg$|chat|message|minutes|meeting[ _-]note|driver[ _-]note"
+    tier: CORRESPONDENCE
+  - pattern: "approved|signed|final"
+    tier: APPROVED
+  - pattern: "statement[ _-]of[ _-]work|\\bsow\\b|_sow_|annexure|contract|purchase[ _-]order|invoice|agreement|delivery[ _-]confirmation"
+    tier: OFFICIAL
+  - pattern: "report|analysis|assessment|study|plan|timeline|ledger|budget|concept[ _-]note"
+    tier: REPORT
+
+default: UNASSESSED

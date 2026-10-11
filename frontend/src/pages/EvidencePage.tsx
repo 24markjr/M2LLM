@@ -11,8 +11,14 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { ApiError, api } from "../api/client";
-import type { EvidenceDetail, EvidenceList, IntegrityCheck } from "../api/types";
-import { CLASSIFICATIONS, custodyLabel, custodySummary, evidenceLink } from "../components/evidence";
+import type { AuthorityTier, EvidenceDetail, EvidenceList, IntegrityCheck } from "../api/types";
+import {
+  CLASSIFICATIONS,
+  authorityWords,
+  custodyLabel,
+  custodySummary,
+  evidenceLink,
+} from "../components/evidence";
 import { sizeLabel } from "../components/documents";
 import { shortHash } from "../components/workspaces";
 
@@ -76,6 +82,7 @@ export function EvidenceLockerPage() {
                     <th>SHA-256</th>
                     <th>Integrity</th>
                     <th>Classification</th>
+                    <th>Authority</th>
                     <th>Collected</th>
                     <th>Cited by</th>
                   </tr>
@@ -97,6 +104,7 @@ export function EvidenceLockerPage() {
                         <span className={`integrity ${item.integrity.toLowerCase()}`}>{item.integrity}</span>
                       </td>
                       <td>{item.classification}</td>
+                      <td title={item.authority_reason}>{authorityWords(item.authority)}</td>
                       <td className="dim">
                         {new Date(item.collected_at).toLocaleString()} · {item.collected_by}
                       </td>
@@ -140,6 +148,22 @@ export function EvidenceItemPage({ evidenceId }: { evidenceId: string }) {
       })
       .catch((exc: unknown) => setError(errorText(exc)))
       .finally(() => setBusy(false));
+  };
+
+  const [tiers, setTiers] = useState<AuthorityTier[]>([]);
+  useEffect(() => {
+    api
+      .authorityTiers()
+      .then(setTiers)
+      .catch(() => setTiers([]));
+  }, []);
+
+  const weigh = (authority: string) => {
+    const reason = window.prompt("Why this authority? (recorded in the chain of custody)") ?? "";
+    api
+      .updateEvidence(evidenceId, { authority, authority_reason: reason })
+      .then(load)
+      .catch((exc: unknown) => setError(errorText(exc)));
   };
 
   const classify = (classification: string) => {
@@ -216,6 +240,27 @@ export function EvidenceItemPage({ evidenceId }: { evidenceId: string }) {
                 ))}
               </select>{" "}
               <span className="dim">a change is recorded in the custody below</span>
+            </dd>
+            <dt>Source authority</dt>
+            <dd>
+              <select
+                aria-label="Source authority"
+                value={item.authority ?? "UNASSESSED"}
+                onChange={(e) => weigh(e.target.value)}
+              >
+                {(tiers.length
+                  ? tiers.map((t) => ({ id: t.id, label: t.label }))
+                  : [{ id: item.authority ?? "UNASSESSED", label: authorityWords(item.authority) }]
+                ).map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>{" "}
+              <span className="dim">
+                {item.authority_reason || "not assessed"} · shown on both sides of a contradiction, never used to
+                settle one
+              </span>
             </dd>
           </dl>
         </div>

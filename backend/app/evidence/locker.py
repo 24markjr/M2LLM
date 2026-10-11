@@ -48,6 +48,8 @@ class EvidenceLocker(Protocol):
         integrity: IntegrityStatus | None = None,
         kind: str | None = None,
         parser: str | None = None,
+        authority: str | None = None,
+        authority_reason: str | None = None,
     ) -> EvidenceItem | None: ...
 
     async def record(self, event: CustodyEvent) -> CustodyEvent: ...
@@ -109,6 +111,8 @@ class MemoryEvidenceLocker:
         integrity: IntegrityStatus | None = None,
         kind: str | None = None,
         parser: str | None = None,
+        authority: str | None = None,
+        authority_reason: str | None = None,
     ) -> EvidenceItem | None:
         item = self._items.get(evidence_id)
         if item is None:
@@ -121,6 +125,8 @@ class MemoryEvidenceLocker:
                 "integrity": integrity,
                 "kind": kind,
                 "parser": parser,
+                "authority": authority,
+                "authority_reason": authority_reason,
             }.items()
             if v is not None
         }
