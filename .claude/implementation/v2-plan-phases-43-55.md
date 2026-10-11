@@ -1,6 +1,6 @@
 # JARVIS v2 — implementation plan, Phases 43–55
 
-**Status:** Phases 43-48 done (2026-10-07 to 2026-10-11); Phases 49-55 in progress.
+**Status:** Phases 43-49 done (2026-10-07 to 2026-10-11); Phases 50-55 in progress.
 
 **Why this plan exists.** A product review of the demo (2026-10-06) judged JARVIS a strong
 investigation engine but not yet an investigation *platform*: no cases, no evidence custody, no
@@ -160,12 +160,17 @@ model-free and re-run in CI: catch 0.833, false alarms 0.000, one documented mis
 The automatic challenge before a report for HIGH/CRITICAL findings waits for severity (Phase 51).
 Details: `architecture/challenge.md`.
 
-### Phase 49 — Visible adaptive planning (M)
+### Phase 49 — Visible adaptive planning (M) — **DONE** 2026-10-11
 
 - `Task.rationale` (the operation, gap or hypothesis behind it) and `Task.workstream`; revision
   snapshots before and after.
 - Plan tree (objective → workstreams → tasks: why, input, action, output, dependencies, status) and a
   "JARVIS changed its plan" diff with the reason. Invariant: every task has a rationale.
+
+**As built (Phase 49):** as planned. Rationale is assigned by rules from the task's origin, not
+asked of the planner model - so no prompt changed and the baseline stands; the "hypothesis" origin
+in the plan does not arise, because open hypotheses add no tasks (Phase 47). Details:
+`architecture/plan-tree.md`.
 
 ## Track C — Professional result (P0)
 

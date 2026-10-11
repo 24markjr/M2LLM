@@ -441,3 +441,29 @@ async def test_an_inserted_task_is_stamped_with_the_revision_that_created_it() -
     for task in inserted:
         assert task.created_by_revision > 0, f"{task.task_id} is not marked as inserted"
         assert task.created_for_gap_id, f"{task.task_id} does not name the gap it was created for"
+
+
+async def test_an_inserted_task_says_which_gap_it_closes_and_the_change_is_snapshotted() -> None:
+    """Phase 49: every task says why it is in the plan; a replan records the plan before/after."""
+    from app.intelligence.planner.rationale import GAPS
+
+    controller, graph = _controller(
+        reasoning=[
+            _findings(("The project slipped against the approved baseline.", ["report.txt:r1"]))
+        ],
+        verification=[_verdict("UNSUPPORTED")],
+    )
+    before = [t.task_id for t in graph.tasks]
+
+    result = await controller.run(Objective(text="Check."), OBSERVATIONS, _ctx())
+
+    inserted = [t for t in graph.tasks if t.task_id not in before]
+    assert inserted
+    for task in inserted:
+        assert task.rationale.startswith(
+            f"inserted by the replanning loop to close gap {task.created_for_gap_id}: "
+        )
+        assert task.workstream == GAPS
+    revision = result.revisions[0]
+    assert revision.tasks_before == before
+    assert set(revision.tasks_after) - set(revision.tasks_before) == set(revision.added_task_ids)

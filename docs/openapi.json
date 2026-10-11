@@ -3999,6 +3999,185 @@
         "title": "PartialDate",
         "type": "object"
       },
+      "PlanChange": {
+        "additionalProperties": false,
+        "description": "One \"JARVIS changed its plan\": what triggered it, why, and the plan before and after.",
+        "properties": {
+          "added": {
+            "items": {
+              "$ref": "#/components/schemas/PlanStep"
+            },
+            "title": "Added",
+            "type": "array"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "skipped": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Skipped",
+            "type": "array"
+          },
+          "tasks_after": {
+            "default": 0,
+            "title": "Tasks After",
+            "type": "integer"
+          },
+          "tasks_before": {
+            "default": 0,
+            "title": "Tasks Before",
+            "type": "integer"
+          },
+          "trigger": {
+            "title": "Trigger",
+            "type": "string"
+          },
+          "triggered_by": {
+            "default": "",
+            "title": "Triggered By",
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision",
+          "trigger",
+          "reason"
+        ],
+        "title": "PlanChange",
+        "type": "object"
+      },
+      "PlanStep": {
+        "additionalProperties": false,
+        "description": "One task in the plan tree (Phase 49): why, what it took in, what it did, what came out.",
+        "properties": {
+          "action": {
+            "default": "",
+            "title": "Action",
+            "type": "string"
+          },
+          "depends_on": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Depends On",
+            "type": "array"
+          },
+          "inputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "inserted_by_revision": {
+            "default": 0,
+            "title": "Inserted By Revision",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "output": {
+            "default": "",
+            "title": "Output",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "task_id": {
+            "title": "Task Id",
+            "type": "string"
+          },
+          "task_type": {
+            "title": "Task Type",
+            "type": "string"
+          },
+          "why": {
+            "title": "Why",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id",
+          "label",
+          "task_type",
+          "why",
+          "status"
+        ],
+        "title": "PlanStep",
+        "type": "object"
+      },
+      "PlanTree": {
+        "additionalProperties": false,
+        "description": "Objective -> workstreams -> steps, and every change the run made to its plan (Phase 49).",
+        "properties": {
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/PlanChange"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "objective": {
+            "title": "Objective",
+            "type": "string"
+          },
+          "repairs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Repairs",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "workstreams": {
+            "items": {
+              "$ref": "#/components/schemas/PlanWorkstream"
+            },
+            "title": "Workstreams",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "objective"
+        ],
+        "title": "PlanTree",
+        "type": "object"
+      },
+      "PlanWorkstream": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/PlanStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "PlanWorkstream",
+        "type": "object"
+      },
       "RecordingSummary": {
         "additionalProperties": false,
         "properties": {
@@ -4490,6 +4669,11 @@
             "title": "Label",
             "type": "string"
           },
+          "rationale": {
+            "default": "",
+            "title": "Rationale",
+            "type": "string"
+          },
           "status": {
             "$ref": "#/components/schemas/TaskStatus"
           },
@@ -4503,6 +4687,11 @@
           "tool_id": {
             "default": "",
             "title": "Tool Id",
+            "type": "string"
+          },
+          "workstream": {
+            "default": "",
+            "title": "Workstream",
             "type": "string"
           }
         },
@@ -7808,6 +7997,49 @@
         "summary": "Compare",
         "tags": [
           "knowledge"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/plan": {
+      "get": {
+        "description": "The plan as a person reads it (Phase 49): objective, workstreams, and each step's why,\ninputs, action, output, dependencies and status; then every change the run made, and why.",
+        "operationId": "get_plan_tree_api_v1_missions__run_id__plan_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanTree"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Plan Tree",
+        "tags": [
+          "missions"
         ]
       }
     },

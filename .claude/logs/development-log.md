@@ -6,6 +6,20 @@ and what is still broken.
 
 ---
 
+# 2026-10-11 - Phase 49: visible adaptive planning
+
+Rationales could have been asked of the planner model; they were not. A model-written "why" would
+change the planner prompt (and the baseline, as Phase 45's withdrawn prompt rule showed), and it
+could explain a task by a reason that did not put it there. The origin of every task is already
+known to the code - the intent's operations, a named repair, a gap id, the knowledge pass - so the
+reason is stated from that. `annotate` runs at both exits of the planner and again after the loop,
+which is what makes "every task has a rationale" an invariant rather than a hope.
+
+A shell heredoc mangled the test file once (an unmatched quote in Git Bash); the tests were written
+with a script instead.
+
+---
+
 # 2026-10-11 - Phase 48: Challenge JARVIS
 
 Member 4's lexical verifier detects conflicts only on shared identifiers (shipment ids, clock

@@ -32,7 +32,7 @@ import type { FormatSpec, StoredDocument, UploadedDocument } from "./types";
 import type { RetrieveResponse, WorkspaceView } from "./types";
 import type { AuthorityTier, EvidenceDetail, EvidenceItem, EvidenceList, IntegrityCheck } from "./types";
 import type { Case, CaseDetail, CaseList, CaseSeverity, CaseStatus } from "./types";
-import type { ChallengeResult, HypothesisSet } from "./types";
+import type { ChallengeResult, HypothesisSet, PlanTree } from "./types";
 
 const BASE = "/api/v1";
 
@@ -120,6 +120,9 @@ export const api = {
     }),
 
   getChallenges: (runId: string) => request<ChallengeResult[]>(`${BASE}/missions/${runId}/challenges`),
+
+  /** The plan tree: workstreams, steps with their why, and every change (Phase 49). */
+  getPlan: (runId: string) => request<PlanTree>(`${BASE}/missions/${runId}/plan`),
 
   /** Competing explanations ranked by computed support (Phase 47). */
   getHypotheses: (runId: string) => request<HypothesisSet>(`${BASE}/missions/${runId}/hypotheses`),

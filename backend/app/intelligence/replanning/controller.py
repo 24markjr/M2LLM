@@ -34,6 +34,7 @@ from app.integrations.verification import VerificationProvider, verify_finding
 from app.intelligence.evidence_gap.detector import EvidenceGapDetector, emit_gaps, propose_task
 from app.intelligence.execution.engine import ExecutionEngine
 from app.intelligence.graph.task_graph import TaskGraph
+from app.intelligence.planner.rationale import GAPS
 from app.intelligence.planning_policy.scoring import ActionScore, score_action, select_actions
 from app.intelligence.reasoning.conflict_findings import conflict_findings
 from app.intelligence.reasoning.engine import ReasoningEngine, requires_comparison
@@ -389,6 +390,7 @@ class ReplanningController:
 
         ordered, scores = self._prioritise(gaps, result)
         result.scores.extend(scores)
+        before = [t.task_id for t in self._graph.tasks]
 
         inserted: list[str] = []
         for gap, task in ordered:
@@ -396,7 +398,15 @@ class ReplanningController:
             # by the API and the UI, but nothing ever set it - so the INSERTED BY REPLAN marker
             # never fired, and the adaptive behaviour this project exists to demonstrate was
             # invisible in the one view built to show it. The same shape of defect as BUG-010.
-            task = task.model_copy(update={"created_by_revision": iteration})
+            task = task.model_copy(
+                update={
+                    "created_by_revision": iteration,
+                    # Why it is here (Phase 49): the specific piece of evidence that was missing.
+                    "rationale": f"inserted by the replanning loop to close gap {gap.gap_id}: "
+                    f"{gap.missing}",
+                    "workstream": GAPS,
+                }
+            )
             try:
                 self._graph.insert_task(task)
             except ValueError as exc:
@@ -419,6 +429,8 @@ class ReplanningController:
                     reason=f"{len(inserted)} task(s) added to close detected evidence gaps",
                     triggered_by_id=ordered[0][0].gap_id,
                     added_task_ids=inserted,
+                    tasks_before=before,
+                    tasks_after=[t.task_id for t in self._graph.tasks],
                 )
             )
             await self._event(

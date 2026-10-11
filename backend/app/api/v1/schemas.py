@@ -89,6 +89,53 @@ class TaskNode(JarvisModel):
     # adaptive behaviour made visible: without it an inserted task is indistinguishable from
     # one that was planned from the start.
     inserted_by_replan: bool = False
+    # Why it is in the plan and its workstream (Phase 49).
+    rationale: str = ""
+    workstream: str = ""
+
+
+class PlanStep(JarvisModel):
+    """One task in the plan tree (Phase 49): why, what it took in, what it did, what came out."""
+
+    task_id: str
+    label: str
+    task_type: str
+    why: str
+    inputs: list[str] = Field(default_factory=list)
+    action: str = ""
+    output: str = ""
+    depends_on: list[str] = Field(default_factory=list)
+    status: TaskStatus
+    inserted_by_revision: int = 0
+
+
+class PlanWorkstream(JarvisModel):
+    name: str
+    steps: list[PlanStep] = Field(default_factory=list)
+
+
+class PlanChange(JarvisModel):
+    """One "JARVIS changed its plan": what triggered it, why, and the plan before and after."""
+
+    revision: int
+    trigger: str
+    reason: str
+    triggered_by: str = ""
+    added: list[PlanStep] = Field(default_factory=list)
+    skipped: list[str] = Field(default_factory=list)
+    tasks_before: int = 0
+    tasks_after: int = 0
+
+
+class PlanTree(JarvisModel):
+    """Objective -> workstreams -> steps, and every change the run made to its plan (Phase 49)."""
+
+    run_id: str
+    objective: str
+    workstreams: list[PlanWorkstream] = Field(default_factory=list)
+    changes: list[PlanChange] = Field(default_factory=list)
+    # How the plan came to be valid: the repairs applied, in words.
+    repairs: list[str] = Field(default_factory=list)
 
 
 class TaskGraphResponse(JarvisModel):

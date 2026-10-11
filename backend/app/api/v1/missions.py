@@ -25,6 +25,7 @@ from app.api.v1.schemas import (
     GapRecord,
     MissionDetail,
     MissionSummary,
+    PlanTree,
     TaskGraphResponse,
     TaskNode,
 )
@@ -158,11 +159,26 @@ async def get_tasks(run_id: str) -> TaskGraphResponse:
             tool_id=task.selection.tool_name if task.selection else "",
             inserted_by_replan=task.created_by_revision > 0,
             label=step_label(task.task_type, task.status),
+            rationale=task.rationale,
+            workstream=task.workstream,
         )
         for task in plan.tasks
     ]
     edges = [(dep, task.task_id) for task in plan.tasks for dep in task.depends_on]
     return TaskGraphResponse(run_id=run_id, nodes=nodes, edges=edges, waves=execution_levels(plan))
+
+
+@router.get("/{run_id}/plan", response_model=PlanTree)
+async def get_plan_tree(run_id: str) -> PlanTree:
+    """The plan as a person reads it (Phase 49): objective, workstreams, and each step's why,
+    inputs, action, output, dependencies and status; then every change the run made, and why."""
+    record = _require(run_id)
+    result = record.result
+    if result is None or result.plan is None:
+        raise MissionNotFinishedError(run_id, "plan", record.stage.value)
+    from app.api.plan_tree import plan_tree  # imports these schemas; imported late
+
+    return plan_tree(run_id, result)
 
 
 @router.get("/{run_id}/events", response_model=EventPage)
@@ -490,6 +506,11 @@ def snapshot_payloads(record: MissionRecord) -> dict[str, object]:
 
     if result.hypotheses is not None:
         payload["hypotheses"] = result.hypotheses.model_dump(mode="json")
+
+    if result.plan is not None:
+        from app.api.plan_tree import plan_tree  # imports these schemas; imported late
+
+        payload["plan"] = plan_tree(record.run_id, result).model_dump(mode="json")
 
     payload["gaps"] = [
         GapRecord(

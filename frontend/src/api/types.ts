@@ -175,6 +175,44 @@ export interface ConfidenceFactor {
   assessed: boolean;
 }
 
+/** The plan as a person reads it (Phase 49). */
+export interface PlanStep {
+  task_id: string;
+  label: string;
+  task_type: string;
+  why: string;
+  inputs: string[];
+  action: string;
+  output: string;
+  depends_on: string[];
+  status: TaskStatus;
+  inserted_by_revision: number;
+}
+
+export interface PlanWorkstream {
+  name: string;
+  steps: PlanStep[];
+}
+
+export interface PlanChange {
+  revision: number;
+  trigger: string;
+  reason: string;
+  triggered_by: string;
+  added: PlanStep[];
+  skipped: string[];
+  tasks_before: number;
+  tasks_after: number;
+}
+
+export interface PlanTree {
+  run_id: string;
+  objective: string;
+  workstreams: PlanWorkstream[];
+  changes: PlanChange[];
+  repairs: string[];
+}
+
 /** A counter-analysis of one finding (Phase 48). */
 export interface CounterEvidence {
   locator: string;
@@ -422,6 +460,8 @@ export interface Recording {
     findings?: { run_id: string; findings: Finding[] };
     gaps?: GapRecord[];
     report?: FinalReport;
+    /** The plan tree and its changes (Phase 49); absent in recordings made before it. */
+    plan?: PlanTree;
     /** Competing explanations (Phase 47); absent in recordings made before it. */
     hypotheses?: HypothesisSet;
     /** The run's knowledge graph, so replay opens the 3D explorer from the recording (absent before this fix). */

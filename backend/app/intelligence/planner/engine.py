@@ -16,6 +16,7 @@ from pydantic import Field
 from app.core.agent_config import get_agent_bounds
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.intelligence.planner.rationale import annotate
 from app.intelligence.planner.validator import cover_operations, repair, validate
 from app.llm.errors import StructuredOutputError
 from app.llm.prompts import get_prompt_library
@@ -124,6 +125,7 @@ class Planner:
             last_tasks = tasks
 
             if result.valid:
+                annotate(tasks, intent)
                 plan = Plan(tasks=tasks, dependencies=dependencies, validation=result)
                 await self._emit_plan(plan, emit)
                 return plan
@@ -160,6 +162,7 @@ class Planner:
                         for d in t.depends_on
                     ]
                     log.warning("plan_completed_by_repair", added=added[0].task_ids)
+                    annotate(tasks, intent)
                     plan = Plan(tasks=tasks, dependencies=dependencies, validation=result)
                     await self._emit_plan(plan, emit)
                     return plan

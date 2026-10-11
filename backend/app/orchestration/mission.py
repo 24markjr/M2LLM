@@ -39,6 +39,7 @@ from app.intelligence.hypotheses.engine import HypothesisEngine
 from app.intelligence.intent.engine import IntentEngine
 from app.intelligence.knowledge.extraction import KnowledgeExtractor
 from app.intelligence.planner.engine import PlanInvalidError, Planner
+from app.intelligence.planner.rationale import EXTRACT, annotate
 from app.intelligence.reasoning.engine import ReasoningEngine, requires_comparison
 from app.intelligence.reasoning.statements import type_statements
 from app.intelligence.replanning.controller import (
@@ -267,6 +268,10 @@ async def run_mission(
         # What kind of statement each finding is, now that its evidence is final (Phase 45).
         type_statements(result.findings, comparative=requires_comparison(result.intent))
 
+        # Every task says why it is in the plan (Phase 49): the ones nothing annotated get the
+        # objective's operations or their type's purpose.
+        annotate(graph.tasks, result.intent)
+
         # The text at each cited line: what verification read, and what the narrative is checked
         # against (Phase 37).
         cited_text = evidence_text_map(
@@ -398,6 +403,11 @@ async def _add_knowledge_pass(
             "disagree across sources (added by the orchestrator, not the planner)"
         ),
         inputs={"mode": "conflicts"},
+        rationale=(
+            "added by the orchestrator: reads every document into the knowledge graph so values "
+            "that disagree across sources can be paired"
+        ),
+        workstream=EXTRACT,
     )
     graph.insert_task(task)
     await _emit(

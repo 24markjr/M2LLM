@@ -238,6 +238,7 @@ function reconstruct(
     gaps,
     report: synthesised ? (snapshot.report ?? null) : null,
     hypotheses: finished ? (snapshot.hypotheses ?? null) : null,
+    plan: finished ? (snapshot.plan ?? null) : null,
     events: emitted,
     liveStage: finished ? "DONE" : stage,
     streaming: false,

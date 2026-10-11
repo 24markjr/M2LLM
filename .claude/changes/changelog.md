@@ -5,6 +5,24 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-11 - Phase 49: visible adaptive planning
+
+### Added
+
+- **Every task says why it is in the plan** (`Task.rationale`, `Task.workstream`): from the
+  objective's operations, a repair, the evidence gap a replan closed, or the knowledge pass - set by
+  rules, never by a model; tested for every task type and every planned task
+- **The plan tree** (`GET /api/v1/missions/{id}/plan`, console technical view): workstreams, and each
+  step's why, inputs, action, output, dependencies and status; in the replay too
+- **"JARVIS changed its plan"** in both views: each revision's trigger, reason, the steps it added and
+  why, and the plan's size before and after (`PlanRevision.tasks_before/after`)
+
+### Verified
+
+- 7 new backend tests, 2 frontend; 1236 backend tests, 68 frontend, tsc, build. No prompt changed
+
+---
+
 ## 2026-10-11 - Phase 48: Challenge JARVIS
 
 ### Added

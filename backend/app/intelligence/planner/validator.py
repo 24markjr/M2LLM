@@ -151,6 +151,7 @@ def repair(
                 task_type=TaskType.SYNTHESIZE,
                 description="Synthesize the findings into the final report",
                 depends_on=leaves,
+                rationale="added by a repair: every plan must end in its report",
             )
             fixed.append(appended)
             repairs.append(
@@ -248,6 +249,13 @@ def cover_operations(
                 description=task_type.value.replace("_", " ").capitalize()
                 + " (added: a required operation the plan left out)",
                 depends_on=inputs,
+                rationale=(
+                    "added by a repair: the objective requires "
+                    + ", ".join(
+                        o.value for o in operations if o in TASK_SATISFIES.get(task_type, set())
+                    )
+                    + " and the planner left it out on every attempt"
+                ),
             )
         )
     if terminal is not None:

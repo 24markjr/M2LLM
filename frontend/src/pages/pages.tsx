@@ -24,6 +24,7 @@ import { useMission, useMissionList } from "../hooks/useMission";
 import { SPEEDS, useReplay } from "../hooks/useReplay";
 import { DocumentPicker } from "../components/DocumentPicker";
 import { Hypotheses } from "../components/HypothesesPanel";
+import { PlanChanges, PlanTreePanel } from "../components/PlanTreePanel";
 import { documentsLink, validWorkspace } from "../components/workspaces";
 import { evidenceLink } from "../components/evidence";
 import { STEP_MARK, caseLink, conclusion, stepsFrom } from "../components/cases";
@@ -449,6 +450,8 @@ export function MissionViewPanels({ view, runId }: { view: MissionView; runId?: 
           {technical ? (
             <>
               <TaskGraph graph={view.tasks} />
+              <PlanTreePanel tree={view.plan} />
+              <PlanChanges tree={view.plan} />
               <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} runId={runId} />
               <Hypotheses set={view.hypotheses} caseId={mission.case_id || undefined} />
               <Gaps gaps={view.gaps} />
@@ -459,6 +462,7 @@ export function MissionViewPanels({ view, runId }: { view: MissionView; runId?: 
           ) : (
             <>
               <Steps nodes={view.tasks?.nodes ?? []} />
+              <PlanChanges tree={view.plan} />
               <Conclusion lines={conclusion(view.findings, done)} />
               <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} runId={runId} />
               <Hypotheses set={view.hypotheses} caseId={mission.case_id || undefined} />

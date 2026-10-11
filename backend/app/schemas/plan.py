@@ -169,6 +169,9 @@ class PlanRevision(JarvisModel):
     added_task_ids: list[TaskId] = Field(default_factory=list)
     skipped_task_ids: list[TaskId] = Field(default_factory=list)
     added_dependencies: list[TaskDependency] = Field(default_factory=list)
+    # The plan's task ids before and after the change (Phase 49), for the "changed its plan" diff.
+    tasks_before: list[TaskId] = Field(default_factory=list)
+    tasks_after: list[TaskId] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=utcnow)
 
     @model_validator(mode="after")

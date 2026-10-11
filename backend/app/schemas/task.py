@@ -197,6 +197,10 @@ class Task(JarvisModel):
     # explain itself. Phase 22 uses this to visually mark replan insertions.
     created_by_revision: int = Field(default=0, ge=0)
     created_for_gap_id: str | None = None
+    # Why the task is in the plan and which workstream it belongs to (Phase 49). Set from what put
+    # it there - the objective's operations, a repair, a gap, the knowledge pass - never by a model.
+    rationale: str = ""
+    workstream: str = ""
 
     created_at: datetime = Field(default_factory=utcnow)
     started_at: datetime | None = None
