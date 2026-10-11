@@ -6,6 +6,28 @@ and what is still broken.
 
 ---
 
+# 2026-10-11 - Phase 46: confidence decomposition, "why?" and the evidence chain
+
+**Measured before designing.** The database held 14 findings and the recordings 26; both showed the
+same thing - almost everything at 0.85, from two different causes, and verification never moving the
+number. That set the factors: verification gets the largest weight, independence replaces the
+"agreement" that was really a document count.
+
+**Two factors in the plan were not built as written.** Evidence strength was never supplied by any
+tool (it would have been 1.0 always), so it now distinguishes line citations from page citations.
+Entity resolution has no input anywhere in the pipeline and is left out rather than faked.
+
+**The offline re-score found two more problems** before any live run: rejected one-document findings
+still read 0.47 (verdict caps added), and verified two-document findings were capped at 0.85 below
+one-document ones because their classification stayed INFERENCE (raised to FACT in the final pass,
+where nothing downstream decides on it). After both: 0.93 / 0.81-0.89 / 0.30 / 0.
+
+**Baseline-neutral by construction**: the factors are applied after the replanning loop, whose
+diminishing-returns stop still reads the simpler value. The chain endpoint imports late to avoid a
+cycle (chain -> v1 schemas -> missions router -> chain).
+
+---
+
 # 2026-10-11 - Phase 45: statement types and source authority
 
 The owner asked for the remaining phases to be completed; this is the first. Docker had stopped with

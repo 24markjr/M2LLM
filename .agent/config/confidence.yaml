@@ -1,0 +1,54 @@
+# Confidence decomposition (Phase 46).
+#
+# A finding's final confidence is computed from named factors, each stored with its value, weight
+# and reason, so "why 0.73?" is answered by numbers that add up:
+#
+#   value = resolution x (sum of weight x factor) - penalties, capped by the statement's ceiling
+#
+# Resolution is a gate, not a weight: a claim whose citations did not resolve has nothing behind it,
+# however official its sources. Weights are normalised over the factors that were assessed; a factor
+# that could not be checked (no evidence text, say) is shown as not checked and carries no weight.
+#
+# Measured before this existed (2026-10-11): 22 of 26 recorded findings sat at exactly 0.85 - one
+# document scored 0.85 "agreement", and an INFERENCE was capped at 0.85 - and verification did not
+# move confidence at all: a finding the verifier rejected kept its 0.85.
+#
+# Consumed by: app/intelligence/confidence.py. Applied once, after replanning; the replanning loop's
+# diminishing-returns stop still reads the earlier, simpler value, so its behaviour is unchanged.
+
+version: 1
+
+weights:
+  evidence_strength: 0.20
+  independence: 0.25
+  authority: 0.10
+  verification: 0.35
+  temporal_consistency: 0.10
+
+# Distinct documents behind the resolved evidence. One document is that document's word.
+independence:
+  one_document: 0.6
+  two_documents: 0.85
+  three_or_more: 1.0
+
+# The verifier's verdict. Not yet verified is neutral, not good.
+verification:
+  SUPPORTED: 1.0
+  PARTIALLY_SUPPORTED: 0.6
+  INCONCLUSIVE: 0.4
+  UNVERIFIED: 0.4
+  UNSUPPORTED: 0.0
+  CONTRADICTED: 0.0
+  # Multiplied in when the strong verifier was unavailable and the baseline one answered.
+  degraded_factor: 0.8
+
+# Subtracted after the weighted sum.
+penalties:
+  # The finding cites a line another finding reports as one side of a contradiction.
+  disputed: 0.15
+
+# The most a finding can show when the verifier rejected it, whatever else is in its favour: without
+# it a rejected single-document claim still read 0.47 ("medium") on the recorded runs.
+verdict_caps:
+  UNSUPPORTED: 0.3
+  CONTRADICTED: 0.1

@@ -160,6 +160,45 @@ export interface Confidence {
   evidence_strength: number;
   source_agreement: number;
   classification_ceiling: number;
+  /** Phase 46: the named factors, the weighted sum before the resolution gate, and penalties. */
+  factors?: ConfidenceFactor[];
+  weighted?: number;
+  penalty?: number;
+}
+
+export interface ConfidenceFactor {
+  name: string;
+  value: number;
+  weight: number;
+  contribution: number;
+  reason: string;
+  assessed: boolean;
+}
+
+/** A finding's evidence chain (Phase 46): claim to conclusion. */
+export interface ChainEvidence {
+  locator: string;
+  document: string;
+  resolved: boolean;
+  note: string;
+  evidence_id: string;
+  authority: string;
+  text: string;
+  extractions: string[];
+}
+
+export interface ChainStep {
+  kind: "CLAIM" | "EVIDENCE" | "EXTRACTION" | "REASONING" | "VERIFICATION" | "CONCLUSION";
+  title: string;
+  detail: string;
+}
+
+export interface FindingChain {
+  run_id: string;
+  finding: Finding;
+  why: string[];
+  evidence: ChainEvidence[];
+  steps: ChainStep[];
 }
 
 export interface VerificationIssue {

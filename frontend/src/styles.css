@@ -1575,3 +1575,39 @@ ul.conclusion {
   margin: 0;
   padding-left: 18px;
 }
+
+/* --- Why this confidence, and the evidence chain (Phase 46) ------------------------------------ */
+.why {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--line-bright);
+}
+.why-head {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.why-sum {
+  margin-bottom: 6px;
+}
+.why-factors td:last-child {
+  white-space: normal;
+}
+.chain {
+  margin-top: 8px;
+}
+.chain-steps {
+  margin: 0 0 8px 18px;
+  padding: 0;
+}
+.chain-steps li {
+  margin-bottom: 4px;
+}
+.chain-evidence {
+  margin: 6px 0;
+}
+.chain-text {
+  margin: 4px 0 4px 12px;
+  padding-left: 8px;
+  border-left: 2px solid var(--line-bright);
+  white-space: pre-wrap;
+}

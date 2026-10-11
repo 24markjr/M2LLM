@@ -1,6 +1,6 @@
 # JARVIS v2 — implementation plan, Phases 43–55
 
-**Status:** Phases 43-45 done (2026-10-07 to 2026-10-11); Phases 46-55 in progress.
+**Status:** Phases 43-46 done (2026-10-07 to 2026-10-11); Phases 47-55 in progress.
 
 **Why this plan exists.** A product review of the demo (2026-10-06) judged JARVIS a strong
 investigation engine but not yet an investigation *platform*: no cases, no evidence custody, no
@@ -111,7 +111,7 @@ rules make on every run is the downgrade (no single-source FACT, enforced by the
 
 ## Track B — Trustworthy reasoning (P0/P1)
 
-### Phase 46 — Confidence decomposition, "Why?" and the evidence chain (M)
+### Phase 46 — Confidence decomposition, "Why?" and the evidence chain (M) — **DONE** 2026-10-11
 
 - First measure the confidence distribution in committed baselines and why it saturates.
 - Factors, each stored with value and reason: evidence strength, independence, agreement, authority,
@@ -121,6 +121,14 @@ rules make on every run is the downgrade (no single-source FACT, enforced by the
 - Evidence chain view: finding → claim → evidence item → document/page/line highlighted → extraction
   → reasoning → both verifiers' verdicts → conclusion, linked to the trail, Locker and custody.
 - **Acceptance:** "why 0.73?" answered on screen by numbers that add up.
+
+**As built (Phase 46):** measured first - 22 of 26 recorded findings at exactly 0.85, and rejected
+findings kept 0.85. Factors as planned except two: *agreement* is folded into independence (it was
+the one-document 0.85), and *entity resolution* is left out (nothing resolves entities yet; a fixed
+factor would be decoration). Added: evidence strength from line vs page citations, verdict caps for
+rejected findings, and the final-pass raise of verified multi-document findings to FACT - each found
+by re-scoring the recorded findings offline. Applied after the replanning loop, so the baseline is
+unchanged. Details: `architecture/confidence.md`.
 
 ### Phase 47 — Hypotheses, knowledge gaps, next best evidence (L)
 

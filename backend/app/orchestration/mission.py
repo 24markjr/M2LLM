@@ -32,6 +32,7 @@ from app.core.logging import get_logger
 from app.evidence.authority import authority_map
 from app.integrations.graph_store import open_knowledge_base, record_findings
 from app.integrations.verification import build_verification_provider
+from app.intelligence.confidence import rescore
 from app.intelligence.execution.engine import ExecutionEngine
 from app.intelligence.graph.task_graph import TaskGraph
 from app.intelligence.intent.engine import IntentEngine
@@ -132,6 +133,9 @@ class MissionResult(JarvisModel):
     knowledge_store: str = ""
     # The task the orchestrator added so reasoning sees conflicting claim pairs (A5), if any.
     knowledge_pass_task_id: str | None = None
+    # The text at each cited locator, as verification read it (Phase 46): what the evidence chain
+    # shows for each citation.
+    evidence_text: dict[str, str] = Field(default_factory=dict)
 
     # Why the run did not complete. A code the client can branch on, plus a message a
     # person can read - never a raw exception string.
@@ -259,6 +263,24 @@ async def run_mission(
         # What kind of statement each finding is, now that its evidence is final (Phase 45).
         type_statements(result.findings, comparative=requires_comparison(result.intent))
 
+        # The text at each cited line: what verification read, and what the narrative is checked
+        # against (Phase 37).
+        cited_text = evidence_text_map(
+            evidence_from_observations(result.observations, documents, page_starts or {})
+        )
+        # Each document's source authority (Phase 45): the locker's tier where the API gave one,
+        # the intake rules otherwise.
+        tiers = authority_map(sorted(documents), authority)
+        # The final confidence, from named factors with their reasons (Phase 46). After the loop:
+        # its diminishing-returns stop read the simpler value, and still does.
+        rescore(result.findings, authority=tiers, evidence_text=cited_text)
+        result.evidence_text = {
+            ref.as_ref(): cited_text.get(ref.as_ref(), "")
+            for finding in result.findings
+            for ref in finding.evidence
+            if ref.is_resolved
+        }
+
         # Carry the *executed* graph, not the planned one. The replanning loop inserts tasks into
         # the graph while it runs, and those tasks are not in the plan the planner produced - so a
         # caller reading `result.plan.tasks` would see the plan as it was written rather than as it
@@ -290,14 +312,8 @@ async def run_mission(
                 # What the run could and could not examine, and what reasoning discarded (BUG-032).
                 knowledge=result.knowledge,
                 discarded=dict(reasoner.discarded),
-                # Each document's source authority, printed on both sides of a contradiction
-                # (Phase 45): the locker's tier where the API gave one, the intake rules otherwise.
-                authority=authority_map(sorted(documents), authority),
-                # The text at each cited line, for checking the narrative (Phase 37): the same map
-                # verification reads.
-                evidence_text=evidence_text_map(
-                    evidence_from_observations(result.observations, documents, page_starts or {})
-                ),
+                authority=tiers,
+                evidence_text=cited_text,
             )
 
         result.status = MissionStatus.COMPLETED

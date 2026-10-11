@@ -319,7 +319,7 @@ export function MissionDetailPage({ runId, onBack }: { runId: string; onBack: ()
         </span>
       </div>
 
-      <MissionViewPanels view={live} />
+      <MissionViewPanels view={live} runId={runId} />
     </>
   );
 }
@@ -340,7 +340,8 @@ export function isFinished(mission: MissionDetail | null): boolean {
  * looks *nearly* right is worse than one that obviously does not: it invites a viewer to trust
  * a rendering no live run ever produced.
  */
-export function MissionViewPanels({ view }: { view: MissionView }) {
+/** `runId` only for a live run: it serves each finding's evidence chain (Phase 46); a replay has none. */
+export function MissionViewPanels({ view, runId }: { view: MissionView; runId?: string }) {
   const { mission } = view;
   const done = isFinished(mission);
   const [technical, setTechnical] = useState(readTechnical);
@@ -447,7 +448,7 @@ export function MissionViewPanels({ view }: { view: MissionView }) {
           {technical ? (
             <>
               <TaskGraph graph={view.tasks} />
-              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} />
+              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} runId={runId} />
               <Gaps gaps={view.gaps} />
               <Report report={view.report} />
               <ExecutionStats report={view.report} />
@@ -457,7 +458,7 @@ export function MissionViewPanels({ view }: { view: MissionView }) {
             <>
               <Steps nodes={view.tasks?.nodes ?? []} />
               <Conclusion lines={conclusion(view.findings, done)} />
-              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} />
+              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} runId={runId} />
               <Report report={view.report} />
             </>
           )}

@@ -120,9 +120,47 @@ class EventPage(JarvisModel):
 class FindingsResponse(JarvisModel):
     run_id: str
     findings: list[Finding] = Field(default_factory=list)
+    # Why each finding has its confidence, and why not higher (Phase 46): finding id -> sentences
+    # whose numbers add up, from the stored factors.
+    why: dict[str, list[str]] = Field(default_factory=dict)
     # Findings are returned whole, with evidence and verification attached. Splitting them
     # across endpoints would let a client render a claim before its verification state
     # arrived, and a claim shown without its verification state is a claim overstated.
+
+
+class ChainEvidence(JarvisModel):
+    """One citation in a finding's evidence chain (Phase 46)."""
+
+    locator: str
+    document: str
+    resolved: bool
+    note: str = ""
+    # The Evidence Locker item the mission read under this name, and its source authority.
+    evidence_id: str = ""
+    authority: str = ""
+    # The text at the cited line (or the matched lines on a cited page), as verification read it.
+    text: str = ""
+    # What the knowledge pass extracted from this line: "Entity.attribute = value".
+    extractions: list[str] = Field(default_factory=list)
+
+
+class ChainStep(JarvisModel):
+    """One link from claim to conclusion, in order."""
+
+    kind: str  # CLAIM | EVIDENCE | EXTRACTION | REASONING | VERIFICATION | CONCLUSION
+    title: str
+    detail: str = ""
+
+
+class FindingChain(JarvisModel):
+    """How a finding came to be what it is: claim -> evidence -> extraction -> reasoning ->
+    verification -> conclusion, each step with what it rests on (Phase 46)."""
+
+    run_id: str
+    finding: Finding
+    why: list[str] = Field(default_factory=list)
+    evidence: list[ChainEvidence] = Field(default_factory=list)
+    steps: list[ChainStep] = Field(default_factory=list)
 
 
 class GapRecord(JarvisModel):

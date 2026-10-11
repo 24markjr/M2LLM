@@ -7,6 +7,7 @@
  * thing worth demonstrating, and a UI that rounds it off throws that away.
  */
 
+import { ConfidenceWhy } from "./ConfidenceWhy";
 import { evidenceForCitation, evidenceLink } from "./evidence";
 import { authorityText, statementHelp, statementLabel, statementType } from "./statements";
 export { singleSource } from "./statements";
@@ -136,8 +137,11 @@ export function FindingCard({
   spawned = [],
   evidence,
   authority,
+  runId,
 }: {
   finding: Finding;
+  /** The live run, for its evidence chain (Phase 46); absent in a replay. */
+  runId?: string | undefined;
   /** Document name -> the evidence item the mission read (Phase 43), for citation links. */
   evidence?: Record<string, string> | undefined;
   /** Document name -> its source authority tier (Phase 45), shown on both sides of a contradiction. */
@@ -226,12 +230,7 @@ export function FindingCard({
             </ul>
           ) : null}
 
-          <div className="hint mono">
-            resolution {finding.confidence.resolution_rate.toFixed(2)} &middot; strength{" "}
-            {finding.confidence.evidence_strength.toFixed(2)} &middot; agreement{" "}
-            {finding.confidence.source_agreement.toFixed(2)} &middot; ceiling{" "}
-            {finding.confidence.classification_ceiling.toFixed(2)}
-          </div>
+          <ConfidenceWhy finding={finding} runId={runId} />
         </div>
       ) : null}
 
@@ -286,8 +285,10 @@ export function Findings({
   tasks = null,
   evidence,
   authority,
+  runId,
 }: {
   findings: Finding[];
+  runId?: string | undefined;
   gaps?: GapRecord[];
   tasks?: TaskGraphResponse | null;
   evidence?: Record<string, string> | undefined;
@@ -330,6 +331,7 @@ export function Findings({
               spawned={insertedTasks}
               evidence={evidence}
               authority={authority}
+              runId={runId}
             />
           ))
         )}

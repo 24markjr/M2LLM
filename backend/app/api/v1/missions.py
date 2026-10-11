@@ -20,6 +20,7 @@ from app.api.v1.schemas import (
     CreateMissionRequest,
     EventPage,
     EventRecord,
+    FindingChain,
     FindingsResponse,
     GapRecord,
     MissionDetail,
@@ -33,6 +34,7 @@ from app.core.logging import get_logger
 from app.evidence.authority import authority_map
 from app.evidence.service import admit_for_mission, authority_of, record_analysed
 from app.integrations.context import workspace_retriever
+from app.intelligence.confidence import why
 from app.intelligence.planner.engine import execution_levels
 from app.intelligence.synthesis.renderers import to_markdown
 from app.llm import get_provider
@@ -192,7 +194,30 @@ async def get_events(
 async def get_findings(run_id: str) -> FindingsResponse:
     record = _require(run_id)
     findings = record.result.findings if record.result else []
-    return FindingsResponse(run_id=run_id, findings=findings)
+    return FindingsResponse(
+        run_id=run_id, findings=findings, why={f.finding_id: why(f) for f in findings}
+    )
+
+
+@router.get("/{run_id}/findings/{finding_id}/chain", response_model=FindingChain)
+async def get_finding_chain(run_id: str, finding_id: str) -> FindingChain:
+    """From claim to conclusion (Phase 46): each citation with its evidence item, authority, line
+    text and what was extracted from it; how reasoning proposed it; what each verifier said; and
+    the confidence with its factors."""
+    record = _require(run_id)
+    result = record.result
+    finding = next(
+        (f for f in (result.findings if result else []) if f.finding_id == finding_id), None
+    )
+    if result is None or finding is None:
+        raise ApiError(
+            "FINDING_NOT_FOUND",
+            f"no finding {finding_id} in {run_id}",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    from app.api.chain import finding_chain  # chain imports these schemas; imported late
+
+    return finding_chain(run_id, finding, result, record.evidence, record.authority, record.events)
 
 
 @router.get("/{run_id}/gaps", response_model=list[GapRecord])

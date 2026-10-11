@@ -5,6 +5,33 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-11 - Phase 46: confidence decomposition, "why?" and the evidence chain
+
+### Added
+
+- **Confidence from named factors** (`.agent/config/confidence.yaml`): resolution as a gate;
+  evidence strength (line 1.0, page 0.7), independence, source authority, verification and temporal
+  consistency, weighted; a penalty when a cited line is disputed by a contradiction; capped by the
+  classification or, for a rejected finding, by a verdict cap. Every term is stored with its reason
+- **"Why?"**: sentences whose numbers add up, and what kept it lower, largest first - in the API
+  (`why` on the findings response), the report's Confidence section and the console's finding card
+- **The evidence chain**: `GET /api/v1/missions/{id}/findings/{finding_id}/chain` - claim, each
+  citation with its locker item, authority, the text read and what was extracted, reasoning,
+  verifiers, conclusion; shown in the console with links to the Evidence Locker and the graph
+
+### Fixed
+
+- Confidence did not move with verification: a rejected finding kept 0.85. Now 0.30 at most
+- 22 of 26 recorded findings sat at 0.85; re-scored, they spread from 0.30 to 0.93 by what supports them
+- Verified two-document findings ranked below one-document ones (the INFERENCE cap); now 0.93
+
+### Verified
+
+- 15 new backend tests, 5 new frontend tests; 1200 backend tests, 61 frontend, tsc, build
+- Re-scored the 26 recorded findings offline (no model): see `architecture/confidence.md`
+
+---
+
 ## 2026-10-11 - Phase 45: statement types and source authority
 
 ### Added

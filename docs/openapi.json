@@ -554,6 +554,83 @@
         "title": "CaseUpdate",
         "type": "object"
       },
+      "ChainEvidence": {
+        "additionalProperties": false,
+        "description": "One citation in a finding's evidence chain (Phase 46).",
+        "properties": {
+          "authority": {
+            "default": "",
+            "title": "Authority",
+            "type": "string"
+          },
+          "document": {
+            "title": "Document",
+            "type": "string"
+          },
+          "evidence_id": {
+            "default": "",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "extractions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Extractions",
+            "type": "array"
+          },
+          "locator": {
+            "title": "Locator",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "resolved": {
+            "title": "Resolved",
+            "type": "boolean"
+          },
+          "text": {
+            "default": "",
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "locator",
+          "document",
+          "resolved"
+        ],
+        "title": "ChainEvidence",
+        "type": "object"
+      },
+      "ChainStep": {
+        "additionalProperties": false,
+        "description": "One link from claim to conclusion, in order.",
+        "properties": {
+          "detail": {
+            "default": "",
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "title"
+        ],
+        "title": "ChainStep",
+        "type": "object"
+      },
       "ClaimComparison": {
         "additionalProperties": false,
         "description": "The temporal order of two claims.",
@@ -701,6 +778,11 @@
         "additionalProperties": false,
         "description": "A computed confidence, inseparable from the inputs that produced it.\n\nConstructed only via `Confidence.compute(...)`. The components travel with the value, so\nany report, UI or evaluation can show *why* a number is what it is \u2014 and so a value that\nlooks wrong can be traced rather than argued about.",
         "properties": {
+          "cap_reason": {
+            "default": "",
+            "title": "Cap Reason",
+            "type": "string"
+          },
           "classification_ceiling": {
             "default": 1.0,
             "maximum": 1.0,
@@ -712,6 +794,20 @@
             "maximum": 1.0,
             "minimum": 0.0,
             "title": "Evidence Strength",
+            "type": "number"
+          },
+          "factors": {
+            "items": {
+              "$ref": "#/components/schemas/ConfidenceFactor"
+            },
+            "title": "Factors",
+            "type": "array"
+          },
+          "penalty": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Penalty",
             "type": "number"
           },
           "resolution_rate": {
@@ -731,6 +827,13 @@
             "minimum": 0.0,
             "title": "Value",
             "type": "number"
+          },
+          "weighted": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Weighted",
+            "type": "number"
           }
         },
         "required": [
@@ -740,6 +843,51 @@
           "source_agreement"
         ],
         "title": "Confidence",
+        "type": "object"
+      },
+      "ConfidenceFactor": {
+        "additionalProperties": false,
+        "description": "One named input to a confidence (Phase 46), with what it contributed and why.\n\n`contribution` is `weight * value` for a weighted factor, the multiplier's effect for the\nresolution gate (weight 0), and minus the amount for a penalty. A factor that could not be\nassessed has `assessed=False` and weight 0, and says why.",
+        "properties": {
+          "assessed": {
+            "default": true,
+            "title": "Assessed",
+            "type": "boolean"
+          },
+          "contribution": {
+            "default": 0.0,
+            "title": "Contribution",
+            "type": "number"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          },
+          "value": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Value",
+            "type": "number"
+          },
+          "weight": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ],
+        "title": "ConfidenceFactor",
         "type": "object"
       },
       "ConflictKind": {
@@ -1991,6 +2139,46 @@
         "title": "Finding",
         "type": "object"
       },
+      "FindingChain": {
+        "additionalProperties": false,
+        "description": "How a finding came to be what it is: claim -> evidence -> extraction -> reasoning ->\nverification -> conclusion, each step with what it rests on (Phase 46).",
+        "properties": {
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/ChainEvidence"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "finding": {
+            "$ref": "#/components/schemas/Finding"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ChainStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "why": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Why",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "finding"
+        ],
+        "title": "FindingChain",
+        "type": "object"
+      },
       "FindingClassification": {
         "description": "How much epistemic weight a claim is entitled to.",
         "enum": [
@@ -2062,6 +2250,16 @@
           "run_id": {
             "title": "Run Id",
             "type": "string"
+          },
+          "why": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Why",
+            "type": "object"
           }
         },
         "required": [
@@ -6138,6 +6336,58 @@
           }
         },
         "summary": "Get Findings",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/findings/{finding_id}/chain": {
+      "get": {
+        "description": "From claim to conclusion (Phase 46): each citation with its evidence item, authority, line\ntext and what was extracted from it; how reasoning proposed it; what each verifier said; and\nthe confidence with its factors.",
+        "operationId": "get_finding_chain_api_v1_missions__run_id__findings__finding_id__chain_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "finding_id",
+            "required": true,
+            "schema": {
+              "title": "Finding Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindingChain"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Finding Chain",
         "tags": [
           "missions"
         ]

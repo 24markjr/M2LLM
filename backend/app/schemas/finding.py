@@ -93,6 +93,22 @@ _CLASSIFICATION_CEILING: dict[FindingClassification, float] = {
 }
 
 
+class ConfidenceFactor(JarvisModel):
+    """One named input to a confidence (Phase 46), with what it contributed and why.
+
+    `contribution` is `weight * value` for a weighted factor, the multiplier's effect for the
+    resolution gate (weight 0), and minus the amount for a penalty. A factor that could not be
+    assessed has `assessed=False` and weight 0, and says why.
+    """
+
+    name: NonEmptyStr
+    value: UnitFloat
+    weight: float = Field(default=0.0, ge=0.0, le=1.0)
+    contribution: float = 0.0
+    reason: str = ""
+    assessed: bool = True
+
+
 class Confidence(JarvisModel):
     """A computed confidence, inseparable from the inputs that produced it.
 
@@ -110,6 +126,13 @@ class Confidence(JarvisModel):
     source_agreement: UnitFloat
     # The ceiling that was applied, for transparency about why a value was capped.
     classification_ceiling: UnitFloat = 1.0
+    # Phase 46: the named factors behind the final value, the weighted sum before the resolution
+    # gate, penalties and cap, and the penalties' total. Empty on a confidence from `compute`.
+    factors: list[ConfidenceFactor] = Field(default_factory=list)
+    weighted: UnitFloat = 0.0
+    penalty: UnitFloat = 0.0
+    # Why the ceiling is what it is, when something other than the classification set it.
+    cap_reason: str = ""
 
     @classmethod
     def compute(
@@ -152,6 +175,58 @@ class Confidence(JarvisModel):
         )
 
     @classmethod
+    def from_factors(
+        cls,
+        *,
+        resolution: ConfidenceFactor,
+        weighted: list[ConfidenceFactor],
+        penalties: list[ConfidenceFactor],
+        ceiling: float,
+        evidence_strength: float,
+        source_agreement: float,
+        cap_reason: str = "",
+    ) -> Confidence:
+        """Derive a confidence from named factors (Phase 46). Still no bare number: the value is
+        `resolution x sum(weight x value) - penalties`, capped, and every term is kept.
+
+        Weights are normalised over the assessed factors, so the contributions add up to the
+        weighted sum exactly.
+        """
+        assessed = {f.name for f in weighted if f.assessed and f.weight > 0}
+        total_weight = sum(f.weight for f in weighted if f.name in assessed)
+        normalised = [
+            f.model_copy(
+                update={
+                    "weight": (f.weight / total_weight)
+                    if (f.name in assessed and total_weight)
+                    else 0.0,
+                }
+            )
+            for f in weighted
+        ]
+        normalised = [f.model_copy(update={"contribution": f.weight * f.value}) for f in normalised]
+        weighted_sum = min(1.0, sum(f.contribution for f in normalised))
+        penalty = min(1.0, sum(p.value for p in penalties))
+        gated = resolution.value * weighted_sum
+        value = max(0.0, min(gated - penalty, ceiling))
+        gate = resolution.model_copy(update={"contribution": gated - weighted_sum})
+        return cls(
+            value=value,
+            resolution_rate=resolution.value,
+            evidence_strength=evidence_strength,
+            source_agreement=source_agreement,
+            classification_ceiling=ceiling,
+            factors=[
+                gate,
+                *normalised,
+                *(p.model_copy(update={"contribution": -p.value}) for p in penalties),
+            ],
+            weighted=weighted_sum,
+            penalty=penalty,
+            cap_reason=cap_reason,
+        )
+
+    @classmethod
     def none(cls) -> Confidence:
         """Zero confidence, for a claim with nothing behind it."""
         return cls(
@@ -163,7 +238,21 @@ class Confidence(JarvisModel):
         )
 
     def explain(self) -> str:
-        """One line suitable for a report footnote or a UI tooltip."""
+        """One line suitable for a report footnote or a UI tooltip. With factors (Phase 46), the
+        terms that make the value, so the line adds up."""
+        if self.factors:
+            terms = ", ".join(
+                f"{f.name.replace('_', ' ')} {f.weight:.2f}x{f.value:.2f}"
+                for f in self.factors
+                if f.weight > 0
+            )
+            capped = self.resolution_rate * self.weighted - self.penalty > self.value + 1e-9
+            return (
+                f"{self.value:.2f} = resolved {self.resolution_rate:.2f} x {self.weighted:.2f} "
+                f"({terms})"
+                + (f" - {self.penalty:.2f} disputed" if self.penalty else "")
+                + (f", capped at {self.classification_ceiling:.2f}" if capped else "")
+            )
         return (
             f"{self.value:.2f} "
             f"(resolved {self.resolution_rate:.0%}, "

@@ -37,7 +37,8 @@ kept current while the run proceeds.
 | GET | `/api/v1/missions/{id}` | Includes `stage` while still running |
 | GET | `/api/v1/missions/{id}/tasks` | Nodes, edges, and the concurrency `waves` |
 | GET | `/api/v1/missions/{id}/events` | Paginated (`offset`, `limit`) |
-| GET | `/api/v1/missions/{id}/findings` | Findings whole, with evidence and verification |
+| GET | `/api/v1/missions/{id}/findings` | Findings whole, with evidence and verification, and `why` per finding (Phase 46) |
+| GET | `/api/v1/missions/{id}/findings/{finding_id}/chain` | The evidence chain: claim, each citation (locker item, authority, text read, extractions), reasoning, verifiers, conclusion with its why (Phase 46) |
 | GET | `/api/v1/missions/{id}/gaps` | Detected gaps and whether each was closed |
 | GET | `/api/v1/missions/{id}/report` | JSON `FinalReport` |
 | GET | `/api/v1/missions/{id}/report.md` | The same report as Markdown |

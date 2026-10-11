@@ -20,6 +20,7 @@ import type {
   EventPage,
   FinalReport,
   Finding,
+  FindingChain,
   GapRecord,
   MissionDetail,
   MissionSummary,
@@ -107,7 +108,13 @@ export const api = {
     request<EventPage>(`${BASE}/missions/${runId}/events?offset=${offset}&limit=${limit}`),
 
   getFindings: (runId: string) =>
-    request<{ run_id: string; findings: Finding[] }>(`${BASE}/missions/${runId}/findings`),
+    request<{ run_id: string; findings: Finding[]; why?: Record<string, string[]> }>(
+      `${BASE}/missions/${runId}/findings`,
+    ),
+
+  /** How a finding came to be: claim, evidence, extraction, reasoning, verification, conclusion. */
+  getFindingChain: (runId: string, findingId: string) =>
+    request<FindingChain>(`${BASE}/missions/${runId}/findings/${findingId}/chain`),
 
   getGaps: (runId: string) => request<GapRecord[]>(`${BASE}/missions/${runId}/gaps`),
 
