@@ -1,0 +1,8 @@
+LYRA BILLING - INCIDENT LOG, 3 March 2026
+Recorded by: Operations
+
+02:10 Change CHG-118 deployed to the billing server.
+02:13 Facilities report a power dip on rack B, where the billing server is housed.
+02:14 The billing server stopped answering requests.
+03:05 Service restored after the billing server was restarted.
+The cause of the outage has not been established.

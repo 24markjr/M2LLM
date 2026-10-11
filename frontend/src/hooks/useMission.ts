@@ -18,6 +18,7 @@ import type {
   FinalReport,
   Finding,
   GapRecord,
+  HypothesisSet,
   MissionDetail,
   MissionSummary,
   Stage,
@@ -82,6 +83,8 @@ export interface MissionView {
   findings: Finding[];
   gaps: GapRecord[];
   report: FinalReport | null;
+  /** Competing explanations (Phase 47), once the run has them. */
+  hypotheses?: HypothesisSet | null;
   events: EventRecord[];
   /** Derived from the stream, so the tracker moves before any request returns. */
   liveStage: Stage | null;
@@ -99,6 +102,7 @@ export function useMission(runId: string): LiveMission {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [gaps, setGaps] = useState<GapRecord[]>([]);
   const [report, setReport] = useState<FinalReport | null>(null);
+  const [hypotheses, setHypotheses] = useState<HypothesisSet | null>(null);
   const [events, setEvents] = useState<EventRecord[]>([]);
   const [liveStage, setLiveStage] = useState<Stage | null>(null);
   const [streaming, setStreaming] = useState(false);
@@ -111,11 +115,13 @@ export function useMission(runId: string): LiveMission {
 
       // Each of these can legitimately not exist yet. A 409 means "not finished", which is
       // not an error to show the user - it is the run still working.
-      const [taskResult, findingResult, gapResult] = await Promise.allSettled([
+      const [taskResult, findingResult, gapResult, hypothesisResult] = await Promise.allSettled([
         api.getTasks(runId),
         api.getFindings(runId),
         api.getGaps(runId),
+        api.getHypotheses(runId),
       ]);
+      if (hypothesisResult.status === "fulfilled") setHypotheses(hypothesisResult.value);
       if (taskResult.status === "fulfilled") setTasks(taskResult.value);
       if (findingResult.status === "fulfilled") setFindings(findingResult.value.findings);
       if (gapResult.status === "fulfilled") setGaps(gapResult.value);
@@ -229,6 +235,7 @@ export function useMission(runId: string): LiveMission {
     findings,
     gaps,
     report,
+    hypotheses,
     events,
     liveStage,
     streaming,

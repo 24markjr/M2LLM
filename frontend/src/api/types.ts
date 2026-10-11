@@ -175,6 +175,49 @@ export interface ConfidenceFactor {
   assessed: boolean;
 }
 
+/** Competing explanations, tested against the findings (Phase 47). */
+export type HypothesisStatus = "SUPPORTED" | "OPEN" | "REJECTED";
+
+export interface FindingRelation {
+  finding_id: string;
+  relation: "SUPPORTS" | "CONTRADICTS" | "NEUTRAL";
+  confidence: number;
+}
+
+export interface Lead {
+  locator: string;
+  text: string;
+}
+
+export interface NextEvidence {
+  kind: "SEARCH" | "ANALYST_REQUEST";
+  text: string;
+  query: string;
+  leads: Lead[];
+}
+
+export interface Hypothesis {
+  hypothesis_id: string;
+  statement: string;
+  supporting: FindingRelation[];
+  contradicting: FindingRelation[];
+  support: number;
+  against: number;
+  status: HypothesisStatus;
+  status_reason: string;
+  decisive_evidence: string;
+  next_evidence: NextEvidence | null;
+}
+
+export interface HypothesisSet {
+  question: string;
+  hypotheses: Hypothesis[];
+  determined: boolean;
+  summary: string;
+  skipped_reason: string;
+  llm_calls: number;
+}
+
 /** A finding's evidence chain (Phase 46): claim to conclusion. */
 export interface ChainEvidence {
   locator: string;
@@ -354,6 +397,8 @@ export interface Recording {
     findings?: { run_id: string; findings: Finding[] };
     gaps?: GapRecord[];
     report?: FinalReport;
+    /** Competing explanations (Phase 47); absent in recordings made before it. */
+    hypotheses?: HypothesisSet;
     /** The run's knowledge graph, so replay opens the 3D explorer from the recording (absent before this fix). */
     knowledge?: { snapshot: KnowledgeSnapshot; timeline: TimelineEvent[]; graph: KnowledgeGraphView };
   };

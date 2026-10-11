@@ -1,0 +1,25 @@
+# Phase 47: a question the evidence cannot settle. The Lyra billing server went offline at 02:14 on
+# 3 March 2026, three minutes after a configuration change and one minute after a power dip on its
+# rack. Either could be the cause; the record that would decide it (the UPS log for rack B) is not
+# attached, and the change was never rolled back, so the restart that fixed it fits both.
+#
+# The correct answer is "undetermined": at least two competing explanations left open, each with
+# what would decide it. Picking one is a premature conclusion (`premature_conclusion_rate`).
+id: lyra_outage_undetermined
+suites: [core, all]
+objective: >
+  Why did the Lyra billing server go offline on 3 March 2026?
+documents:
+  - lyra_incident_log.txt
+  - lyra_change_record.txt
+  - lyra_facilities_note.txt
+
+expected_operations:
+  - extract_timeline
+  - assess_impact
+  - generate_report
+
+min_tasks: 2
+minimal_tasks: 3
+
+expect_open_hypotheses: 2

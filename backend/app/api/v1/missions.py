@@ -41,6 +41,7 @@ from app.llm import get_provider
 from app.orchestration.labels import step_label
 from app.orchestration.mission import MissionStatus
 from app.schemas.case import Case, CaseStatus
+from app.schemas.hypothesis import HypothesisSet
 from app.schemas.objective import AttachedDocument, DocumentKind, Objective, ObjectiveScope
 from app.schemas.result import FinalReport
 from app.tools.formats import prepare
@@ -197,6 +198,17 @@ async def get_findings(run_id: str) -> FindingsResponse:
     return FindingsResponse(
         run_id=run_id, findings=findings, why={f.finding_id: why(f) for f in findings}
     )
+
+
+@router.get("/{run_id}/hypotheses", response_model=HypothesisSet)
+async def get_hypotheses(run_id: str) -> HypothesisSet:
+    """The competing explanations, ranked by computed support, with what would decide each and
+    where to look next (Phase 47). Empty with a reason when the objective asked for none."""
+    record = _require(run_id)
+    result = record.result
+    if result is None or result.hypotheses is None:
+        return HypothesisSet(skipped_reason="the run has not reached this step")
+    return result.hypotheses
 
 
 @router.get("/{run_id}/findings/{finding_id}/chain", response_model=FindingChain)
@@ -428,8 +440,13 @@ def snapshot_payloads(record: MissionRecord) -> dict[str, object]:
         ).model_dump(mode="json")
 
     payload["findings"] = FindingsResponse(
-        run_id=record.run_id, findings=result.findings
+        run_id=record.run_id,
+        findings=result.findings,
+        why={f.finding_id: why(f) for f in result.findings},
     ).model_dump(mode="json")
+
+    if result.hypotheses is not None:
+        payload["hypotheses"] = result.hypotheses.model_dump(mode="json")
 
     payload["gaps"] = [
         GapRecord(

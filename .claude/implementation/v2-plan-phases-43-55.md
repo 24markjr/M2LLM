@@ -1,6 +1,6 @@
 # JARVIS v2 — implementation plan, Phases 43–55
 
-**Status:** Phases 43-46 done (2026-10-07 to 2026-10-11); Phases 47-55 in progress.
+**Status:** Phases 43-47 done (2026-10-07 to 2026-10-11); Phases 48-55 in progress.
 
 **Why this plan exists.** A product review of the demo (2026-10-06) judged JARVIS a strong
 investigation engine but not yet an investigation *platform*: no cases, no evidence custody, no
@@ -130,13 +130,21 @@ rejected findings, and the final-pass raise of verified multi-document findings 
 by re-scoring the recorded findings offline. Applied after the replanning loop, so the baseline is
 unchanged. Details: `architecture/confidence.md`.
 
-### Phase 47 — Hypotheses, knowledge gaps, next best evidence (L)
+### Phase 47 — Hypotheses, knowledge gaps, next best evidence (L) — **DONE** 2026-10-11
 
 - Two to four competing explanations proposed by the model, tested for and against, ranked by
   computed support; open hypotheses can add tasks through the replanning loop (existing ceilings).
 - Gaps in plain language; next best evidence as a search task or a request to the analyst.
 - Scenarios whose answer is "undetermined": at least two hypotheses must stay open; metric
   `premature_conclusion_rate`. Latency budget: at most two model calls more per run.
+
+**As built (Phase 47):** as planned, with one change. Open hypotheses do not add tasks to the
+replanning loop: their next best evidence is a deterministic search of the attached documents (leads,
+not findings) or an analyst request, and the console opens a new investigation of the leads in the
+same case. Re-entering the loop would let an explanation's own search produce the findings that
+then support it. Runs only for explanation questions, so other questions cost nothing. One
+undetermined scenario (`lyra_outage_undetermined`), measured once: four open, none concluded.
+Details: `architecture/hypotheses.md`.
 
 ### Phase 48 — Challenge JARVIS (M)
 

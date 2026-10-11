@@ -108,6 +108,24 @@ reasoning:
     keep_unresolved_citations: true
 
 # --- Verification --------------------------------------------------------------
+# --- Hypotheses (Phase 47) ----------------------------------------------------------
+# Competing explanations, proposed by the model and tested against the verified findings. Run only
+# when the objective asks for an explanation (why, cause, what happened...), so other questions
+# cost nothing more. Two model calls at most: one proposes, one tests.
+hypotheses:
+  enabled: true
+  min: 2
+  max: 4
+  # A hypothesis is SUPPORTED only with this much net support (sum of the confidence of verified
+  # findings for it, minus against it) AND this margin over the next best. Otherwise it stays OPEN:
+  # an undecided question left open is the correct answer, not a failure to conclude.
+  supported_min: 0.5
+  supported_margin: 0.3
+  # REJECTED when verified findings against it outweigh those for it by at least this much.
+  rejected_min: 0.5
+  # Lines returned per open hypothesis by the next-evidence search.
+  max_leads: 3
+
 verification:
   # The baseline verifier sees only the claim and its evidence — never the
   # reasoning trail that produced it. Independence is the point.

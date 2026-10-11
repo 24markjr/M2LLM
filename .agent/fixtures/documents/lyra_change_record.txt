@@ -1,0 +1,6 @@
+CHANGE RECORD CHG-118
+System: Lyra billing server
+
+Change CHG-118 updated the billing server's network settings.
+Deployed on 3 March 2026 at 02:10 by the platform team.
+The change was not rolled back; the server was restarted at 03:05 with the new settings in place.

@@ -157,7 +157,7 @@ def test_every_scenario_names_real_documents_and_known_operations() -> None:
     fixtures = get_settings().agent_dir / "fixtures"
     vocabulary = {o.value for o in Operation}
     paths = sorted(datasets_dir().glob("*.yaml"))
-    assert len(paths) == 16  # Phase 45 added the two Vega scenarios
+    assert len(paths) == 17  # two Vega scenarios (45), one Lyra (47)
     for path in paths:
         raw = yaml.safe_load(path.read_text(encoding="utf-8"))
         assert raw["id"] == path.stem

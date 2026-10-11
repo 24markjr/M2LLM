@@ -89,6 +89,9 @@ class EventType(StrEnum):
     REPLAN_STARTED = "REPLAN_STARTED"
     REPLAN_COMPLETED = "REPLAN_COMPLETED"
 
+    # Competing explanations (Phase 47): proposed, tested against the findings, ranked by support.
+    HYPOTHESES_EVALUATED = "HYPOTHESES_EVALUATED"
+
     # Output
     SYNTHESIS_STARTED = "SYNTHESIS_STARTED"
     SYNTHESIS_COMPLETED = "SYNTHESIS_COMPLETED"

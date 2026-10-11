@@ -5,6 +5,29 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-11 - Phase 47: competing explanations, gaps and next best evidence
+
+### Added
+
+- **Competing explanations** for questions that ask why (`hypotheses/engine.py`): the model proposes
+  two to four, and says which verified findings support or contradict each (two calls at most).
+  Support is computed from those findings' confidence; an explanation is SUPPORTED only with a clear
+  margin, REJECTED when contradicted, otherwise OPEN
+- **Next best evidence** for each open explanation: lines in the attached documents to read next
+  (leads, with "investigate these lines" opening a prefilled investigation in the same case), or a
+  request for what a person must provide
+- `GET /api/v1/missions/{id}/hypotheses`, the `HYPOTHESES_EVALUATED` event, the console panel, the
+  replay snapshot; prompts `hypotheses.md` and `hypothesis_test.md` (v1), model role `hypotheses`
+- Scenario `lyra_outage_undetermined` (17 in all) and `premature_conclusion_rate`; closing an
+  undetermined question fails the build
+
+### Verified
+
+- 22 new backend tests, 4 frontend; 1215 backend tests, 65 frontend, tsc, build
+- One live run of the new scenario: four explanations open, none concluded
+
+---
+
 ## 2026-10-11 - Phase 46: confidence decomposition, "why?" and the evidence chain
 
 ### Added

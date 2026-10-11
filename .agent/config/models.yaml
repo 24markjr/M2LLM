@@ -57,6 +57,12 @@ roles:
     <<: *default
     max_tokens: 400
 
+  # Proposes competing explanations and tests findings against them (Phase 47). It never ranks
+  # them: support is computed from the verified findings' confidence.
+  hypotheses:
+    <<: *default
+    max_tokens: 800
+
   # Independent check of a claim against its evidence. Deliberately sees no
   # reasoning trail — see agent.yaml:verification.independent_context.
   verification:

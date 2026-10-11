@@ -35,6 +35,7 @@ from app.integrations.verification import build_verification_provider
 from app.intelligence.confidence import rescore
 from app.intelligence.execution.engine import ExecutionEngine
 from app.intelligence.graph.task_graph import TaskGraph
+from app.intelligence.hypotheses.engine import HypothesisEngine
 from app.intelligence.intent.engine import IntentEngine
 from app.intelligence.knowledge.extraction import KnowledgeExtractor
 from app.intelligence.planner.engine import PlanInvalidError, Planner
@@ -53,6 +54,7 @@ from app.schemas.event import EventType
 from app.schemas.evidence import EvidenceGap
 from app.schemas.execution import Observation, TerminationReason
 from app.schemas.finding import Finding
+from app.schemas.hypothesis import HypothesisSet
 from app.schemas.intent import Intent
 from app.schemas.knowledge import KnowledgeSnapshot
 from app.schemas.objective import Objective
@@ -136,6 +138,8 @@ class MissionResult(JarvisModel):
     # The text at each cited locator, as verification read it (Phase 46): what the evidence chain
     # shows for each citation.
     evidence_text: dict[str, str] = Field(default_factory=dict)
+    # Competing explanations tested against the findings (Phase 47); None before that step.
+    hypotheses: HypothesisSet | None = None
 
     # Why the run did not complete. A code the client can branch on, plus a message a
     # person can read - never a raw exception string.
@@ -280,6 +284,28 @@ async def run_mission(
             for ref in finding.evidence
             if ref.is_resolved
         }
+
+        # Competing explanations, when the objective asks for one (Phase 47): two model calls at
+        # most, after the findings are final, so they can never change a finding.
+        result.hypotheses = await HypothesisEngine(provider).run(
+            objective.text,
+            result.findings,
+            result.gaps,
+            documents,
+            page_starts,
+            emit=emitter,
+        )
+        if not result.hypotheses.skipped_reason:
+            await _emit(
+                emitter,
+                EventType.HYPOTHESES_EVALUATED,
+                {
+                    "hypotheses": len(result.hypotheses.hypotheses),
+                    "open": len(result.hypotheses.open),
+                    "determined": result.hypotheses.determined,
+                    "summary": result.hypotheses.summary,
+                },
+            )
 
         # Carry the *executed* graph, not the planned one. The replanning loop inserts tasks into
         # the graph while it runs, and those tasks are not in the plan the planner produced - so a

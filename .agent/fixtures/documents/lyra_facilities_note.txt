@@ -1,0 +1,6 @@
+FACILITIES NOTE - DATA HALL 2
+Date: 3 March 2026
+
+A brief power dip was recorded on rack B at 02:13.
+The UPS log for rack B is held by the vendor and is not attached.
+No other rack reported a fault.

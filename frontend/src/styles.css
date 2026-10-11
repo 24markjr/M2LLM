@@ -1611,3 +1611,17 @@ ul.conclusion {
   border-left: 2px solid var(--line-bright);
   white-space: pre-wrap;
 }
+
+/* --- Competing explanations (Phase 47) --------------------------------------------------------- */
+.badge.hyp.supported {
+  color: var(--ok);
+  border-color: var(--ok);
+}
+.badge.hyp.open {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+.badge.hyp.rejected {
+  color: var(--bad);
+  border-color: var(--bad);
+}

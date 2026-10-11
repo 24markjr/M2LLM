@@ -6,6 +6,26 @@ and what is still broken.
 
 ---
 
+# 2026-10-11 - Phase 47: competing explanations, gaps, next best evidence
+
+**Scoped to explanation questions.** Every existing scenario asks for a comparison or a check; adding
+two model calls to each would have changed the baseline's latency and explained nothing. A narrow
+regex (why, cause, what happened...) decides, and its tests list both kinds.
+
+**The model proposes and judges relations; support is arithmetic.** That keeps invariant 9: no
+probability is asserted, and a hypothesis supported by an unverified finding gains nothing.
+
+**Leads are not findings and do not re-enter the loop** - a deliberate departure from the plan,
+recorded there. A search chosen by an explanation, feeding findings that then support that same
+explanation, is the circular confirmation the step exists to avoid; a separate investigation keeps
+the evidence independent.
+
+**Measured once** on the new Lyra scenario: four explanations, all open, three with leads (one of them
+the line saying the deciding UPS log is not attached), one analyst request. A Windows-only snag: a
+component `Hypotheses.tsx` beside `hypotheses.ts` differs only in case; renamed `HypothesesPanel.tsx`.
+
+---
+
 # 2026-10-11 - Phase 46: confidence decomposition, "why?" and the evidence chain
 
 **Measured before designing.** The database held 14 findings and the recordings 26; both showed the

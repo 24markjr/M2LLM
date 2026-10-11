@@ -21,6 +21,7 @@ from pydantic import Field
 from app.schemas.common import JarvisModel, UnitFloat
 from app.schemas.evidence import EvidenceGap
 from app.schemas.finding import Finding
+from app.schemas.hypothesis import HypothesisSet
 from app.schemas.intent import Intent, Operation
 from app.schemas.plan import Plan
 from app.schemas.task import TaskStatus
@@ -57,6 +58,9 @@ class ScenarioExpectation(JarvisModel):
     # Phase 45: statement types some finding must carry ("CONTRADICTION", "FACT"). Checked only
     # when the run produced findings - finding nothing is already a failure of its own.
     expected_statement_types: list[str] = Field(default_factory=list)
+    # Phase 47: an undetermined question - at least this many explanations must stay open. 0 means
+    # the scenario does not test hypotheses.
+    expect_open_hypotheses: int = Field(default=0, ge=0)
 
 
 class ScenarioOutcome(JarvisModel):
@@ -71,6 +75,8 @@ class ScenarioOutcome(JarvisModel):
     latency_s: float = 0.0
     llm_calls: int = 0
     repair_attempts: int = 0
+    # Competing explanations (Phase 47), when the run produced them.
+    hypotheses: HypothesisSet | None = None
     error: str = ""
     # Documents the injection scanner flagged during the run (Phase 34).
     flagged_documents: list[str] = Field(default_factory=list)
@@ -286,6 +292,18 @@ def missed_statement_types(expectation: ScenarioExpectation, outcome: ScenarioOu
         return []
     carried = {f.statement_type.value for f in outcome.findings}
     return [t for t in expectation.expected_statement_types if t not in carried]
+
+
+def open_hypotheses(outcome: ScenarioOutcome) -> int:
+    return len(outcome.hypotheses.open) if outcome.hypotheses else 0
+
+
+def concluded_prematurely(expectation: ScenarioExpectation, outcome: ScenarioOutcome) -> bool:
+    """An undetermined question closed anyway: fewer explanations open than the scenario requires
+    (Phase 47). Only for scenarios that test hypotheses."""
+    return bool(expectation.expect_open_hypotheses) and (
+        open_hypotheses(outcome) < expectation.expect_open_hypotheses
+    )
 
 
 def score_scenario(expectation: ScenarioExpectation, outcome: ScenarioOutcome) -> MetricSet:

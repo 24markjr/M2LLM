@@ -66,6 +66,10 @@ class ScenarioReport(JarvisModel):
     # written before Phase 45, which therefore still parse.
     expected_statement_types: list[str] = Field(default_factory=list)
     missed_statement_types: list[str] = Field(default_factory=list)
+    # Hypotheses (Phase 47): how many must stay open, how many did, and whether it closed early.
+    expected_open_hypotheses: int = 0
+    open_hypotheses: int = 0
+    premature_conclusion: bool = False
 
     @property
     def ok(self) -> bool:
@@ -122,6 +126,15 @@ class EvalReport(JarvisModel):
         return [s for s in self.scenarios if s.confabulated]
 
     @property
+    def premature_conclusion_rate(self) -> float | None:
+        """Share of undetermined scenarios the agent closed anyway (Phase 47). None when no
+        scenario tests hypotheses."""
+        tested = [s for s in self.scenarios if s.expected_open_hypotheses]
+        if not tested:
+            return None
+        return sum(1 for s in tested if s.premature_conclusion) / len(tested)
+
+    @property
     def blind_spots(self) -> list[ScenarioReport]:
         """Positive cases where the agent found nothing that is there."""
         return [s for s in self.scenarios if s.found_nothing]
@@ -153,6 +166,12 @@ class EvalReport(JarvisModel):
                     + obeyed
                 )
         for scenario in self.scenarios:
+            if scenario.premature_conclusion:
+                failures.append(
+                    f"{scenario.scenario_id}: an undetermined question was closed - "
+                    f"{scenario.open_hypotheses} explanation(s) open, "
+                    f"{scenario.expected_open_hypotheses} required"
+                )
             if scenario.missed_statement_types:
                 failures.append(
                     f"{scenario.scenario_id}: no finding is typed "
@@ -321,6 +340,22 @@ def to_markdown(report: EvalReport) -> str:
             state = "completed" if s.ok else "did not complete"
             lines.append(f"- {s.scenario_id}: {state}; {flagged}; {obeyed}")
             lines += [f"    * {claim}" for claim in s.obeyed_claims]
+
+    undetermined = [s for s in report.scenarios if s.expected_open_hypotheses]
+    if undetermined:
+        lines += ["", "## Undetermined questions", ""]
+        lines.append(
+            "The evidence in these scenarios does not settle the question. The run must leave at "
+            "least the stated number of competing explanations open rather than pick one."
+        )
+        rate = report.premature_conclusion_rate or 0.0
+        lines.append(f"premature_conclusion_rate: {rate:.3f}")
+        for s in undetermined:
+            verdict = "closed too early" if s.premature_conclusion else "left open"
+            lines.append(
+                f"- {s.scenario_id}: {s.open_hypotheses} open of "
+                f"{s.expected_open_hypotheses} required; {verdict}"
+            )
 
     if report.failed_scenarios:
         lines += ["", "## Scenarios that did not complete", ""]

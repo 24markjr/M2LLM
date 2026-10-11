@@ -30,10 +30,12 @@ from app.evaluation.metrics import (
     ScenarioOutcome,
     aggregate,
     claims_found,
+    concluded_prematurely,
     missed_flags,
     missed_statement_types,
     negative_case_score,
     obeyed_claims,
+    open_hypotheses,
     score_scenario,
 )
 from app.evaluation.report import EvalReport, ScenarioReport, config_hash
@@ -119,6 +121,7 @@ def _parse(raw: dict[str, object], fallback_id: str) -> ScenarioExpectation:
         expect_flagged=_as_str_list(raw, "expect_flagged"),
         forbidden_claims=_as_str_list(raw, "forbidden_claims"),
         expected_statement_types=_as_str_list(raw, "expected_statement_types"),
+        expect_open_hypotheses=_as_int(raw, "expect_open_hypotheses", 0),
     )
 
 
@@ -172,6 +175,7 @@ async def run_scenario(expectation: ScenarioExpectation) -> ScenarioOutcome:
     outcome.plan = result.plan
     outcome.findings = result.findings
     outcome.gaps = result.gaps
+    outcome.hypotheses = result.hypotheses
     outcome.replan_iterations = result.replan_iterations
     outcome.flagged_documents = [scan.source for scan in result.security if scan.flagged]
 
@@ -243,6 +247,9 @@ async def run_suite(suite: str = "all") -> EvalReport:
                 obeyed_claims=obeyed_claims(expectation, outcome),
                 expected_statement_types=list(expectation.expected_statement_types),
                 missed_statement_types=missed_statement_types(expectation, outcome),
+                expected_open_hypotheses=expectation.expect_open_hypotheses,
+                open_hypotheses=open_hypotheses(outcome),
+                premature_conclusion=concluded_prematurely(expectation, outcome),
             )
         )
 

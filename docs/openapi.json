@@ -2190,6 +2190,31 @@
         "title": "FindingClassification",
         "type": "string"
       },
+      "FindingRelation": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "finding_id": {
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "relation": {
+            "$ref": "#/components/schemas/Relation"
+          }
+        },
+        "required": [
+          "finding_id",
+          "relation"
+        ],
+        "title": "FindingRelation",
+        "type": "object"
+      },
       "FindingTrail": {
         "additionalProperties": false,
         "description": "The subgraph a finding rests on: what lights up when a finding is clicked (A9).",
@@ -2564,6 +2589,123 @@
         ],
         "title": "HealthResponse",
         "type": "object"
+      },
+      "Hypothesis": {
+        "additionalProperties": false,
+        "properties": {
+          "against": {
+            "default": 0.0,
+            "title": "Against",
+            "type": "number"
+          },
+          "contradicting": {
+            "items": {
+              "$ref": "#/components/schemas/FindingRelation"
+            },
+            "title": "Contradicting",
+            "type": "array"
+          },
+          "decisive_evidence": {
+            "default": "",
+            "title": "Decisive Evidence",
+            "type": "string"
+          },
+          "hypothesis_id": {
+            "pattern": "^H-\\d+$",
+            "title": "Hypothesis Id",
+            "type": "string"
+          },
+          "next_evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NextEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "statement": {
+            "title": "Statement",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/HypothesisStatus",
+            "default": "OPEN"
+          },
+          "status_reason": {
+            "default": "",
+            "title": "Status Reason",
+            "type": "string"
+          },
+          "support": {
+            "default": 0.0,
+            "title": "Support",
+            "type": "number"
+          },
+          "supporting": {
+            "items": {
+              "$ref": "#/components/schemas/FindingRelation"
+            },
+            "title": "Supporting",
+            "type": "array"
+          }
+        },
+        "required": [
+          "hypothesis_id",
+          "statement"
+        ],
+        "title": "Hypothesis",
+        "type": "object"
+      },
+      "HypothesisSet": {
+        "additionalProperties": false,
+        "description": "The run's competing explanations, ranked by computed support, or why there are none.",
+        "properties": {
+          "determined": {
+            "default": false,
+            "title": "Determined",
+            "type": "boolean"
+          },
+          "hypotheses": {
+            "items": {
+              "$ref": "#/components/schemas/Hypothesis"
+            },
+            "title": "Hypotheses",
+            "type": "array"
+          },
+          "llm_calls": {
+            "default": 0,
+            "title": "Llm Calls",
+            "type": "integer"
+          },
+          "question": {
+            "default": "",
+            "title": "Question",
+            "type": "string"
+          },
+          "skipped_reason": {
+            "default": "",
+            "title": "Skipped Reason",
+            "type": "string"
+          },
+          "summary": {
+            "default": "",
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "title": "HypothesisSet",
+        "type": "object"
+      },
+      "HypothesisStatus": {
+        "enum": [
+          "SUPPORTED",
+          "OPEN",
+          "REJECTED"
+        ],
+        "title": "HypothesisStatus",
+        "type": "string"
       },
       "IngestRequest": {
         "additionalProperties": false,
@@ -3127,6 +3269,26 @@
         "title": "KnownEntity",
         "type": "object"
       },
+      "Lead": {
+        "additionalProperties": false,
+        "description": "A line the next-evidence search found. A lead, not a finding: nothing has checked it.",
+        "properties": {
+          "locator": {
+            "title": "Locator",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "locator",
+          "text"
+        ],
+        "title": "Lead",
+        "type": "object"
+      },
       "Limitation": {
         "additionalProperties": false,
         "description": "Something that constrains how much the report can be trusted.\n\nGenerated from run facts \u2014 skipped tasks, unresolved gaps, degraded verification,\nexhausted budget \u2014 not from the model's sense of modesty.",
@@ -3564,6 +3726,44 @@
         "title": "NetworkNode",
         "type": "object"
       },
+      "NextEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/NextEvidenceKind"
+          },
+          "leads": {
+            "items": {
+              "$ref": "#/components/schemas/Lead"
+            },
+            "title": "Leads",
+            "type": "array"
+          },
+          "query": {
+            "default": "",
+            "title": "Query",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "text"
+        ],
+        "title": "NextEvidence",
+        "type": "object"
+      },
+      "NextEvidenceKind": {
+        "enum": [
+          "SEARCH",
+          "ANALYST_REQUEST"
+        ],
+        "title": "NextEvidenceKind",
+        "type": "string"
+      },
       "NodeDetail": {
         "additionalProperties": false,
         "description": "Everything the hover pop-up and the side panel show for one node.",
@@ -3736,6 +3936,15 @@
         ],
         "title": "RecordingSummary",
         "type": "object"
+      },
+      "Relation": {
+        "enum": [
+          "SUPPORTS",
+          "CONTRADICTS",
+          "NEUTRAL"
+        ],
+        "title": "Relation",
+        "type": "string"
       },
       "ReportSection": {
         "additionalProperties": false,
@@ -6486,6 +6695,49 @@
           }
         },
         "summary": "Get Gaps",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/hypotheses": {
+      "get": {
+        "description": "The competing explanations, ranked by computed support, with what would decide each and\nwhere to look next (Phase 47). Empty with a reason when the objective asked for none.",
+        "operationId": "get_hypotheses_api_v1_missions__run_id__hypotheses_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HypothesisSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Hypotheses",
         "tags": [
           "missions"
         ]
