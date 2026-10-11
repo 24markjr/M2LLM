@@ -175,6 +175,53 @@ export interface ConfidenceFactor {
   assessed: boolean;
 }
 
+/** Human review of findings and the audit log (Phase 50). */
+export type ReviewState = "PENDING" | "APPROVED" | "REJECTED" | "MODIFIED";
+
+export interface ReviewDecision {
+  decision_id: number;
+  run_id: string;
+  finding_id: string;
+  state: ReviewState;
+  reviewer: string;
+  reason: string;
+  modified_claim: string;
+  at: string;
+}
+
+export interface FindingReview {
+  run_id: string;
+  finding_id: string;
+  claim: string;
+  statement_type: string;
+  required: boolean;
+  required_because: string[];
+  state: ReviewState;
+  history: ReviewDecision[];
+}
+
+export interface ReviewList {
+  run_id: string;
+  store: string;
+  reviews: FindingReview[];
+}
+
+export interface ReviewResponse {
+  review: FindingReview;
+  follow_up_run_id: string;
+  facts_remembered: number;
+}
+
+export interface AuditEntry {
+  entry_id: number;
+  at: string;
+  actor: string;
+  action: string;
+  target: string;
+  status_code: number | null;
+  details: Record<string, unknown>;
+}
+
 /** The plan as a person reads it (Phase 49). */
 export interface PlanStep {
   task_id: string;

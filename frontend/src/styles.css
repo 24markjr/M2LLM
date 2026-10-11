@@ -1642,3 +1642,21 @@ ul.conclusion {
   color: var(--bad);
   border-color: var(--bad);
 }
+
+/* --- Human review (Phase 50) ------------------------------------------------------------------- */
+.review {
+  margin-top: 8px;
+}
+.badge.review.pending {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+.badge.review.approved,
+.badge.review.modified {
+  color: var(--ok);
+  border-color: var(--ok);
+}
+.badge.review.rejected {
+  color: var(--bad);
+  border-color: var(--bad);
+}

@@ -452,7 +452,7 @@ export function MissionViewPanels({ view, runId }: { view: MissionView; runId?: 
               <TaskGraph graph={view.tasks} />
               <PlanTreePanel tree={view.plan} />
               <PlanChanges tree={view.plan} />
-              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} runId={runId} />
+              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} runId={runId} reviews={view.reviews} />
               <Hypotheses set={view.hypotheses} caseId={mission.case_id || undefined} />
               <Gaps gaps={view.gaps} />
               <Report report={view.report} />
@@ -464,7 +464,7 @@ export function MissionViewPanels({ view, runId }: { view: MissionView; runId?: 
               <Steps nodes={view.tasks?.nodes ?? []} />
               <PlanChanges tree={view.plan} />
               <Conclusion lines={conclusion(view.findings, done)} />
-              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} runId={runId} />
+              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} runId={runId} reviews={view.reviews} />
               <Hypotheses set={view.hypotheses} caseId={mission.case_id || undefined} />
               <Report report={view.report} />
             </>

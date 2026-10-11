@@ -5,6 +5,27 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-11 - Phase 50: human review and the audit log
+
+### Added
+
+- **Review of findings**: rules (`.agent/config/review.yaml`) say which findings need a person and
+  why - a contradiction, a claim only described, one a challenge contested, a proposed risk or
+  recommendation, any finding in a HIGH or CRITICAL case, an ATT&CK mapping. A reviewer approves,
+  rejects (with a reason, optionally starting a follow-up investigation) or modifies (with the
+  reworded claim); every decision is kept. Console: a review badge and panel on each finding
+- **Memory gated by review**: a finding awaiting review contributes no fact; approval releases its facts
+- **The audit log**: every write the API receives (refused ones too) and the system's own actions,
+  append-only; `GET /api/v1/audit`, the console's Audit page
+- Migration `a50a0d17e001` (`review_decisions`, `audit_log`, append-only triggers); ADR-016
+
+### Verified
+
+- 17 new backend tests (including every write route audited, and the Postgres triggers), 3 frontend;
+  1253 backend tests, 71 frontend, tsc, build
+
+---
+
 ## 2026-10-11 - Phase 49: visible adaptive planning
 
 ### Added

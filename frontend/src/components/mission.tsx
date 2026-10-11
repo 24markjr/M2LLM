@@ -8,6 +8,8 @@
  */
 
 import { ChallengePanel } from "./ChallengePanel";
+import { ReviewPanel } from "./ReviewPanel";
+import { reviewBadge, reviewSummary } from "./review";
 import { ConfidenceWhy } from "./ConfidenceWhy";
 import { evidenceForCitation, evidenceLink } from "./evidence";
 import { authorityText, statementHelp, statementLabel, statementType } from "./statements";
@@ -18,6 +20,7 @@ import type {
   EventRecord,
   FinalReport,
   Finding,
+  FindingReview,
   GapRecord,
   NarrativeCheck,
   Stage,
@@ -139,10 +142,13 @@ export function FindingCard({
   evidence,
   authority,
   runId,
+  review,
 }: {
   finding: Finding;
   /** The live run, for its evidence chain (Phase 46); absent in a replay. */
   runId?: string | undefined;
+  /** Its review, when the run has one (Phase 50). */
+  review?: FindingReview | undefined;
   /** Document name -> the evidence item the mission read (Phase 43), for citation links. */
   evidence?: Record<string, string> | undefined;
   /** Document name -> its source authority tier (Phase 45), shown on both sides of a contradiction. */
@@ -167,6 +173,11 @@ export function FindingCard({
           {statementLabel(finding)}
         </span>
         <span className={`badge v-${status.toLowerCase()}`}>{status}</span>
+        {reviewBadge(review) ? (
+          <span className={`badge review ${review?.state.toLowerCase() ?? ""}`} title={review ? reviewSummary(review) : ""}>
+            {reviewBadge(review)}
+          </span>
+        ) : null}
         {finding.verification?.degraded ? (
           <span className="badge degraded" title={finding.verification.degraded_reason}>
             DEGRADED CHECK
@@ -233,6 +244,7 @@ export function FindingCard({
 
           <ConfidenceWhy finding={finding} runId={runId} />
           <ChallengePanel runId={runId} findingId={finding.finding_id} />
+          {review?.required || review?.history.length ? <ReviewPanel runId={runId} review={review} /> : null}
         </div>
       ) : null}
 
@@ -288,9 +300,11 @@ export function Findings({
   evidence,
   authority,
   runId,
+  reviews = [],
 }: {
   findings: Finding[];
   runId?: string | undefined;
+  reviews?: FindingReview[] | undefined;
   gaps?: GapRecord[];
   tasks?: TaskGraphResponse | null;
   evidence?: Record<string, string> | undefined;
@@ -334,6 +348,7 @@ export function Findings({
               evidence={evidence}
               authority={authority}
               runId={runId}
+              review={reviews.find((r) => r.finding_id === f.finding_id)}
             />
           ))
         )}

@@ -28,3 +28,4 @@ reader looking for something that was never written.
 | ADR-013 | Stored retrieval: pgvector, workspaces, and defaults set by measurement | Accepted |
 | ADR-014 | Evidence is content-addressed, and its custody is append-only in the database | Accepted |
 | ADR-015 | Statement types are ruled from evidence; source authority informs and never decides | Accepted |
+| ADR-016 | Review decisions and the audit log are append-only; the audit is structural | Accepted |

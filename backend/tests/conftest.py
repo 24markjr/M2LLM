@@ -28,6 +28,8 @@ from app.evidence import store as evidence_store
 from app.evidence.locker import MemoryEvidenceLocker
 from app.integrations import context as context_integration
 from app.integrations import graph_store
+from app.review import service as review_service
+from app.review.store import MemoryReviewStore
 
 
 @pytest.fixture(autouse=True)
@@ -65,6 +67,9 @@ def _evidence_stays_in_the_test(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     # Cases too (Phase 44): a fresh memory store per test, never a developer's database.
     monkeypatch.setattr(case_service, "_memory_store", MemoryCaseStore())
     monkeypatch.setattr(case_service, "_database", False)
+    # Reviews and the audit log too (Phase 50): append-only in Postgres, so never a real database.
+    monkeypatch.setattr(review_service, "_memory_store", MemoryReviewStore())
+    monkeypatch.setattr(review_service, "_database", False)
     yield
 
 

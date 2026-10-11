@@ -33,6 +33,7 @@ import type { RetrieveResponse, WorkspaceView } from "./types";
 import type { AuthorityTier, EvidenceDetail, EvidenceItem, EvidenceList, IntegrityCheck } from "./types";
 import type { Case, CaseDetail, CaseList, CaseSeverity, CaseStatus } from "./types";
 import type { ChallengeResult, HypothesisSet, PlanTree } from "./types";
+import type { AuditEntry, ReviewList, ReviewResponse, ReviewState } from "./types";
 
 const BASE = "/api/v1";
 
@@ -120,6 +121,23 @@ export const api = {
     }),
 
   getChallenges: (runId: string) => request<ChallengeResult[]>(`${BASE}/missions/${runId}/challenges`),
+
+  /** Which findings need review, why, their state and every decision (Phase 50). */
+  getReviews: (runId: string) => request<ReviewList>(`${BASE}/missions/${runId}/reviews`),
+
+  reviewFinding: (
+    runId: string,
+    findingId: string,
+    body: { state: ReviewState; reason?: string; modified_claim?: string; replan?: boolean },
+  ) =>
+    request<ReviewResponse>(`${BASE}/missions/${runId}/findings/${findingId}/review`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  /** The audit log, newest first (Phase 50). */
+  getAudit: (target = "", limit = 200) =>
+    request<AuditEntry[]>(`${BASE}/audit?limit=${limit}${target ? `&target=${encodeURIComponent(target)}` : ""}`),
 
   /** The plan tree: workstreams, steps with their why, and every change (Phase 49). */
   getPlan: (runId: string) => request<PlanTree>(`${BASE}/missions/${runId}/plan`),

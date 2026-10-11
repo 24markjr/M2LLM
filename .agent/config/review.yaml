@@ -1,0 +1,24 @@
+# Which findings need a person's review before they count (Phase 50).
+#
+# A finding that needs review is PENDING until a reviewer approves, rejects or modifies it. Until it
+# is approved it does not become a fact in memory, and the report (Phase 51) lists it as awaiting
+# review rather than among the established findings. A finding no rule names needs no review: a
+# verified finding then counts as it always has.
+#
+# Consumed by: app/review/service.py (`requirements`).
+
+version: 1
+
+rules:
+  # Two evidenced values that cannot both be true: a person decides what that means.
+  contradiction: true
+  # The verifier found the claim only described in the documents, not established by them.
+  described_only: true
+  # A challenge contested or overturned it (Phase 48).
+  challenged: true
+  # The model proposed it as a risk or a recommendation (Phase 45): a judgement, not a fact.
+  risk_or_recommendation: true
+  # Every finding in a case of these severities.
+  case_severity: [HIGH, CRITICAL]
+  # A mapping to a MITRE ATT&CK technique (Phase 53) always needs an analyst.
+  attack_mapping: true

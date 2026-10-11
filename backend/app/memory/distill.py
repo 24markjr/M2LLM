@@ -142,8 +142,15 @@ def make_fact(kind: FactKind, subject: str, predicate: str, obj: str) -> Fact:
     )
 
 
-def memory_record(result: MissionResult, started_at: datetime | None = None) -> MemoryRecord:
-    """Everything a finished run contributes to memory."""
+def memory_record(
+    result: MissionResult,
+    started_at: datetime | None = None,
+    *,
+    held: set[str] | None = None,
+) -> MemoryRecord:
+    """Everything a finished run contributes to memory. `held`: findings awaiting a person's
+    review (Phase 50) - logged as episodes like every finding, but no fact rests on them until a
+    reviewer approves them."""
     snapshot = result.knowledge or KnowledgeSnapshot()
     return MemoryRecord(
         run_id=result.run_id,
@@ -154,7 +161,11 @@ def memory_record(result: MissionResult, started_at: datetime | None = None) -> 
         ),
         episodes=episodes(result),
         entities=known_entities(result.run_id, snapshot),
-        facts=verified_facts(result.run_id, snapshot, result.findings),
+        facts=verified_facts(
+            result.run_id,
+            snapshot,
+            [f for f in result.findings if f.finding_id not in (held or set())],
+        ),
     )
 
 

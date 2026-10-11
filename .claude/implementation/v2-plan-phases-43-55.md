@@ -1,6 +1,6 @@
 # JARVIS v2 — implementation plan, Phases 43–55
 
-**Status:** Phases 43-49 done (2026-10-07 to 2026-10-11); Phases 50-55 in progress.
+**Status:** Phases 43-50 done (2026-10-07 to 2026-10-11); Phases 51-55 in progress.
 
 **Why this plan exists.** A product review of the demo (2026-10-06) judged JARVIS a strong
 investigation engine but not yet an investigation *platform*: no cases, no evidence custody, no
@@ -174,13 +174,19 @@ in the plan does not arise, because open hypotheses add no tasks (Phase 47). Det
 
 ## Track C — Professional result (P0)
 
-### Phase 50 — Human review and audit log (M)
+### Phase 50 — Human review and audit log (M) — **DONE** 2026-10-11
 
 - Review states PENDING / APPROVED / REJECTED / MODIFIED with reviewer, time and reason; rules for
   review-required (severity, unresolved contradiction, described-only, ATT&CK); a rejection can
   trigger a replan.
 - Append-only audit log of every human and system action; every write endpoint audited (tested).
 - Memory: only approved findings (or verified where no review is required) become facts.
+
+**As built (Phase 50):** as planned. "A rejection can trigger a replan" is a follow-up
+investigation (same question, documents and case, told what was rejected and why) rather than
+re-entering the finished run's loop. Every write is audited by middleware, tested route by route
+from the OpenAPI schema. The ATT&CK rule is in place and fires once Phase 53 maps techniques.
+Details: `architecture/review-and-audit.md`, ADR-016.
 
 ### Phase 51 — The investigation report (M–L)
 

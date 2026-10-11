@@ -16,6 +16,7 @@ from app.api.v1 import (
     memory,
     missions,
     replay,
+    review,
 )
 
 router = APIRouter(prefix="/api/v1")
@@ -27,5 +28,6 @@ router.include_router(memory.router)
 router.include_router(context.router)
 router.include_router(evidence.router)
 router.include_router(cases.router)
+router.include_router(review.router)
 
 __all__ = ["router"]

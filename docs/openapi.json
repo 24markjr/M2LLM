@@ -80,6 +80,56 @@
         "title": "ArchivedInvestigation",
         "type": "object"
       },
+      "AuditEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor": {
+            "default": "system",
+            "title": "Actor",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "entry_id": {
+            "default": 0,
+            "title": "Entry Id",
+            "type": "integer"
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Code"
+          },
+          "target": {
+            "default": "",
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "AuditEntry",
+        "type": "object"
+      },
       "AuthorityTier": {
         "additionalProperties": false,
         "properties": {
@@ -2331,6 +2381,59 @@
         "title": "FindingRelation",
         "type": "object"
       },
+      "FindingReview": {
+        "additionalProperties": false,
+        "description": "A finding's review: whether it needs one and why, its state, and every decision.",
+        "properties": {
+          "claim": {
+            "title": "Claim",
+            "type": "string"
+          },
+          "finding_id": {
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewDecision"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "required": {
+            "default": false,
+            "title": "Required",
+            "type": "boolean"
+          },
+          "required_because": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Required Because",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ReviewState",
+            "default": "PENDING"
+          },
+          "statement_type": {
+            "default": "",
+            "title": "Statement Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "finding_id",
+          "claim"
+        ],
+        "title": "FindingReview",
+        "type": "object"
+      },
       "FindingTrail": {
         "additionalProperties": false,
         "description": "The subgraph a finding rests on: what lights up when a finding is clicked (A9).",
@@ -4403,6 +4506,147 @@
         "title": "RetrieveResponse",
         "type": "object"
       },
+      "ReviewDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "decision_id": {
+            "default": 0,
+            "title": "Decision Id",
+            "type": "integer"
+          },
+          "finding_id": {
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "modified_claim": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Modified Claim",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Reason",
+            "type": "string"
+          },
+          "reviewer": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Reviewer",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ReviewState"
+          }
+        },
+        "required": [
+          "run_id",
+          "finding_id",
+          "state",
+          "reviewer"
+        ],
+        "title": "ReviewDecision",
+        "type": "object"
+      },
+      "ReviewList": {
+        "additionalProperties": false,
+        "properties": {
+          "reviews": {
+            "items": {
+              "$ref": "#/components/schemas/FindingReview"
+            },
+            "title": "Reviews",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "store": {
+            "title": "Store",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "store"
+        ],
+        "title": "ReviewList",
+        "type": "object"
+      },
+      "ReviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "modified_claim": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Modified Claim",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Reason",
+            "type": "string"
+          },
+          "replan": {
+            "default": false,
+            "title": "Replan",
+            "type": "boolean"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ReviewState"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "title": "ReviewRequest",
+        "type": "object"
+      },
+      "ReviewResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "facts_remembered": {
+            "default": 0,
+            "title": "Facts Remembered",
+            "type": "integer"
+          },
+          "follow_up_run_id": {
+            "default": "",
+            "title": "Follow Up Run Id",
+            "type": "string"
+          },
+          "review": {
+            "$ref": "#/components/schemas/FindingReview"
+          }
+        },
+        "required": [
+          "review"
+        ],
+        "title": "ReviewResponse",
+        "type": "object"
+      },
+      "ReviewState": {
+        "enum": [
+          "PENDING",
+          "APPROVED",
+          "REJECTED",
+          "MODIFIED"
+        ],
+        "title": "ReviewState",
+        "type": "string"
+      },
       "SearchHit": {
         "additionalProperties": false,
         "description": "A claim ranked by the original's explainable score. Every point has a reason.",
@@ -5262,6 +5506,67 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/audit": {
+      "get": {
+        "description": "The audit log, newest first: every write the API received and the system's own actions.",
+        "operationId": "get_audit_api_v1_audit_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 2000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "target",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 200,
+              "title": "Target",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEntry"
+                  },
+                  "title": "Response Get Audit Api V1 Audit Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Audit",
+        "tags": [
+          "review"
+        ]
+      }
+    },
     "/api/v1/cases": {
       "get": {
         "operationId": "list_cases_api_v1_cases_get",
@@ -7017,6 +7322,79 @@
         ]
       }
     },
+    "/api/v1/missions/{run_id}/findings/{finding_id}/review": {
+      "post": {
+        "description": "Decide on a finding. REJECTED and MODIFIED need a reason; MODIFIED the reworded claim. Each\ndecision is a new record - a changed mind does not erase the first.",
+        "operationId": "review_finding_api_v1_missions__run_id__findings__finding_id__review_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "finding_id",
+            "required": true,
+            "schema": {
+              "title": "Finding Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Review Finding",
+        "tags": [
+          "review"
+        ]
+      }
+    },
     "/api/v1/missions/{run_id}/findings/{finding_id}/trail": {
       "get": {
         "description": "The claims, documents and entities a finding rests on (A9).",
@@ -8125,6 +8503,49 @@
         "summary": "Get Report Markdown",
         "tags": [
           "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/reviews": {
+      "get": {
+        "description": "Every finding of a run: whether it needs review and why, its state and its decisions.",
+        "operationId": "get_reviews_api_v1_missions__run_id__reviews_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Reviews",
+        "tags": [
+          "review"
         ]
       }
     },

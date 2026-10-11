@@ -549,3 +549,36 @@ class CaseEvidenceRow(Base):
     )
     added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     added_by: Mapped[str] = mapped_column(String(128), default="system")
+
+
+# --- Review and audit (Phase 50) -----------------------------------------------------------------
+
+
+class ReviewDecisionRow(Base):
+    """One reviewer's decision on one finding. Append-only by trigger (migration `a50a0d17e001`):
+    a changed mind is a new decision, and the old one stays on record."""
+
+    __tablename__ = "review_decisions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    finding_id: Mapped[str] = mapped_column(String(32), nullable=False)
+    state: Mapped[str] = mapped_column(String(16), nullable=False)
+    reviewer: Mapped[str] = mapped_column(String(128), nullable=False)
+    reason: Mapped[str] = mapped_column(Text, default="")
+    modified_claim: Mapped[str] = mapped_column(Text, default="")
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class AuditLogRow(Base):
+    """Every write the API received, and the system's own actions. Append-only by trigger."""
+
+    __tablename__ = "audit_log"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    actor: Mapped[str] = mapped_column(String(128), default="system", index=True)
+    action: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
+    target: Mapped[str] = mapped_column(String(200), default="", index=True)
+    status_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    details: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)

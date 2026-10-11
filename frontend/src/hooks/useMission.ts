@@ -20,6 +20,7 @@ import type {
   GapRecord,
   HypothesisSet,
   PlanTree,
+  FindingReview,
   MissionDetail,
   MissionSummary,
   Stage,
@@ -88,6 +89,8 @@ export interface MissionView {
   hypotheses?: HypothesisSet | null;
   /** The plan tree and its changes (Phase 49). */
   plan?: PlanTree | null;
+  /** Each finding's review (Phase 50); a live run only. */
+  reviews?: FindingReview[];
   events: EventRecord[];
   /** Derived from the stream, so the tracker moves before any request returns. */
   liveStage: Stage | null;
@@ -107,6 +110,7 @@ export function useMission(runId: string): LiveMission {
   const [report, setReport] = useState<FinalReport | null>(null);
   const [hypotheses, setHypotheses] = useState<HypothesisSet | null>(null);
   const [plan, setPlan] = useState<PlanTree | null>(null);
+  const [reviews, setReviews] = useState<FindingReview[]>([]);
   const [events, setEvents] = useState<EventRecord[]>([]);
   const [liveStage, setLiveStage] = useState<Stage | null>(null);
   const [streaming, setStreaming] = useState(false);
@@ -119,13 +123,16 @@ export function useMission(runId: string): LiveMission {
 
       // Each of these can legitimately not exist yet. A 409 means "not finished", which is
       // not an error to show the user - it is the run still working.
-      const [taskResult, findingResult, gapResult, hypothesisResult, planResult] = await Promise.allSettled([
+      const [taskResult, findingResult, gapResult, hypothesisResult, planResult, reviewResult] =
+        await Promise.allSettled([
         api.getTasks(runId),
         api.getFindings(runId),
         api.getGaps(runId),
         api.getHypotheses(runId),
         api.getPlan(runId),
+        api.getReviews(runId),
       ]);
+      if (reviewResult.status === "fulfilled") setReviews(reviewResult.value.reviews);
       if (planResult.status === "fulfilled") setPlan(planResult.value);
       if (hypothesisResult.status === "fulfilled") setHypotheses(hypothesisResult.value);
       if (taskResult.status === "fulfilled") setTasks(taskResult.value);
@@ -243,6 +250,7 @@ export function useMission(runId: string): LiveMission {
     report,
     hypotheses,
     plan,
+    reviews,
     events,
     liveStage,
     streaming,

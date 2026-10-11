@@ -12,8 +12,9 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.errors import register_error_handlers
@@ -23,7 +24,11 @@ from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.integrations.graph_store import close_graph_store
 from app.llm import get_provider
+from app.review.service import audit
 from app.schemas.common import JarvisModel
+
+# The methods that change something: each request with one is audited (Phase 50).
+WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 
 log = get_logger(__name__)
 
@@ -84,6 +89,21 @@ def create_app() -> FastAPI:
 
     register_error_handlers(app)
     app.include_router(v1_router)
+
+    @app.middleware("http")
+    async def audit_writes(request: Request, call_next: Any) -> Any:
+        """Every write the API receives goes in the audit log (Phase 50): who, what, the outcome.
+        Here rather than in each route, so a new write route cannot be added unaudited - refused
+        writes included: an attempt is part of the record."""
+        response = await call_next(request)
+        if request.method in WRITE_METHODS and request.url.path.startswith("/api/"):
+            await audit(
+                f"{request.method} {request.url.path}",
+                actor=request.headers.get("X-Jarvis-User", "console")[:128],
+                target=request.url.path.removeprefix("/api/v1/")[:200],
+                status_code=response.status_code,
+            )
+        return response
 
     @app.get("/health", response_model=HealthResponse, tags=["system"])
     async def health() -> HealthResponse:

@@ -22,6 +22,7 @@ import { DocumentsPage } from "./pages/DocumentsPage";
 import { CasePage, CasesPage } from "./pages/CasesPage";
 import { caseIdFromHash } from "./components/cases";
 import { EvidenceItemPage, EvidenceLockerPage } from "./pages/EvidencePage";
+import { AuditPage } from "./pages/AuditPage";
 import { evidenceIdFromHash } from "./components/evidence";
 import { draftFromHash } from "./components/workspaces";
 import { hashQuery } from "./components/graph3d/investigation";
@@ -42,7 +43,8 @@ type Route =
   | { name: "knowledge" }
   | { name: "memory"; entity: string }
   | { name: "replay" }
-  | { name: "evaluation" };
+  | { name: "evaluation" }
+  | { name: "audit" };
 
 function parse(full: string): Route {
   // Pages link to each other with a parameter (Phase 36): the graph opened on an entity
@@ -63,6 +65,7 @@ function parse(full: string): Route {
   if (hash === "#/documents") return { name: "documents", workspace: query.workspace ?? "default" };
   if (hash === "#/replay") return { name: "replay" };
   if (hash === "#/evaluation") return { name: "evaluation" };
+  if (hash === "#/audit") return { name: "audit" };
   // Cases are the home page (Phase 44); the flat list of every investigation is `#/missions`.
   if (caseIdFromHash(hash)) return { name: "case", caseId: caseIdFromHash(hash) };
   if (hash === "#/missions") return { name: "list" };
@@ -121,6 +124,9 @@ export default function App() {
           </a>
           <a className={route.name === "memory" ? "on" : ""} href="#/memory">
             Memory
+          </a>
+          <a className={route.name === "audit" ? "on" : ""} href="#/audit">
+            Audit
           </a>
         </nav>
         <div className="tagline">adaptive, evidence-driven investigation</div>
@@ -203,6 +209,8 @@ export default function App() {
       ) : null}
 
       {route.name === "memory" ? <MemoryPage key={route.entity} entity={route.entity} /> : null}
+
+      {route.name === "audit" ? <AuditPage /> : null}
     </div>
   );
 }

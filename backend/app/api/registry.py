@@ -33,6 +33,7 @@ from app.database.event_sink import DatabaseEventSink
 from app.intelligence.challenge import ChallengeResult
 from app.memory.service import record_run
 from app.orchestration.mission import MissionResult, MissionStatus, Stage, run_mission
+from app.review.service import audit
 from app.schemas.case import CaseInvestigation
 from app.schemas.common import RunId, new_run_id, utcnow
 from app.schemas.event import ExecutionEvent
@@ -248,9 +249,15 @@ class MissionRegistry:
             # Memory last: its episodes reference the run row just written (Phase 33). Written
             # once the run is over and never read back into one.
             if record.result is not None:
-                await _record_memory(record.result, record.started_at)
+                await _record_memory(record.result, record.started_at, await _held(record))
                 await _record_citations(record)
             await _file_outcome(record)
+            await audit(
+                "mission.finished",
+                target=record.run_id,
+                status=record.status.value,
+                findings=len(record.result.findings) if record.result else 0,
+            )
 
 
 async def _capture_knowledge(record: MissionRecord) -> None:
@@ -274,9 +281,36 @@ async def _capture_knowledge(record: MissionRecord) -> None:
         log.exception("knowledge_capture_failed", run_id=record.run_id)
 
 
-async def _record_memory(result: MissionResult, started_at: datetime | None) -> None:
+async def _held(record: MissionRecord) -> set[str]:
+    """Findings that need a person's review before they count (Phase 50). Never raises."""
+    if record.result is None:
+        return set()
     try:
-        await record_run(result, started_at=started_at)
+        from app.review.service import requirements
+
+        severity = await _case_severity(record.case_id)
+        return {
+            f.finding_id for f in record.result.findings if requirements(f, case_severity=severity)
+        }
+    except Exception:
+        log.exception("review_requirements_failed", run_id=record.run_id)
+        return {f.finding_id for f in record.result.findings}
+
+
+async def _case_severity(case_id: str) -> str:
+    if not case_id:
+        return ""
+    from app.cases.service import get_case_store
+
+    case = await (await get_case_store()).get(case_id)
+    return case.severity.value if case else ""
+
+
+async def _record_memory(
+    result: MissionResult, started_at: datetime | None, held: set[str] | None = None
+) -> None:
+    try:
+        await record_run(result, started_at=started_at, held=held)
     except Exception:  # the boundary: memory must never fail a run
         log.exception("memory_record_failed", run_id=result.run_id)
 

@@ -42,9 +42,15 @@ async def episodic_available() -> bool:
     return await persistence_enabled()
 
 
-async def record_run(result: MissionResult, *, started_at: datetime | None = None) -> MemoryRecord:
-    """Record a finished run in memory. Never raises; returns what was derived."""
-    record = memory_record(result, started_at)
+async def record_run(
+    result: MissionResult,
+    *,
+    started_at: datetime | None = None,
+    held: set[str] | None = None,
+) -> MemoryRecord:
+    """Record a finished run in memory. Never raises; returns what was derived. Findings in `held`
+    await review (Phase 50) and contribute no fact yet."""
+    record = memory_record(result, started_at, held=held)
     episodic = semantic = False
 
     if await episodic_available():
@@ -65,6 +71,7 @@ async def record_run(result: MissionResult, *, started_at: datetime | None = Non
 
     log.info(
         "memory_recorded",
+        held=len(held or ()),
         run_id=result.run_id,
         episodic=episodic,
         semantic=semantic,
@@ -74,3 +81,24 @@ async def record_run(result: MissionResult, *, started_at: datetime | None = Non
         facts=len(record.facts),
     )
     return record
+
+
+async def remember_approved(result: MissionResult, finding_ids: list[str]) -> int:
+    """The facts a reviewer's approval releases (Phase 50): what the approved findings cite,
+    recorded in semantic memory. Never raises; returns how many facts were recorded."""
+    from app.memory.distill import verified_facts
+
+    approved = [f for f in result.findings if f.finding_id in set(finding_ids)]
+    snapshot = result.knowledge
+    if not approved or snapshot is None:
+        return 0
+    facts = verified_facts(result.run_id, snapshot, approved)
+    memory = await get_semantic_memory()
+    if memory is None or not facts:
+        return 0
+    try:
+        await memory.record([], facts)
+    except Exception:  # the boundary: memory must never fail the decision that released it
+        log.exception("memory_approved_failed", run_id=result.run_id)
+        return 0
+    return len(facts)

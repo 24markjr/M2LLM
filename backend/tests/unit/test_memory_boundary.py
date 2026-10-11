@@ -58,4 +58,6 @@ def test_memory_is_reached_only_from_the_api() -> None:
     assert users == [
         "api/registry.py",
         "api/v1/memory.py",
+        # Phase 50: a reviewer's approval releases the facts an approved finding cites.
+        "api/v1/review.py",
     ]

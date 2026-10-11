@@ -6,6 +6,23 @@ and what is still broken.
 
 ---
 
+# 2026-10-11 - Phase 50: human review and the audit log
+
+**The audit is structural.** Middleware records every write under `/api/`, refused ones too, so a
+route cannot be added unaudited; the test that proves it enumerates the write routes from the OpenAPI
+schema - the first version walked `app.routes`, which in this FastAPI version nests included routers
+and found none. Reviews and the audit share the custody pattern: append-only by trigger, Postgres
+or memory, rolled-back transactions in tests.
+
+**Review gates memory, and fails closed**: when the rules cannot be evaluated at the end of a run,
+every finding is held. The memory boundary invariant (memory reached only from the API) gained the
+review routes, which are API routes.
+
+Git Bash rejected two more heredocs with unmatched-quote errors; files are now written with the editor
+or a script, never a heredoc.
+
+---
+
 # 2026-10-11 - Phase 49: visible adaptive planning
 
 Rationales could have been asked of the planner model; they were not. A model-written "why" would
