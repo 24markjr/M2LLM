@@ -533,7 +533,7 @@ Worth knowing before someone asks:
 - **Memory is written only for missions run through the API** (the CLI stores no runs).
 - **Stored retrieval is opt-in per mission.** Evaluation and missions without a workspace match
   words, so the measured agent does not depend on what a workspace holds.
-- **No currency check.** A finding can say "$" where the documents say INR; nothing compares units
-  of money yet.
+- **The currency check covers money only** (Phase 51): a finding saying "$" over lines saying INR is
+  a UNIT_MISMATCH; other units (tonnes, hours) are not compared yet.
 - **CI does not measure the agent.** It cannot run a model; it validates the committed reports and
   enforces their thresholds, and re-runs the trust and security benchmarks, which need none.

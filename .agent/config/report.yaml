@@ -1,0 +1,32 @@
+# The investigation report (Phase 51): severity by declared rules.
+#
+# A finding's severity is the highest rule it matches; the report's risk is the highest severity among
+# the findings that count (verified, and approved where review is required). Findings awaiting
+# review, or not established, are listed but never raise the risk. Every severity is printed with the
+# rule that set it.
+#
+# Consumed by: app/reporting/builder.py.
+
+version: 1
+
+severity:
+  # The currency or unit check found the claim's unit is not its evidence's (UNIT_MISMATCH).
+  unit_mismatch: HIGH
+  # Two evidenced values that cannot both be true.
+  contradiction: HIGH
+  # Overturned by a challenge from a stronger source (Phase 48).
+  overturned: HIGH
+  # Proposed as a risk by the model, over a supported basis (Phase 45).
+  risk: MEDIUM
+  # Contested by a challenge.
+  contested: MEDIUM
+  # Anything else that is established.
+  default: LOW
+  # A finding in a case of this severity is at least this severe.
+  case_floor:
+    CRITICAL: HIGH
+    HIGH: MEDIUM
+
+# Findings of these severities are challenged before a report when nobody has challenged them yet
+# (Phase 48): the deterministic counter-evidence rule only, so a report never waits on a model.
+challenge_before_report: [HIGH, CRITICAL]

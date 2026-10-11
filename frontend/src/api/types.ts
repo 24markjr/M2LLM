@@ -175,6 +175,45 @@ export interface ConfidenceFactor {
   assessed: boolean;
 }
 
+/** The investigation report (Phase 51). */
+export type Severity = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO";
+
+export interface ReportFinding {
+  finding_id: string;
+  claim: string;
+  statement: string;
+  severity: Severity;
+  severity_reason: string;
+  confidence: number;
+  confidence_explained: string;
+  verification: string;
+  review: string;
+  challenge: string;
+  citations: string[];
+  unit_issues: string[];
+}
+
+export interface InvestigationReport {
+  report_id: string;
+  run_id: string;
+  case_id: string;
+  objective: string;
+  generated_at: string;
+  model: string;
+  content_hash: string;
+  risk: Severity;
+  risk_reason: string;
+  executive_summary: string[];
+  established: ReportFinding[];
+  awaiting_review: ReportFinding[];
+  not_established: ReportFinding[];
+  recommendations: string[];
+  limitations: string[];
+  unknowns: string[];
+  contradictions: string[];
+  hypotheses: string[];
+}
+
 /** Human review of findings and the audit log (Phase 50). */
 export type ReviewState = "PENDING" | "APPROVED" | "REJECTED" | "MODIFIED";
 

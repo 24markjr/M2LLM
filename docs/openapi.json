@@ -3129,6 +3129,158 @@
         "title": "InvestigationMemory",
         "type": "object"
       },
+      "InvestigationReport": {
+        "additionalProperties": false,
+        "properties": {
+          "awaiting_review": {
+            "items": {
+              "$ref": "#/components/schemas/ReportFinding"
+            },
+            "title": "Awaiting Review",
+            "type": "array"
+          },
+          "case_id": {
+            "default": "",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "content_hash": {
+            "default": "",
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "contradictions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Contradictions",
+            "type": "array"
+          },
+          "established": {
+            "items": {
+              "$ref": "#/components/schemas/ReportFinding"
+            },
+            "title": "Established",
+            "type": "array"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/ReportEvidence"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "executive_summary": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Executive Summary",
+            "type": "array"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "hypotheses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hypotheses",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "model": {
+            "default": "",
+            "title": "Model",
+            "type": "string"
+          },
+          "narrative": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Narrative",
+            "type": "array"
+          },
+          "not_established": {
+            "items": {
+              "$ref": "#/components/schemas/ReportFinding"
+            },
+            "title": "Not Established",
+            "type": "array"
+          },
+          "objective": {
+            "title": "Objective",
+            "type": "string"
+          },
+          "path": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Path",
+            "type": "array"
+          },
+          "recommendations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Recommendations",
+            "type": "array"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "risk": {
+            "$ref": "#/components/schemas/app__schemas__investigation_report__Severity",
+            "default": "INFO"
+          },
+          "risk_reason": {
+            "default": "",
+            "title": "Risk Reason",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineEntry"
+            },
+            "title": "Timeline",
+            "type": "array"
+          },
+          "trace": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Trace",
+            "type": "array"
+          },
+          "unknowns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unknowns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "report_id",
+          "run_id",
+          "objective"
+        ],
+        "title": "InvestigationReport",
+        "type": "object"
+      },
       "IssueType": {
         "enum": [
           "NO_EVIDENCE",
@@ -4344,6 +4496,119 @@
         "title": "Relation",
         "type": "string"
       },
+      "ReportEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "authority": {
+            "default": "",
+            "title": "Authority",
+            "type": "string"
+          },
+          "cited_by": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cited By",
+            "type": "array"
+          },
+          "document": {
+            "title": "Document",
+            "type": "string"
+          },
+          "evidence_id": {
+            "default": "",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "integrity": {
+            "default": "",
+            "title": "Integrity",
+            "type": "string"
+          },
+          "sha256": {
+            "default": "",
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document"
+        ],
+        "title": "ReportEvidence",
+        "type": "object"
+      },
+      "ReportFinding": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge": {
+            "default": "",
+            "title": "Challenge",
+            "type": "string"
+          },
+          "citations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "claim": {
+            "title": "Claim",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "confidence_explained": {
+            "title": "Confidence Explained",
+            "type": "string"
+          },
+          "finding_id": {
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "review": {
+            "title": "Review",
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/app__schemas__investigation_report__Severity"
+          },
+          "severity_reason": {
+            "title": "Severity Reason",
+            "type": "string"
+          },
+          "statement": {
+            "title": "Statement",
+            "type": "string"
+          },
+          "unit_issues": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unit Issues",
+            "type": "array"
+          },
+          "verification": {
+            "title": "Verification",
+            "type": "string"
+          }
+        },
+        "required": [
+          "finding_id",
+          "claim",
+          "statement",
+          "severity",
+          "severity_reason",
+          "confidence",
+          "confidence_explained",
+          "verification",
+          "review"
+        ],
+        "title": "ReportFinding",
+        "type": "object"
+      },
       "ReportSection": {
         "additionalProperties": false,
         "description": "One section. `narrative` is model-written; everything else is injected.",
@@ -4729,17 +4994,6 @@
         "title": "SentenceCheck",
         "type": "object"
       },
-      "Severity": {
-        "enum": [
-          "INFO",
-          "LOW",
-          "MEDIUM",
-          "HIGH",
-          "CRITICAL"
-        ],
-        "title": "Severity",
-        "type": "string"
-      },
       "SourceLocator": {
         "additionalProperties": false,
         "description": "Exactly where a piece of content came from.\n\nThis is what makes evidence checkable rather than decorative. \"doc_A says the project\nslipped\" is an assertion; \"project_report.pdf page 12, chars 400-520\" is something a\nreader can go and verify, and something the evidence binder can resolve against the\nchunks actually retrieved.",
@@ -4984,6 +5238,30 @@
         "title": "TaskType",
         "type": "string"
       },
+      "TimelineEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "event": {
+            "title": "Event",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "event",
+          "source"
+        ],
+        "title": "TimelineEntry",
+        "type": "object"
+      },
       "TimelineEvent": {
         "additionalProperties": false,
         "description": "A dated claim, placed in order.",
@@ -5227,7 +5505,7 @@
             "$ref": "#/components/schemas/IssueType"
           },
           "severity": {
-            "$ref": "#/components/schemas/Severity",
+            "$ref": "#/components/schemas/app__schemas__common__Severity",
             "default": "MEDIUM"
           }
         },
@@ -5496,6 +5774,28 @@
         ],
         "title": "StoredDocument",
         "type": "object"
+      },
+      "app__schemas__common__Severity": {
+        "enum": [
+          "INFO",
+          "LOW",
+          "MEDIUM",
+          "HIGH",
+          "CRITICAL"
+        ],
+        "title": "Severity",
+        "type": "string"
+      },
+      "app__schemas__investigation_report__Severity": {
+        "enum": [
+          "CRITICAL",
+          "HIGH",
+          "MEDIUM",
+          "LOW",
+          "INFO"
+        ],
+        "title": "Severity",
+        "type": "string"
       }
     }
   },
@@ -7533,6 +7833,110 @@
         "summary": "Get Hypotheses",
         "tags": [
           "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/investigation-report": {
+      "get": {
+        "description": "The report as it stands now: findings with their reviews and challenges, evidence with hashes\nand integrity, timeline, contradictions, explanations, unknowns, recommendations, trace.",
+        "operationId": "get_investigation_report_api_v1_missions__run_id__investigation_report_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestigationReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Investigation Report",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/investigation-report/export/{fmt}": {
+      "get": {
+        "description": "Download the report as md, pdf, docx or json. Recorded: a REPORTED custody event on every\ncited evidence item, and an audit entry carrying the content hash.",
+        "operationId": "export_investigation_report_api_v1_missions__run_id__investigation_report_export__fmt__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "fmt",
+            "required": true,
+            "schema": {
+              "title": "Fmt",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Investigation Report",
+        "tags": [
+          "reports"
         ]
       }
     },

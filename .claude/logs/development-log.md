@@ -6,6 +6,25 @@ and what is still broken.
 
 ---
 
+# 2026-10-11 - Phase 51: the investigation report
+
+**The summary is not new prose.** "Every sentence grounded" is met by construction: the executive
+summary is the established findings' claims with their citations. Synthesis's narrative is carried
+in its own section with the grounding verdicts Phase 37 computes - it informs, it does not stand in
+for the findings.
+
+**The hash describes content, not time.** The first version hashed `generated_at`, so the page and a
+download of it differed; a test caught it.
+
+**The PDF writer is ours** (ADR-017): the report is text, and a layout engine would have been a large
+new dependency for it. The formatter converted `\u` escapes in the character map into literal
+look-alike characters, which the linter then flagged; the map is keyed by code point.
+
+With severity in place, Phase 48's deferred automatic challenge runs before a report for HIGH and
+CRITICAL findings - deterministically, so building a report never waits on a model.
+
+---
+
 # 2026-10-11 - Phase 50: human review and the audit log
 
 **The audit is structural.** Middleware records every write under `/api/`, refused ones too, so a

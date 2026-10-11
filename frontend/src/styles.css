@@ -1660,3 +1660,17 @@ ul.conclusion {
   color: var(--bad);
   border-color: var(--bad);
 }
+
+/* --- The investigation report (Phase 51) ------------------------------------------------------- */
+.badge.risk {
+  margin-left: 8px;
+}
+.badge.risk.critical,
+.badge.risk.high {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+.badge.risk.medium {
+  color: var(--warn);
+  border-color: var(--warn);
+}

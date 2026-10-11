@@ -1,6 +1,6 @@
 # JARVIS v2 — implementation plan, Phases 43–55
 
-**Status:** Phases 43-50 done (2026-10-07 to 2026-10-11); Phases 51-55 in progress.
+**Status:** Phases 43-51 done (2026-10-07 to 2026-10-11); Phases 52-55 in progress.
 
 **Why this plan exists.** A product review of the demo (2026-10-06) judged JARVIS a strong
 investigation engine but not yet an investigation *platform*: no cases, no evidence custody, no
@@ -188,7 +188,7 @@ re-entering the finished run's loop. Every write is audited by middleware, teste
 from the OpenAPI schema. The ATT&CK rule is in place and fires once Phase 53 maps techniques.
 Details: `architecture/review-and-audit.md`, ADR-016.
 
-### Phase 51 — The investigation report (M–L)
+### Phase 51 — The investigation report (M–L) — **DONE** 2026-10-11
 
 - One structured report: header and hash; risk and executive summary from approved/verified findings
   only, every sentence grounded; findings, evidence (IDs, hashes, authority, integrity), timeline,
@@ -196,6 +196,13 @@ Details: `architecture/review-and-audit.md`, ADR-016.
   trace.
 - Severity by declared rules. A currency and unit check (Phase 41's known issue, `UNIT_MISMATCH`).
 - PDF, DOCX and JSON from one object; export written to custody and audit.
+
+**As built (Phase 51):** as planned, plus Markdown, and Phase 48's deferred step (HIGH/CRITICAL
+findings challenged before a report, deterministically). The executive summary is the established
+findings' claims with citations rather than new prose - grounded by construction; synthesis's
+narrative is carried with its grounding verdicts. The PDF writer is in-house (ADR-017). The content
+hash covers the content, not the generation time, so the page and a download match. Details:
+`architecture/investigation-report.md`.
 
 ## Track D — Cyber investigation mode (P1)
 

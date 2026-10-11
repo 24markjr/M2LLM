@@ -29,3 +29,4 @@ reader looking for something that was never written.
 | ADR-014 | Evidence is content-addressed, and its custody is append-only in the database | Accepted |
 | ADR-015 | Statement types are ruled from evidence; source authority informs and never decides | Accepted |
 | ADR-016 | Review decisions and the audit log are append-only; the audit is structural | Accepted |
+| ADR-017 | The report's PDF is written by a small in-house text writer | Accepted |

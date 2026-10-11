@@ -23,6 +23,7 @@ code is a guess, and one written after the code is a record.
 | `retrieval.md` | Stored, workspace-scoped retrieval: pgvector or memory, two chunkers, hits cited at their closest line | 40 |
 | `evidence-locker.md` | Every input an evidence item: content-addressed originals, append-only custody, integrity before every mission | 43 |
 | `cases.md` | Cases holding investigations and evidence; counters computed; the Professional view and plain step labels | 44 |
+| `investigation-report.md` | One report object: risk and summary from established findings only, severity by rules, the currency check, PDF/DOCX/MD/JSON exports recorded in custody and audit | 51 |
 | `review-and-audit.md` | Which findings need a person and why; append-only decisions; approval releases facts to memory; a rejection can start a follow-up; every write audited by middleware | 50 |
 | `plan-tree.md` | Every task's rationale and workstream from what put it in the plan; the plan tree; every change with its trigger, reason and before/after | 49 |
 | `challenge.md` | Challenge a finding: counter-evidence, its own lines, the verifier on the counter lines, authority; before and after; the challenge benchmark | 48 |

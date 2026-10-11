@@ -34,6 +34,7 @@ import type { AuthorityTier, EvidenceDetail, EvidenceItem, EvidenceList, Integri
 import type { Case, CaseDetail, CaseList, CaseSeverity, CaseStatus } from "./types";
 import type { ChallengeResult, HypothesisSet, PlanTree } from "./types";
 import type { AuditEntry, ReviewList, ReviewResponse, ReviewState } from "./types";
+import type { InvestigationReport } from "./types";
 
 const BASE = "/api/v1";
 
@@ -134,6 +135,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+
+  /** The investigation report as it stands (Phase 51). */
+  getInvestigationReport: (runId: string) =>
+    request<InvestigationReport>(`${BASE}/missions/${runId}/investigation-report`),
+
+  /** A download of the report; recorded in custody and the audit log. */
+  investigationReportUrl: (runId: string, fmt: string) =>
+    `${BASE}/missions/${runId}/investigation-report/export/${fmt}`,
 
   /** The audit log, newest first (Phase 50). */
   getAudit: (target = "", limit = 200) =>

@@ -5,6 +5,32 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-11 - Phase 51: the investigation report
+
+### Added
+
+- **One report object**: header and content hash; risk and executive summary from established
+  findings only (verified, approved where review is required); every finding with its statement type,
+  severity and rule, confidence sum, verification, review and challenge; evidence with locker ids,
+  SHA-256, authority and integrity; timeline; contradictions; competing explanations; unknowns and next
+  evidence; recommendations; limitations; the path, the checked narrative and the full trace
+- **Severity by declared rules** (`.agent/config/report.yaml`), each printed with its rule; HIGH and
+  CRITICAL findings are challenged before a report when nobody has (Phase 48's deferred step)
+- **The currency check** (UNIT_MISMATCH): a claim naming a currency its cited lines do not
+- **Exports**: Markdown, PDF (in-house writer, ADR-017), DOCX and JSON; each recorded as REPORTED in the
+  custody of every cited item and in the audit log with the content hash. Console: "Build the report"
+
+### Fixed
+
+- Phase 41's known issue: no currency check (the demo script's "not built" list updated)
+
+### Verified
+
+- 18 new backend tests (exports read back with pypdf and python-docx; custody and audit on export), 1
+  frontend; 1269 backend tests, 72 frontend, tsc, build
+
+---
+
 ## 2026-10-11 - Phase 50: human review and the audit log
 
 ### Added
