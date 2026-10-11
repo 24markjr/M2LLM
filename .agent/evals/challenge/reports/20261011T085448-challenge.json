@@ -1,0 +1,107 @@
+{
+  "generated_at": "2026-10-11T08:54:48.842054Z",
+  "dataset_hash": "sha256:c0b98eac3eacfe67",
+  "cases": 12,
+  "false_cases": 6,
+  "true_cases": 6,
+  "challenge_catch_rate": 0.8333333333333334,
+  "challenge_false_alarm_rate": 0.0,
+  "results": [
+    {
+      "case_id": "false-golive-from-email",
+      "true": false,
+      "outcome": "OVERTURNED",
+      "summary": "Overturned: atlas_approved_plan.txt:r2 (Approved or signed) gives 12 June 2026 where the claim gives 26 June 2026.",
+      "confidence_before": 0.84,
+      "confidence_after": 0.1
+    },
+    {
+      "case_id": "false-budget-from-draft",
+      "true": false,
+      "outcome": "OVERTURNED",
+      "summary": "Overturned: atlas_approved_plan.txt:r3 (Approved or signed) gives 480,000 where the claim gives 520,000.",
+      "confidence_before": 0.85,
+      "confidence_after": 0.1
+    },
+    {
+      "case_id": "false-phase2-continues",
+      "true": false,
+      "outcome": "OVERTURNED",
+      "summary": "Overturned: atlas_approved_plan.txt:r4 (Approved or signed) says \"cancelled\" where the claim does not.",
+      "confidence_before": 0.875,
+      "confidence_after": 0.1
+    },
+    {
+      "case_id": "false-testing-date",
+      "true": false,
+      "outcome": "CONTESTED",
+      "summary": "Contested: atlas_minutes_draft.txt:r3 (Draft) gives 4 May 2026 where the claim gives 18 May 2026.",
+      "confidence_before": 0.775,
+      "confidence_after": 0.625
+    },
+    {
+      "case_id": "false-spend-figure",
+      "true": false,
+      "outcome": "CONTESTED",
+      "summary": "Contested by its own citation: 0 of 1 date(s) and figure(s) in the claim are on its cited lines; not found: 250,000.",
+      "confidence_before": 0.775,
+      "confidence_after": 0.625
+    },
+    {
+      "case_id": "false-vendor-name",
+      "true": false,
+      "outcome": "WITHSTOOD",
+      "summary": "Withstood: nothing in the documents disagrees with it.",
+      "confidence_before": 0.84,
+      "confidence_after": 0.84
+    },
+    {
+      "case_id": "true-golive",
+      "true": true,
+      "outcome": "CONTESTED",
+      "summary": "Contested: atlas_vendor_email.txt:r2 (Correspondence) gives 26 June 2026 where the claim gives 12 June 2026.",
+      "confidence_before": 0.9,
+      "confidence_after": 0.75
+    },
+    {
+      "case_id": "true-budget",
+      "true": true,
+      "outcome": "CONTESTED",
+      "summary": "Contested: atlas_minutes_draft.txt:r2 (Draft) gives 520,000 where the claim gives 480,000.",
+      "confidence_before": 0.9,
+      "confidence_after": 0.75
+    },
+    {
+      "case_id": "true-spend",
+      "true": true,
+      "outcome": "WITHSTOOD",
+      "summary": "Withstood: nothing in the documents disagrees with it.",
+      "confidence_before": 0.875,
+      "confidence_after": 0.875
+    },
+    {
+      "case_id": "true-testing-date",
+      "true": true,
+      "outcome": "WITHSTOOD",
+      "summary": "Withstood: nothing in the documents disagrees with it.",
+      "confidence_before": 0.875,
+      "confidence_after": 0.875
+    },
+    {
+      "case_id": "true-vendor",
+      "true": true,
+      "outcome": "WITHSTOOD",
+      "summary": "Withstood: nothing in the documents disagrees with it.",
+      "confidence_before": 0.9,
+      "confidence_after": 0.9
+    },
+    {
+      "case_id": "true-invoice",
+      "true": true,
+      "outcome": "WITHSTOOD",
+      "summary": "Withstood: nothing in the documents disagrees with it.",
+      "confidence_before": 0.84,
+      "confidence_after": 0.84
+    }
+  ]
+}

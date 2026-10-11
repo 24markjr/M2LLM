@@ -10,7 +10,7 @@ at this layer for free - the API has no LLM dependency at all, only the orchestr
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Query, Request, Response, status
+from fastapi import APIRouter, Header, Query, Request, Response, status
 from fastapi.responses import PlainTextResponse
 
 from app.api.errors import ApiError, MissionNotFinishedError, MissionNotFoundError
@@ -34,6 +34,8 @@ from app.core.logging import get_logger
 from app.evidence.authority import authority_map
 from app.evidence.service import admit_for_mission, authority_of, record_analysed
 from app.integrations.context import workspace_retriever
+from app.integrations.verification import build_verification_provider
+from app.intelligence.challenge import ChallengeResult, challenge
 from app.intelligence.confidence import why
 from app.intelligence.planner.engine import execution_levels
 from app.intelligence.synthesis.renderers import to_markdown
@@ -198,6 +200,47 @@ async def get_findings(run_id: str) -> FindingsResponse:
     return FindingsResponse(
         run_id=run_id, findings=findings, why={f.finding_id: why(f) for f in findings}
     )
+
+
+@router.post("/{run_id}/findings/{finding_id}/challenge", response_model=ChallengeResult)
+async def challenge_finding(
+    run_id: str,
+    finding_id: str,
+    actor: str = Header(default="console", alias="X-Jarvis-User", max_length=128),
+) -> ChallengeResult:
+    """Challenge one finding (Phase 48): look for counter-evidence in the run's documents, check
+    its own lines, verify it against the counter lines with the configured verifier, weigh
+    authority, and recompute its confidence. The finding itself is not changed; the challenge is
+    kept beside it, with who asked."""
+    record = _require(run_id)
+    result = record.result
+    finding = next(
+        (f for f in (result.findings if result else []) if f.finding_id == finding_id), None
+    )
+    if result is None or finding is None:
+        raise ApiError(
+            "FINDING_NOT_FOUND",
+            f"no finding {finding_id} in {run_id}",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    verifier = build_verification_provider(get_provider())
+    outcome = await challenge(
+        finding,
+        record.texts,
+        page_starts=record.page_starts,
+        authority=record.authority,
+        evidence_text=result.evidence_text,
+        verifier=verifier.verify,
+        actor=actor,
+    )
+    record.challenges[finding_id] = outcome
+    return outcome
+
+
+@router.get("/{run_id}/challenges", response_model=list[ChallengeResult])
+async def get_challenges(run_id: str) -> list[ChallengeResult]:
+    """Every challenge made of this run's findings, latest per finding (Phase 48)."""
+    return list(_require(run_id).challenges.values())
 
 
 @router.get("/{run_id}/hypotheses", response_model=HypothesisSet)

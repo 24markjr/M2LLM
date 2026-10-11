@@ -175,6 +175,31 @@ export interface ConfidenceFactor {
   assessed: boolean;
 }
 
+/** A counter-analysis of one finding (Phase 48). */
+export interface CounterEvidence {
+  locator: string;
+  text: string;
+  reason: string;
+  authority: string;
+  stronger: boolean;
+}
+
+export interface ChallengeResult {
+  finding_id: string;
+  claim: string;
+  outcome: "WITHSTOOD" | "CONTESTED" | "OVERTURNED";
+  summary: string;
+  counter_evidence: CounterEvidence[];
+  own_lines: string;
+  negation_check: string;
+  authority_note: string;
+  confidence_before: number;
+  confidence_after: number;
+  after: Confidence;
+  challenged_by: string;
+  challenged_at: string;
+}
+
 /** Competing explanations, tested against the findings (Phase 47). */
 export type HypothesisStatus = "SUPPORTED" | "OPEN" | "REJECTED";
 

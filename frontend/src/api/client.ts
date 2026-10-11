@@ -32,7 +32,7 @@ import type { FormatSpec, StoredDocument, UploadedDocument } from "./types";
 import type { RetrieveResponse, WorkspaceView } from "./types";
 import type { AuthorityTier, EvidenceDetail, EvidenceItem, EvidenceList, IntegrityCheck } from "./types";
 import type { Case, CaseDetail, CaseList, CaseSeverity, CaseStatus } from "./types";
-import type { HypothesisSet } from "./types";
+import type { ChallengeResult, HypothesisSet } from "./types";
 
 const BASE = "/api/v1";
 
@@ -112,6 +112,14 @@ export const api = {
     request<{ run_id: string; findings: Finding[]; why?: Record<string, string[]> }>(
       `${BASE}/missions/${runId}/findings`,
     ),
+
+  /** Challenge one finding: counter-evidence, its own lines, the verifier, authority (Phase 48). */
+  challengeFinding: (runId: string, findingId: string) =>
+    request<ChallengeResult>(`${BASE}/missions/${runId}/findings/${findingId}/challenge`, {
+      method: "POST",
+    }),
+
+  getChallenges: (runId: string) => request<ChallengeResult[]>(`${BASE}/missions/${runId}/challenges`),
 
   /** Competing explanations ranked by computed support (Phase 47). */
   getHypotheses: (runId: string) => request<HypothesisSet>(`${BASE}/missions/${runId}/hypotheses`),

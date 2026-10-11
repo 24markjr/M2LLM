@@ -6,6 +6,23 @@ and what is still broken.
 
 ---
 
+# 2026-10-11 - Phase 48: Challenge JARVIS
+
+Member 4's lexical verifier detects conflicts only on shared identifiers (shipment ids, clock
+times), so the challenge has its own deterministic disagreement rule: same subject (half the claim's
+content words) and a different date, figure or a negation. That keeps the benchmark model-free and
+CI-checkable, and the on-demand API still asks the configured verifier about the counter lines.
+
+The benchmark was designed with its limits visible: one planted false finding is a wrong name the
+rule cannot see, kept as a known miss rather than tuned away; and a true finding contested by a
+weaker draft is counted as correct, because the disagreement is real - only overturning a true
+finding is a false alarm. Results matched the design on the first run: 5/6 caught, 0 overturned.
+
+Authority's role is narrow on purpose: it never says which side is true, only whether a challenge
+may overturn (stronger source) or merely contest.
+
+---
+
 # 2026-10-11 - Phase 47: competing explanations, gaps, next best evidence
 
 **Scoped to explanation questions.** Every existing scenario asks for a comparison or a check; adding

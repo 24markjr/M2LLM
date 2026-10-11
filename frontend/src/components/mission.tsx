@@ -7,6 +7,7 @@
  * thing worth demonstrating, and a UI that rounds it off throws that away.
  */
 
+import { ChallengePanel } from "./ChallengePanel";
 import { ConfidenceWhy } from "./ConfidenceWhy";
 import { evidenceForCitation, evidenceLink } from "./evidence";
 import { authorityText, statementHelp, statementLabel, statementType } from "./statements";
@@ -231,6 +232,7 @@ export function FindingCard({
           ) : null}
 
           <ConfidenceWhy finding={finding} runId={runId} />
+          <ChallengePanel runId={runId} findingId={finding.finding_id} />
         </div>
       ) : null}
 

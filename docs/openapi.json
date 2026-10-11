@@ -631,6 +631,88 @@
         "title": "ChainStep",
         "type": "object"
       },
+      "ChallengeOutcome": {
+        "enum": [
+          "WITHSTOOD",
+          "CONTESTED",
+          "OVERTURNED"
+        ],
+        "title": "ChallengeOutcome",
+        "type": "string"
+      },
+      "ChallengeResult": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "authority_note": {
+            "default": "",
+            "title": "Authority Note",
+            "type": "string"
+          },
+          "challenged_at": {
+            "format": "date-time",
+            "title": "Challenged At",
+            "type": "string"
+          },
+          "challenged_by": {
+            "default": "system",
+            "title": "Challenged By",
+            "type": "string"
+          },
+          "claim": {
+            "title": "Claim",
+            "type": "string"
+          },
+          "confidence_after": {
+            "default": 0.0,
+            "title": "Confidence After",
+            "type": "number"
+          },
+          "confidence_before": {
+            "default": 0.0,
+            "title": "Confidence Before",
+            "type": "number"
+          },
+          "counter_evidence": {
+            "items": {
+              "$ref": "#/components/schemas/CounterEvidence"
+            },
+            "title": "Counter Evidence",
+            "type": "array"
+          },
+          "finding_id": {
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "negation_check": {
+            "default": "not run: no verifier was given",
+            "title": "Negation Check",
+            "type": "string"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/ChallengeOutcome"
+          },
+          "own_lines": {
+            "default": "",
+            "title": "Own Lines",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "finding_id",
+          "claim",
+          "outcome",
+          "summary"
+        ],
+        "title": "ChallengeResult",
+        "type": "object"
+      },
       "ClaimComparison": {
         "additionalProperties": false,
         "description": "The temporal order of two claims.",
@@ -932,6 +1014,40 @@
           "sources"
         ],
         "title": "ConflictSide",
+        "type": "object"
+      },
+      "CounterEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "authority": {
+            "title": "Authority",
+            "type": "string"
+          },
+          "locator": {
+            "title": "Locator",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "stronger": {
+            "default": false,
+            "title": "Stronger",
+            "type": "boolean"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "locator",
+          "text",
+          "reason",
+          "authority"
+        ],
+        "title": "CounterEvidence",
         "type": "object"
       },
       "CreateMissionRequest": {
@@ -6442,6 +6558,53 @@
         ]
       }
     },
+    "/api/v1/missions/{run_id}/challenges": {
+      "get": {
+        "description": "Every challenge made of this run's findings, latest per finding (Phase 48).",
+        "operationId": "get_challenges_api_v1_missions__run_id__challenges_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChallengeResult"
+                  },
+                  "title": "Response Get Challenges Api V1 Missions  Run Id  Challenges Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Challenges",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
     "/api/v1/missions/{run_id}/events": {
       "get": {
         "description": "The full event log, paginated. This is the run's reconstructable record.",
@@ -6597,6 +6760,69 @@
           }
         },
         "summary": "Get Finding Chain",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/findings/{finding_id}/challenge": {
+      "post": {
+        "description": "Challenge one finding (Phase 48): look for counter-evidence in the run's documents, check\nits own lines, verify it against the counter lines with the configured verifier, weigh\nauthority, and recompute its confidence. The finding itself is not changed; the challenge is\nkept beside it, with who asked.",
+        "operationId": "challenge_finding_api_v1_missions__run_id__findings__finding_id__challenge_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "finding_id",
+            "required": true,
+            "schema": {
+              "title": "Finding Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChallengeResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Challenge Finding",
         "tags": [
           "missions"
         ]

@@ -1,6 +1,6 @@
 # JARVIS v2 — implementation plan, Phases 43–55
 
-**Status:** Phases 43-47 done (2026-10-07 to 2026-10-11); Phases 48-55 in progress.
+**Status:** Phases 43-48 done (2026-10-07 to 2026-10-11); Phases 49-55 in progress.
 
 **Why this plan exists.** A product review of the demo (2026-10-06) judged JARVIS a strong
 investigation engine but not yet an investigation *platform*: no cases, no evidence custody, no
@@ -146,12 +146,19 @@ then support it. Runs only for explanation questions, so other questions cost no
 undetermined scenario (`lyra_outage_undetermined`), measured once: four open, none concluded.
 Details: `architecture/hypotheses.md`.
 
-### Phase 48 — Challenge JARVIS (M)
+### Phase 48 — Challenge JARVIS (M) — **DONE** 2026-10-11
 
 - Counter-analysis on demand (and optionally before a report for HIGH/CRITICAL findings): search for
   counter-evidence, verify the negated claim, check authority and dates, recompute confidence; show
   before and after.
 - Benchmark of planted false and true findings: `challenge_catch_rate`, `challenge_false_alarm_rate`.
+
+**As built (Phase 48):** on demand, deterministic counter-evidence plus the configured verifier on
+the counter lines; authority decides how far a challenge may move the number (overturn only from a
+stronger source). The finding is never changed - the challenge sits beside it. The benchmark is
+model-free and re-run in CI: catch 0.833, false alarms 0.000, one documented miss (a wrong name).
+The automatic challenge before a report for HIGH/CRITICAL findings waits for severity (Phase 51).
+Details: `architecture/challenge.md`.
 
 ### Phase 49 — Visible adaptive planning (M)
 

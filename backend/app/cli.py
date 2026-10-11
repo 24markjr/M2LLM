@@ -614,6 +614,38 @@ def run_eval_trust(*, write: bool) -> int:
     return 1 if report.false_confidence or security_failed else 0
 
 
+async def run_eval_challenge(*, write: bool) -> int:
+    """The challenge benchmark (Phase 48). Deterministic, no model, well under a second."""
+    from app.evaluation.challenge import run_challenge_benchmark, write_challenge_report
+
+    report = await run_challenge_benchmark()
+    print()
+    print(RULE)
+    print("JARVIS CHALLENGE BENCHMARK  (planted false findings and true ones)")
+    print(RULE)
+    print(f"  cases                       {report.cases}")
+    caught = sum(r.caught for r in report.results)
+    alarms = sum(r.false_alarm for r in report.results)
+    print(
+        f"  challenge_catch_rate        {report.challenge_catch_rate:.3f}  "
+        f"({caught}/{report.false_cases} false findings not let stand)"
+    )
+    print(
+        f"  challenge_false_alarm_rate  {report.challenge_false_alarm_rate:.3f}  "
+        f"({alarms}/{report.true_cases} true findings overturned)"
+    )
+    for r in report.results:
+        print(f"    {r.case_id:<26} {r.outcome.value:<10} {r.summary[:70]}")
+    if write:
+        _, md_path = write_challenge_report(report)
+        print()
+        print(f"report written to {md_path}")
+    print(RULE)
+    # The gate: a true finding overturned. A missed false one is reported, not gated - the known
+    # miss (a wrong name) is part of what the benchmark documents.
+    return 1 if alarms else 0
+
+
 async def run_eval_retrieval(*, write: bool) -> int:
     """Experiment 006 (Phase 41). Embeddings only, no chat model: about a minute with Ollama."""
     from app.evaluation.retrieval import run_retrieval_experiment, write_retrieval_report
@@ -689,6 +721,11 @@ def main(argv: list[str] | None = None) -> int:
     trust_cmd = sub.add_parser("eval-trust", help="run Member 4's verifier benchmark")
     trust_cmd.add_argument("--no-write", action="store_true", help="do not write a report file")
 
+    challenge_cmd = sub.add_parser(
+        "eval-challenge", help="Phase 48: challenge planted false and true findings"
+    )
+    challenge_cmd.add_argument("--no-write", action="store_true", help="do not write a report")
+
     sub.add_parser("health", help="check the configured provider")
 
     args = parser.parse_args(argv)
@@ -701,6 +738,8 @@ def main(argv: list[str] | None = None) -> int:
         )
     if args.command == "eval-retrieval":
         return asyncio.run(run_eval_retrieval(write=not args.no_write))
+    if args.command == "eval-challenge":
+        return asyncio.run(run_eval_challenge(write=not args.no_write))
     if args.command == "eval-trust":
         return run_eval_trust(write=not args.no_write)
     if args.command == "investigate":

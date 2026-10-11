@@ -5,6 +5,26 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-11 - Phase 48: Challenge JARVIS
+
+### Added
+
+- **Challenge a finding** (`POST .../findings/{id}/challenge`, "challenge this finding" on the
+  console): counter-evidence from the run's documents (same subject, a different date or figure, or
+  a negation), whether its own line holds it, the configured verifier on the counter lines alone,
+  and authority - a stronger source can overturn, an equal or weaker one contests. Confidence before
+  and after; the finding itself is never changed, and who challenged it is recorded
+- **The challenge benchmark** (`python -m app.cli eval-challenge`, re-run in CI by
+  `scripts/check_challenge_report.py`): six planted false findings and six true ones, no model.
+  `challenge_catch_rate` 0.833, `challenge_false_alarm_rate` 0.000; the miss (a wrong name) is
+  documented
+
+### Verified
+
+- 14 new backend tests, 1 frontend; 1229 backend tests, 66 frontend, tsc, build
+
+---
+
 ## 2026-10-11 - Phase 47: competing explanations, gaps and next best evidence
 
 ### Added

@@ -38,6 +38,8 @@ kept current while the run proceeds.
 | GET | `/api/v1/missions/{id}/tasks` | Nodes, edges, and the concurrency `waves` |
 | GET | `/api/v1/missions/{id}/events` | Paginated (`offset`, `limit`) |
 | GET | `/api/v1/missions/{id}/findings` | Findings whole, with evidence and verification, and `why` per finding (Phase 46) |
+| POST | `/api/v1/missions/{id}/findings/{finding_id}/challenge` | Challenge a finding: counter-evidence with authority, its own lines, the verifier on the counter lines, outcome and confidence before and after; actor from `X-Jarvis-User` (Phase 48) |
+| GET | `/api/v1/missions/{id}/challenges` | Every challenge of the run's findings, latest per finding |
 | GET | `/api/v1/missions/{id}/hypotheses` | Competing explanations ranked by computed support, each with findings for and against, what would decide it and next evidence (Phase 47) |
 | GET | `/api/v1/missions/{id}/findings/{finding_id}/chain` | The evidence chain: claim, each citation (locker item, authority, text read, extractions), reasoning, verifiers, conclusion with its why (Phase 46) |
 | GET | `/api/v1/missions/{id}/gaps` | Detected gaps and whether each was closed |

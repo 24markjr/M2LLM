@@ -246,6 +246,12 @@ jobs:
         working-directory: backend
         run: python scripts/check_trust_reports.py
 
+      # Phase 48's challenge benchmark, deterministic like the trust one: re-run, compared with the
+      # committed report, and failed on any true finding overturned.
+      - name: challenge report is current
+        working-directory: backend
+        run: python scripts/check_challenge_report.py
+
       # Phase 24's "no metric shown anywhere is hard-coded", made enforceable. Every figure
       # quoted in the README or the contribution statement must match the baseline, so a
       # re-run cannot leave the documentation confidently wrong.

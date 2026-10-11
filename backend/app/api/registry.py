@@ -30,6 +30,7 @@ from app.core.events import (
 )
 from app.core.logging import get_logger
 from app.database.event_sink import DatabaseEventSink
+from app.intelligence.challenge import ChallengeResult
 from app.memory.service import record_run
 from app.orchestration.mission import MissionResult, MissionStatus, Stage, run_mission
 from app.schemas.case import CaseInvestigation
@@ -71,6 +72,11 @@ class MissionRecord:
         self.excluded: dict[str, str] = {}
         # Each document's source authority tier (Phase 45), fixed when the mission is created.
         self.authority: dict[str, str] = {}
+        # The text each document was read as, and its page starts: what a challenge searches for
+        # counter-evidence (Phase 48), and what it records against.
+        self.texts: dict[str, str] = {}
+        self.page_starts: dict[str, list[int]] = {}
+        self.challenges: dict[str, ChallengeResult] = {}
         # The case the mission belongs to (Phase 44).
         self.case_id: str = ""
 
@@ -153,6 +159,8 @@ class MissionRegistry:
         """
         record = MissionRecord(new_run_id(), objective, documents)
         record.authority = dict(authority or {})
+        record.texts = dict(loaded)
+        record.page_starts = dict(page_starts)
         self._missions[record.run_id] = record
 
         history = _HistorySink(record)

@@ -1625,3 +1625,20 @@ ul.conclusion {
   color: var(--bad);
   border-color: var(--bad);
 }
+
+/* --- Challenge JARVIS (Phase 48) --------------------------------------------------------------- */
+.challenge {
+  margin-top: 8px;
+}
+.badge.challenge.withstood {
+  color: var(--ok);
+  border-color: var(--ok);
+}
+.badge.challenge.contested {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+.badge.challenge.overturned {
+  color: var(--bad);
+  border-color: var(--bad);
+}
