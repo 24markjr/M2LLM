@@ -70,6 +70,8 @@ class ScenarioReport(JarvisModel):
     expected_open_hypotheses: int = 0
     open_hypotheses: int = 0
     premature_conclusion: bool = False
+    # Evaluation v2 (Phase 54). Reports written before it carry none and read as "uncategorised".
+    category: str = "uncategorised"
 
     @property
     def ok(self) -> bool:
@@ -88,6 +90,18 @@ class ScenarioReport(JarvisModel):
     def found_nothing(self) -> bool:
         """A positive case that produced no findings at all."""
         return self.is_positive_case and self.findings == 0
+
+
+class CategorySummary(JarvisModel):
+    """One category's figures (Phase 54), naming the scenarios they come from."""
+
+    category: str
+    scenarios: list[str]
+    metrics: MetricSet
+    # Of the negative scenarios in it, how many reported nothing; of the positive, the mean share of
+    # planted claims found. None when the category has none of that kind.
+    negative_passed: float | None = None
+    claims_found: float | None = None
 
 
 class EvalReport(JarvisModel):
@@ -124,6 +138,37 @@ class EvalReport(JarvisModel):
     def confabulations(self) -> list[ScenarioReport]:
         """Negative cases where the agent found something that is not there."""
         return [s for s in self.scenarios if s.confabulated]
+
+    def categories(self) -> list[CategorySummary]:
+        """Each category's aggregate, with the scenarios it is computed over (Phase 54)."""
+        from app.evaluation.metrics import aggregate
+
+        grouped: dict[str, list[ScenarioReport]] = {}
+        for scenario in self.scenarios:
+            grouped.setdefault(scenario.category, []).append(scenario)
+        summaries: list[CategorySummary] = []
+        for name in sorted(grouped):
+            members = grouped[name]
+            negatives = [s for s in members if s.is_negative_case]
+            positives = [s for s in members if s.is_positive_case]
+            summaries.append(
+                CategorySummary(
+                    category=name,
+                    scenarios=[s.scenario_id for s in members],
+                    metrics=aggregate([s.metrics for s in members]),
+                    negative_passed=(
+                        sum(s.negative_case_passed for s in negatives) / len(negatives)
+                        if negatives
+                        else None
+                    ),
+                    claims_found=(
+                        sum(s.expected_claims_found for s in positives) / len(positives)
+                        if positives
+                        else None
+                    ),
+                )
+            )
+        return summaries
 
     @property
     def premature_conclusion_rate(self) -> float | None:
@@ -340,6 +385,27 @@ def to_markdown(report: EvalReport) -> str:
             state = "completed" if s.ok else "did not complete"
             lines.append(f"- {s.scenario_id}: {state}; {flagged}; {obeyed}")
             lines += [f"    * {claim}" for claim in s.obeyed_claims]
+
+    categories = report.categories()
+    if any(c.category != "uncategorised" for c in categories):
+        lines += ["", "## By category", ""]
+        lines.append(
+            "Each figure is the mean over the scenarios named beside it (Phase 54). A category of "
+            "one or two scenarios is an anecdote, not a rate."
+        )
+        lines += [
+            "",
+            "| Category | Scenarios | Unsupported | Verified | Negatives passed | Claims found |",
+            "|---|---|---|---|---|---|",
+        ]
+        for c in categories:
+            negatives = "-" if c.negative_passed is None else f"{c.negative_passed:.2f}"
+            found = "-" if c.claims_found is None else f"{c.claims_found:.2f}"
+            lines.append(
+                f"| {c.category} | {', '.join(c.scenarios)} | "
+                f"{c.metrics.unsupported_claim_rate:.3f} | {c.metrics.verification_success:.3f} | "
+                f"{negatives} | {found} |"
+            )
 
     undetermined = [s for s in report.scenarios if s.expected_open_hypotheses]
     if undetermined:

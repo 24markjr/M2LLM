@@ -487,3 +487,18 @@ async def test_composite_rule_4_catches_the_shipment_number_read_as_a_date() -> 
     assert result.status is VerificationStatus.PARTIALLY_SUPPORTED
     misread = [i for i in result.issues if i.issue_type is IssueType.DATE_AMBIGUITY]
     assert misread and misread[0].element == "9012"
+
+
+def test_an_address_the_cited_line_does_not_hold_is_ungrounded() -> None:
+    """BUG-039: "on server 10.0.0.12" citing a line that reads host=SRV-DB."""
+    from app.intelligence.trust.specifics import ungrounded_specifics
+
+    line = EvidenceText(
+        source="l.jsonl:r2",
+        content="2026-03-03T10:20:04Z host=SRV-DB user=svc_admin event=7045 service=PSEXESVC",
+    )
+    claim = "On server 10.0.0.12, svc_admin ran PSEXESVC.exe on 3 March 2026"
+    assert ungrounded_specifics(claim, [line]) == ["10.0.0.12"]
+    source = EvidenceText(source="l.jsonl:r1", content="host=SRV-DB src_ip=10.0.0.12")
+    assert ungrounded_specifics("svc_admin logged on from 10.0.0.12", [source]) == []
+    assert ungrounded_specifics("from 10.0.0.1", [source]) == ["10.0.0.1"], "exact, not a prefix"

@@ -175,6 +175,23 @@ export interface ConfidenceFactor {
   assessed: boolean;
 }
 
+/** Evaluation v2 (Phase 54): one quality figure, its components, categories and trend. */
+export interface QualitySummary {
+  formula: string;
+  value: number | null;
+  components: { name: string; value: number; formula: string; source: string; dataset: string }[];
+  categories: {
+    category: string;
+    scenarios: string[];
+    metrics: Record<string, number> & { unsupported_claim_rate: number; verification_success: number };
+    negative_passed: number | null;
+    claims_found: number | null;
+  }[];
+  agent_formula: string;
+  trend: { generated_at: string; report: string; agent_quality: number; comparable_key: string }[];
+  missing: string[];
+}
+
 /** What a run's security logs show (Phase 52). */
 export interface CyberRelation {
   subject: string;

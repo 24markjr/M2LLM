@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 
 import { api } from "../api/client";
 import type { MetricDirections, MetricPoint } from "../api/types";
+import { QualityPanel } from "./QualityPanel";
 
 /** The metrics worth a chart each. The rest are in the table. */
 const CHARTED = [
@@ -32,6 +33,7 @@ export function EvaluationDashboard() {
   const [points, setPoints] = useState<MetricPoint[]>([]);
   const [directions, setDirections] = useState<MetricDirections>({});
   const [loading, setLoading] = useState(true);
+  const [technical, setTechnical] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -69,6 +71,30 @@ export function EvaluationDashboard() {
   const latest = points[points.length - 1];
   const keys = new Set(points.map((p) => p.comparable_key));
 
+  return (
+    <>
+      <QualityPanel />
+      <label className="row">
+        <input type="checkbox" checked={technical} onChange={(e) => setTechnical(e.target.checked)} />{" "}
+        Technical: every raw metric, every committed report
+      </label>
+      {technical ? <TechnicalView points={points} directions={directions} keys={keys} latest={latest} /> : null}
+    </>
+  );
+}
+
+/** The raw metrics (Phase 54 moved them under Technical, below the quality summary). */
+function TechnicalView({
+  points,
+  directions,
+  keys,
+  latest,
+}: {
+  points: MetricPoint[];
+  directions: MetricDirections;
+  keys: Set<string>;
+  latest: MetricPoint | undefined;
+}) {
   return (
     <>
       {keys.size > 1 ? (

@@ -122,6 +122,7 @@ def _parse(raw: dict[str, object], fallback_id: str) -> ScenarioExpectation:
         forbidden_claims=_as_str_list(raw, "forbidden_claims"),
         expected_statement_types=_as_str_list(raw, "expected_statement_types"),
         expect_open_hypotheses=_as_int(raw, "expect_open_hypotheses", 0),
+        category=str(raw.get("category") or "uncategorised"),
     )
 
 
@@ -250,6 +251,7 @@ async def run_suite(suite: str = "all") -> EvalReport:
                 expected_open_hypotheses=expectation.expect_open_hypotheses,
                 open_hypotheses=open_hypotheses(outcome),
                 premature_conclusion=concluded_prematurely(expectation, outcome),
+                category=expectation.category,
             )
         )
 

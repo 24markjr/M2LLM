@@ -4,6 +4,8 @@
 # A second document family to the Aurora set, so a fix tuned to one corpus does not look like
 # a general improvement.
 id: helix_schedule_contradiction
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: temporal_contradiction
 suites: [core, all]
 objective: >
   Compare the Helix programme report against the milestone report and identify any

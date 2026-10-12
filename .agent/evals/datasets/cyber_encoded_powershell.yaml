@@ -4,6 +4,8 @@
 # to Temp. The decoding, the indicators and the timeline are deterministic (unit tests); this
 # scenario measures whether the agent reports the activity, citing the events.
 id: cyber_encoded_powershell
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: cyber
 suites: [cyber, all]
 objective: >
   Investigate the PowerShell activity on WS-12 on 3 March 2026: what ran, what started it, and

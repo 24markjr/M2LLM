@@ -2,6 +2,8 @@
 # is installed and spawns cmd.exe running reconnaissance, then the same account reaches SRV-FILE and
 # runs rundll32 on a DLL in Temp.
 id: cyber_lateral_movement
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: cyber
 suites: [cyber, all]
 objective: >
   Determine how the svc_admin account moved between servers on 3 March 2026 and what it ran on each.

@@ -61,6 +61,8 @@ class ScenarioExpectation(JarvisModel):
     # Phase 47: an undetermined question - at least this many explanations must stay open. 0 means
     # the scenario does not test hypotheses.
     expect_open_hypotheses: int = Field(default=0, ge=0)
+    # Evaluation v2 (Phase 54): which category the scenario is reported under.
+    category: str = "uncategorised"
 
 
 class ScenarioOutcome(JarvisModel):

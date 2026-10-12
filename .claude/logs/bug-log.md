@@ -1272,3 +1272,39 @@ format with ISO timestamps was affected; the document corpora (dates written apa
 
 **Fix.** The pattern ends "not followed by a digit" instead. A number running on (`2026-03-031`) is
 still no date. Re-run: all four findings SUPPORTED at 0.88.
+
+## BUG-038 — Asked whether benign logs showed an attack, the agent described ordinary activity
+
+**Found:** 2026-10-12, Phase 54's 20-scenario baseline (`20261012T074106`), all three runs
+**Severity:** High. A negative scenario failed; on a real case it reads as a finding about nothing
+**Status:** Fixed (`cyber/attack.py` `asks_about_attack`/`quiet_logs`, `reasoning/engine.py`)
+
+**Symptom.** `cyber_admin_benign` ("Do these server logs show malicious activity or a compromise?")
+produced two verified findings: a backup completed, and an IT administrator ran a system update.
+
+**Cause.** Three correct behaviours met. BUG-037's fix grounds event dates, so the findings verified;
+BUG-030 keeps single-source claims when the question asks for an assessment; and the relevance gate
+(a model call) judged "what happened on the server" relevant to "did anything bad happen". Narrowing
+the knowledge tool's cyber items to ATT&CK-mapped lines alone did not change it.
+
+**Fix.** Deterministic, once per run: when the objective asks about an attack and the documents are
+logs in which no ATT&CK rule flagged a single event, every candidate is discarded, with an event and
+the reason. Accepted cost, documented in `architecture/evaluation-v2.md`: an attack no rule covers
+reports nothing (held-out recall 0.400). Live: the benign scenario reports no finding; the two attack
+scenarios keep theirs.
+
+## BUG-039 — A claim could place an event on an address its cited line does not hold
+
+**Found:** 2026-10-12, the live check of BUG-038's fix on `cyber_lateral_movement`
+**Severity:** High. Wrong findings verified at 0.88
+**Status:** Fixed (`intelligence/trust/specifics.py`)
+
+**Symptom.** "On server 10.0.0.12, svc_admin ran PSEXESVC.exe" was SUPPORTED, citing
+`host=SRV-DB ... service=PSEXESVC`. 10.0.0.12 is the logon's source address, on another line; the
+model (qwen3:4b) took it for the host. Two more findings repeated the mistake with 10.0.0.31.
+
+**Cause.** The specifics check grounded dates and figures, not addresses; the model verifier read
+the line and passed the claim.
+
+**Fix.** IPv4 addresses are specifics, matched exactly: a claim cannot state an address none of its
+cited lines contains.

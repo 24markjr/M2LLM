@@ -14,6 +14,10 @@ whether each **specific** in the claim, meaning each date and each figure of thr
 appears somewhere in the evidence. A claim can phrase things freely; it cannot assert a value
 nothing it cites contains. Dates match when compatible (`2026-04-30` = `30 April 2026`); figures
 match by value (`450,000` = `450000`).
+
+Phase 54 added IPv4 addresses (BUG-039): on a security log a claim placed svc_admin "on server
+10.0.0.12" citing a line that reads `host=SRV-DB`; 10.0.0.12 was the logon's source, on another
+line. An address is matched exactly.
 """
 
 from __future__ import annotations
@@ -34,6 +38,9 @@ _DATE_POSITION = re.compile(r"\b(?:on|dated|since|until)\s+(\d{3,})\b(?![.,/:-]?
 # A bare number after "on" can be a year ("on 2026, the budget..."). Outside this range it is not.
 _PLAUSIBLE_YEARS = range(1900, 2101)
 
+# An IPv4 address, not part of a longer dotted run (a version number such as 1.2.3.4.5).
+_IPV4 = re.compile(r"(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d]|\.\d)")
+
 
 def ungrounded_specifics(claim: str, evidence: list[EvidenceText]) -> list[str]:
     """The dates and figures in `claim` that no evidence item contains, as the claim wrote them."""
@@ -51,6 +58,8 @@ def ungrounded_specifics(claim: str, evidence: list[EvidenceText]) -> list[str]:
     for written, value in find_figures(claim):
         if value not in pool_figures and value not in derived:
             missing.append(written)
+    pool_addresses = {a for item in evidence for a in _IPV4.findall(item.content)}
+    missing.extend(a for a in _IPV4.findall(claim) if a not in pool_addresses)
     return list(dict.fromkeys(missing))
 
 

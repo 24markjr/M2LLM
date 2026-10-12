@@ -9,6 +9,8 @@
 # date; the type it asks for is the one the rules guarantee on every run - no single-source FACT -
 # which `Finding` enforces and the unit tests prove.
 id: vega_start_corroborated
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: corroboration
 suites: [core, all]
 objective: >
   When does Project Vega start, and which documents state the start date?

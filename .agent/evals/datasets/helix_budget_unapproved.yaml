@@ -5,6 +5,8 @@
 # Deliberately crosses a text document and a CSV, so evidence binding has to resolve a row
 # locator and a line locator in the same claim.
 id: helix_budget_unapproved
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: financial
 suites: [core, all]
 objective: >
   Determine whether the Helix spend recorded in the financial report was approved in the

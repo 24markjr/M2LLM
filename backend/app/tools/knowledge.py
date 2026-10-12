@@ -171,9 +171,15 @@ MAX_CYBER_ITEMS = 30
 
 
 def cyber_items(documents: dict[str, str], page_starts: dict[str, list[int]]) -> list[Extraction]:
-    """Decoded commands and observed relations from any event logs among the documents, each on
-    the line that states it. Deterministic; empty when no document holds events."""
+    """Decoded commands, and the observed relations on events an ATT&CK rule flagged, each on the
+    line that states it. Deterministic; empty when no document holds a flagged event.
+
+    Only what the analysis flags (Phase 54): handed every relation, the reasoning model reported a
+    nightly backup and an administrator's package upgrade as findings when asked whether benign
+    logs showed a compromise - true, cited, and not an answer.
+    """
     from app.cyber.analysis import analyse
+    from app.cyber.attack import mapped_locators
 
     analysis = analyse(documents, page_starts)
     if analysis.events == 0:
@@ -193,11 +199,14 @@ def cyber_items(documents: dict[str, str], page_starts: dict[str, list[int]]) ->
             f"decoded -EncodedCommand on {command.host or 'the host'}: {command.script[:300]}",
             "decoded_command",
         )
+    flagged = mapped_locators(analysis)
     for relation in analysis.relations:
+        if not flagged & set(relation.sources):
+            continue
         subject = relation.subject.split(":", 1)[-1]
         target = relation.object.split(":", 1)[-1]
         detail = f" ({relation.detail})" if relation.detail else ""
-        for locator in relation.sources[:2]:
+        for locator in [s for s in relation.sources if s in flagged][:2]:
             at(locator, f"{subject} {relation.predicate} {target}{detail}", "observed_relation")
     return items[:MAX_CYBER_ITEMS]
 

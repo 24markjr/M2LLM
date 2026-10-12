@@ -345,3 +345,31 @@ def attack_graph(run_id: str, analysis: CyberAnalysis) -> KnowledgeGraphView:
     return KnowledgeGraphView(
         run_id=run_id, store="attack-path", nodes=list(nodes.values()), links=links
     )
+
+
+# A question about an attack: whether something malicious happened, a compromise, an intrusion.
+_ATTACK_QUESTION = re.compile(
+    r"\b(malicious|compromis\w*|attack\w*|intrusion|breach\w*|threat|exfiltrat\w*|"
+    r"backdoor|malware|ransomware|lateral movement)\b",
+    re.IGNORECASE,
+)
+
+
+def asks_about_attack(objective: str) -> bool:
+    return bool(_ATTACK_QUESTION.search(objective))
+
+
+def quiet_logs(documents: dict[str, str] | None) -> bool:
+    """Security logs in which no detection rule flagged a single event (Phase 54, BUG-038).
+
+    Asked whether such logs show an attack, a description of ordinary activity - a backup finished,
+    an administrator upgraded packages - is not an answer, and reasoning discards it with that
+    reason. The cost is stated: an attack no rule covers is then reported as nothing; the held-out
+    ATT&CK fixture (recall 0.400) is the measure of how much that can be.
+    """
+    if not documents:
+        return False
+    from app.cyber.analysis import analyse
+
+    analysis = analyse(documents)
+    return analysis.events > 0 and not analysis.techniques

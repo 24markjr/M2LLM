@@ -3,6 +3,8 @@
 # differs ("finished" / "completed", "confirm" / "confirmed for"), which is the point: a paraphrase
 # is not a contradiction.
 id: orion_meeting_consistent
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: negative
 suites: [negative, formats, all]
 objective: >
   Determine whether the Orion site readiness meeting recording and its written minutes disagree on

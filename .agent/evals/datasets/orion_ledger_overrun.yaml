@@ -3,6 +3,8 @@
 # raised. The overrun is the finding, and it crosses a paragraph locator and a spreadsheet row on a
 # sheet that acts as a page. Fixtures: `.agent/fixtures/make_orion_fixtures.py`.
 id: orion_ledger_overrun
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: financial
 suites: [core, formats, all]
 objective: >
   Determine whether Project Orion's recorded spend stayed within the budget approved by the

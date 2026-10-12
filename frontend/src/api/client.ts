@@ -36,6 +36,7 @@ import type { ChallengeResult, HypothesisSet, PlanTree } from "./types";
 import type { AuditEntry, ReviewList, ReviewResponse, ReviewState } from "./types";
 import type { InvestigationReport } from "./types";
 import type { CyberAnalysis } from "./types";
+import type { QualitySummary } from "./types";
 
 const BASE = "/api/v1";
 
@@ -270,6 +271,9 @@ export const api = {
 
   /** Indicators, relations, decoded commands and timelines from the run's security logs (Phase 52). */
   getCyber: (runId: string) => request<CyberAnalysis>(`${BASE}/missions/${runId}/cyber`),
+
+  /** One quality figure with its formula, categories and trend (Phase 54). */
+  getQuality: () => request<QualitySummary>(`${BASE}/evaluation/quality`),
 
   /** The attack path as the 3D explorer draws it (Phase 53). */
   getAttackGraph: (runId: string) =>

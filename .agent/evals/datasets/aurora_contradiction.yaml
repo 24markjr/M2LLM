@@ -1,6 +1,8 @@
 # The reference case: two documents disagree about the completion date, and spend
 # exceeds the approved budget. Both contradictions are planted and documented.
 id: aurora_contradiction
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: temporal_contradiction
 suites: [core, all]
 objective: >
   Investigate the Aurora project reports and identify any contradictions between the

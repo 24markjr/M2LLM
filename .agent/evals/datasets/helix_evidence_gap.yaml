@@ -5,6 +5,8 @@
 # No `expected_claims`: what is being scored here is gap detection and the replanning loop,
 # not recall. Asserting a claim would make this a recall test wearing a gap test's name.
 id: helix_evidence_gap
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: evidence_gap
 suites: [gaps, all]
 objective: >
   Determine whether the Helix milestones closed on or before the dates in the approved

@@ -3,6 +3,8 @@
 # read the note, the run has nothing to compare - and a finding resting only on what the vision
 # model "saw" is PARTIALLY_SUPPORTED by design, so the read lines are what must carry it.
 id: orion_scanned_delivery
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: noisy_ocr
 suites: [core, formats, all]
 objective: >
   Determine whether Polar Systems delivered the Orion cooling units in the quantity and by the

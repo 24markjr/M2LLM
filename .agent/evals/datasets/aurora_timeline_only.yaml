@@ -1,6 +1,8 @@
 # A narrower objective over a single document. Checks the planner scales its plan down
 # rather than producing the same large graph regardless of what was asked.
 id: aurora_timeline_only
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: temporal_contradiction
 suites: [core, all]
 objective: Extract the project timeline and milestone dates from the Aurora project report.
 documents:

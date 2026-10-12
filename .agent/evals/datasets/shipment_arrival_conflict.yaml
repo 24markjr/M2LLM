@@ -6,6 +6,8 @@
 # A third document family, after Aurora and Helix, and the first whose documents are each one
 # sentence long: a different shape of evidence for the same behaviour.
 id: shipment_arrival_conflict
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: temporal_contradiction
 suites: [core, all]
 objective: >
   Investigate when Shipment 4821 arrived at the Mumbai warehouse, and whether the shipping

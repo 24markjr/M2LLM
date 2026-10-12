@@ -4,6 +4,8 @@
 # An agent that always finds something is not investigating, it is confabulating - and no
 # positive scenario can detect that. This is the only kind of case that can.
 id: aurora_no_contradiction
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: negative
 suites: [negative, all]
 objective: >
   Determine whether the Aurora project report contradicts itself on the approved

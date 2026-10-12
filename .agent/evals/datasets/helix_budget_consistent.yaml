@@ -5,6 +5,8 @@
 # suite: an agent could pass `aurora_no_contradiction` by accident. Two, over different corpora
 # and different formats, is harder to pass by luck.
 id: helix_budget_consistent
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: negative
 suites: [negative, all]
 objective: >
   Determine whether the Helix budget file contradicts itself on any line item amount.

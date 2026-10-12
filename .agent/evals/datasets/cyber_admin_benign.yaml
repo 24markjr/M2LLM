@@ -2,6 +2,8 @@
 # packages during business hours, a scheduled apt job. Ordinary administration; the correct answer
 # is that nothing malicious is shown.
 id: cyber_admin_benign
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: cyber
 suites: [cyber, negative, all]
 objective: >
   Do these server logs from 3 March 2026 show malicious activity or a compromise?

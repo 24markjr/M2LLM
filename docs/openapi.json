@@ -651,6 +651,55 @@
         "title": "CaseUpdate",
         "type": "object"
       },
+      "CategorySummary": {
+        "additionalProperties": false,
+        "description": "One category's figures (Phase 54), naming the scenarios they come from.",
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "claims_found": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claims Found"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/MetricSet"
+          },
+          "negative_passed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Negative Passed"
+          },
+          "scenarios": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          }
+        },
+        "required": [
+          "category",
+          "scenarios",
+          "metrics"
+        ],
+        "title": "CategorySummary",
+        "type": "object"
+      },
       "ChainEvidence": {
         "additionalProperties": false,
         "description": "One citation in a finding's evidence chain (Phase 46).",
@@ -4044,6 +4093,82 @@
         "title": "MetricPoint",
         "type": "object"
       },
+      "MetricSet": {
+        "additionalProperties": false,
+        "description": "The ten metrics for one scenario or one suite.",
+        "properties": {
+          "dependency_correctness": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Dependency Correctness",
+            "type": "number"
+          },
+          "evidence_coverage": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Evidence Coverage",
+            "type": "number"
+          },
+          "intent_accuracy": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Intent Accuracy",
+            "type": "number"
+          },
+          "latency_s": {
+            "default": 0.0,
+            "minimum": 0.0,
+            "title": "Latency S",
+            "type": "number"
+          },
+          "plan_validity": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Plan Validity",
+            "type": "number"
+          },
+          "replanning_success": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Replanning Success",
+            "type": "number"
+          },
+          "task_efficiency": {
+            "default": 0.0,
+            "minimum": 0.0,
+            "title": "Task Efficiency",
+            "type": "number"
+          },
+          "tool_selection_accuracy": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Tool Selection Accuracy",
+            "type": "number"
+          },
+          "unsupported_claim_rate": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Unsupported Claim Rate",
+            "type": "number"
+          },
+          "verification_success": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Verification Success",
+            "type": "number"
+          }
+        },
+        "title": "MetricSet",
+        "type": "object"
+      },
       "MissionDetail": {
         "additionalProperties": false,
         "description": "A mission's current state, without the full event log.",
@@ -4768,6 +4893,96 @@
           "name"
         ],
         "title": "PlanWorkstream",
+        "type": "object"
+      },
+      "QualityComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "dataset": {
+            "title": "Dataset",
+            "type": "string"
+          },
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "value",
+          "formula",
+          "source",
+          "dataset"
+        ],
+        "title": "QualityComponent",
+        "type": "object"
+      },
+      "QualitySummary": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_formula": {
+            "default": "agent quality = mean(grounding, verification, negatives, claims found, open questions), from one agent report",
+            "title": "Agent Formula",
+            "type": "string"
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/CategorySummary"
+            },
+            "title": "Categories",
+            "type": "array"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/QualityComponent"
+            },
+            "title": "Components",
+            "type": "array"
+          },
+          "formula": {
+            "default": "quality = mean(grounding, verification, negatives, claims found, open questions, challenge, ATT&CK, injection), each in 0..1 and each from the newest committed report it names",
+            "title": "Formula",
+            "type": "string"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "trend": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "title": "Trend",
+            "type": "array"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "title": "QualitySummary",
         "type": "object"
       },
       "RecordingSummary": {
@@ -5803,6 +6018,35 @@
         ],
         "title": "TimelineRelation",
         "type": "string"
+      },
+      "TrendPoint": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_quality": {
+            "title": "Agent Quality",
+            "type": "number"
+          },
+          "comparable_key": {
+            "title": "Comparable Key",
+            "type": "string"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "report": {
+            "title": "Report",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generated_at",
+          "report",
+          "agent_quality",
+          "comparable_key"
+        ],
+        "title": "TrendPoint",
+        "type": "object"
       },
       "TrustStatus": {
         "description": "Member 4's `ClaimStatus`, unchanged.",
@@ -6868,6 +7112,28 @@
           }
         },
         "summary": "Get Metric Directions",
+        "tags": [
+          "replay"
+        ]
+      }
+    },
+    "/api/v1/evaluation/quality": {
+      "get": {
+        "description": "One quality figure with its formula, its components (each naming the report and scenarios it\ncame from), the figures by category, and the agent-quality trend (Phase 54).",
+        "operationId": "get_evaluation_quality_api_v1_evaluation_quality_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QualitySummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Evaluation Quality",
         "tags": [
           "replay"
         ]

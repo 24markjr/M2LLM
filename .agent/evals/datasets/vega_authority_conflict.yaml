@@ -3,6 +3,8 @@
 # both sides' authority (approved; draft) - not a verdict that the approved figure wins. Authority
 # informs the reader; it never settles a conflict (decision D18).
 id: vega_authority_conflict
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: conflicting_authority
 suites: [core, all]
 objective: >
   Compare the approved budget statement for Project Vega with the draft email to the project team,

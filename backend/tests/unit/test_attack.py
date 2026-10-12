@@ -194,3 +194,62 @@ async def test_a_finding_citing_a_mapped_event_needs_review() -> None:
 
     assert "it maps to a MITRE ATT&CK technique" in reviews[0]["required_because"]
     assert graph.status_code == 200 and graph.json()["store"] == "attack-path"
+
+
+# --- quiet logs (Phase 54) ------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("objective", "about"),
+    [
+        ("Do these server logs show malicious activity or a compromise?", True),
+        ("Was there lateral movement between the servers?", True),
+        ("Investigate the PowerShell activity on WS-12.", False),
+        ("When does Project Vega start?", False),
+    ],
+)
+def test_an_attack_question_is_recognised(objective: str, about: bool) -> None:
+    from app.cyber.attack import asks_about_attack
+
+    assert asks_about_attack(objective) is about
+
+
+def test_only_logs_with_no_detection_are_quiet() -> None:
+    from app.cyber.attack import quiet_logs
+
+    def documents(name: str) -> dict[str, str]:
+        return {name: parse(FIXTURES / name).text}
+
+    assert quiet_logs(documents("cyber_admin_benign.log"))
+    assert not quiet_logs(documents("cyber_ws12_security.xml"))
+    assert not quiet_logs({"report.txt": "The approved budget is 250,000."}), "no events at all"
+
+
+async def test_reasoning_discards_descriptions_of_quiet_logs_and_says_why() -> None:
+    """Measured in the 20-scenario baseline: asked whether benign logs showed a compromise, the
+    agent reported a finished backup and a package upgrade."""
+    import json
+
+    from app.intelligence.reasoning.engine import DISCARD_NO_DETECTION, ReasoningEngine
+    from app.llm.echo import EchoProvider
+    from app.schemas.execution import Observation
+
+    text = parse(FIXTURES / "cyber_admin_benign.log").text
+    candidates = json.dumps(
+        {"findings": [{"claim": "A backup completed at 01:00:01.", "citations": ["b.log:r1"]}]}
+    )
+    relevant = json.dumps({"verdicts": [{"index": 1, "keep": True, "reason": "x"}]})
+    engine = ReasoningEngine(
+        EchoProvider(responses={"reasoning": [candidates], "relevance": [relevant]})
+    )
+    findings = await engine.derive_findings(
+        Objective(text="Do these server logs show malicious activity or a compromise?"),
+        [
+            Observation(
+                task_id="task_001", task_type="extract_timeline", content="x", sources=["b.log:r1"]
+            )
+        ],
+        documents={"b.log": text},
+    )
+    assert findings == []
+    assert engine.discarded[DISCARD_NO_DETECTION] == 1

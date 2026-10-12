@@ -5,6 +5,8 @@
 # exercises it, so a regression in PDF page mapping would otherwise be invisible until a
 # citation silently stopped resolving.
 id: aurora_pdf_timeline
+# Evaluation v2 (Phase 54): reported with the other scenarios of its category.
+category: temporal_contradiction
 suites: [core, all]
 objective: Extract the project timeline and milestone dates from the Aurora project report.
 documents:

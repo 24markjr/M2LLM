@@ -223,6 +223,10 @@ DISCARD_UNEVIDENCED = (
 )
 DISCARD_AGREEMENT = "it stated the same value on every side: agreement, not a conflict"
 DISCARD_IRRELEVANT = "it was judged not to bear on the question asked"
+DISCARD_NO_DETECTION = (
+    "the question asked whether the logs show an attack, and no detection rule flagged any event: "
+    "it describes ordinary activity"
+)
 DISCARD_GRAPH_COPY = (
     'it copied a knowledge-graph entry ("X.attribute = value") instead of saying what it means'
 )
@@ -337,12 +341,27 @@ class ReasoningEngine:
         candidates = await self._filter_irrelevant(objective, candidates, emit)
         comparative = requires_comparison(intent)
         assessing = requires_assessment(intent)
+        # Logs no detection rule flagged, asked about an attack (Phase 54): nothing in them is an
+        # answer. Decided once per run, deterministically.
+        from app.cyber.attack import asks_about_attack, quiet_logs
+
+        no_detection = asks_about_attack(objective.text) and quiet_logs(documents)
         binder = EvidenceBinder(observations)
         findings: list[Finding] = []
 
         for offset, candidate in enumerate(candidates.findings, start=start_index + 1):
             claim = candidate.claim.strip()
             if not claim:
+                continue
+
+            if no_detection:
+                await self._event(
+                    emit,
+                    EventType.FINDING_DISCARDED,
+                    {"claim": claim[:160], "reason": DISCARD_NO_DETECTION},
+                )
+                log.info("no_detection_discarded", claim=claim[:80])
+                self.discarded[DISCARD_NO_DETECTION] += 1
                 continue
 
             refs, _evidence = binder.bind(candidate.all_citations)

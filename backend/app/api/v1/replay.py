@@ -14,6 +14,7 @@ from fastapi import APIRouter, status
 from app.api.errors import ApiError
 from app.api.recording import list_recordings, load_recording
 from app.core.logging import get_logger
+from app.evaluation.quality import QualitySummary, quality_summary
 from app.evaluation.report import LOWER_IS_BETTER, EvalReport
 from app.evaluation.runner import reports_dir
 from app.schemas.common import JarvisModel
@@ -112,6 +113,13 @@ async def get_evaluation_reports() -> list[MetricPoint]:
         )
 
     return points
+
+
+@router.get("/evaluation/quality", response_model=QualitySummary)
+async def get_evaluation_quality() -> QualitySummary:
+    """One quality figure with its formula, its components (each naming the report and scenarios it
+    came from), the figures by category, and the agent-quality trend (Phase 54)."""
+    return quality_summary()
 
 
 @router.get("/evaluation/directions", response_model=dict[str, str])
