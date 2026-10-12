@@ -1,0 +1,21 @@
+# Phase 52: lateral movement. svc_admin logs on to SRV-DB over the network from 10.0.0.12, PSEXESVC
+# is installed and spawns cmd.exe running reconnaissance, then the same account reaches SRV-FILE and
+# runs rundll32 on a DLL in Temp.
+id: cyber_lateral_movement
+suites: [cyber, all]
+objective: >
+  Determine how the svc_admin account moved between servers on 3 March 2026 and what it ran on each.
+documents:
+  - cyber_lateral_movement.jsonl
+
+expected_operations:
+  - extract_entities
+  - extract_timeline
+  - assess_impact
+  - generate_report
+
+min_tasks: 2
+minimal_tasks: 3
+
+expected_claims:
+  - "SRV-DB"

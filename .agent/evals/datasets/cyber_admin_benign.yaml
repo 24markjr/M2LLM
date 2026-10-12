@@ -1,0 +1,19 @@
+# Phase 52: a NEGATIVE case. A nightly backup, an administrator's SSH session that upgrades
+# packages during business hours, a scheduled apt job. Ordinary administration; the correct answer
+# is that nothing malicious is shown.
+id: cyber_admin_benign
+suites: [cyber, negative, all]
+objective: >
+  Do these server logs from 3 March 2026 show malicious activity or a compromise?
+documents:
+  - cyber_admin_benign.log
+
+expected_operations:
+  - extract_timeline
+  - detect_inconsistencies
+  - generate_report
+
+min_tasks: 2
+minimal_tasks: 3
+
+expect_zero_findings: true

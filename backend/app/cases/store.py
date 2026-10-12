@@ -13,6 +13,7 @@ from app.schemas.case import (
     Case,
     CaseEvidence,
     CaseInvestigation,
+    CaseMode,
     CaseSeverity,
     CaseStatus,
 )
@@ -39,6 +40,8 @@ class CaseStore(Protocol):
         status: CaseStatus | None = None,
         owner: str | None = None,
         closed_at: datetime | None = None,
+        mode: CaseMode | None = None,
+        recall_similar: bool | None = None,
     ) -> Case | None: ...
 
     async def save_investigation(self, investigation: CaseInvestigation) -> None:
@@ -91,6 +94,8 @@ class MemoryCaseStore:
         status: CaseStatus | None = None,
         owner: str | None = None,
         closed_at: datetime | None = None,
+        mode: CaseMode | None = None,
+        recall_similar: bool | None = None,
     ) -> Case | None:
         case = self._cases.get(case_id)
         if case is None:
@@ -103,6 +108,8 @@ class MemoryCaseStore:
                 "severity": severity,
                 "status": status,
                 "owner": owner,
+                "mode": mode,
+                "recall_similar": recall_similar,
             }.items()
             if v is not None
         }

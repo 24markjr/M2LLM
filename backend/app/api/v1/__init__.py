@@ -10,6 +10,7 @@ from fastapi import APIRouter
 from app.api.v1 import (
     cases,
     context,
+    cyber,
     documents,
     evidence,
     knowledge,
@@ -31,5 +32,6 @@ router.include_router(evidence.router)
 router.include_router(cases.router)
 router.include_router(review.router)
 router.include_router(reports.router)
+router.include_router(cyber.router)
 
 __all__ = ["router"]

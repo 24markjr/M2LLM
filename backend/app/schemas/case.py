@@ -34,7 +34,8 @@ class CaseStatus(StrEnum):
 
 class CaseMode(StrEnum):
     GENERAL = "GENERAL"
-    # Cyber investigation mode arrives in Phase 52; the field exists so no migration is needed then.
+    # Cyber investigation mode (Phase 52): event logs, indicators, per-host and per-account
+    # timelines, and the ATT&CK view (Phase 53).
     CYBER = "CYBER"
 
 
@@ -46,6 +47,9 @@ class Case(JarvisModel):
     status: CaseStatus = CaseStatus.OPEN
     owner: str = Field(default="unassigned", max_length=128)
     mode: CaseMode = CaseMode.GENERAL
+    # Opt-in (decision D19): show other cases sharing indicators with this one, as context. Never
+    # evidence - nothing recalled can be cited by a finding.
+    recall_similar: bool = False
     opened_at: datetime = Field(default_factory=utcnow)
     closed_at: datetime | None = None
 

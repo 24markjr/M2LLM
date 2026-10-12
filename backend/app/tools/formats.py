@@ -53,6 +53,8 @@ class FormatKind(StrEnum):
     IMAGE = "image"
     VIDEO = "video"
     AUDIO = "audio"
+    # Security event logs (Phase 52): one event per line, whatever the export's shape.
+    EVENT_LOG = "event_log"
 
 
 class FormatSpec(JarvisModel):
@@ -73,6 +75,15 @@ FORMATS: list[FormatSpec] = [
         extensions=[".txt", ".md", ".json", ".log"],
         parser="text",
         becomes="its lines, as written",
+    ),
+    FormatSpec(
+        kind=FormatKind.EVENT_LOG,
+        extensions=[".jsonl", ".ndjson", ".xml"],
+        parser="eventlog",
+        becomes=(
+            "one security event per line - JSON Lines, or a Windows / Sysmon XML export - its "
+            "fields named host=, user=, event=, image=, cmd=, src_ip= ..."
+        ),
     ),
     FormatSpec(
         kind=FormatKind.TABLE,
@@ -457,8 +468,41 @@ async def prepare(paths: list[Path], provider: Any) -> None:
             await understand(path, sha256_of(path), provider)
 
 
+def load_event_log(path: Path) -> LoadedDocument:
+    """A security event log, one event per line (Phase 52). A file that turns out not to hold
+    events is read as text, so nothing is lost by the extension promising more than it had."""
+    from app.cyber.eventlog import events_from_json, events_from_xml, to_line
+
+    raw = path.read_text(encoding="utf-8", errors="replace")
+    try:
+        events = events_from_xml(raw) if path.suffix.lower() == ".xml" else events_from_json(raw)
+    except (ValueError, SyntaxError) as exc:
+        raise DocumentLoadError(f"{path.name}: not a readable event log ({exc})") from exc
+    if not events:
+        return load_text(path)
+    return _bounded(
+        path,
+        [to_line(event) for event in events],
+        kind=FormatKind.EVENT_LOG.value,
+        note="",
+    )
+
+
+def load_text_or_events(path: Path) -> LoadedDocument:
+    """A `.json` file: one event per line when it is an array of events (Phase 52), as written
+    otherwise."""
+    if path.suffix.lower() == ".json":
+        from app.cyber.eventlog import events_from_json, to_line
+
+        events = events_from_json(path.read_text(encoding="utf-8", errors="replace"))
+        if events:
+            return _bounded(path, [to_line(e) for e in events], kind=FormatKind.TEXT.value)
+    return load_text(path)
+
+
 _PARSERS: dict[FormatKind, Callable[[Path], LoadedDocument]] = {
-    FormatKind.TEXT: load_text,
+    FormatKind.TEXT: load_text_or_events,
+    FormatKind.EVENT_LOG: load_event_log,
     FormatKind.TABLE: load_text,
     FormatKind.SPREADSHEET: load_xlsx,
     FormatKind.WORD: load_docx,

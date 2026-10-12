@@ -111,7 +111,7 @@ class KnowledgeGraphTool(Tool):
 
         snapshot = ctx.knowledge
         if snapshot is None:
-            return await self._regex_fallback(call, payload, ctx)
+            return with_cyber(self, call, await self._regex_fallback(call, payload, ctx), ctx)
 
         conflicts = conflict_items(snapshot)[:MAX_CONFLICT_ITEMS]
         items = list(conflicts)
@@ -134,10 +134,15 @@ class KnowledgeGraphTool(Tool):
                 if any(i.document_id == c.document_id and i.line == c.line for i in items)
             )
         )
-        return self.success(
+        return with_cyber(
+            self,
             call,
-            ExtractOutput(extractions=items, note=note).model_dump(),
-            sources=sources,
+            self.success(
+                call,
+                ExtractOutput(extractions=items, note=note).model_dump(),
+                sources=sources,
+            ),
+            ctx,
         )
 
     async def _regex_fallback(
@@ -155,3 +160,60 @@ class KnowledgeGraphTool(Tool):
             output.get("note", "")
         )
         return self.success(call, output, sources=result.sources)
+
+
+# --- security logs (Phase 52) ----------------------------------------------------------------------
+
+# Items added from security logs. A decoded command or an observed connection is what a 4B reasoning
+# model does not derive by itself: measured, it reported "PowerShell ran on WS-12" three times and
+# never the address the encoded command fetched from.
+MAX_CYBER_ITEMS = 30
+
+
+def cyber_items(documents: dict[str, str], page_starts: dict[str, list[int]]) -> list[Extraction]:
+    """Decoded commands and observed relations from any event logs among the documents, each on
+    the line that states it. Deterministic; empty when no document holds events."""
+    from app.cyber.analysis import analyse
+
+    analysis = analyse(documents, page_starts)
+    if analysis.events == 0:
+        return []
+    items: list[Extraction] = []
+
+    def at(locator: str, value: str, kind: str) -> None:
+        name, _, position = locator.rpartition(":")
+        if position.startswith("r"):
+            items.append(
+                Extraction(document_id=name, line=int(position[1:]), value=value, kind=kind)
+            )
+
+    for command in analysis.decoded_commands:
+        at(
+            command.locator,
+            f"decoded -EncodedCommand on {command.host or 'the host'}: {command.script[:300]}",
+            "decoded_command",
+        )
+    for relation in analysis.relations:
+        subject = relation.subject.split(":", 1)[-1]
+        target = relation.object.split(":", 1)[-1]
+        detail = f" ({relation.detail})" if relation.detail else ""
+        for locator in relation.sources[:2]:
+            at(locator, f"{subject} {relation.predicate} {target}{detail}", "observed_relation")
+    return items[:MAX_CYBER_ITEMS]
+
+
+def with_cyber(tool: Tool, call: ToolCall, result: ToolResult, ctx: ToolContext) -> ToolResult:
+    """The knowledge tool's result, with what the run's security logs show appended (Phase 52)."""
+    if result.failed:
+        return result
+    extra = cyber_items(ctx.documents, ctx.page_starts)
+    if not extra:
+        return result
+    output = dict(result.output)
+    output["extractions"] = [*output.get("extractions", []), *(e.model_dump() for e in extra)]
+    output["note"] = (
+        f"{output.get('note', '')}; {len(extra)} item(s) from security logs "
+        "(decoded commands, observed relations)"
+    ).lstrip("; ")
+    sources = list(dict.fromkeys([*result.sources, *(f"{e.document_id}:r{e.line}" for e in extra)]))
+    return tool.success(call, output, sources=sources)

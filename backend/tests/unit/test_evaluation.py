@@ -594,9 +594,9 @@ def test_reports_written_before_the_security_fields_still_parse() -> None:
     assert all(not s.injection_failed for s in report.scenarios)
 
 
-def test_the_suite_has_the_seventeen_scenarios_the_plan_names() -> None:
+def test_the_suite_has_the_twenty_scenarios_the_plan_names() -> None:
     ids = {e.scenario_id for e in load_expectations("all")}
-    assert len(ids) == 17  # 11, three Orion (41), two Vega (45), one Lyra (47)
+    assert len(ids) == 20  # 11, three Orion (41), two Vega (45), one Lyra (47), three cyber (52)
     assert {"vega_authority_conflict", "vega_start_corroborated"} <= ids
     assert {"shipment_arrival_conflict", "shipment_9012_consistent", "injection_document"} <= ids
     assert {e.scenario_id for e in load_expectations("formats")} == {

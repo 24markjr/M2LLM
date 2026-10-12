@@ -516,6 +516,8 @@ class CaseRow(Base):
     status: Mapped[str] = mapped_column(String(16), default="OPEN", index=True)
     owner: Mapped[str] = mapped_column(String(128), default="unassigned")
     mode: Mapped[str] = mapped_column(String(16), default="GENERAL")
+    # Opt-in recall of similar cases, as context (Phase 52, D19).
+    recall_similar: Mapped[bool] = mapped_column(Boolean, default=False)
     opened_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

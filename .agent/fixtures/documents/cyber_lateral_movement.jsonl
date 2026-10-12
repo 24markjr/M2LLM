@@ -1,0 +1,5 @@
+{"timestamp": "2026-03-03T10:20:00Z", "host": "SRV-DB", "EventID": 4624, "TargetUserName": "svc_admin", "LogonType": 3, "IpAddress": "10.0.0.12"}
+{"timestamp": "2026-03-03T10:20:04Z", "host": "SRV-DB", "EventID": 7045, "ServiceName": "PSEXESVC", "Image": "C:\\Windows\\PSEXESVC.exe", "SubjectUserName": "svc_admin"}
+{"timestamp": "2026-03-03T10:20:06Z", "host": "SRV-DB", "EventID": 4688, "SubjectUserName": "svc_admin", "NewProcessName": "C:\\Windows\\System32\\cmd.exe", "ParentProcessName": "C:\\Windows\\PSEXESVC.exe", "CommandLine": "cmd.exe /c whoami & net group \"Domain Admins\" /domain"}
+{"timestamp": "2026-03-03T10:24:30Z", "host": "SRV-FILE", "EventID": 4624, "TargetUserName": "svc_admin", "LogonType": 3, "IpAddress": "10.0.0.31"}
+{"timestamp": "2026-03-03T10:25:02Z", "host": "SRV-FILE", "EventID": 4688, "SubjectUserName": "svc_admin", "NewProcessName": "C:\\Windows\\System32\\rundll32.exe", "CommandLine": "rundll32.exe C:\\Windows\\Temp\\x.dll,Start"}

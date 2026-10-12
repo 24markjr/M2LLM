@@ -45,6 +45,9 @@ class CaseUpdate(JarvisModel):
     severity: CaseSeverity | None = None
     status: CaseStatus | None = None
     owner: str | None = Field(default=None, max_length=128)
+    mode: CaseMode | None = None
+    # Opt-in recall of similar cases as context (Phase 52, D19).
+    recall_similar: bool | None = None
 
 
 class CaseSummary(JarvisModel):
@@ -145,6 +148,8 @@ async def update_case(case_id: str, body: CaseUpdate) -> Case:
         status=body.status,
         owner=body.owner,
         closed_at=utcnow() if body.status is CaseStatus.CLOSED else None,
+        mode=body.mode,
+        recall_similar=body.recall_similar,
     )
     assert updated is not None
     return updated

@@ -48,6 +48,7 @@ class PgCaseStore:
                     status=case.status.value,
                     owner=case.owner,
                     mode=case.mode.value,
+                    recall_similar=case.recall_similar,
                     opened_at=case.opened_at,
                     closed_at=case.closed_at,
                 )
@@ -78,11 +79,17 @@ class PgCaseStore:
         status: CaseStatus | None = None,
         owner: str | None = None,
         closed_at: datetime | None = None,
+        mode: CaseMode | None = None,
+        recall_similar: bool | None = None,
     ) -> Case | None:
         async with self._scope() as session:
             row = await session.get(CaseRow, case_id)
             if row is None:
                 return None
+            if mode is not None:
+                row.mode = mode.value
+            if recall_similar is not None:
+                row.recall_similar = recall_similar
             if title is not None:
                 row.title = title
             if description is not None:
@@ -194,6 +201,7 @@ def _case(row: CaseRow) -> Case:
         status=CaseStatus(row.status),
         owner=row.owner,
         mode=CaseMode(row.mode),
+        recall_similar=bool(row.recall_similar),
         opened_at=row.opened_at,
         closed_at=row.closed_at,
     )
