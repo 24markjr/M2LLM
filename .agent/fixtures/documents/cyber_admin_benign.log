@@ -1,0 +1,6 @@
+Mar  3 01:00:01 backup01 cron[2211]: (root) CMD (/usr/local/bin/nightly-backup.sh)
+Mar  3 01:42:17 backup01 nightly-backup[2214]: backup of /srv/finance completed, 3.2 GB
+Mar  3 09:05:44 SRV-FILE sshd[911]: Accepted publickey for it_admin from 10.0.0.40 port 51122
+Mar  3 09:06:02 SRV-FILE sudo[915]: it_admin : TTY=pts/0 ; COMMAND=/usr/bin/apt-get upgrade -y
+Mar  3 09:21:40 SRV-FILE sshd[911]: Disconnected from user it_admin 10.0.0.40 port 51122
+Mar  3 12:00:00 SRV-FILE systemd[1]: Started Daily apt download activities.

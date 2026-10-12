@@ -162,7 +162,7 @@ class KnowledgeGraphTool(Tool):
         return self.success(call, output, sources=result.sources)
 
 
-# --- security logs (Phase 52) ----------------------------------------------------------------------
+# --- security logs (Phase 52) ---------------------------------------------------------------------
 
 # Items added from security logs. A decoded command or an observed connection is what a 4B reasoning
 # model does not derive by itself: measured, it reported "PowerShell ran on WS-12" three times and

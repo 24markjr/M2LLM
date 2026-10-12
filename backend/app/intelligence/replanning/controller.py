@@ -30,6 +30,7 @@ from pydantic import Field
 from app.core.agent_config import get_agent_bounds
 from app.core.config import PlanningPolicyName, get_settings
 from app.core.logging import get_logger
+from app.cyber.analysis import with_decoded
 from app.integrations.verification import VerificationProvider, verify_finding
 from app.intelligence.evidence_gap.detector import EvidenceGapDetector, emit_gaps, propose_task
 from app.intelligence.execution.engine import ExecutionEngine
@@ -149,7 +150,12 @@ def _text_at(
     lines = documents[document].splitlines()
 
     if kind == "r":
-        return lines[value - 1].strip() if 1 <= value <= len(lines) else ""
+        if not 1 <= value <= len(lines):
+            return ""
+        # A line carrying an encoded PowerShell command is read with its decoding beside it
+        # (Phase 52): a deterministic transformation of the same line, labelled as such, so a
+        # verifier can check a claim about what the command did.
+        return with_decoded(lines[value - 1].strip())
 
     if kind == "p":
         starts = (page_starts or {}).get(document, [])

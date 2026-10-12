@@ -48,8 +48,9 @@ _ORDINAL = r"(?:st|nd|rd|th)?"
 # Tried in this order. An earlier pattern wins where two overlap, which is what lets
 # "14 September 2026" be read once as a full date rather than also as "September 2026".
 _DATE_PATTERNS: tuple[re.Pattern[str], ...] = (
-    # 2026-04-30
-    re.compile(r"\b(?P<year>\d{4})-(?P<month_n>\d{1,2})-(?P<day>\d{1,2})\b"),
+    # 2026-04-30, and the date of an ISO timestamp, 2026-03-03T09:14:05Z (BUG-037: a trailing
+    # word boundary never matched "03T", so no event log's date could ground a claim).
+    re.compile(r"\b(?P<year>\d{4})-(?P<month_n>\d{1,2})-(?P<day>\d{1,2})(?![\d])"),
     # 14 September, 14 September 2026, 14th Sept. 2026   (original: %d %B, %d %B %Y)
     re.compile(
         rf"\b(?P<day>\d{{1,2}}){_ORDINAL}\s+{_MONTH},?(?:\s+(?P<year>\d{{4}}))?\b", re.IGNORECASE

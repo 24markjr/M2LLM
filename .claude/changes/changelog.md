@@ -5,6 +5,36 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-12 - Phase 52: cyber data, entities, incident timelines
+
+### Added
+
+- **Event logs as citable lines**: JSON Lines, Windows/Sysmon XML exports and JSON arrays normalised
+  to one event per line (`host=`, `user=`, `event=`, `image=`, `cmd=`, ...); syslog and CSV as they are.
+  XML with a DTD is refused
+- **Indicators** (IPs, domains, URLs, e-mails, hashes, CVEs, paths, registry keys), defanged forms
+  included; **observed relations** (logons, remote logons, process trees, connections, service
+  installs) each with its events; **encoded PowerShell decoded**; **per-host and per-account
+  timelines**. `GET /api/v1/missions/{id}/cyber`, the console's security-logs panel
+- **Missions see it**: the knowledge tool hands reasoning the decoded commands and relations on their
+  lines; the verifier reads a decoding beside its line
+- **Case mode CYBER and opt-in recall** of similar cases (D19), as context that no mission can cite;
+  migration `a52c0be70001`
+- Scenarios `cyber_encoded_powershell`, `cyber_lateral_movement`, `cyber_admin_benign` (negative); 20 in all
+
+### Fixed
+
+- **BUG-037**: the date in an ISO timestamp was never read, so claims about event times failed the
+  date check
+
+### Verified
+
+- 25 new backend tests, 3 frontend; 1290+ backend tests, 75 frontend, tsc, build
+- Live, once per change: the PowerShell scenario went from no finding naming the contacted address to
+  four verified findings (0.88) including the decoded command; the benign case stayed empty
+
+---
+
 ## 2026-10-11 - Phase 51: the investigation report
 
 ### Added

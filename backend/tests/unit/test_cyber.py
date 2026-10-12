@@ -222,3 +222,75 @@ async def test_the_endpoint_recalls_only_when_the_case_opted_in() -> None:
     assert off["recall"].startswith("off: the case has not opted in")
     assert on["recall"].startswith("on: context only")
     assert on["similar_cases"] and "203.0.113.50" in on["similar_cases"][0]["shared"]
+
+
+# --- missions see what the logs show -------------------------------------------------------------
+
+
+async def test_the_knowledge_tool_hands_reasoning_the_decoded_command_on_its_line() -> None:
+    """Measured: without this the agent reported "PowerShell ran on WS-12" three times and never
+    the address the encoded command fetched from."""
+    from app.schemas.tool import ToolCall
+    from app.tools.base import ToolContext
+    from app.tools.knowledge import KnowledgeGraphTool
+
+    documents = _documents("cyber_ws12_security.xml")
+    result = await KnowledgeGraphTool().execute(
+        ToolCall(tool_name="knowledge_graph", arguments={"mode": "all"}),
+        ToolContext(documents=documents, document_ids=list(documents)),
+    )
+    assert result.ok
+    decoded = [e for e in result.output["extractions"] if e["kind"] == "decoded_command"]
+    assert decoded and decoded[0]["line"] == 2
+    assert "http://203.0.113.50/stage.ps1" in decoded[0]["value"]
+    assert "cyber_ws12_security.xml:r2" in result.sources, "citable where it was decoded from"
+
+
+async def test_documents_without_events_get_nothing_extra() -> None:
+    from app.tools.knowledge import cyber_items
+
+    prose = {"report.txt": "The approved budget is 250,000.\nGo-live is June."}
+    assert cyber_items(prose, {}) == []
+
+
+def test_a_verifier_reads_an_encoded_command_with_its_decoding() -> None:
+    """The cited line holds only Base64; its decoding is put beside it, labelled, so a claim about
+    what the command fetched can be checked against the line it cites."""
+    from app.intelligence.replanning.controller import evidence_from_observations
+    from app.schemas.execution import Observation
+
+    documents = _documents("cyber_ws12_security.xml")
+    [evidence] = evidence_from_observations(
+        [
+            Observation(
+                task_id="task_001",
+                task_type="extract_entities",
+                content="1 item",
+                sources=["cyber_ws12_security.xml:r2"],
+            )
+        ],
+        documents,
+    )
+    assert "-enc SQBFAFgA" in evidence.content
+    assert "[decoded -EncodedCommand: IEX (New-Object Net.WebClient)" in evidence.content
+    plain = evidence_from_observations(
+        [
+            Observation(
+                task_id="task_001",
+                task_type="extract_entities",
+                content="1 item",
+                sources=["cyber_ws12_security.xml:r1"],
+            )
+        ],
+        documents,
+    )[0]
+    assert "decoded" not in plain.content
+
+
+def test_an_iso_timestamp_carries_its_date() -> None:
+    """BUG-037: "2026-03-03T09:14:05Z" was no date at all, so every claim about when an event
+    happened was marked as stating a date its line did not contain."""
+    from app.intelligence.temporal import find_dates
+
+    assert [d.iso() for _, d in find_dates("2026-03-03T09:14:05Z host=WS-12")] == ["2026-03-03"]
+    assert find_dates("build 2026-03-031") == []

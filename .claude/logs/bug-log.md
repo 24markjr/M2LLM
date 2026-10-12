@@ -1253,3 +1253,22 @@ exactly as before.
 
 **Lesson.** The test corpora were written by us and share a naming habit. Real file names belong in
 the tests: the new cases are the owner's actual file names.
+
+---
+
+## BUG-037 — The date in an ISO timestamp was never read as a date
+
+**Found:** 2026-10-12, Phase 52's live check on `cyber_encoded_powershell`
+**Severity:** High for logs. Every claim about when an event happened was marked OVERSTATED_CLAIM
+**Status:** Fixed (`intelligence/temporal.py`)
+
+**Symptom.** Four findings on the PowerShell log, all correct, all PARTIALLY_SUPPORTED: "the claim
+states 3 March 2026, which none of its cited evidence contains" - on lines that begin
+`2026-03-03T09:14:05Z`.
+
+**Cause.** The ISO date pattern ended in a word boundary. In `2026-03-03T09` the day is followed by
+`T`, a word character, so the boundary never matched and the timestamp carried no date. Every log
+format with ISO timestamps was affected; the document corpora (dates written apart) were not.
+
+**Fix.** The pattern ends "not followed by a digit" instead. A number running on (`2026-03-031`) is
+still no date. Re-run: all four findings SUPPORTED at 0.88.

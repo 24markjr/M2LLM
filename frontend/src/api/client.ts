@@ -35,6 +35,7 @@ import type { Case, CaseDetail, CaseList, CaseSeverity, CaseStatus } from "./typ
 import type { ChallengeResult, HypothesisSet, PlanTree } from "./types";
 import type { AuditEntry, ReviewList, ReviewResponse, ReviewState } from "./types";
 import type { InvestigationReport } from "./types";
+import type { CyberAnalysis } from "./types";
 
 const BASE = "/api/v1";
 
@@ -256,8 +257,19 @@ export const api = {
 
   updateCase: (
     caseId: string,
-    body: { title?: string; description?: string; severity?: CaseSeverity; status?: CaseStatus; owner?: string },
+    body: {
+      title?: string;
+      description?: string;
+      severity?: CaseSeverity;
+      status?: CaseStatus;
+      owner?: string;
+      mode?: "GENERAL" | "CYBER";
+      recall_similar?: boolean;
+    },
   ) => request<Case>(`${BASE}/cases/${caseId}`, { method: "PATCH", body: JSON.stringify(body) }),
+
+  /** Indicators, relations, decoded commands and timelines from the run's security logs (Phase 52). */
+  getCyber: (runId: string) => request<CyberAnalysis>(`${BASE}/missions/${runId}/cyber`),
 
   // --- the Evidence Locker (Phase 43) ---
   listEvidence: () => request<EvidenceList>(`${BASE}/evidence`),

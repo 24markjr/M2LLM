@@ -62,6 +62,12 @@ def decode_powershell(command: str) -> str:
     return ""
 
 
+def with_decoded(line: str) -> str:
+    """The line, with its encoded PowerShell decoded beside it when it carries one."""
+    script = decode_powershell(line)
+    return f"{line} [decoded -EncodedCommand: {script}]" if script else line
+
+
 def analyse(
     documents: dict[str, str], page_starts: dict[str, list[int]] | None = None
 ) -> CyberAnalysis:

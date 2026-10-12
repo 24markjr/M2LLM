@@ -243,6 +243,11 @@
             "title": "Owner",
             "type": "string"
           },
+          "recall_similar": {
+            "default": false,
+            "title": "Recall Similar",
+            "type": "boolean"
+          },
           "severity": {
             "$ref": "#/components/schemas/CaseSeverity",
             "default": "MEDIUM"
@@ -555,6 +560,16 @@
             ],
             "title": "Description"
           },
+          "mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CaseMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "owner": {
             "anyOf": [
               {
@@ -566,6 +581,17 @@
               }
             ],
             "title": "Owner"
+          },
+          "recall_similar": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recall Similar"
           },
           "severity": {
             "anyOf": [
@@ -1206,6 +1232,186 @@
           "action"
         ],
         "title": "CustodyEvent",
+        "type": "object"
+      },
+      "CyberAnalysis": {
+        "additionalProperties": false,
+        "properties": {
+          "account_timelines": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/TimelineItem"
+              },
+              "type": "array"
+            },
+            "title": "Account Timelines",
+            "type": "object"
+          },
+          "decoded_commands": {
+            "items": {
+              "$ref": "#/components/schemas/DecodedCommand"
+            },
+            "title": "Decoded Commands",
+            "type": "array"
+          },
+          "documents": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/CyberEntity"
+            },
+            "title": "Entities",
+            "type": "array"
+          },
+          "events": {
+            "default": 0,
+            "title": "Events",
+            "type": "integer"
+          },
+          "host_timelines": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/TimelineItem"
+              },
+              "type": "array"
+            },
+            "title": "Host Timelines",
+            "type": "object"
+          },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/IndicatorSighting"
+            },
+            "title": "Indicators",
+            "type": "array"
+          },
+          "recall": {
+            "default": "off",
+            "title": "Recall",
+            "type": "string"
+          },
+          "relations": {
+            "items": {
+              "$ref": "#/components/schemas/CyberRelation"
+            },
+            "title": "Relations",
+            "type": "array"
+          },
+          "similar_cases": {
+            "items": {
+              "$ref": "#/components/schemas/SimilarCase"
+            },
+            "title": "Similar Cases",
+            "type": "array"
+          }
+        },
+        "title": "CyberAnalysis",
+        "type": "object"
+      },
+      "CyberEntity": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "name"
+        ],
+        "title": "CyberEntity",
+        "type": "object"
+      },
+      "CyberRelation": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "default": "",
+            "title": "Detail",
+            "type": "string"
+          },
+          "first_seen": {
+            "default": "",
+            "title": "First Seen",
+            "type": "string"
+          },
+          "last_seen": {
+            "default": "",
+            "title": "Last Seen",
+            "type": "string"
+          },
+          "object": {
+            "title": "Object",
+            "type": "string"
+          },
+          "predicate": {
+            "title": "Predicate",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject",
+          "predicate",
+          "object"
+        ],
+        "title": "CyberRelation",
+        "type": "object"
+      },
+      "DecodedCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "host": {
+            "default": "",
+            "title": "Host",
+            "type": "string"
+          },
+          "locator": {
+            "title": "Locator",
+            "type": "string"
+          },
+          "script": {
+            "title": "Script",
+            "type": "string"
+          },
+          "user": {
+            "default": "",
+            "title": "User",
+            "type": "string"
+          }
+        },
+        "required": [
+          "locator",
+          "script"
+        ],
+        "title": "DecodedCommand",
         "type": "object"
       },
       "EntityInvestigation": {
@@ -2551,7 +2757,8 @@
           "subtitles",
           "image",
           "video",
-          "audio"
+          "audio",
+          "event_log"
         ],
         "title": "FormatKind",
         "type": "string"
@@ -2925,6 +3132,44 @@
         ],
         "title": "HypothesisStatus",
         "type": "string"
+      },
+      "IndicatorSighting": {
+        "additionalProperties": false,
+        "properties": {
+          "defanged": {
+            "default": false,
+            "title": "Defanged",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          },
+          "via": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Via",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "value"
+        ],
+        "title": "IndicatorSighting",
+        "type": "object"
       },
       "IngestRequest": {
         "additionalProperties": false,
@@ -4994,6 +5239,33 @@
         "title": "SentenceCheck",
         "type": "object"
       },
+      "SimilarCase": {
+        "additionalProperties": false,
+        "description": "Another case sharing indicators with this one (D19): context, never evidence.",
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "shared": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Shared",
+            "type": "array"
+          }
+        },
+        "required": [
+          "case_id",
+          "run_id"
+        ],
+        "title": "SimilarCase",
+        "type": "object"
+      },
       "SourceLocator": {
         "additionalProperties": false,
         "description": "Exactly where a piece of content came from.\n\nThis is what makes evidence checkable rather than decorative. \"doc_A says the project\nslipped\" is an assertion; \"project_report.pdf page 12, chars 400-520\" is something a\nreader can go and verify, and something the evidence binder can resolve against the\nchunks actually retrieved.",
@@ -5331,6 +5603,30 @@
           "source"
         ],
         "title": "TimelineEvent",
+        "type": "object"
+      },
+      "TimelineItem": {
+        "additionalProperties": false,
+        "properties": {
+          "locator": {
+            "title": "Locator",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "time": {
+            "title": "Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "time",
+          "locator",
+          "summary"
+        ],
+        "title": "TimelineItem",
         "type": "object"
       },
       "TimelineRelation": {
@@ -7396,6 +7692,48 @@
         "summary": "Get Challenges",
         "tags": [
           "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/cyber": {
+      "get": {
+        "operationId": "get_cyber_analysis_api_v1_missions__run_id__cyber_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CyberAnalysis"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Cyber Analysis",
+        "tags": [
+          "cyber"
         ]
       }
     },

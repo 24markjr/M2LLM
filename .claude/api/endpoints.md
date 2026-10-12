@@ -42,6 +42,7 @@ kept current while the run proceeds.
 | POST | `/api/v1/missions/{id}/findings/{finding_id}/review` | Approve, reject (reason; `replan` starts a follow-up investigation) or modify (reason, reworded claim); reviewer from `X-Jarvis-User`; approval releases facts to memory |
 | GET | `/api/v1/missions/{id}/investigation-report` | The investigation report as it stands (JSON, no side effects); HIGH/CRITICAL findings are challenged first if nobody has (Phase 51) |
 | GET | `/api/v1/missions/{id}/investigation-report/export/{md,pdf,docx,json}` | A download; REPORTED custody on each cited item and an audit entry with the content hash; `X-Report-Hash` |
+| GET | `/api/v1/missions/{id}/cyber` | The run's security logs: indicators, entities, observed relations with their lines, decoded commands, per-host and per-account timelines; similar cases when the case opted in (context only) (Phase 52) |
 | GET | `/api/v1/audit` | The audit log, newest first: every write the API received (refused ones too) and the system's own actions; `target`, `limit` |
 | GET | `/api/v1/missions/{id}/plan` | The plan tree: workstreams, each step's why, inputs, action, output, dependencies and status; every change with trigger, reason and before/after; repairs (Phase 49) |
 | POST | `/api/v1/missions/{id}/findings/{finding_id}/challenge` | Challenge a finding: counter-evidence with authority, its own lines, the verifier on the counter lines, outcome and confidence before and after; actor from `X-Jarvis-User` (Phase 48) |

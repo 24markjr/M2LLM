@@ -1,6 +1,6 @@
 # JARVIS v2 — implementation plan, Phases 43–55
 
-**Status:** Phases 43-51 done (2026-10-07 to 2026-10-11); Phases 52-55 in progress.
+**Status:** Phases 43-52 done (2026-10-07 to 2026-10-12); Phases 53-55 to do.
 
 **Why this plan exists.** A product review of the demo (2026-10-06) judged JARVIS a strong
 investigation engine but not yet an investigation *platform*: no cases, no evidence custody, no
@@ -206,12 +206,18 @@ hash covers the content, not the generation time, so the page and a download mat
 
 ## Track D — Cyber investigation mode (P1)
 
-### Phase 52 — Cyber data, entities, incident timeline (L)
+### Phase 52 — Cyber data, entities, incident timeline (L) — **DONE** 2026-10-12
 
 - Parsers for event logs (D13), one citable event per line; cyber entities and relationships;
   deterministic IOC extraction (defanged forms included); per-host and per-account timelines.
 - Case mode CYBER; opt-in recall of similar cases as context (D19), excluded from evidence by test.
 - Fixtures: encoded PowerShell, lateral movement, benign admin activity (negative case).
+
+**As built (Phase 52):** as planned. Recall is computed on demand from other CYBER cases' stored
+evidence (no index table) and kept out of missions structurally. The live check found that the
+model could not report what the analysis knew, so missions now receive the decoded commands and
+relations through the knowledge tool, and the verifier sees a decoding beside its line; it also found
+BUG-037 (ISO timestamps carried no date). Details: `architecture/cyber.md`.
 
 ### Phase 53 — MITRE ATT&CK mapping and attack paths (L)
 

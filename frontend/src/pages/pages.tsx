@@ -24,6 +24,7 @@ import { useMission, useMissionList } from "../hooks/useMission";
 import { SPEEDS, useReplay } from "../hooks/useReplay";
 import { DocumentPicker } from "../components/DocumentPicker";
 import { Hypotheses } from "../components/HypothesesPanel";
+import { CyberPanel } from "../components/CyberPanel";
 import { InvestigationReportPanel } from "../components/InvestigationReportPanel";
 import { PlanChanges, PlanTreePanel } from "../components/PlanTreePanel";
 import { documentsLink, validWorkspace } from "../components/workspaces";
@@ -455,6 +456,7 @@ export function MissionViewPanels({ view, runId }: { view: MissionView; runId?: 
               <PlanChanges tree={view.plan} />
               <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} runId={runId} reviews={view.reviews} />
               <Hypotheses set={view.hypotheses} caseId={mission.case_id || undefined} />
+              <CyberPanel runId={runId} caseId={mission.case_id || undefined} />
               <Gaps gaps={view.gaps} />
               <Report report={view.report} />
               <InvestigationReportPanel runId={runId} />
@@ -468,6 +470,7 @@ export function MissionViewPanels({ view, runId }: { view: MissionView; runId?: 
               <Conclusion lines={conclusion(view.findings, done)} />
               <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} runId={runId} reviews={view.reviews} />
               <Hypotheses set={view.hypotheses} caseId={mission.case_id || undefined} />
+              <CyberPanel runId={runId} caseId={mission.case_id || undefined} />
               <Report report={view.report} />
               <InvestigationReportPanel runId={runId} />
             </>

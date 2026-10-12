@@ -175,6 +175,30 @@ export interface ConfidenceFactor {
   assessed: boolean;
 }
 
+/** What a run's security logs show (Phase 52). */
+export interface CyberRelation {
+  subject: string;
+  predicate: string;
+  object: string;
+  sources: string[];
+  first_seen: string;
+  last_seen: string;
+  detail: string;
+}
+
+export interface CyberAnalysis {
+  events: number;
+  documents: string[];
+  indicators: { kind: string; value: string; defanged: boolean; sources: string[]; via: string[] }[];
+  entities: { kind: string; name: string; sources: string[] }[];
+  relations: CyberRelation[];
+  host_timelines: Record<string, { time: string; locator: string; summary: string }[]>;
+  account_timelines: Record<string, { time: string; locator: string; summary: string }[]>;
+  decoded_commands: { locator: string; host: string; user: string; script: string }[];
+  similar_cases: { case_id: string; run_id: string; shared: string[] }[];
+  recall: string;
+}
+
 /** The investigation report (Phase 51). */
 export type Severity = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO";
 
@@ -1031,6 +1055,8 @@ export interface Case {
   status: CaseStatus;
   owner: string;
   mode: "GENERAL" | "CYBER";
+  /** Opt-in recall of similar cases, as context (Phase 52). */
+  recall_similar?: boolean;
   opened_at: string;
   closed_at: string | null;
 }

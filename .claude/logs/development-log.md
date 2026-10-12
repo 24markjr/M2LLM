@@ -6,6 +6,25 @@ and what is still broken.
 
 ---
 
+# 2026-10-12 - Phase 52: cyber data, entities, incident timelines
+
+The deterministic part came first and was right on the first fixture run: the decoding, the relations,
+the timelines. The live check then showed the model could not use any of it - three findings saying
+PowerShell ran, none naming what it fetched. Two changes closed that, neither touching a prompt: the
+knowledge tool now hands reasoning the decoded commands and relations on their lines, and the verifier
+reads a decoding beside an encoded line. The next run named the address but nothing verified, and the
+verifier's issues pointed straight at BUG-037: no ISO timestamp had ever carried a date. Fixed, the
+same run verified all four findings.
+
+Indicator rules were tightened against the fixtures before any test: a .NET type in a decoded script
+read as a domain, and `C:\Program Files` was cut at the space. Python's `is_private` counts the
+documentation ranges as private, so recall names its local networks explicitly. The benign fixture is
+a `.log`, which `.gitignore` excludes; it is added explicitly.
+
+Paused here at the owner's request.
+
+---
+
 # 2026-10-11 - Phase 51: the investigation report
 
 **The summary is not new prose.** "Every sentence grounded" is met by construction: the executive
