@@ -68,9 +68,10 @@ def with_decoded(line: str) -> str:
     return f"{line} [decoded -EncodedCommand: {script}]" if script else line
 
 
-def analyse(
+def parse_events(
     documents: dict[str, str], page_starts: dict[str, list[int]] | None = None
-) -> CyberAnalysis:
+) -> list[CyberEvent]:
+    """Every line that parses as an event, with its locator, in time order."""
     page_starts = page_starts or {}
     events: list[CyberEvent] = []
     for name, text in documents.items():
@@ -90,6 +91,14 @@ def analyse(
                 )
             )
     events.sort(key=lambda e: (sort_key(Event(time=e.time)), e.locator))
+    return events
+
+
+def analyse(
+    documents: dict[str, str], page_starts: dict[str, list[int]] | None = None
+) -> CyberAnalysis:
+    page_starts = page_starts or {}
+    events = parse_events(documents, page_starts)
 
     sightings: dict[tuple[str, str], IndicatorSighting] = {}
     entities: dict[tuple[str, str], CyberEntity] = {}
@@ -182,7 +191,7 @@ def analyse(
         if e.user:
             by_account[e.user].append(item)
 
-    return CyberAnalysis(
+    analysis = CyberAnalysis(
         events=len(events),
         documents=sorted({e.locator.rsplit(":", 1)[0] for e in events}),
         indicators=sorted(sightings.values(), key=lambda s: (s.kind, s.value)),
@@ -192,6 +201,10 @@ def analyse(
         account_timelines=dict(sorted(by_account.items())),
         decoded_commands=decoded,
     )
+    # ATT&CK techniques and the attack path (Phase 53), from the same events.
+    from app.cyber.attack import attach_attack
+
+    return attach_attack(analysis, events)
 
 
 def documents_line(

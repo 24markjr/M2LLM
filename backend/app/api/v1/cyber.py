@@ -13,10 +13,24 @@ from app.api.errors import ApiError
 from app.api.registry import get_registry
 from app.cases.service import get_case_store
 from app.cyber.analysis import analyse
+from app.cyber.attack import attack_graph
 from app.cyber.recall import distinctive, similar_cases
 from app.schemas.cyber import CyberAnalysis
+from app.schemas.knowledge import KnowledgeGraphView
 
 router = APIRouter(tags=["cyber"])
+
+
+@router.get("/missions/{run_id}/attack-graph", response_model=KnowledgeGraphView)
+async def get_attack_graph(run_id: str) -> KnowledgeGraphView:
+    """The attack path as the 3D explorer draws it (Phase 53): observed steps, inferred steps
+    labelled with their reasons, and the ATT&CK techniques mapped to the hosts."""
+    record = get_registry().get(run_id)
+    if record is None:
+        raise ApiError(
+            "MISSION_NOT_FOUND", f"no mission {run_id}", status_code=status.HTTP_404_NOT_FOUND
+        )
+    return attack_graph(run_id, analyse(record.texts, record.page_starts))
 
 
 @router.get("/missions/{run_id}/cyber", response_model=CyberAnalysis)

@@ -1,6 +1,12 @@
 /** The cyber analysis as the console shows it (Phase 52). Pure, so it is tested without rendering. */
 
-import type { CyberAnalysis, CyberRelation } from "../api/types";
+import type { CyberAnalysis, CyberRelation, PathEdge } from "../api/types";
+
+/** "url http://… DELIVERED file C:\\…": an attack-path step in words. */
+export function pathEdgeText(edge: PathEdge): string {
+  const side = (value: string) => value.replace(":", " ");
+  return `${side(edge.subject)} ${edge.predicate.replace(/_/g, " ")} ${side(edge.object)}`;
+}
 
 /** "account svc_admin LOGGED ON REMOTELY host srv-db". */
 export function relationText(relation: CyberRelation): string {

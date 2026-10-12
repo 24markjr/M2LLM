@@ -614,6 +614,35 @@ def run_eval_trust(*, write: bool) -> int:
     return 1 if report.false_confidence or security_failed else 0
 
 
+def run_eval_attack(*, write: bool) -> int:
+    """The ATT&CK mapping benchmark (Phase 53). Deterministic, no model, well under a second."""
+    from app.evaluation.attack import run_attack_benchmark, write_attack_report
+
+    report = run_attack_benchmark()
+    print()
+    print(RULE)
+    print(f"JARVIS ATT&CK MAPPING BENCHMARK  ({report.attack_version})")
+    print(RULE)
+    print(f"  technique_precision   {report.technique_precision:.3f}")
+    print(f"  technique_recall      {report.technique_recall:.3f}")
+    print(
+        f"  held_out_recall       {report.held_out_recall:.3f}  "
+        "(the fixture written after the rules)"
+    )
+    for case in report.cases:
+        print(
+            f"    {case.fixture:<36} missed {', '.join(case.missed) or '-'}; "
+            f"wrong {', '.join(case.false_positives) or '-'}"
+        )
+    if write:
+        _, md_path = write_attack_report(report)
+        print()
+        print(f"report written to {md_path}")
+    print(RULE)
+    # The gate: a technique mapped that the ground truth does not hold. Misses are reported.
+    return 1 if any(case.false_positives for case in report.cases) else 0
+
+
 async def run_eval_challenge(*, write: bool) -> int:
     """The challenge benchmark (Phase 48). Deterministic, no model, well under a second."""
     from app.evaluation.challenge import run_challenge_benchmark, write_challenge_report
@@ -726,6 +755,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     challenge_cmd.add_argument("--no-write", action="store_true", help="do not write a report")
 
+    attack_cmd = sub.add_parser(
+        "eval-attack", help="Phase 53: ATT&CK technique precision and recall"
+    )
+    attack_cmd.add_argument("--no-write", action="store_true", help="do not write a report")
+
     sub.add_parser("health", help="check the configured provider")
 
     args = parser.parse_args(argv)
@@ -738,6 +772,8 @@ def main(argv: list[str] | None = None) -> int:
         )
     if args.command == "eval-retrieval":
         return asyncio.run(run_eval_retrieval(write=not args.no_write))
+    if args.command == "eval-attack":
+        return run_eval_attack(write=not args.no_write)
     if args.command == "eval-challenge":
         return asyncio.run(run_eval_challenge(write=not args.no_write))
     if args.command == "eval-trust":

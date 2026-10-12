@@ -1,0 +1,80 @@
+# Rule-based MITRE ATT&CK mapping (Phase 53, decision D14).
+#
+# Each rule names one technique from the vendored ATT&CK v15.1 extract (.agent/attack/) and the event
+# fields that indicate it. A rule matches an event when every condition matches (case-insensitive
+# regular expressions); the mapping then lists what matched and the lines it matched on. A mapping is
+# evidence for an analyst, not a verdict: every one is marked as needing validation, and a finding
+# that cites a mapped event needs review (Phase 50).
+#
+# Fields: image, parent, cmd, decoded (the decoded -EncodedCommand), event (id), logon_type, service,
+# dst_port, dst_ip, user, host, message.
+#
+# Consumed by: app/cyber/attack.py. A rule naming a technique the extract does not hold fails loudly.
+
+version: 1
+
+rules:
+  - technique: T1059.001
+    why: PowerShell ran
+    all:
+      - { field: image, regex: '(^|\\)powershell(_ise)?\.exe$' }
+
+  - technique: T1027
+    why: the command line carries an encoded command
+    all:
+      - { field: cmd, regex: '\s-e(nc(odedcommand)?)?\s+[A-Za-z0-9+/=]{16,}' }
+
+  - technique: T1105
+    why: the decoded command downloads from the network
+    all:
+      - { field: decoded, regex: 'download(string|file|data)|invoke-webrequest|\biwr\b|start-bitstransfer' }
+
+  - technique: T1204.002
+    why: an Office application started a script interpreter
+    all:
+      - { field: parent, regex: '(winword|excel|powerpnt|outlook)\.exe$' }
+      - { field: image, regex: '(powershell|cmd|wscript|cscript|mshta)\.exe$' }
+
+  - technique: T1071.001
+    why: a script interpreter connected out on a web port
+    all:
+      - { field: image, regex: '(powershell|wscript|cscript|mshta|rundll32)\.exe$' }
+      - { field: dst_port, regex: '^(80|443|8080|8443)$' }
+
+  - technique: T1078
+    why: an account logged on over the network
+    all:
+      - { field: event, regex: '^4624$' }
+      - { field: logon_type, regex: '^(3|10)$' }
+
+  - technique: T1569.002
+    why: a service was installed to run a command (PsExec-style)
+    all:
+      - { field: event, regex: '^(7045|4697)$' }
+      - { field: service, regex: 'psexe|remcom|paexec' }
+
+  - technique: T1021.002
+    why: PsExec's service implies execution over SMB admin shares
+    all:
+      - { field: event, regex: '^(7045|4697)$' }
+      - { field: service, regex: 'psexe|remcom|paexec' }
+
+  - technique: T1543.003
+    why: a Windows service was installed
+    all:
+      - { field: event, regex: '^(7045|4697)$' }
+
+  - technique: T1033
+    why: the command asks who the current user is
+    all:
+      - { field: cmd, regex: '\bwhoami\b' }
+
+  - technique: T1069.002
+    why: the command lists domain groups
+    all:
+      - { field: cmd, regex: '\bnet1?(\.exe)?\s+group\b.*\/domain' }
+
+  - technique: T1218.011
+    why: rundll32 ran a DLL
+    all:
+      - { field: image, regex: '(^|\\)rundll32\.exe$' }

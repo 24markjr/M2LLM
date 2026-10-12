@@ -30,3 +30,4 @@ reader looking for something that was never written.
 | ADR-015 | Statement types are ruled from evidence; source authority informs and never decides | Accepted |
 | ADR-016 | Review decisions and the audit log are append-only; the audit is structural | Accepted |
 | ADR-017 | The report's PDF is written by a small in-house text writer | Accepted |
+| ADR-018 | ATT&CK is vendored from the official bundle; techniques are mapped by rule | Accepted |

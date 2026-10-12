@@ -271,6 +271,10 @@ export const api = {
   /** Indicators, relations, decoded commands and timelines from the run's security logs (Phase 52). */
   getCyber: (runId: string) => request<CyberAnalysis>(`${BASE}/missions/${runId}/cyber`),
 
+  /** The attack path as the 3D explorer draws it (Phase 53). */
+  getAttackGraph: (runId: string) =>
+    request<KnowledgeGraphView>(`${BASE}/missions/${runId}/attack-graph`),
+
   // --- the Evidence Locker (Phase 43) ---
   listEvidence: () => request<EvidenceList>(`${BASE}/evidence`),
 

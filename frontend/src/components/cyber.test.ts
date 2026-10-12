@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { CyberAnalysis } from "../api/types";
-import { hasEvents, indicatorsByKind, relationText } from "./cyber";
+import { hasEvents, indicatorsByKind, pathEdgeText, relationText } from "./cyber";
 
 const analysis: CyberAnalysis = {
   events: 5,
@@ -46,5 +46,22 @@ describe("cyber (Phase 52)", () => {
     expect(hasEvents(analysis)).toBe(true);
     expect(hasEvents({ ...analysis, events: 0 })).toBe(false);
     expect(hasEvents(null)).toBe(false);
+  });
+});
+
+describe("attack path (Phase 53)", () => {
+  it("writes an inferred step in words", () => {
+    expect(
+      pathEdgeText({
+        kind: "INFERRED",
+        subject: "host:srv-db",
+        predicate: "MOVED_TO",
+        object: "host:srv-file",
+        sources: [],
+        reason: "",
+        techniques: [],
+        time: "",
+      }),
+    ).toBe("host srv-db MOVED TO host srv-file");
   });
 });

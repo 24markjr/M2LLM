@@ -262,6 +262,10 @@ export function linkColourOf(kind: GraphLinkKind): string {
   if (kind === "DIFFERS_FROM") return "#8a93a6";
   if (kind === "CITES") return "#3ecf8e";
   if (kind === "RELATES") return "#4da3ff";
+  // The attack path (Phase 53): an inferred step in amber, never the observed blue; a technique in
+  // purple.
+  if (kind === "INFERRED") return "#e8b34a";
+  if (kind === "MAPS_TO") return "#a970ff";
   return "#333d52";
 }
 

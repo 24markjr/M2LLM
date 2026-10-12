@@ -6,6 +6,22 @@ and what is still broken.
 
 ---
 
+# 2026-10-12 - Phase 53: MITRE ATT&CK mapping and attack paths
+
+The official v15.1 bundle was downloaded once and reduced to what the mapping reads; the reduction
+is a script, so the extract can be regenerated and compared. Every rule's technique was checked
+against it before any mapping ran.
+
+The benchmark was built to avoid grading the rules on their own homework: a fourth fixture was written
+after the rules, with the techniques it shows whether or not a rule exists. It scores 0.400 recall,
+and the report says which three techniques are missing rather than adding rules to pass it.
+
+Writing the lateral-movement ground truth exposed a Phase 52 defect: a quoted argument in a command
+line ended the value at its first quote. The attack path reuses the explorer's analysis mode with two
+new link kinds rather than a second renderer.
+
+---
+
 # 2026-10-12 - Phase 52: cyber data, entities, incident timelines
 
 The deterministic part came first and was right on the first fixture run: the decoding, the relations,

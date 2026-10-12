@@ -80,6 +80,27 @@
         "title": "ArchivedInvestigation",
         "type": "object"
       },
+      "AttackPath": {
+        "additionalProperties": false,
+        "properties": {
+          "inferred": {
+            "items": {
+              "$ref": "#/components/schemas/PathEdge"
+            },
+            "title": "Inferred",
+            "type": "array"
+          },
+          "observed": {
+            "items": {
+              "$ref": "#/components/schemas/PathEdge"
+            },
+            "title": "Observed",
+            "type": "array"
+          }
+        },
+        "title": "AttackPath",
+        "type": "object"
+      },
       "AuditEntry": {
         "additionalProperties": false,
         "properties": {
@@ -1247,6 +1268,14 @@
             "title": "Account Timelines",
             "type": "object"
           },
+          "attack_path": {
+            "$ref": "#/components/schemas/AttackPath"
+          },
+          "attack_version": {
+            "default": "",
+            "title": "Attack Version",
+            "type": "string"
+          },
           "decoded_commands": {
             "items": {
               "$ref": "#/components/schemas/DecodedCommand"
@@ -1307,6 +1336,13 @@
               "$ref": "#/components/schemas/SimilarCase"
             },
             "title": "Similar Cases",
+            "type": "array"
+          },
+          "techniques": {
+            "items": {
+              "$ref": "#/components/schemas/TechniqueMapping"
+            },
+            "title": "Techniques",
             "type": "array"
           }
         },
@@ -2885,7 +2921,9 @@
           "MENTIONED_IN",
           "CONFLICTS_WITH",
           "CITES",
-          "DIFFERS_FROM"
+          "DIFFERS_FROM",
+          "INFERRED",
+          "MAPS_TO"
         ],
         "title": "GraphLinkKind",
         "type": "string"
@@ -4499,6 +4537,60 @@
         "title": "PartialDate",
         "type": "object"
       },
+      "PathEdge": {
+        "additionalProperties": false,
+        "description": "One step of an attack path. OBSERVED: events state it. INFERRED: a rule concluded it from\nobserved steps, and says how - never shown as observed.",
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "object": {
+            "title": "Object",
+            "type": "string"
+          },
+          "predicate": {
+            "title": "Predicate",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          },
+          "techniques": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Techniques",
+            "type": "array"
+          },
+          "time": {
+            "default": "",
+            "title": "Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "subject",
+          "predicate",
+          "object"
+        ],
+        "title": "PathEdge",
+        "type": "object"
+      },
       "PlanChange": {
         "additionalProperties": false,
         "description": "One \"JARVIS changed its plan\": what triggered it, why, and the plan before and after.",
@@ -5509,6 +5601,79 @@
         ],
         "title": "TaskType",
         "type": "string"
+      },
+      "TechniqueMapping": {
+        "additionalProperties": false,
+        "description": "One ATT&CK technique a rule matched (Phase 53): evidence for an analyst, never a verdict.",
+        "properties": {
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "first_seen": {
+            "default": "",
+            "title": "First Seen",
+            "type": "string"
+          },
+          "hosts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hosts",
+            "type": "array"
+          },
+          "indicators": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Indicators",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "needs_validation": {
+            "default": true,
+            "title": "Needs Validation",
+            "type": "boolean"
+          },
+          "rule": {
+            "title": "Rule",
+            "type": "string"
+          },
+          "source": {
+            "default": "rule",
+            "title": "Source",
+            "type": "string"
+          },
+          "tactics": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tactics",
+            "type": "array"
+          },
+          "technique_id": {
+            "title": "Technique Id",
+            "type": "string"
+          },
+          "url": {
+            "default": "",
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "technique_id",
+          "name",
+          "rule"
+        ],
+        "title": "TechniqueMapping",
+        "type": "object"
       },
       "TimelineEntry": {
         "additionalProperties": false,
@@ -7602,6 +7767,49 @@
         "summary": "Get Mission",
         "tags": [
           "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/attack-graph": {
+      "get": {
+        "description": "The attack path as the 3D explorer draws it (Phase 53): observed steps, inferred steps\nlabelled with their reasons, and the ATT&CK techniques mapped to the hosts.",
+        "operationId": "get_attack_graph_api_v1_missions__run_id__attack_graph_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeGraphView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Attack Graph",
+        "tags": [
+          "cyber"
         ]
       }
     },

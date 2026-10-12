@@ -72,6 +72,9 @@ def _value(raw: Any) -> str:
 
 
 def _quote(value: str) -> str:
+    """A value with spaces is quoted. Double quotes inside it become single quotes, so the line
+    reads back whole (`net group "Domain Admins"` was cut at its first quote - Phase 53)."""
+    value = value.replace('"', "'")
     return f'"{value}"' if (" " in value or not value) else value
 
 

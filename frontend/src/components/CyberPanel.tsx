@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import type { CyberAnalysis } from "../api/types";
 import { caseLink } from "./cases";
-import { hasEvents, indicatorsByKind, relationText } from "./cyber";
+import { hasEvents, indicatorsByKind, pathEdgeText, relationText } from "./cyber";
 
 export function CyberPanel({ runId, caseId }: { runId?: string | undefined; caseId?: string | undefined }) {
   const [analysis, setAnalysis] = useState<CyberAnalysis | null>(null);
@@ -50,6 +50,42 @@ export function CyberPanel({ runId, caseId }: { runId?: string | undefined; case
               </div>
             ))}
           </>
+        ) : null}
+        {analysis.techniques?.length ? (
+          <>
+            <div className="why-head">
+              ATT&amp;CK techniques <span className="dim">({analysis.attack_version}, by rule - each needs validation)</span>
+            </div>
+            {analysis.techniques.map((m) => (
+              <div className="gap-item" key={m.technique_id}>
+                <a className="mono" href={m.url} target="_blank" rel="noreferrer">
+                  {m.technique_id}
+                </a>{" "}
+                {m.name} <span className="dim">{m.tactics.join(", ")}</span>
+                <div className="dim">
+                  {m.rule} · {m.indicators.join("; ")} · <span className="mono">{m.evidence.join(", ")}</span>
+                </div>
+              </div>
+            ))}
+          </>
+        ) : null}
+        {analysis.attack_path?.inferred.length ? (
+          <>
+            <div className="why-head">Inferred steps (not observed - each says why)</div>
+            <ul>
+              {analysis.attack_path.inferred.map((e) => (
+                <li key={`${e.subject}-${e.object}`}>
+                  <span className="badge">INFERRED</span> {pathEdgeText(e)}
+                  <div className="dim">{e.reason}</div>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
+        {runId ? (
+          <a className="button" href={`#/mission/${runId}/attack`}>
+            the attack path in 3D
+          </a>
         ) : null}
         <div className="why-head">Indicators</div>
         {indicatorsByKind(analysis).map(([kind, values]) => (

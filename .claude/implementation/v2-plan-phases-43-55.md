@@ -1,6 +1,6 @@
 # JARVIS v2 — implementation plan, Phases 43–55
 
-**Status:** Phases 43-52 done (2026-10-07 to 2026-10-12); Phases 53-55 to do.
+**Status:** Phases 43-53 done (2026-10-07 to 2026-10-12); Phases 54-55 to do.
 
 **Why this plan exists.** A product review of the demo (2026-10-06) judged JARVIS a strong
 investigation engine but not yet an investigation *platform*: no cases, no evidence custody, no
@@ -219,12 +219,16 @@ model could not report what the analysis knew, so missions now receive the decod
 relations through the knowledge tool, and the verifier sees a decoding beside its line; it also found
 BUG-037 (ISO timestamps carried no date). Details: `architecture/cyber.md`.
 
-### Phase 53 — MITRE ATT&CK mapping and attack paths (L)
+### Phase 53 — MITRE ATT&CK mapping and attack paths (L) — **DONE** 2026-10-12
 
 - Vendored ATT&CK (D14); rule-based technique mapping in YAML, model suggestions labelled; every
   mapping lists indicators and evidence and needs analyst validation.
 - Attack path with OBSERVED and INFERRED edges, named as such; shown in the 3D explorer.
 - Technique precision and recall; invariant: no inferred edge reported as observed.
+
+**As built (Phase 53):** as planned except model-suggested techniques, which are not built (ADR-018).
+ATT&CK v15.1 vendored as a reduced extract of the official bundle. Precision 1.000, recall 0.824,
+held-out recall 0.400. Details: `architecture/cyber.md`.
 
 ## Track E — Measurement and enterprise (P1/P2)
 

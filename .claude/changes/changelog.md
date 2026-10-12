@@ -5,6 +5,31 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-12 - Phase 53: MITRE ATT&CK mapping and attack paths
+
+### Added
+
+- **ATT&CK v15.1**, vendored from the official STIX bundle as a reduced, hash-stamped extract
+  (`backend/scripts/vendor_attack.py`, `.agent/attack/`)
+- **Rule-based technique mapping** (`.agent/config/attack_rules.yaml`): each mapping with its rule,
+  what matched, its lines and tactics, marked as needing validation; a finding citing a mapped event
+  needs review
+- **The attack path**: observed steps, and inferred ones (a delivered payload, a lateral hop) each
+  with its reason, never shown as observed; in the security-logs panel and in 3D
+  (`#/mission/{id}/attack`, `GET .../attack-graph`)
+- **The ATT&CK benchmark** (`eval-attack`, re-run in CI): precision 1.000, recall 0.824, held-out
+  recall 0.400; ADR-018
+
+### Fixed
+
+- Command lines with double quotes were cut at the first quote when normalised (T1069.002 missed)
+
+### Verified
+
+- 11 new backend tests, 1 frontend; 1302 backend tests, 76 frontend, tsc, build
+
+---
+
 ## 2026-10-12 - Phase 52: cyber data, entities, incident timelines
 
 ### Added

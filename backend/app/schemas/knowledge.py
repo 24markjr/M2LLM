@@ -312,6 +312,10 @@ class GraphLinkKind(StrEnum):
     CITES = "CITES"
     # Two descriptions of one attribute in other words (BUG-033): drawn apart from a contradiction.
     DIFFERS_FROM = "DIFFERS_FROM"
+    # The attack path (Phase 53): a step concluded from observed ones, never drawn as observed...
+    INFERRED = "INFERRED"
+    # ...and an ATT&CK technique a rule mapped to the host or process it was seen on.
+    MAPS_TO = "MAPS_TO"
 
 
 class GraphNode(JarvisModel):

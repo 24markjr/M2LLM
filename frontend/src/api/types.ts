@@ -197,6 +197,35 @@ export interface CyberAnalysis {
   decoded_commands: { locator: string; host: string; user: string; script: string }[];
   similar_cases: { case_id: string; run_id: string; shared: string[] }[];
   recall: string;
+  /** Phase 53: ATT&CK techniques mapped by rule, and the attack path. */
+  techniques?: TechniqueMapping[];
+  attack_path?: { observed: PathEdge[]; inferred: PathEdge[] };
+  attack_version?: string;
+}
+
+export interface TechniqueMapping {
+  technique_id: string;
+  name: string;
+  tactics: string[];
+  url: string;
+  rule: string;
+  source: string;
+  indicators: string[];
+  evidence: string[];
+  hosts: string[];
+  first_seen: string;
+  needs_validation: boolean;
+}
+
+export interface PathEdge {
+  kind: "OBSERVED" | "INFERRED";
+  subject: string;
+  predicate: string;
+  object: string;
+  sources: string[];
+  reason: string;
+  techniques: string[];
+  time: string;
 }
 
 /** The investigation report (Phase 51). */
@@ -611,7 +640,9 @@ export type GraphLinkKind =
   | "CONFLICTS_WITH"
   | "CITES"
   /** The same attribute described in other words: not a contradiction (BUG-033). */
-  | "DIFFERS_FROM";
+  | "DIFFERS_FROM"
+  | "INFERRED"
+  | "MAPS_TO";
 
 export interface GraphNode {
   id: string;

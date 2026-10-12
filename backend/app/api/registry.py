@@ -37,6 +37,7 @@ from app.review.service import audit
 from app.schemas.case import CaseInvestigation
 from app.schemas.common import RunId, new_run_id, utcnow
 from app.schemas.event import ExecutionEvent
+from app.schemas.finding import Finding
 from app.schemas.objective import Objective
 
 log = get_logger(__name__)
@@ -78,6 +79,8 @@ class MissionRecord:
         self.texts: dict[str, str] = {}
         self.page_starts: dict[str, list[int]] = {}
         self.challenges: dict[str, ChallengeResult] = {}
+        # The lines an ATT&CK mapping rests on (Phase 53), computed once from `texts` on first use.
+        self.attack_locators: set[str] | None = None
         # The case the mission belongs to (Phase 44).
         self.case_id: str = ""
 
@@ -289,12 +292,33 @@ async def _held(record: MissionRecord) -> set[str]:
         from app.review.service import requirements
 
         severity = await _case_severity(record.case_id)
+        mapped = attack_locators(record)
         return {
-            f.finding_id for f in record.result.findings if requirements(f, case_severity=severity)
+            f.finding_id
+            for f in record.result.findings
+            if requirements(f, case_severity=severity, attack_mapped=cites(f, mapped))
         }
     except Exception:
         log.exception("review_requirements_failed", run_id=record.run_id)
         return {f.finding_id for f in record.result.findings}
+
+
+def attack_locators(record: MissionRecord) -> set[str]:
+    """The lines of the run's documents an ATT&CK mapping rests on (Phase 53). Cached on the
+    record; empty when the documents hold no events."""
+    if record.attack_locators is None:
+        from app.cyber.analysis import analyse
+        from app.cyber.attack import mapped_locators
+
+        record.attack_locators = (
+            mapped_locators(analyse(record.texts, record.page_starts)) if record.texts else set()
+        )
+    return record.attack_locators
+
+
+def cites(finding: Finding, locators: set[str]) -> bool:
+    """Whether a finding cites one of these lines."""
+    return any(ref.is_resolved and ref.as_ref() in locators for ref in finding.evidence)
 
 
 async def _case_severity(case_id: str) -> str:

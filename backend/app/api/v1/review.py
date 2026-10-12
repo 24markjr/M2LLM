@@ -58,13 +58,15 @@ def _record(run_id: str) -> MissionRecord:
 
 
 async def _reasons(record: MissionRecord, finding: Finding) -> list[str]:
-    from app.api.registry import _case_severity
+    from app.api.registry import _case_severity, attack_locators, cites
 
     challenge = record.challenges.get(finding.finding_id)
     return requirements(
         finding,
         case_severity=await _case_severity(record.case_id),
         challenge_outcome=challenge.outcome.value if challenge else "",
+        # It cites an event an ATT&CK technique was mapped to (Phase 53).
+        attack_mapped=cites(finding, attack_locators(record)),
     )
 
 

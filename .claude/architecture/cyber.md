@@ -59,3 +59,25 @@ documents hold events; the recall button appears for a run in a case.
 | cyber_encoded_powershell | 3 findings, none naming the address; claims 0.0 | 4 findings, all verified (0.88), the decoded command and 203.0.113.50 among them |
 | cyber_lateral_movement | 2 findings, unverified, SRV-DB missed | 2 findings naming SRV-DB and SRV-FILE (before BUG-037's fix: unverified on dates) |
 | cyber_admin_benign (negative) | no findings | no findings |
+
+## ATT&CK mapping and the attack path (Phase 53, ADR-018)
+
+- **Catalogue**: `.agent/attack/enterprise-attack.json`, reduced from the official ATT&CK v15.1 STIX
+  bundle (https://github.com/mitre/cti, tag ATT&CK-v15.1; SHA-256 recorded in the file) by
+  `backend/scripts/vendor_attack.py`: 637 live techniques, 14 tactics, offline.
+- **Rules**: `.agent/config/attack_rules.yaml` - a technique and the event fields that indicate it
+  (image, parent, cmd, decoded, event, logon_type, service, dst_port ...). A rule naming a technique
+  the catalogue lacks fails loudly. Each mapping lists its rule, what matched and the lines; `source:
+  rule`; `needs_validation: true`; a finding citing a mapped line needs review (Phase 50).
+- **Attack path**: OBSERVED edges are Phase 52's relations; INFERRED edges come from two rules -
+  a decoded command's URL whose file name is then created on the host (DELIVERED), and an account's
+  successive remote logons (MOVED_TO, with the caveat that the source address is not known to be the
+  first host). Each inferred edge has its reason; none is ever among the observed (tested).
+- **3D**: `GET /api/v1/missions/{id}/attack-graph` in the explorer's format; `#/mission/{id}/attack`
+  draws observed steps blue (RELATES), inferred amber (INFERRED), techniques purple (MAPS_TO).
+- **Benchmark** (`python -m app.cli eval-attack`, CI `scripts/check_attack_report.py`):
+  technique_precision 1.000, technique_recall 0.824, held_out_recall 0.400 - the held-out fixture,
+  written after the rules, shows an RDP logon, a certutil download and a scheduled task no rule covers.
+- **Not built**: model-suggested techniques (they would be labelled `model`).
+- **Fixed on the way**: a command line with double quotes (`net group "Domain Admins"`) was cut at
+  its first quote when normalised; inner quotes now become single quotes.

@@ -45,7 +45,8 @@ PORT_VOCABULARIES: list[tuple[type, int]] = [
     (EntityType, 7),
     (ConflictKind, 3),
     (GraphNodeKind, 4),
-    (GraphLinkKind, 7),  # DIFFERS_FROM (BUG-033): differing descriptions, apart from conflicts
+    # DIFFERS_FROM (BUG-033); INFERRED and MAPS_TO (Phase 53): the attack path's two kinds of edge
+    (GraphLinkKind, 9),
     (FactKind, 2),
     (CrossSourcePass, 3),
 ]

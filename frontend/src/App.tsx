@@ -30,6 +30,7 @@ import { hashQuery } from "./components/graph3d/investigation";
 // The knowledge graph pages pull in three.js (~600 kB). Loaded only when opened (Phase 32).
 const KnowledgeExplorer = lazy(() => import("./components/graph3d/KnowledgeExplorer"));
 const AnalyzePage = lazy(() => import("./components/graph3d/AnalyzePage"));
+const AttackGraphPage = lazy(() => import("./components/graph3d/AttackGraphPage"));
 
 type Route =
   | { name: "cases" }
@@ -44,13 +45,16 @@ type Route =
   | { name: "memory"; entity: string }
   | { name: "replay" }
   | { name: "evaluation" }
-  | { name: "audit" };
+  | { name: "audit" }
+  | { name: "attack"; runId: string };
 
 function parse(full: string): Route {
   // Pages link to each other with a parameter (Phase 36): the graph opened on an entity
   // (`?focus=`), Memory opened on an entity (`?entity=`).
   const query = hashQuery(full);
   const hash = full.split("?")[0] ?? full;
+  const attack = /^#\/mission\/([\w-]+)\/attack$/.exec(hash);
+  if (attack?.[1]) return { name: "attack", runId: attack[1] };
   const graph = /^#\/mission\/([\w-]+)\/graph$/.exec(hash);
   if (graph?.[1]) return { name: "graph", runId: graph[1], focus: query.focus ?? "", search: query.q ?? "" };
   if (hash === "#/knowledge") return { name: "knowledge" };
@@ -211,6 +215,19 @@ export default function App() {
       {route.name === "memory" ? <MemoryPage key={route.entity} entity={route.entity} /> : null}
 
       {route.name === "audit" ? <AuditPage /> : null}
+
+      {route.name === "attack" ? (
+        <>
+          <div className="row" style={{ marginBottom: 20 }}>
+            <button onClick={() => go(`#/mission/${route.runId}`)}>&larr; Mission</button>
+            <span className="spacer" />
+            <span className="dim mono">attack path · {route.runId}</span>
+          </div>
+          <Suspense fallback={<div className="empty">Loading the 3D view.</div>}>
+            <AttackGraphPage key={route.runId} runId={route.runId} />
+          </Suspense>
+        </>
+      ) : null}
     </div>
   );
 }

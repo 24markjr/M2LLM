@@ -59,7 +59,7 @@ def _record(run_id: str) -> MissionRecord:
 
 
 async def assemble(record: MissionRecord) -> InvestigationReport:
-    from app.api.registry import _case_severity
+    from app.api.registry import _case_severity, attack_locators, cites
 
     result = record.result
     assert result is not None
@@ -73,6 +73,7 @@ async def assemble(record: MissionRecord) -> InvestigationReport:
             finding,
             case_severity=severity,
             challenge_outcome=challenge.outcome.value if challenge else "",
+            attack_mapped=cites(finding, attack_locators(record)),
         )
         reviews[finding.finding_id] = review_of(record.run_id, finding, decisions, reasons)
     items: dict[str, EvidenceItem] = {}
