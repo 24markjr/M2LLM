@@ -72,3 +72,4 @@ Each phase records here what was actually built and how it differs from the line
   hidden or all with `confirm=delete`; committed recordings kept.
 - **U1c** (deletion): investigations, all investigations and cases, each removed everywhere it is
   held and audited; custody, reviews and the audit log kept by design.
+- **U1d** (rename, pin, search): `Case.pinned` with migration `au1c0a5e0001`; `GET /cases?q=`.

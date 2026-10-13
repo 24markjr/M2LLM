@@ -518,6 +518,8 @@ class CaseRow(Base):
     mode: Mapped[str] = mapped_column(String(16), default="GENERAL")
     # Opt-in recall of similar cases, as context (Phase 52, D19).
     recall_similar: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Kept at the top of the case list (Phase U1).
+    pinned: Mapped[bool] = mapped_column(Boolean, default=False)
     opened_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

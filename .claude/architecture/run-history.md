@@ -83,3 +83,14 @@ deleted.
 
 Memory is still reached only through the API's memory routes: deletion calls `forget_quietly` in
 `api/v1/memory.py`, so the boundary test (`test_memory_boundary.py`) is unchanged.
+
+## Rename, pin and search cases (U1d)
+
+- **Rename**: `PATCH /cases/{id}` with `title` (it always could; the new sidebar uses it).
+- **Pin**: `PATCH /cases/{id}` with `pinned`. `Case.pinned`, column `cases.pinned` (migration
+  `au1c0a5e0001`, default false). Pinned cases come first; within each group the order stays newest
+  first.
+- **Search**: `GET /cases?q=...` keeps a case when every word of `q` appears in its id, title or
+  description, or in the question of one of its investigations - so "shipment 4821" finds the case
+  in which that was asked. Words, not meaning: search by meaning over evidence is the workspace
+  search (Phase 40), and the Ctrl+K search in U3 combines both.

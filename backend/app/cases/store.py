@@ -42,6 +42,7 @@ class CaseStore(Protocol):
         closed_at: datetime | None = None,
         mode: CaseMode | None = None,
         recall_similar: bool | None = None,
+        pinned: bool | None = None,
     ) -> Case | None: ...
 
     async def save_investigation(self, investigation: CaseInvestigation) -> None:
@@ -101,6 +102,7 @@ class MemoryCaseStore:
         closed_at: datetime | None = None,
         mode: CaseMode | None = None,
         recall_similar: bool | None = None,
+        pinned: bool | None = None,
     ) -> Case | None:
         case = self._cases.get(case_id)
         if case is None:
@@ -115,6 +117,7 @@ class MemoryCaseStore:
                 "owner": owner,
                 "mode": mode,
                 "recall_similar": recall_similar,
+                "pinned": pinned,
             }.items()
             if v is not None
         }

@@ -264,6 +264,11 @@
             "title": "Owner",
             "type": "string"
           },
+          "pinned": {
+            "default": false,
+            "title": "Pinned",
+            "type": "boolean"
+          },
           "recall_similar": {
             "default": false,
             "title": "Recall Similar",
@@ -602,6 +607,17 @@
               }
             ],
             "title": "Owner"
+          },
+          "pinned": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pinned"
           },
           "recall_similar": {
             "anyOf": [
@@ -6648,7 +6664,21 @@
     },
     "/api/v1/cases": {
       "get": {
+        "description": "Cases, pinned first, then newest. `q` (Phase U1) keeps the cases whose id, title or\ndescription, or the question of one of their investigations, contains every word of it.",
         "operationId": "list_cases_api_v1_cases_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 200,
+              "title": "Q",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -6659,6 +6689,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "List Cases",

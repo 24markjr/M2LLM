@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 
-from fastapi import APIRouter, Header, status
+from fastapi import APIRouter, Header, Query, status
 from pydantic import Field
 
 from app.api.deletion import DeletionReport, delete_case
@@ -49,6 +49,8 @@ class CaseUpdate(JarvisModel):
     mode: CaseMode | None = None
     # Opt-in recall of similar cases as context (Phase 52, D19).
     recall_similar: bool | None = None
+    # Phase U1: keep the case at the top of the list. Renaming is `title`.
+    pinned: bool | None = None
 
 
 class CaseSummary(JarvisModel):
@@ -102,16 +104,28 @@ async def open_case(
 
 
 @router.get("", response_model=CaseList)
-async def list_cases() -> CaseList:
+async def list_cases(q: str = Query(default="", max_length=200)) -> CaseList:
+    """Cases, pinned first, then newest. `q` (Phase U1) keeps the cases whose id, title or
+    description, or the question of one of their investigations, contains every word of it."""
     store = await get_case_store()
     running = _running()
+    found = [c for c in await store.cases() if not q or await _matches(store, c, q)]
+    found.sort(key=lambda c: not c.pinned)  # stable: newest-first order kept within each group
     return CaseList(
         store=store.name,
         cases=[
-            CaseSummary(case=case, counters=await counters(store, case, running))
-            for case in await store.cases()
+            CaseSummary(case=case, counters=await counters(store, case, running)) for case in found
         ],
     )
+
+
+async def _matches(store: CaseStore, case: Case, q: str) -> bool:
+    words = q.lower().split()
+    text = " ".join([case.case_id, case.title, case.description]).lower()
+    if all(w in text for w in words):
+        return True
+    asked = " ".join(i.objective for i in await store.investigations(case.case_id)).lower()
+    return all(w in f"{text} {asked}" for w in words)
 
 
 @router.get("/{case_id}", response_model=CaseDetail)
@@ -151,6 +165,7 @@ async def update_case(case_id: str, body: CaseUpdate) -> Case:
         closed_at=utcnow() if body.status is CaseStatus.CLOSED else None,
         mode=body.mode,
         recall_similar=body.recall_similar,
+        pinned=body.pinned,
     )
     assert updated is not None
     return updated

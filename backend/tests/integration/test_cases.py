@@ -94,3 +94,13 @@ async def test_cases_investigations_and_evidence_round_trip(scope: Scope) -> Non
     assert await store.add_evidence(link) is False
     assert [e.evidence_id for e in await store.evidence(first)] == [evidence_id]
     assert await store.cases_of_evidence(evidence_id) == [first]
+
+    # Phase U1: pin, unlink an investigation, delete the case; the evidence item stays.
+    pinned = await store.update(first, pinned=True)
+    assert pinned is not None and pinned.pinned and (await store.get(first)) == pinned
+    assert await store.remove_investigation("run_aaaaaaaaaaaa") is True
+    assert await store.case_of_run("run_aaaaaaaaaaaa") is None
+    assert await store.delete(first) is True
+    assert await store.get(first) is None and await store.evidence(first) == []
+    assert await locker.get(evidence_id) is not None
+    assert await store.delete(first) is False

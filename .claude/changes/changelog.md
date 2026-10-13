@@ -21,6 +21,8 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
   episodes), memory support and its case; `DELETE /missions?confirm=delete` for all;
   `DELETE /cases/{id}` with its investigations. Custody, review decisions and the audit log are kept
   and every response says so; evidence items are never deleted with a case
+- **U1d - rename, pin and search cases**: `pinned` on a case (migration `au1c0a5e0001`), pinned
+  first in the list; `GET /cases?q=` matches id, title, description and the questions asked in it
 
 ### Fixed
 

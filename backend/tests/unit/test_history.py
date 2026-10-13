@@ -261,3 +261,36 @@ async def test_deleting_a_case_takes_its_investigations_and_keeps_its_evidence()
     assert "the evidence items themselves, in the Evidence Locker" in report["kept"]
     assert missing.status_code == 404
     assert get_registry().get(record.run_id) is None
+
+
+# --- U1d: rename, pin and search cases ------------------------------------------------------------
+
+
+async def test_cases_are_renamed_pinned_to_the_top_and_found_by_search() -> None:
+    from app.cases.service import get_case_store
+    from app.schemas.case import CaseInvestigation
+
+    async with await _client() as client:
+        first = (await client.post("/api/v1/cases", json={"title": "Helix budget"})).json()
+        second = (await client.post("/api/v1/cases", json={"title": "Orion delivery"})).json()
+        renamed = await client.patch(
+            f"/api/v1/cases/{first['case_id']}",
+            json={"title": "Helix budget overrun", "pinned": True},
+        )
+        await (await get_case_store()).save_investigation(
+            CaseInvestigation(
+                case_id=second["case_id"],
+                run_id="run_aaaaaaaaaaaa",
+                objective="Was shipment 4821 late?",
+            )
+        )
+        listed = (await client.get("/api/v1/cases")).json()["cases"]
+        by_title = (await client.get("/api/v1/cases?q=overrun")).json()["cases"]
+        by_question = (await client.get("/api/v1/cases?q=shipment 4821")).json()["cases"]
+        nothing = (await client.get("/api/v1/cases?q=aurora")).json()["cases"]
+
+    assert renamed.json()["title"] == "Helix budget overrun" and renamed.json()["pinned"] is True
+    assert [c["case"]["case_id"] for c in listed] == [first["case_id"], second["case_id"]]
+    assert [c["case"]["case_id"] for c in by_title] == [first["case_id"]]
+    assert [c["case"]["case_id"] for c in by_question] == [second["case_id"]]
+    assert nothing == []

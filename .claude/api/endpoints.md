@@ -44,6 +44,8 @@ kept current while the run proceeds.
 | GET | `/api/v1/missions/{id}/investigation-report/export/{md,pdf,docx,json}` | A download; REPORTED custody on each cited item and an audit entry with the content hash; `X-Report-Hash` |
 | DELETE | `/api/v1/missions/{id}` | Delete a finished investigation everywhere it is held; returns what was `removed` and what is `kept` (custody, reviews, audit); `409 MISSION_RUNNING` (Phase U1) |
 | DELETE | `/api/v1/missions` | Every finished investigation; `confirm=delete` required; running ones `skipped` (Phase U1) |
+| GET | `/api/v1/cases` | Cases, pinned first then newest; `q` keeps those whose id, title, description or an investigation's question holds every word (Phase U1) |
+| PATCH | `/api/v1/cases/{id}` | `title` (rename), `pinned`, description, severity, status, owner, mode, `recall_similar` |
 | DELETE | `/api/v1/cases/{id}` | A case and its investigations; evidence stays in the Locker (Phase U1) |
 | GET | `/api/v1/recordings` | Recordings newest first, each with findings, verified count, case and why it is `hidden` (failed with no findings, or a second copy); hidden ones only with `include_hidden=true` (Phase U1) |
 | DELETE | `/api/v1/recordings/{name}` | Delete one local recording; `409 RECORDING_KEPT` for a committed one; audited (Phase U1) |

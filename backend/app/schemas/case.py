@@ -50,6 +50,8 @@ class Case(JarvisModel):
     # Opt-in (decision D19): show other cases sharing indicators with this one, as context. Never
     # evidence - nothing recalled can be cited by a finding.
     recall_similar: bool = False
+    # Kept at the top of the case list (Phase U1).
+    pinned: bool = False
     opened_at: datetime = Field(default_factory=utcnow)
     closed_at: datetime | None = None
 
