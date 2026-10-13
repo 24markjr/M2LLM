@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JARVIS Mission Control</title>
+    <script>
+      // Phase U2: light by default; a dark choice is applied before anything paints.
+      try {
+        if (localStorage.getItem("jarvis.theme") === "dark") document.documentElement.dataset.theme = "dark";
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

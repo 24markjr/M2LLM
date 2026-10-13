@@ -5,6 +5,21 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-13 - Phase U2: the design system
+
+### Added
+
+- **U2a - themes and tokens**: light by default, dark in Settings (gear, header), remembered per
+  browser and applied before first paint; colour, type, space, radius and shadow tokens in
+  `theme/tokens.css`, system fonts only (works offline); the old variable names kept as aliases so
+  every page follows the theme
+
+### Fixed
+
+- The primary button put white text on a pale background in the light theme
+
+---
+
 ## 2026-10-13 - Phase U1: run history the redesign can stand on
 
 ### Added
@@ -30,6 +45,11 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 ### Fixed
 
 - **BUG-040**: tests wrote recordings into the real `.agent/traces/` (80 of 101 on the Replay page)
+
+### Verified
+
+- U1: 1330 backend tests (25 new), 79 frontend, tsc, build; the Postgres case store's pin and delete
+  against the local database in a rolled-back transaction
 
 ---
 

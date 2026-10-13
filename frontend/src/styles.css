@@ -10,29 +10,7 @@
  * finding from a rejected one, and "it looked fine to me" is not a test.
  */
 
-:root {
-  --bg: #0b0e14;
-  --panel: #12161f;
-  --panel-raised: #171c28;
-  --line: #242b3a;
-  --line-bright: #333d52;
-
-  --text: #e3e8f0;
-  --text-dim: #8b95a8;
-  --text-faint: #5c6578;
-
-  --accent: #4da3ff;
-  --accent-dim: #1e3a5f;
-
-  /* Verification states. Each is paired with a glyph and a border style in the markup. */
-  --ok: #3ecf8e;
-  --warn: #e8b34a;
-  --bad: #f0616d;
-  --unknown: #7c86a0;
-
-  --mono: "SF Mono", "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
-  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
+/* The tokens - colours, type, space, both themes - are in theme/tokens.css (Phase U2). */
 
 * {
   box-sizing: border-box;
@@ -73,10 +51,22 @@ button:disabled {
   cursor: not-allowed;
 }
 button.primary {
-  background: var(--accent-dim);
+  background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--text-on-accent);
   font-weight: 600;
+}
+button.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 button.danger:hover:not(:disabled) {
   border-color: var(--bad);
@@ -222,7 +212,7 @@ header.top {
 /* Done, active and pending differ by glyph and weight, not only by colour. */
 .phase.done {
   color: var(--ok);
-  border-color: rgba(62, 207, 142, 0.35);
+  border-color: color-mix(in srgb, var(--ok) 35%, transparent);
 }
 .phase.active {
   color: var(--accent);
@@ -294,16 +284,16 @@ header.top {
 }
 .status.completed {
   color: var(--ok);
-  border-color: rgba(62, 207, 142, 0.4);
+  border-color: color-mix(in srgb, var(--ok) 40%, transparent);
 }
 .status.failed,
 .status.cancelled {
   color: var(--bad);
-  border-color: rgba(240, 97, 109, 0.4);
+  border-color: color-mix(in srgb, var(--bad) 40%, transparent);
 }
 .status.clarification_needed {
   color: var(--warn);
-  border-color: rgba(232, 179, 74, 0.4);
+  border-color: color-mix(in srgb, var(--warn) 40%, transparent);
 }
 
 /* --- task graph ------------------------------------------------------------- */
@@ -444,21 +434,21 @@ header.top {
 }
 .badge.v-supported {
   color: var(--ok);
-  border-color: rgba(62, 207, 142, 0.4);
+  border-color: color-mix(in srgb, var(--ok) 40%, transparent);
 }
 .badge.v-partially_supported,
 .badge.v-inconclusive {
   color: var(--warn);
-  border-color: rgba(232, 179, 74, 0.4);
+  border-color: color-mix(in srgb, var(--warn) 40%, transparent);
 }
 .badge.v-unsupported,
 .badge.v-contradicted {
   color: var(--bad);
-  border-color: rgba(240, 97, 109, 0.4);
+  border-color: color-mix(in srgb, var(--bad) 40%, transparent);
 }
 .badge.degraded {
   color: var(--warn);
-  border-color: rgba(232, 179, 74, 0.4);
+  border-color: color-mix(in srgb, var(--warn) 40%, transparent);
 }
 
 /* Confidence: a number, a label and a filled bar. Three encodings, one value. */
@@ -562,7 +552,7 @@ header.top {
   display: flex;
   gap: 12px;
   padding: 4px 18px;
-  border-bottom: 1px solid rgba(36, 43, 58, 0.5);
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent);
   align-items: baseline;
 }
 .event:hover {
@@ -650,11 +640,11 @@ header.top {
   font-size: 13px;
 }
 .notice.error {
-  border-color: rgba(240, 97, 109, 0.45);
+  border-color: color-mix(in srgb, var(--bad) 45%, transparent);
   color: var(--bad);
 }
 .notice.warn {
-  border-color: rgba(232, 179, 74, 0.45);
+  border-color: color-mix(in srgb, var(--warn) 45%, transparent);
   color: var(--warn);
 }
 .notice code {
@@ -747,10 +737,10 @@ header.top {
 @keyframes task-running {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(77, 163, 255, 0);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 3px rgba(77, 163, 255, 0.16);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
   }
 }
 
@@ -820,8 +810,8 @@ header.top {
   margin-top: 12px;
   padding: 11px 13px;
   border-radius: 5px;
-  border: 1px dashed rgba(232, 179, 74, 0.45);
-  background: rgba(232, 179, 74, 0.05);
+  border: 1px dashed color-mix(in srgb, var(--warn) 45%, transparent);
+  background: color-mix(in srgb, var(--warn) 5%, transparent);
   animation: finding-in 420ms ease-out;
 }
 
@@ -852,7 +842,7 @@ header.top {
   margin-top: 8px;
   padding-top: 8px
     /* separated, because the inserted task is a consequence, not part of the gap */;
-  border-top: 1px solid rgba(232, 179, 74, 0.2);
+  border-top: 1px solid color-mix(in srgb, var(--warn) 20%, transparent);
   font-size: 12px;
   color: var(--text-dim);
 }
@@ -870,7 +860,7 @@ header.top {
   margin-bottom: 20px;
   border-radius: 6px;
   border: 1px solid var(--warn);
-  background: rgba(232, 179, 74, 0.08);
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
   font-size: 13px;
   color: var(--text);
 }
@@ -1126,7 +1116,7 @@ a.button:hover {
   border-radius: 6px;
   font-size: 12px;
   pointer-events: none;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow-lg);
 }
 .node-tooltip .tooltip-head {
   font-weight: 600;
@@ -1452,7 +1442,7 @@ button.link:focus-visible {
 
 /* An objective over the server's limit (2026-10-06). */
 .hint.over-limit {
-  color: var(--bad, #e5534b);
+  color: var(--bad);
 }
 
 /* The drop zone is a <label> (a click opens the file dialog), so `.field label` made it a block of
@@ -1472,7 +1462,7 @@ button.link:focus-visible {
   letter-spacing: 0.04em;
 }
 .integrity.verified {
-  color: var(--good, #3fb950);
+  color: var(--good);
 }
 .integrity.failed {
   color: var(--bad);
@@ -1559,7 +1549,7 @@ ol.steps li .mark {
   font-family: var(--mono, monospace);
 }
 ol.steps li.done .mark {
-  color: var(--good, #3fb950);
+  color: var(--good);
 }
 ol.steps li.failed {
   color: var(--bad);

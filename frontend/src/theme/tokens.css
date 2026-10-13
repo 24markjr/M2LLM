@@ -1,0 +1,131 @@
+/*
+ * Design tokens (Phase U2).
+ *
+ * Light is the default theme; dark is chosen in Settings and stored per browser. Components use the
+ * semantic tokens (`--surface`, `--text-muted`, `--verified`...), never a colour value: a theme is
+ * then only this file.
+ *
+ * Status colours carry meaning and are always paired with a glyph and a word in the markup
+ * (verified, inferred, not established, unknown), so nothing depends on telling hues apart.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* --- surfaces --- */
+  --surface-page: #f6f7f9;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eff1f5;
+  --surface-hover: #f1f3f7;
+  --border: #e2e5ea;
+  --border-strong: #c9cfd8;
+
+  /* --- text --- */
+  --text: #1a1e26;
+  --text-muted: #566072;
+  --text-faint: #7f889a;
+  --text-on-accent: #ffffff;
+
+  /* --- brand --- */
+  --accent: #2c56e0;
+  --accent-hover: #2348c2;
+  --accent-soft: #e9eefe;
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+
+  /* --- meaning (with a glyph and a word, always) --- */
+  --verified: #157347;
+  --verified-soft: #e5f4ec;
+  --inferred: #9a6200;
+  --inferred-soft: #fcf1d9;
+  --unsupported: #c2304a;
+  --unsupported-soft: #fde8ec;
+  --unknown: #5f6878;
+  --unknown-soft: #eceef2;
+  --sensitive: #6d3fd6;
+  --sensitive-soft: #f0eafd;
+
+  /* --- shape and depth --- */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
+  --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.16);
+
+  /* --- type --- */
+  --sans: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, "Inter",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Cascadia Mono", "SF Mono", "JetBrains Mono", Consolas, "Liberation Mono", monospace;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 26px;
+
+  /* --- space (4px steps) --- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --gutter: 16px;
+
+  /* --- the names styles.css used before U2, kept as aliases so every page follows the theme --- */
+  --bg: var(--surface-page);
+  --panel: var(--surface);
+  --panel-raised: var(--surface-raised);
+  --line: var(--border);
+  --line-bright: var(--border-strong);
+  --text-dim: var(--text-muted);
+  --accent-dim: var(--accent-soft);
+  --ok: var(--verified);
+  --good: var(--verified);
+  --warn: var(--inferred);
+  --bad: var(--unsupported);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface-page: #0d1117;
+  --surface: #151b24;
+  --surface-raised: #1b222d;
+  --surface-sunken: #0a0e14;
+  --surface-hover: #1f2733;
+  --border: #283142;
+  --border-strong: #3a4659;
+
+  --text: #e6ebf2;
+  --text-muted: #9ca6b8;
+  --text-faint: #6b7589;
+  --text-on-accent: #ffffff;
+
+  --accent: #6d94ff;
+  --accent-hover: #86a7ff;
+  --accent-soft: #1b2a4f;
+
+  --verified: #3ecf8e;
+  --verified-soft: #10301f;
+  --inferred: #e8b34a;
+  --inferred-soft: #3a2c0c;
+  --unsupported: #f0616d;
+  --unsupported-soft: #3d1419;
+  --unknown: #8f99ab;
+  --unknown-soft: #222a36;
+  --sensitive: #b394ff;
+  --sensitive-soft: #2b1f4d;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 14px 36px rgba(0, 0, 0, 0.55);
+}
+
+@media (max-width: 640px) {
+  :root {
+    --gutter: 12px;
+  }
+}

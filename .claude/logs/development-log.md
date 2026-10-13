@@ -14,6 +14,14 @@ runs. Postgres already held the run rows, but not what the routes serve (the tex
 searches, the knowledge view, challenges), so a run is now archived whole, as a file, and restored
 on first use. Reading the recordings to design this showed 80 of them were test runs - BUG-040.
 
+U1 finished with the audit page: the table was empty for an ordinary reason, but a store that missed
+Postgres at start-up stayed in memory silently, so the stores now re-check, and the page names its
+store.
+
+U2a: the theme. The quickest way to make every existing page light by default was to keep the old
+variable names as aliases of the new tokens; the stylesheet itself changed only where it hard-coded
+tints. Light is the default as the user asked; dark is in Settings.
+
 ---
 
 # 2026-10-12 - Phase 53: MITRE ATT&CK mapping and attack paths

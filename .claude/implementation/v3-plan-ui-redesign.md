@@ -76,3 +76,8 @@ Each phase records here what was actually built and how it differs from the line
 - **U1e** (audit page): the log was genuinely empty (nothing written through the API since Phase 50);
   stores now re-check a failed database probe after 30 s; `GET /system/stores`; the page names its
   store and explains an empty log.
+
+### U2 - as built
+
+- **U2a** (themes and tokens): `theme/tokens.css`, `theme/theme.ts`, `ThemeProvider`, the Settings
+  menu with Light / Dark. See `architecture/design-system.md`.

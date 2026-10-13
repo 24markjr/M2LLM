@@ -9,6 +9,7 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 
 import { api } from "./api/client";
+import { SettingsMenu } from "./components/SettingsMenu";
 import type { MissionDetail } from "./api/types";
 import {
   EvaluationPage,
@@ -141,6 +142,7 @@ export default function App() {
           />
           {unreachable ? "engine unreachable" : engine ? engine.model : "checking."}
         </div>
+        <SettingsMenu />
       </header>
 
       {unreachable ? (
