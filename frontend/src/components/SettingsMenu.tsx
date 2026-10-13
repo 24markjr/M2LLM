@@ -66,6 +66,9 @@ export function SettingsMenu() {
               ))}
             </div>
           </div>
+          <a className="settings-link" href="#/design" onClick={() => setOpen(false)}>
+            Design system: every component
+          </a>
         </div>
       ) : null}
     </div>

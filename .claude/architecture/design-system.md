@@ -40,3 +40,28 @@ rewritten; the pages are replaced one by one from U3. Hard-coded tints in `style
 (it was white text on a pale background in light).
 
 The 3D graph keeps its own dark canvas in both themes for now, like an image viewer; U6 themes it.
+
+## Components (U2b)
+
+`frontend/src/ui/components.tsx`, styled by `ui/components.css`; icons in `ui/icons.tsx` (inline SVG,
+stroke in the text colour). Pure logic is separate and tested: `status.ts`, `toast.ts`, `tabs.ts`.
+
+| Component | What it is for |
+|---|---|
+| `Button` | `primary`, `secondary`, `ghost`, `danger`; `sm`/`md`; `icon`; `busy` (spinner, disabled) |
+| `TextInput`, `TextArea`, `Select` | Labelled fields with a hint or an error, wired with `aria-describedby` / `aria-invalid` |
+| `Card` | Title, meta, actions and body; `flush` for a table edge to edge |
+| `Badge`, `StatusBadge` | Neutral and meaning tones; a status badge always shows glyph and word |
+| `StatusMark` | **The status underline**: verified (solid), inferred (dashed), not established (wavy), unknown (dotted), each in its colour, the word read to screen readers and shown on hover |
+| `DataTable` | Columns with render functions; cells wrap so the page never scrolls sideways; below 720 px each row becomes a stacked, labelled card |
+| `Tabs`, `TabPanel` | The WAI-ARIA tabs pattern: arrow keys, Home, End |
+| `Dialog` | The native `<dialog>`: focus trapped, Escape closes |
+| `ConfirmDialog` | Before anything that cannot be undone; `typeToConfirm` enables the button only once a word is typed (deleting everything) |
+| `Notice` | Inline info, success, warning, error |
+| `ToastProvider`, `useToast` | Short confirmations; at most four; an error stays until dismissed |
+
+`statusOf` maps the API's `VerificationStatus` to a mark: SUPPORTED -> verified, PARTIALLY_SUPPORTED ->
+inferred, UNSUPPORTED and CONTRADICTED -> not established, INCONCLUSIVE or none -> unknown.
+
+**`#/design`** shows every token and component in the current theme, with a switch between themes.
+It is linked from Settings, and is where a change to the system is reviewed.

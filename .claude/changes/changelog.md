@@ -13,6 +13,9 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
   browser and applied before first paint; colour, type, space, radius and shadow tokens in
   `theme/tokens.css`, system fonts only (works offline); the old variable names kept as aliases so
   every page follows the theme
+- **U2b - the component library**: buttons, fields, cards, badges, the status underline
+  (`StatusMark`), tables that wrap and stack on phones, tabs, dialogs with type-to-confirm, notices,
+  toasts, icons; `#/design` shows them all, linked from Settings
 
 ### Fixed
 

@@ -24,6 +24,7 @@ import { CasePage, CasesPage } from "./pages/CasesPage";
 import { caseIdFromHash } from "./components/cases";
 import { EvidenceItemPage, EvidenceLockerPage } from "./pages/EvidencePage";
 import { AuditPage } from "./pages/AuditPage";
+import { DesignPage } from "./pages/DesignPage";
 import { evidenceIdFromHash } from "./components/evidence";
 import { draftFromHash } from "./components/workspaces";
 import { hashQuery } from "./components/graph3d/investigation";
@@ -47,6 +48,7 @@ type Route =
   | { name: "replay" }
   | { name: "evaluation" }
   | { name: "audit" }
+  | { name: "design" }
   | { name: "attack"; runId: string };
 
 function parse(full: string): Route {
@@ -71,6 +73,7 @@ function parse(full: string): Route {
   if (hash === "#/replay") return { name: "replay" };
   if (hash === "#/evaluation") return { name: "evaluation" };
   if (hash === "#/audit") return { name: "audit" };
+  if (hash === "#/design") return { name: "design" };
   // Cases are the home page (Phase 44); the flat list of every investigation is `#/missions`.
   if (caseIdFromHash(hash)) return { name: "case", caseId: caseIdFromHash(hash) };
   if (hash === "#/missions") return { name: "list" };
@@ -217,6 +220,7 @@ export default function App() {
       {route.name === "memory" ? <MemoryPage key={route.entity} entity={route.entity} /> : null}
 
       {route.name === "audit" ? <AuditPage /> : null}
+      {route.name === "design" ? <DesignPage /> : null}
 
       {route.name === "attack" ? (
         <>

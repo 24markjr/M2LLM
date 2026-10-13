@@ -81,3 +81,4 @@ Each phase records here what was actually built and how it differs from the line
 
 - **U2a** (themes and tokens): `theme/tokens.css`, `theme/theme.ts`, `ThemeProvider`, the Settings
   menu with Light / Dark. See `architecture/design-system.md`.
+- **U2b** (components): `ui/components.tsx` and `components.css`, `#/design`.
