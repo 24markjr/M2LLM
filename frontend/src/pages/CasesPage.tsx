@@ -7,6 +7,7 @@
  * evidence they read, each a link to the mission or the Evidence Locker.
  */
 
+import { casesChanged } from "../shell/Sidebar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
@@ -69,6 +70,7 @@ export function CasesPage() {
     api
       .openCase({ title: title.trim(), description: description.trim(), severity })
       .then((created) => {
+        casesChanged(); // the sidebar lists it at once (U3)
         window.location.hash = caseLink(created.case_id);
       })
       .catch((exc: unknown) => setError(errorText(exc)));
@@ -166,7 +168,10 @@ export function CasePage({ caseId }: { caseId: string }) {
   const change = (body: { status?: CaseStatus; severity?: CaseSeverity }) => {
     api
       .updateCase(caseId, body)
-      .then(load)
+      .then(() => {
+        casesChanged();
+        load();
+      })
       .catch((exc: unknown) => setError(errorText(exc)));
   };
 

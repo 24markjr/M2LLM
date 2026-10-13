@@ -101,3 +101,74 @@ export const IconAlert = (p: IconProps) => (
     <path d="M12 9v4M12 17h.01" />
   </Svg>
 );
+
+export const IconMenu = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 6h16M4 12h16M4 18h16" />
+  </Svg>
+);
+
+export const IconSidebar = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <path d="M9 4v16" />
+  </Svg>
+);
+
+export const IconFolder = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+  </Svg>
+);
+
+export const IconLibrary = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 19V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v14M9 19V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v12M15 19l2.5-13.5a1 1 0 0 1 1.2-.8l1.6.3a1 1 0 0 1 .8 1.2L18.6 19M3 19h18" />
+  </Svg>
+);
+
+export const IconInsights = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+  </Svg>
+);
+
+export const IconActivity = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M22 12h-4l-3 8L9 4l-3 8H2" />
+  </Svg>
+);
+
+export const IconMore = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="5" cy="12" r="1.2" />
+    <circle cx="12" cy="12" r="1.2" />
+    <circle cx="19" cy="12" r="1.2" />
+  </Svg>
+);
+
+export const IconEdit = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+  </Svg>
+);
+
+export const IconChevronRight = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m9 18 6-6-6-6" />
+  </Svg>
+);
+
+export const IconList = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+  </Svg>
+);
+
+export const IconLogo = ({ size = 22 }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <rect x="1" y="1" width="22" height="22" rx="6" fill="var(--accent)" />
+    <path d="M8 16.5a3 3 0 0 0 3 1.5h1a3 3 0 0 0 3-3V6" fill="none" stroke="var(--text-on-accent)" strokeWidth="2.2" strokeLinecap="round" />
+    <circle cx="15" cy="6" r="1.4" fill="var(--text-on-accent)" />
+  </svg>
+);

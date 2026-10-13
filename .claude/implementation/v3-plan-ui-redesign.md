@@ -83,3 +83,9 @@ Each phase records here what was actually built and how it differs from the line
   menu with Light / Dark. See `architecture/design-system.md`.
 - **U2b** (components): `ui/components.tsx` and `components.css`, `#/design`.
 - **U2c** (no sideways scrolling, phone widths): the responsive section of `styles.css`.
+
+### U3 - as built
+
+Sidebar, top bar, Ctrl+K and the merged Library / Insights / Activity, as planned; the user asked
+for it during U2 ("add a side bar and a nav bar ... make it look professional"). The old addresses
+open inside the merged pages instead of redirecting. See `architecture/app-shell.md`.

@@ -5,6 +5,28 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-13 - Phase U3: the application shell
+
+### Added
+
+- **Sidebar**: New investigation, Search (Ctrl+K), cases grouped Pinned / Today / Previous 7 days /
+  Earlier with pin, rename and delete, Library, Insights, Activity, the engine's state; collapsible
+  to a rail; a drawer below 1024 px
+- **Top bar**: where you are, search, light/dark switch, Settings
+- **Search everything** (Ctrl+K): pages and cases
+
+### Changed
+
+- **Duplicated pages merged**: Documents and Evidence are Library; Evaluation, Memory and Replay
+  are Insights; Audit is Activity. Every old address still opens, inside its merged page
+- Tables keep words whole and scroll inside their card when wider than it
+
+### Verified
+
+- 90 frontend tests (3 new), tsc, build; headless Chrome at 1440 px and 800 px
+
+---
+
 ## 2026-10-13 - Phase U2: the design system
 
 ### Added

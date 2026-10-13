@@ -23,6 +23,7 @@ code is a guess, and one written after the code is a record.
 | `retrieval.md` | Stored, workspace-scoped retrieval: pgvector or memory, two chunkers, hits cited at their closest line | 40 |
 | `evidence-locker.md` | Every input an evidence item: content-addressed originals, append-only custody, integrity before every mission | 43 |
 | `cases.md` | Cases holding investigations and evidence; counters computed; the Professional view and plain step labels | 44 |
+| `app-shell.md` | Sidebar, top bar, Ctrl+K search; pages merged into Library, Insights, Activity; drawer on narrow screens | U3 |
 | `design-system.md` | Light (default) and dark themes, tokens, system fonts, the component library | U2 |
 | `run-history.md` | Run archives restored after a restart; run records; deleting with a record of it | U1 |
 | `evaluation-v2.md` | Scenario categories, one quality figure with its formula and components, the trend by configuration, raw metrics under Technical | 54 |

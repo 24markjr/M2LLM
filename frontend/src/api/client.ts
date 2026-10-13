@@ -38,6 +38,7 @@ import type { InvestigationReport } from "./types";
 import type { CyberAnalysis } from "./types";
 import type { QualitySummary } from "./types";
 import type { StoreStatus } from "./types";
+import type { DeletionReport } from "./types";
 
 const BASE = "/api/v1";
 
@@ -253,7 +254,16 @@ export const api = {
   },
 
   // --- cases (Phase 44) ---
-  listCases: () => request<CaseList>(`${BASE}/cases`),
+  /** Cases, pinned first; `q` searches ids, titles, descriptions and the questions asked (U1). */
+  listCases: (q = "") => request<CaseList>(`${BASE}/cases${q ? `?q=${encodeURIComponent(q)}` : ""}`),
+
+  /** Delete a case and its investigations; its evidence stays in the Locker (U1). */
+  deleteCase: (caseId: string) =>
+    request<DeletionReport>(`${BASE}/cases/${caseId}`, { method: "DELETE" }),
+
+  /** Delete one finished investigation everywhere it is held (U1). */
+  deleteMission: (runId: string) =>
+    request<DeletionReport>(`${BASE}/missions/${runId}`, { method: "DELETE" }),
 
   openCase: (body: { title: string; description?: string; severity?: CaseSeverity }) =>
     request<Case>(`${BASE}/cases`, { method: "POST", body: JSON.stringify(body) }),
@@ -270,6 +280,7 @@ export const api = {
       owner?: string;
       mode?: "GENERAL" | "CYBER";
       recall_similar?: boolean;
+      pinned?: boolean;
     },
   ) => request<Case>(`${BASE}/cases/${caseId}`, { method: "PATCH", body: JSON.stringify(body) }),
 

@@ -22,6 +22,11 @@ U2a: the theme. The quickest way to make every existing page light by default wa
 variable names as aliases of the new tokens; the stylesheet itself changed only where it hard-coded
 tints. Light is the default as the user asked; dark is in Settings.
 
+U3 came straight after U2 at the user's request: a sidebar and a top bar, professional. The merge of
+duplicated pages needed no redirects - the old addresses simply render inside Library and Insights on
+the right tab - so none of the links between pages had to change. One headless check against a
+temporary API caught a U2c regression (words broken letter by letter in narrow table columns).
+
 ---
 
 # 2026-10-12 - Phase 53: MITRE ATT&CK mapping and attack paths

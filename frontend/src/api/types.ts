@@ -1112,8 +1112,18 @@ export interface Case {
   mode: "GENERAL" | "CYBER";
   /** Opt-in recall of similar cases, as context (Phase 52). */
   recall_similar?: boolean;
+  /** Kept at the top of the sidebar (Phase U1). */
+  pinned?: boolean;
   opened_at: string;
   closed_at: string | null;
+}
+
+/** What a deletion removed, and what is kept by design (Phase U1). */
+export interface DeletionReport {
+  deleted: string[];
+  removed: string[];
+  kept: string[];
+  skipped: string[];
 }
 
 export interface CaseCounters {

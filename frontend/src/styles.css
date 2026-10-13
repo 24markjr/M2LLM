@@ -1698,12 +1698,16 @@ section {
 }
 
 /* Tables wrap instead of forcing one line per cell (the Evaluation and Evidence pages ran off the
-   screen). Identifiers and file names break anywhere; numbers stay on one line. */
+   screen). A word breaks only when it cannot fit a line of its own ("anywhere" broke VERIFIED into
+   VER/IFI/ED); a table still wider than its card scrolls inside the card, never the page. */
 table.metrics th,
 table.metrics td {
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   vertical-align: top;
+}
+.panel {
+  overflow-x: auto;
 }
 table.metrics td.num {
   white-space: nowrap;
