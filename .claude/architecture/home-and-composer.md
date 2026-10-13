@@ -28,20 +28,27 @@ analysis (no investigation), the detailed form (`#/new`) and all cases.
 Starting: classify the new uploads, open the case if asked (mode CYBER for Security logs), start the
 investigation (`POST /missions` with the case), tell the sidebar, open the investigation.
 
-## Modes are wording, not engines
+## Modes change the plan (U4, then U4b)
 
-Every mode runs the same investigation: plan, read, verify, cite. A mode puts a framing sentence in
-front of the question (`objectiveFor`) so the intent engine plans the operations it names:
+The first version of U4 only put a framing sentence in front of the question, which a person could
+fairly call cosmetic. **U4b made modes real on the engine.** The question is now sent exactly as
+asked, with `mode` (`CreateMissionRequest.mode`, `Objective.mode`), and the intent engine's
+deterministic pre-pass adds the mode's operations (`MODE_OPERATIONS` in
+`intelligence/intent/engine.py`). The pre-pass is unioned with whatever the model proposes, and the
+planner must cover every required operation (BUG-035's repair completes a plan that leaves one out),
+so the operations are in the plan even when the model proposes only a summary - a test proves it.
 
-| Mode | Sent to the engine |
-|---|---|
-| Investigate | the question as asked |
-| Compare | "Compare the attached documents: where do they agree, and where do they contradict each other?" + the question |
-| Timeline | "Build a timeline of the events in the attached documents, and note any dates that conflict." + the question |
-| Security logs | "Examine the attached security logs for malicious activity." + the question; a new case is CYBER |
+| Mode | Required in the plan | Also |
+|---|---|---|
+| Investigate | nothing beyond what the question implies | - |
+| Compare | extract claims, compare sources, detect contradictions | - |
+| Timeline | extract the timeline, detect inconsistencies | - |
+| Security logs | extract entities, extract the timeline; assess impact (done by synthesis, recorded as optional) | a new case is CYBER: log analysis, ATT&CK, attack path |
 
-Saying so here, and in the composer's hint line, matters: a mode that looked like a different engine
-would be a claim the system does not make.
+The composer shows, under the box, what the chosen mode adds to the plan. Every mode still plans,
+reads, verifies and cites the same way; the mode is on the mission (`MissionSummary.mode`) so the
+journal can say how it was run. The default (Investigate) adds nothing, so the evaluation baseline
+is unchanged.
 
 ## Domain packs
 

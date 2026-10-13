@@ -97,3 +97,5 @@ engine, said so in the UI), and a new investigation opens a new case by default 
 the sidebar. "Ask" was not built as a separate mode - it would have run the same investigation under
 another name. Review decisions are not yet in "Needs your attention" (U5). See
 `architecture/home-and-composer.md`.
+- **U4b** (the limit removed): modes now make operations required on the engine
+  (`MODE_OPERATIONS`), the question is sent as asked; the user asked for the limit to be overcome.

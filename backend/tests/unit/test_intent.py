@@ -223,3 +223,44 @@ async def test_the_intent_event_carries_no_prompt_text() -> None:
 
     serialized = json.dumps([e.payload for e in memory.of_type(EventType.INTENT_CREATED)])
     assert "confidential merger" not in serialized
+
+
+# --- modes make operations required (Phase U4) --------------------------------
+
+
+@pytest.mark.parametrize(
+    ("mode", "required"),
+    [
+        ("compare", {Operation.COMPARE_SOURCES, Operation.DETECT_CONTRADICTIONS}),
+        ("timeline", {Operation.EXTRACT_TIMELINE, Operation.DETECT_INCONSISTENCIES}),
+        (
+            "security",
+            {Operation.EXTRACT_ENTITIES, Operation.EXTRACT_TIMELINE, Operation.ASSESS_IMPACT},
+        ),
+    ],
+)
+async def test_a_mode_puts_its_operations_in_the_intent_whatever_the_model_says(
+    mode: str, required: set[Operation]
+) -> None:
+    """The model proposes only a summary; the mode's operations are required anyway, so the plan
+    must contain them - a mode is not just wording."""
+    import json
+
+    from app.schemas.objective import InvestigationMode
+
+    objective = _objective("Look at these files please.", ("a.txt", DocumentKind.TEXT))
+    objective = objective.model_copy(update={"mode": InvestigationMode(mode)})
+    engine, _ = _engine(json.dumps({"goal": "summary", "operations": ["summarize"]}))
+    intent = await engine.analyze(objective)
+    from app.schemas.intent import SUPPORTING_OPERATIONS
+
+    recorded = {r.operation for r in intent.required_operations}
+    planned = {r.operation for r in intent.required_operations if not r.optional}
+    assert required <= recorded
+    # Those a task can perform must be planned; assessing impact is synthesis's own work.
+    assert required - SUPPORTING_OPERATIONS <= planned
+
+
+def test_investigate_adds_nothing_of_its_own() -> None:
+    plain = _objective("Look at these files please.", ("a.txt", DocumentKind.TEXT))
+    assert Operation.COMPARE_SOURCES not in derive_operations(plain)

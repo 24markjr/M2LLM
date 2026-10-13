@@ -1235,6 +1235,10 @@
             "title": "Documents",
             "type": "array"
           },
+          "mode": {
+            "$ref": "#/components/schemas/InvestigationMode",
+            "default": "investigate"
+          },
           "objective": {
             "maxLength": 2000,
             "minLength": 8,
@@ -3531,6 +3535,17 @@
         "title": "InvestigationMemory",
         "type": "object"
       },
+      "InvestigationMode": {
+        "description": "How the person asked for the investigation to be run (Phase U4).\n\nNot a different engine: every mode plans, reads, verifies and cites the same way. A mode makes\ncertain operations required, so the plan is guaranteed to contain them whatever the model\nproposes (`intent.engine.MODE_OPERATIONS`).",
+        "enum": [
+          "investigate",
+          "compare",
+          "timeline",
+          "security"
+        ],
+        "title": "InvestigationMode",
+        "type": "string"
+      },
       "InvestigationReport": {
         "additionalProperties": false,
         "properties": {
@@ -4343,6 +4358,10 @@
             "title": "Knowledge Store",
             "type": "string"
           },
+          "mode": {
+            "$ref": "#/components/schemas/InvestigationMode",
+            "default": "investigate"
+          },
           "objective": {
             "title": "Objective",
             "type": "string"
@@ -4456,6 +4475,10 @@
               }
             ],
             "title": "Finished At"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/InvestigationMode",
+            "default": "investigate"
           },
           "objective": {
             "title": "Objective",

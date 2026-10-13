@@ -71,11 +71,26 @@ class ObjectiveScope(JarvisModel):
         return document_id in self.restrict_to_document_ids
 
 
+class InvestigationMode(StrEnum):
+    """How the person asked for the investigation to be run (Phase U4).
+
+    Not a different engine: every mode plans, reads, verifies and cites the same way. A mode makes
+    certain operations required, so the plan is guaranteed to contain them whatever the model
+    proposes (`intent.engine.MODE_OPERATIONS`).
+    """
+
+    INVESTIGATE = "investigate"
+    COMPARE = "compare"
+    TIMELINE = "timeline"
+    SECURITY = "security"
+
+
 class Objective(JarvisModel):
     """What the user asked for, verbatim, plus what they attached."""
 
     text: NonEmptyStr
     scope: ObjectiveScope = Field(default_factory=ObjectiveScope)
+    mode: InvestigationMode = InvestigationMode.INVESTIGATE
     success_criteria: list[SuccessCriterion] = Field(default_factory=list)
     submitted_at: datetime = Field(default_factory=utcnow)
     # Free-form caller context (user id, source UI). Never interpreted as instruction.

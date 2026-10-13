@@ -15,7 +15,7 @@ import { acceptAttribute, contextFileName, isSupported } from "../components/doc
 import { casesChanged } from "../shell/Sidebar";
 import { Button, Dialog, Notice, TextArea, TextInput, useToast } from "../ui/components";
 import { IconClose, IconPlus } from "../ui/icons";
-import { caseTitleFor, MODES, objectiveFor, questionProblem, type Mode } from "./modes";
+import { caseTitleFor, MODE_PLANS, MODES, questionProblem, type Mode } from "./modes";
 import type { Pack, Sensitivity } from "./packs";
 
 export interface Attached {
@@ -93,7 +93,7 @@ export function Composer({ pack, draft }: { pack: Pack; draft: ComposerDraft | n
 
   const accept = useMemo(() => acceptAttribute(formats), [formats]);
   const modeInfo = MODES.find((m) => m.id === mode) ?? MODES[0];
-  const problem = questionProblem(question, mode);
+  const problem = questionProblem(question);
   const readable = files.filter((f) => f.readable);
 
   const upload = async (picked: File[]) => {
@@ -144,12 +144,7 @@ export function Composer({ pack, draft }: { pack: Pack; draft: ComposerDraft | n
       } else if (caseChoice !== "none") {
         caseId = caseChoice;
       }
-      const mission = await api.createMission(
-        objectiveFor(mode, question),
-        readable.map((f) => f.name),
-        undefined,
-        caseId,
-      );
+      const mission = await api.createMission(question.trim(), readable.map((f) => f.name), undefined, caseId, mode);
       casesChanged();
       notify("Investigation started.", "success");
       window.location.hash = `#/mission/${mission.run_id}`;
@@ -289,6 +284,7 @@ export function Composer({ pack, draft }: { pack: Pack; draft: ComposerDraft | n
 
       <div className="composer-foot">
         <span>{modeInfo?.hint}.</span>
+        {MODE_PLANS[mode] ? <span className="composer-plan">{MODE_PLANS[mode]}</span> : null}
         {question && problem ? <span className="composer-problem">{problem}</span> : null}
         {!files.length ? <span>No files attached: the engine will only have your question to go on.</span> : null}
       </div>

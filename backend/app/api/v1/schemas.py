@@ -16,6 +16,7 @@ from pydantic import Field
 from app.orchestration.mission import MissionStatus, Stage
 from app.schemas.common import JarvisModel
 from app.schemas.finding import Finding
+from app.schemas.objective import InvestigationMode
 from app.schemas.task import TaskStatus, TaskType
 from app.schemas.trust import InjectionScan
 
@@ -28,6 +29,8 @@ class CreateMissionRequest(JarvisModel):
     workspace_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{1,64}$")
     # The case the investigation belongs to (Phase 44). Its documents are filed in the case too.
     case_id: str | None = Field(default=None, pattern=r"^CASE-\d{4}-\d{5,}$")
+    # How to run it (Phase U4): each mode makes certain operations required in the plan.
+    mode: InvestigationMode = InvestigationMode.INVESTIGATE
 
 
 class MissionSummary(JarvisModel):
@@ -46,6 +49,8 @@ class MissionSummary(JarvisModel):
     unresolved_gap_count: int = 0
     # The case this investigation belongs to (Phase 44); empty for one run outside any case.
     case_id: str = ""
+    # How it was asked to run (Phase U4).
+    mode: InvestigationMode = InvestigationMode.INVESTIGATE
 
 
 class MissionDetail(MissionSummary):

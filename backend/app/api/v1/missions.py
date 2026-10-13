@@ -429,7 +429,7 @@ def _objective(body: CreateMissionRequest) -> Objective:
         )
         for name in body.documents
     ]
-    return Objective(text=body.objective, scope=ObjectiveScope(documents=attached))
+    return Objective(text=body.objective, scope=ObjectiveScope(documents=attached), mode=body.mode)
 
 
 def _summary(record: MissionRecord) -> MissionSummary:
@@ -446,6 +446,7 @@ def _summary(record: MissionRecord) -> MissionSummary:
         verified_count=len(result.verified_findings) if result else 0,
         unresolved_gap_count=len(result.unresolved_gaps) if result else 0,
         case_id=record.case_id,
+        mode=record.objective.mode,
     )
 
 

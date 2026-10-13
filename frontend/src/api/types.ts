@@ -60,6 +60,8 @@ export interface MissionSummary {
   unresolved_gap_count: number;
   /** The case the investigation belongs to (Phase 44); "" or absent outside any case. */
   case_id?: string;
+  /** How it was asked to run (Phase U4): each mode makes operations required in the plan. */
+  mode?: "investigate" | "compare" | "timeline" | "security";
 }
 
 export interface MissionDetail extends MissionSummary {

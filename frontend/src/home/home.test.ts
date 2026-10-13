@@ -1,16 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { attentionItems, type MissionLike } from "./attention";
-import { caseTitleFor, MODES, objectiveFor, questionProblem } from "./modes";
+import { caseTitleFor, MODE_PLANS, MODES, questionProblem } from "./modes";
 import { packById, PACKS } from "./packs";
 
 describe("composer modes (Phase U4)", () => {
-  it("frames the question for the engine, and leaves Investigate as asked", () => {
-    expect(objectiveFor("investigate", "  Was shipment 4821 late? ")).toBe("Was shipment 4821 late?");
-    expect(objectiveFor("compare", "on dates")).toMatch(/^Compare the attached documents.*on dates$/);
-    expect(objectiveFor("security", "lateral movement")).toMatch(/^Examine the attached security logs/);
-    expect(objectiveFor("timeline", "")).toBe("");
+  it("says what each mode adds to the plan", () => {
     expect(MODES.map((m) => m.id)).toEqual(["investigate", "compare", "timeline", "security"]);
+    expect(MODE_PLANS.investigate).toBe("");
+    expect(MODE_PLANS.compare).toMatch(/contradictions/);
   });
 
   it("names a new case from the first sentence of the question", () => {
@@ -23,7 +21,7 @@ describe("composer modes (Phase U4)", () => {
     expect(questionProblem("")).toBe("Ask a question first.");
     expect(questionProblem("why?")).toMatch(/at least 8/);
     expect(questionProblem("Was shipment 4821 late?")).toBe("");
-    expect(questionProblem("x".repeat(1990), "compare")).toMatch(/at most 2,000/);
+    expect(questionProblem("x".repeat(2001))).toMatch(/at most 2,000/);
   });
 });
 

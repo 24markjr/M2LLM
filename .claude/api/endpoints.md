@@ -42,6 +42,7 @@ kept current while the run proceeds.
 | POST | `/api/v1/missions/{id}/findings/{finding_id}/review` | Approve, reject (reason; `replan` starts a follow-up investigation) or modify (reason, reworded claim); reviewer from `X-Jarvis-User`; approval releases facts to memory |
 | GET | `/api/v1/missions/{id}/investigation-report` | The investigation report as it stands (JSON, no side effects); HIGH/CRITICAL findings are challenged first if nobody has (Phase 51) |
 | GET | `/api/v1/missions/{id}/investigation-report/export/{md,pdf,docx,json}` | A download; REPORTED custody on each cited item and an audit entry with the content hash; `X-Report-Hash` |
+| POST | `/api/v1/missions` (`mode`) | Phase U4: `investigate` (default), `compare`, `timeline`, `security` - each makes its operations required in the plan; returned as `mode` on every mission |
 | GET | `/api/v1/system/stores` | The store behind cases, evidence, the audit log and investigations, with a note when one is in memory (Phase U1) |
 | DELETE | `/api/v1/missions/{id}` | Delete a finished investigation everywhere it is held; returns what was `removed` and what is `kept` (custody, reviews, audit); `409 MISSION_RUNNING` (Phase U1) |
 | DELETE | `/api/v1/missions` | Every finished investigation; `confirm=delete` required; running ones `skipped` (Phase U1) |

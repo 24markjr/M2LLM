@@ -94,12 +94,20 @@ export const api = {
     request<{ status: string; model: string; provider_healthy: boolean }>("/health"),
 
   /** `workspaceId` (Phase 40): the mission's documents are ingested there and searched by meaning. */
-  createMission: (objective: string, documents: string[], workspaceId?: string, caseId?: string) =>
+  /** `mode` (Phase U4): makes the mode's operations required in the plan. */
+  createMission: (
+    objective: string,
+    documents: string[],
+    workspaceId?: string,
+    caseId?: string,
+    mode: "investigate" | "compare" | "timeline" | "security" = "investigate",
+  ) =>
     request<MissionDetail>(`${BASE}/missions`, {
       method: "POST",
       body: JSON.stringify({
         objective,
         documents,
+        mode,
         ...(workspaceId ? { workspace_id: workspaceId } : {}),
         ...(caseId ? { case_id: caseId } : {}),
       }),

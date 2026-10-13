@@ -17,6 +17,12 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 - **Domain packs**: General, Investigation, Finance and audit, Legal, Healthcare (decision support,
   never diagnosis), Cyber; starters attach real example files where the repository has them
 
+### Changed (U4b)
+
+- **Modes change the plan, not only the wording**: the question is sent as asked with `mode`; Compare,
+  Timeline and Security logs make their operations required in the intent, so the planner must
+  cover them whatever the model proposes; `MissionSummary.mode`
+
 ### Verified
 
 - 97 frontend tests (7 new), tsc, build; headless Chrome at 1440 px and 600 px

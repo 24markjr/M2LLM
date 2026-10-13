@@ -40,7 +40,7 @@ from app.schemas.intent import (
     RequiredOperation,
     UnsupportedOperation,
 )
-from app.schemas.objective import DocumentKind, Objective
+from app.schemas.objective import DocumentKind, InvestigationMode, Objective
 
 log = get_logger(__name__)
 
@@ -136,6 +136,23 @@ def map_operation(raw: str) -> Operation | None:
         return _SYNONYMS.get(key)
 
 
+# The operations each mode makes required (Phase U4). Added to the deterministic pre-pass, so they
+# reach the intent whatever the model proposes, and the planner must cover them (BUG-035's repair).
+MODE_OPERATIONS: dict[InvestigationMode, frozenset[Operation]] = {
+    InvestigationMode.INVESTIGATE: frozenset(),
+    InvestigationMode.COMPARE: frozenset(
+        {Operation.EXTRACT_CLAIMS, Operation.COMPARE_SOURCES, Operation.DETECT_CONTRADICTIONS}
+    ),
+    InvestigationMode.TIMELINE: frozenset(
+        {Operation.EXTRACT_TIMELINE, Operation.DETECT_INCONSISTENCIES}
+    ),
+    # What the security-log scenarios expect (Phase 52): who and what, when, and the impact.
+    InvestigationMode.SECURITY: frozenset(
+        {Operation.EXTRACT_ENTITIES, Operation.EXTRACT_TIMELINE, Operation.ASSESS_IMPACT}
+    ),
+}
+
+
 def derive_operations(objective: Objective) -> set[Operation]:
     """Deterministic pre-pass: what the request structurally implies.
 
@@ -148,6 +165,7 @@ def derive_operations(objective: Objective) -> set[Operation]:
     for pattern, operation in _KEYWORDS:
         if pattern.search(text):
             found.add(operation)
+    found |= MODE_OPERATIONS[objective.mode]
 
     docs = objective.scope.documents
     if docs:
