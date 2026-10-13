@@ -1308,3 +1308,21 @@ the line and passed the claim.
 
 **Fix.** IPv4 addresses are specifics, matched exactly: a claim cannot state an address none of its
 cited lines contains.
+
+
+## BUG-040 — Tests wrote their missions into the console's run history
+
+**Found:** 2026-10-13, Phase U1, reading the 101 recordings on the Replay page
+**Severity:** Medium. 80 of the 101 recordings were test runs; with archives (U1a) they would also
+have been restored as investigations
+**Status:** Fixed (`tests/conftest.py`)
+
+**Symptom.** Replay listed 80 failed runs named "Investigate the reports for contradictions.", two
+events each, no duration.
+
+**Cause.** `tests/integration/test_api_persistence.py` starts real missions through the registry, and
+the registry writes a recording into `.agent/traces/` when a run ends. No fixture redirected it.
+
+**Fix.** An autouse fixture points recordings and run archives at the test's temporary folder. The 80
+files already written are left for the user to remove with the history page's delete (U1b); they are
+hidden there by default as failed runs with no findings.

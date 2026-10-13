@@ -19,6 +19,7 @@ import asyncio
 import itertools
 from datetime import datetime
 
+from app.api.archive import RunArchive, read_archives, write_archive
 from app.api.persistence import persistence_enabled, record_finished, record_started
 from app.api.recording import write_recording
 from app.core.config import get_settings
@@ -84,6 +85,28 @@ class MissionRecord:
         # The case the mission belongs to (Phase 44).
         self.case_id: str = ""
 
+    @classmethod
+    def from_archive(cls, archive: RunArchive) -> MissionRecord:
+        """A finished mission as it was archived (Phase U1): every route answers for it."""
+        record = cls(archive.run_id, archive.objective, list(archive.documents))
+        record.created_at = archive.created_at
+        record.started_at = archive.started_at
+        record.finished_at = archive.finished_at
+        record.status = archive.status
+        record.stage = archive.stage
+        record.result = archive.result
+        record.events = list(archive.events)
+        record.evidence = dict(archive.evidence)
+        record.excluded = dict(archive.excluded)
+        record.authority = dict(archive.authority)
+        record.texts = dict(archive.texts)
+        record.page_starts = dict(archive.page_starts)
+        record.case_id = archive.case_id
+        record.knowledge_view = archive.knowledge_view
+        record.knowledge_timeline = archive.knowledge_timeline
+        record.challenges = dict(archive.challenges)
+        return record
+
     def is_finished(self) -> bool:
         """Whether the run has reached a terminal status.
 
@@ -125,15 +148,41 @@ class MissionRegistry:
         # Created lazily in `create`, because availability is an async question and a registry is
         # constructed synchronously.
         self._database: DatabaseEventSink | None = None
+        self._restored = False
+
+    def _restore(self) -> None:
+        """Load archived missions once, oldest first, before anything new (Phase U1). A run
+        already in memory wins over its archive."""
+        if self._restored:
+            return
+        self._restored = True
+        restored = 0
+        for archive in read_archives():
+            if archive.run_id not in self._missions:
+                self._missions[archive.run_id] = MissionRecord.from_archive(archive)
+                restored += 1
+        if restored:
+            log.info("missions_restored", count=restored)
 
     # --- reading -----------------------------------------------------------
 
     def get(self, run_id: str) -> MissionRecord | None:
+        self._restore()
         return self._missions.get(run_id)
 
     def records(self) -> list[MissionRecord]:
         """Newest first: a mission list is read from the top."""
-        return sorted(self._missions.values(), key=lambda m: m.sequence, reverse=True)
+        self._restore()
+        # By creation time, then sequence: a restored run keeps its place among new ones (U1).
+        return sorted(
+            self._missions.values(), key=lambda m: (m.created_at, m.sequence), reverse=True
+        )
+
+    def forget(self, run_id: str) -> MissionRecord | None:
+        """Remove a mission from the registry. Its archive and recording are removed by the
+        caller (`app/api/v1/history.py`), which also records the deletion."""
+        self._restore()
+        return self._missions.pop(run_id, None)
 
     @property
     def stream(self) -> StreamEventSink:
@@ -161,6 +210,7 @@ class MissionRegistry:
         Async only to probe the database once: attaching a sink that cannot write would log a
         failed connection on every flush, and a log full of expected errors is a log nobody reads.
         """
+        self._restore()
         record = MissionRecord(new_run_id(), objective, documents)
         record.authority = dict(authority or {})
         record.texts = dict(loaded)
@@ -244,6 +294,7 @@ class MissionRegistry:
             # than the system is.
             await _capture_knowledge(record)
             write_recording(record)
+            write_archive(record)
             if self._database is not None:
                 # Flush before the final write, so the stored timeline is complete when the run
                 # row is marked finished.
@@ -255,6 +306,8 @@ class MissionRegistry:
                 await _record_memory(record.result, record.started_at, await _held(record))
                 await _record_citations(record)
             await _file_outcome(record)
+            # Again: filing can set the case's outcome after the first write (Phase U1).
+            write_archive(record)
             await audit(
                 "mission.finished",
                 target=record.run_id,

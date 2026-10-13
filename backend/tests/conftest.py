@@ -74,6 +74,22 @@ def _evidence_stays_in_the_test(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
 
 
 @pytest.fixture(autouse=True)
+def _runs_are_recorded_in_the_test(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> Iterator[None]:
+    """No test writes a recording or a run archive into the real `.agent/` (BUG-040).
+
+    `test_api_persistence.py` started real missions, and each one left a recording in
+    `.agent/traces/`: 80 of the 101 recordings on the console's Replay page were these, failed runs
+    named "Investigate the reports for contradictions.". Since Phase U1 archives would also be
+    restored as investigations, so a leak would now show up in everyone's history.
+    """
+    monkeypatch.setattr("app.api.recording.recordings_dir", lambda: tmp_path / "traces")
+    monkeypatch.setattr("app.api.archive.archives_dir", lambda: tmp_path / "runs")
+    yield
+
+
+@pytest.fixture(autouse=True)
 def _unit_tests_have_no_database(request: pytest.FixtureRequest) -> Iterator[None]:
     if request.node.get_closest_marker("integration") is None:
         persistence._available = False

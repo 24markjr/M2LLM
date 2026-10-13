@@ -6,6 +6,16 @@ and what is still broken.
 
 ---
 
+# 2026-10-13 - Phase U1: run history
+
+The v3 plan starts with the back end the new interface needs. U1a first, because every later screen
+lists investigations: after a restart the Missions page was empty while cases still counted their
+runs. Postgres already held the run rows, but not what the routes serve (the text a challenge
+searches, the knowledge view, challenges), so a run is now archived whole, as a file, and restored
+on first use. Reading the recordings to design this showed 80 of them were test runs - BUG-040.
+
+---
+
 # 2026-10-12 - Phase 53: MITRE ATT&CK mapping and attack paths
 
 The official v15.1 bundle was downloaded once and reduced to what the mapping reads; the reduction

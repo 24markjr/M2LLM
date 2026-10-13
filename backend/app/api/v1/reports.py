@@ -11,6 +11,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Header, status
 from fastapi.responses import Response
 
+from app.api.archive import write_archive
 from app.api.errors import ApiError
 from app.api.registry import MissionRecord, get_registry
 from app.core.config import get_settings
@@ -135,6 +136,7 @@ async def _challenge_severe(record: MissionRecord, case_severity: str) -> None:
             severity=level.value,
             outcome=record.challenges[finding.finding_id].outcome.value,
         )
+        write_archive(record)  # Phase U1: the challenge is part of the run's record
 
 
 @router.get("/missions/{run_id}/investigation-report", response_model=InvestigationReport)

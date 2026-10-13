@@ -13,6 +13,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Header, Query, Request, Response, status
 from fastapi.responses import PlainTextResponse
 
+from app.api.archive import write_archive
 from app.api.errors import ApiError, MissionNotFinishedError, MissionNotFoundError
 from app.api.registry import MissionRecord, case_investigation, get_registry
 from app.api.v1.schemas import (
@@ -250,6 +251,7 @@ async def challenge_finding(
         actor=actor,
     )
     record.challenges[finding_id] = outcome
+    write_archive(record)  # a challenge is part of the run's record (Phase U1)
     return outcome
 
 

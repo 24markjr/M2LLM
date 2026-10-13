@@ -23,6 +23,7 @@ code is a guess, and one written after the code is a record.
 | `retrieval.md` | Stored, workspace-scoped retrieval: pgvector or memory, two chunkers, hits cited at their closest line | 40 |
 | `evidence-locker.md` | Every input an evidence item: content-addressed originals, append-only custody, integrity before every mission | 43 |
 | `cases.md` | Cases holding investigations and evidence; counters computed; the Professional view and plain step labels | 44 |
+| `run-history.md` | Run archives restored after a restart; run records; deleting with a record of it | U1 |
 | `evaluation-v2.md` | Scenario categories, one quality figure with its formula and components, the trend by configuration, raw metrics under Technical | 54 |
 | `cyber.md` | Event logs as one citable event per line, indicators (defanged too), observed relations, decoded PowerShell, per-host/account timelines, opt-in recall as context | 52 |
 | `investigation-report.md` | One report object: risk and summary from established findings only, severity by rules, the currency check, PDF/DOCX/MD/JSON exports recorded in custody and audit | 51 |

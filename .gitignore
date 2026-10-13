@@ -34,6 +34,8 @@ frontend/.vite/
 .agent/media-cache/
 # The Evidence Locker's stored originals (Phase 43): evidence, not source code.
 .agent/evidence/
+# Run archives (Phase U1): a finished mission kept so it survives a restart.
+.agent/runs/
 
 # --- Editors / OS ---
 .idea/

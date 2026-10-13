@@ -5,6 +5,20 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-13 - Phase U1: run history the redesign can stand on
+
+### Added
+
+- **U1a - investigations survive a restart**: each finished run is archived to `.agent/runs/` (result,
+  events, evidence, the text it read, case, knowledge graph, challenges) and restored on the
+  registry's first use; every route answers for an old run as for a new one
+
+### Fixed
+
+- **BUG-040**: tests wrote recordings into the real `.agent/traces/` (80 of 101 on the Replay page)
+
+---
+
 ## 2026-10-12 - Phase 53: MITRE ATT&CK mapping and attack paths
 
 ### Added

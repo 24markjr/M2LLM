@@ -63,3 +63,8 @@ a pause after each phase. **The default theme is light**; dark is a choice in Se
 ## As built
 
 Each phase records here what was actually built and how it differs from the line above.
+
+### U1 - as built
+
+- **U1a** (investigations survive a restart): run archives in `.agent/runs/`, restored on the
+  registry's first use; BUG-040 fixed. See `architecture/run-history.md`.
