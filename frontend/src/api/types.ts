@@ -175,6 +175,13 @@ export interface ConfidenceFactor {
   assessed: boolean;
 }
 
+/** Where each part's records are kept right now (Phase U1). */
+export interface StoreStatus {
+  part: string;
+  store: string;
+  note: string;
+}
+
 /** Evaluation v2 (Phase 54): one quality figure, its components, categories and trend. */
 export interface QualitySummary {
   formula: string;

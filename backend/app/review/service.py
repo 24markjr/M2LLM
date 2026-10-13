@@ -27,19 +27,19 @@ log = get_logger(__name__)
 _memory_store = MemoryReviewStore()
 # Probed once per process; tests set it False (tests/conftest.py).
 _database: bool | None = None
+_checked_at: float | None = None
 
 
 def reset_review_store_probe() -> None:
-    global _database
-    _database = None
+    global _database, _checked_at
+    _database, _checked_at = None, None
 
 
 async def get_review_store() -> ReviewStore:
-    global _database
-    if _database is None:
-        from app.database.session import database_available
+    global _database, _checked_at
+    from app.database.session import recheck
 
-        _database = await database_available()
+    _database, _checked_at = await recheck(_database, _checked_at)
     if _database:
         from app.database.review_store import PgReviewStore
 

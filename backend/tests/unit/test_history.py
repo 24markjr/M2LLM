@@ -294,3 +294,40 @@ async def test_cases_are_renamed_pinned_to_the_top_and_found_by_search() -> None
     assert [c["case"]["case_id"] for c in by_title] == [first["case_id"]]
     assert [c["case"]["case_id"] for c in by_question] == [second["case_id"]]
     assert nothing == []
+
+
+# --- U1e: the audit page can tell an empty log from one that is not kept -------------------------
+
+
+async def test_a_failed_database_check_is_retried_and_a_success_kept(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    from app.database import session
+
+    answers = iter([False, True])
+    calls: list[str] = []
+
+    async def probe() -> bool:
+        calls.append("probe")
+        return next(answers)
+
+    clock = iter([100.0, 110.0, 140.0, 500.0, 600.0])
+    monkeypatch.setattr(session, "database_available", probe)
+    monkeypatch.setattr(session, "_clock", lambda: next(clock))
+
+    state = await session.recheck(None, None)  # first check: no database
+    assert state == (False, 100.0)
+    state = await session.recheck(*state)  # 10 s later: trusted, not re-probed
+    assert state == (False, 100.0)
+    state = await session.recheck(*state)  # 40 s later: checked again, and it is up
+    assert state == (True, 140.0)
+    assert await session.recheck(*state) == (True, 140.0)  # a success is kept
+    assert calls == ["probe", "probe"]
+    assert await session.recheck(False, None) == (False, None), "set by a test: never probed"
+
+
+async def test_the_stores_say_where_each_record_is_kept() -> None:
+    async with await _client() as client:
+        body = (await client.get("/api/v1/system/stores")).json()
+    by_part = {s["part"]: s for s in body["stores"]}
+    assert by_part["audit log"]["store"] == "memory"
+    assert "lost when the engine stops" in by_part["audit log"]["note"]
+    assert by_part["investigations"]["note"].endswith("archived in .agent/runs/")

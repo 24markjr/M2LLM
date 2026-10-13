@@ -6,13 +6,22 @@
 import { useEffect, useState } from "react";
 
 import { api } from "../api/client";
-import type { AuditEntry } from "../api/types";
+import type { AuditEntry, StoreStatus } from "../api/types";
 import { auditLine } from "../components/review";
 
 export function AuditPage() {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [target, setTarget] = useState("");
   const [error, setError] = useState("");
+  const [store, setStore] = useState<StoreStatus | null>(null);
+
+  useEffect(() => {
+    // Phase U1: say where the log is kept, so "0 entries" is never ambiguous.
+    api
+      .getStores()
+      .then((body) => setStore(body.stores.find((s) => s.part === "audit log") ?? null))
+      .catch(() => setStore(null));
+  }, []);
 
   useEffect(() => {
     api
@@ -25,6 +34,7 @@ export function AuditPage() {
     <div className="panel">
       <h2>
         Audit log <span className="count">{entries.length} entries</span>
+        {store ? <span className="count"> · {store.store}</span> : null}
       </h2>
       <div className="panel-body">
         <input
@@ -34,6 +44,14 @@ export function AuditPage() {
           onChange={(e) => setTarget(e.target.value)}
         />
         {error ? <div className="notice error">{error}</div> : null}
+        {store?.note ? <div className="notice">{store.note}</div> : null}
+        {!error && entries.length === 0 ? (
+          <p className="dim">
+            {target
+              ? "Nothing matches that filter."
+              : "Nothing recorded yet. Every change made through the console - opening a case, uploading, reviewing, challenging, exporting, deleting - and every finished investigation is recorded here."}
+          </p>
+        ) : null}
         <table className="metrics">
           <thead>
             <tr>

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from functools import lru_cache
@@ -56,6 +57,29 @@ async def dispose_engine() -> None:
     await engine.dispose()
     get_engine.cache_clear()
     get_sessionmaker.cache_clear()
+
+
+# Phase U1: how long a failed check is trusted. The stores used to remember "no database" for the
+# life of the process, so an API started a moment before Postgres kept cases, evidence and the audit
+# log in memory until restarted - and the audit page then showed nothing after every restart.
+RETRY_UNAVAILABLE_S = 30.0
+_clock = time.monotonic  # replaced in tests
+
+
+async def recheck(available: bool | None, checked_at: float | None) -> tuple[bool, float | None]:
+    """Whether to use the database now, and when that was last checked.
+
+    Checked when never checked, or when the last check failed more than `RETRY_UNAVAILABLE_S` ago.
+    A success is kept. `checked_at` None with `available` False means "set, not probed" - what the
+    tests do to keep a store in memory - and is never re-checked.
+    """
+    now = _clock()
+    stale = (
+        available is False and checked_at is not None and now - checked_at >= RETRY_UNAVAILABLE_S
+    )
+    if available is None or stale:
+        return await database_available(), now
+    return available, checked_at
 
 
 async def database_available() -> bool:

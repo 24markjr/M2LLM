@@ -43,19 +43,19 @@ log = get_logger(__name__)
 _memory_locker = MemoryEvidenceLocker()
 # Probed once per process, like run persistence; unit tests set it False (tests/conftest.py).
 _database: bool | None = None
+_checked_at: float | None = None
 
 
 def reset_locker_probe() -> None:
-    global _database
-    _database = None
+    global _database, _checked_at
+    _database, _checked_at = None, None
 
 
 async def get_locker() -> EvidenceLocker:
-    global _database
-    if _database is None:
-        from app.database.session import database_available
+    global _database, _checked_at
+    from app.database.session import recheck
 
-        _database = await database_available()
+    _database, _checked_at = await recheck(_database, _checked_at)
     if _database:
         from app.database.evidence_locker import PgEvidenceLocker
 

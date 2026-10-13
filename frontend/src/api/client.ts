@@ -37,6 +37,7 @@ import type { AuditEntry, ReviewList, ReviewResponse, ReviewState } from "./type
 import type { InvestigationReport } from "./types";
 import type { CyberAnalysis } from "./types";
 import type { QualitySummary } from "./types";
+import type { StoreStatus } from "./types";
 
 const BASE = "/api/v1";
 
@@ -145,6 +146,9 @@ export const api = {
   /** A download of the report; recorded in custody and the audit log. */
   investigationReportUrl: (runId: string, fmt: string) =>
     `${BASE}/missions/${runId}/investigation-report/export/${fmt}`,
+
+  /** The store behind cases, evidence, the audit log and investigations (Phase U1). */
+  getStores: () => request<{ stores: StoreStatus[] }>(`${BASE}/system/stores`),
 
   /** The audit log, newest first (Phase 50). */
   getAudit: (target = "", limit = 200) =>

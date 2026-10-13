@@ -73,3 +73,6 @@ Each phase records here what was actually built and how it differs from the line
 - **U1c** (deletion): investigations, all investigations and cases, each removed everywhere it is
   held and audited; custody, reviews and the audit log kept by design.
 - **U1d** (rename, pin, search): `Case.pinned` with migration `au1c0a5e0001`; `GET /cases?q=`.
+- **U1e** (audit page): the log was genuinely empty (nothing written through the API since Phase 50);
+  stores now re-check a failed database probe after 30 s; `GET /system/stores`; the page names its
+  store and explains an empty log.

@@ -94,3 +94,23 @@ Memory is still reached only through the API's memory routes: deletion calls `fo
   description, or in the question of one of its investigations - so "shipment 4821" finds the case
   in which that was asked. Words, not meaning: search by meaning over evidence is the workspace
   search (Phase 40), and the Ctrl+K search in U3 combines both.
+
+## The audit page, and stores that fall back to memory (U1e)
+
+**What was found.** The audit page showed 0 entries. The `audit_log` table existed and accepted
+writes (checked inside a rolled-back transaction); it held nothing because nothing had been written
+through the API since Phase 50 created it - command-line evaluations do not pass through the API.
+But a second cause was possible and invisible: the case, evidence and review stores probed the
+database once per process and remembered a failure for ever. An API started a moment before
+Postgres kept everything in memory until restarted, and the page could not say so.
+
+**What changed.**
+
+- `database/session.recheck(available, checked_at)`: a failed check is retried after 30 seconds
+  (`RETRY_UNAVAILABLE_S`); a success is kept. Used by `get_case_store`, `get_locker` and
+  `get_review_store`. A value set without a check time (what the tests set) is never re-probed, so a
+  unit test cannot reach the real database.
+- `GET /api/v1/system/stores` names the store behind cases, evidence, the audit log and
+  investigations, with a note when one is in memory.
+- The Audit page shows that store, the in-memory warning when it applies, and, when the log is empty,
+  what will appear there.

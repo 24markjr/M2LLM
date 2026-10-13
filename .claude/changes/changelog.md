@@ -23,6 +23,9 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
   and every response says so; evidence items are never deleted with a case
 - **U1d - rename, pin and search cases**: `pinned` on a case (migration `au1c0a5e0001`), pinned
   first in the list; `GET /cases?q=` matches id, title, description and the questions asked in it
+- **U1e - the audit page**: failed database checks retried after 30 s instead of trusted for the
+  life of the process (cases, evidence, audit log); `GET /system/stores` names the store behind each;
+  the Audit page shows it and explains an empty log
 
 ### Fixed
 

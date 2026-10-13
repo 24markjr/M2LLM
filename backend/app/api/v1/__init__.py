@@ -19,6 +19,7 @@ from app.api.v1 import (
     replay,
     reports,
     review,
+    system,
 )
 
 router = APIRouter(prefix="/api/v1")
@@ -33,5 +34,6 @@ router.include_router(cases.router)
 router.include_router(review.router)
 router.include_router(reports.router)
 router.include_router(cyber.router)
+router.include_router(system.router)
 
 __all__ = ["router"]

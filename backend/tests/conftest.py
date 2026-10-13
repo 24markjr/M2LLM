@@ -64,12 +64,15 @@ def _evidence_stays_in_the_test(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setattr(evidence_store, "evidence_root", lambda: tmp_path / "evidence-store")
     monkeypatch.setattr(evidence_service, "_memory_locker", MemoryEvidenceLocker())
     monkeypatch.setattr(evidence_service, "_database", False)
+    monkeypatch.setattr(evidence_service, "_checked_at", None)  # never re-probed (U1)
     # Cases too (Phase 44): a fresh memory store per test, never a developer's database.
     monkeypatch.setattr(case_service, "_memory_store", MemoryCaseStore())
     monkeypatch.setattr(case_service, "_database", False)
+    monkeypatch.setattr(case_service, "_checked_at", None)  # never re-probed (U1)
     # Reviews and the audit log too (Phase 50): append-only in Postgres, so never a real database.
     monkeypatch.setattr(review_service, "_memory_store", MemoryReviewStore())
     monkeypatch.setattr(review_service, "_database", False)
+    monkeypatch.setattr(review_service, "_checked_at", None)  # never re-probed (U1)
     yield
 
 

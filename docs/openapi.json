@@ -5763,6 +5763,47 @@
         "title": "StatementType",
         "type": "string"
       },
+      "StoreStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "part": {
+            "title": "Part",
+            "type": "string"
+          },
+          "store": {
+            "title": "Store",
+            "type": "string"
+          }
+        },
+        "required": [
+          "part",
+          "store"
+        ],
+        "title": "StoreStatus",
+        "type": "object"
+      },
+      "SystemStores": {
+        "additionalProperties": false,
+        "properties": {
+          "stores": {
+            "items": {
+              "$ref": "#/components/schemas/StoreStatus"
+            },
+            "title": "Stores",
+            "type": "array"
+          }
+        },
+        "required": [
+          "stores"
+        ],
+        "title": "SystemStores",
+        "type": "object"
+      },
       "TaskGraphResponse": {
         "additionalProperties": false,
         "properties": {
@@ -10300,6 +10341,28 @@
         "summary": "Get Recording",
         "tags": [
           "replay"
+        ]
+      }
+    },
+    "/api/v1/system/stores": {
+      "get": {
+        "description": "The store behind cases, evidence, the audit log and investigations.",
+        "operationId": "stores_api_v1_system_stores_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStores"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Stores",
+        "tags": [
+          "system"
         ]
       }
     },
