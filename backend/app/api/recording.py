@@ -76,8 +76,16 @@ def _snapshot(record: MissionRecord) -> dict[str, Any]:
     return snapshot_payloads(record)
 
 
-def list_recordings() -> list[dict[str, Any]]:
-    """Every recording on disk, newest first, with just enough to build a picker."""
+# Why a recording is hidden from the default list (Phase U1). Hidden, never deleted on its own:
+# deleting is the person's decision.
+HIDDEN_EMPTY = "the run failed or was cancelled before it found anything"
+HIDDEN_DUPLICATE = "another file holds the same run"
+
+
+def list_recordings(*, include_hidden: bool = True) -> list[dict[str, Any]]:
+    """Every recording on disk, newest first, as a record: what was asked, how it ended, what it
+    found, its case. A failed run with no findings, or a second file of the same run, is marked
+    `hidden` with the reason, and left out unless `include_hidden`."""
     directory = recordings_dir()
     if not directory.is_dir():
         return []
@@ -91,6 +99,7 @@ def list_recordings() -> list[dict[str, Any]]:
             continue
 
         events = raw.get("events") or []
+        mission = (raw.get("snapshot") or {}).get("mission") or {}
         rows.append(
             {
                 "run_id": raw.get("run_id", path.stem),
@@ -102,11 +111,49 @@ def list_recordings() -> list[dict[str, Any]]:
                 "event_count": len(events),
                 "duration_ms": events[-1].get("t_offset_ms", 0) if events else 0,
                 "committed": not path.name.endswith(SCRATCH_SUFFIX),
+                "findings": int(mission.get("finding_count", 0) or 0),
+                "verified": int(mission.get("verified_count", 0) or 0),
+                "case_id": str(mission.get("case_id", "") or ""),
+                "hidden": "",
             }
         )
 
     rows.sort(key=lambda row: str(row["recorded_at"]), reverse=True)
-    return rows
+    # One file per run in the default list: a committed copy first, else the newest.
+    seen: set[str] = set()
+    for row in sorted(rows, key=lambda r: not r["committed"]):
+        if row["run_id"] in seen:
+            row["hidden"] = HIDDEN_DUPLICATE
+        seen.add(row["run_id"])
+    for row in rows:
+        if not row["hidden"] and row["findings"] == 0 and row["outcome"] in ("FAILED", "CANCELLED"):
+            row["hidden"] = HIDDEN_EMPTY
+    return rows if include_hidden else [r for r in rows if not r["hidden"]]
+
+
+def delete_recording(name: str) -> str:
+    """Delete one recording: "deleted", "kept" (committed to the repository: removed with git, not
+    from the console) or "missing". The name is resolved strictly inside the recordings folder."""
+    directory = recordings_dir().resolve()
+    candidate = (directory / Path(name).name).resolve()
+    if candidate.parent != directory or not candidate.is_file():
+        return "missing"
+    if not candidate.name.endswith(SCRATCH_SUFFIX):
+        return "kept"
+    candidate.unlink()
+    return "deleted"
+
+
+def delete_recordings(*, hidden_only: bool) -> tuple[int, int]:
+    """Delete every local recording, or only the hidden ones. Returns (deleted, kept)."""
+    deleted = kept = 0
+    for row in list_recordings():
+        if hidden_only and not row["hidden"]:
+            continue
+        outcome = delete_recording(str(row["file"]))
+        deleted += outcome == "deleted"
+        kept += outcome == "kept"
+    return deleted, kept
 
 
 def load_recording(name: str) -> dict[str, Any] | None:

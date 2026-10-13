@@ -104,3 +104,76 @@ def test_restored_runs_sort_before_new_ones() -> None:
     registry.records()  # restores
     registry._missions[newer.run_id] = newer
     assert [r.objective.text for r in registry.records()] == ["second", "first"]
+
+
+# --- U1b: recordings as records, and deleting them ------------------------------------------------
+
+
+def _recording(name: str, run_id: str, outcome: str, findings: int, at: str) -> None:
+    import json
+
+    from app.api.recording import recordings_dir
+
+    directory = recordings_dir()
+    directory.mkdir(parents=True, exist_ok=True)
+    body = {
+        "run_id": run_id,
+        "objective": f"objective of {run_id}",
+        "outcome": outcome,
+        "recorded_at": at,
+        "events": [{"t_offset_ms": 0}, {"t_offset_ms": 5000}],
+        "snapshot": {"mission": {"finding_count": findings, "case_id": "CASE-2026-00002"}},
+    }
+    (directory / name).write_text(json.dumps(body), encoding="utf-8")
+
+
+def _three_recordings() -> None:
+    _recording("run_aaaaaaaaaaaa.local.json", "run_aaaaaaaaaaaa", "COMPLETED", 2, "2026-10-13T01")
+    _recording("run_bbbbbbbbbbbb.local.json", "run_bbbbbbbbbbbb", "FAILED", 0, "2026-10-13T02")
+    _recording("aurora-demo.json", "run_cccccccccccc", "COMPLETED", 3, "2026-10-13T03")
+    _recording("run_cccccccccccc.local.json", "run_cccccccccccc", "COMPLETED", 3, "2026-10-13T04")
+
+
+async def test_the_default_list_hides_empty_and_duplicate_runs_and_says_why() -> None:
+    _three_recordings()
+    async with await _client() as client:
+        shown = (await client.get("/api/v1/recordings")).json()
+        every = (await client.get("/api/v1/recordings?include_hidden=true")).json()
+
+    assert [r["file"] for r in shown] == ["aurora-demo.json", "run_aaaaaaaaaaaa.local.json"]
+    assert shown[0]["findings"] == 3 and shown[0]["case_id"] == "CASE-2026-00002"
+    hidden = {r["file"]: r["hidden"] for r in every if r["hidden"]}
+    assert hidden == {
+        "run_bbbbbbbbbbbb.local.json": "the run failed or was cancelled before it found anything",
+        "run_cccccccccccc.local.json": "another file holds the same run",
+    }
+
+
+async def test_a_recording_is_deleted_and_a_committed_one_is_kept() -> None:
+    _three_recordings()
+    async with await _client() as client:
+        gone = await client.delete("/api/v1/recordings/run_aaaaaaaaaaaa.local.json")
+        kept = await client.delete("/api/v1/recordings/aurora-demo.json")
+        missing = await client.delete("/api/v1/recordings/run_aaaaaaaaaaaa.local.json")
+        audit = (await client.get("/api/v1/audit")).json()
+
+    assert gone.status_code == 204
+    assert kept.status_code == 409 and kept.json()["error_code"] == "RECORDING_KEPT"
+    assert missing.status_code == 404
+    assert any(e["action"] == "recording.deleted" for e in audit)
+
+
+async def test_deleting_many_needs_confirmation_and_reports_counts() -> None:
+    _three_recordings()
+    async with await _client() as client:
+        refused = await client.delete("/api/v1/recordings?scope=all")
+        hidden = (await client.delete("/api/v1/recordings?scope=hidden&confirm=delete")).json()
+        left = (await client.get("/api/v1/recordings?include_hidden=true")).json()
+        every = (await client.delete("/api/v1/recordings?scope=all&confirm=delete")).json()
+        last = (await client.get("/api/v1/recordings?include_hidden=true")).json()
+
+    assert refused.status_code == 400 and refused.json()["error_code"] == "CONFIRMATION_REQUIRED"
+    assert hidden == {"deleted": 2, "kept": 0}
+    assert {r["file"] for r in left} == {"run_aaaaaaaaaaaa.local.json", "aurora-demo.json"}
+    assert every == {"deleted": 1, "kept": 1}
+    assert [r["file"] for r in last] == ["aurora-demo.json"]

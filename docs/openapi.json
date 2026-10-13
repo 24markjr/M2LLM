@@ -1499,6 +1499,25 @@
         "title": "DecodedCommand",
         "type": "object"
       },
+      "DeletedRecordings": {
+        "additionalProperties": false,
+        "properties": {
+          "deleted": {
+            "title": "Deleted",
+            "type": "integer"
+          },
+          "kept": {
+            "title": "Kept",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "deleted",
+          "kept"
+        ],
+        "title": "DeletedRecordings",
+        "type": "object"
+      },
       "EntityInvestigation": {
         "additionalProperties": false,
         "description": "Everything known about one entity, in one response.\n\nThe original `/investigation/{name}` endpoint, which its README called the main one.",
@@ -4988,6 +5007,11 @@
       "RecordingSummary": {
         "additionalProperties": false,
         "properties": {
+          "case_id": {
+            "default": "",
+            "title": "Case Id",
+            "type": "string"
+          },
           "committed": {
             "title": "Committed",
             "type": "boolean"
@@ -5002,6 +5026,16 @@
           },
           "file": {
             "title": "File",
+            "type": "string"
+          },
+          "findings": {
+            "default": 0,
+            "title": "Findings",
+            "type": "integer"
+          },
+          "hidden": {
+            "default": "",
+            "title": "Hidden",
             "type": "string"
           },
           "model": {
@@ -5023,6 +5057,11 @@
           "run_id": {
             "title": "Run Id",
             "type": "string"
+          },
+          "verified": {
+            "default": 0,
+            "title": "Verified",
+            "type": "integer"
           }
         },
         "required": [
@@ -9850,9 +9889,77 @@
       }
     },
     "/api/v1/recordings": {
+      "delete": {
+        "description": "Delete the hidden recordings, or all local ones. `confirm=delete` is required, so a stray\nrequest cannot empty the history.",
+        "operationId": "remove_recordings_api_v1_recordings_delete",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "default": "hidden",
+              "enum": [
+                "hidden",
+                "all"
+              ],
+              "title": "Scope",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "confirm",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Confirm",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedRecordings"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Recordings",
+        "tags": [
+          "replay"
+        ]
+      },
       "get": {
-        "description": "Recorded runs available to replay, newest first.",
+        "description": "Recorded runs available to replay, newest first. Failed runs that found nothing, and second\ncopies of a run, are left out unless `include_hidden`; each says why.",
         "operationId": "get_recordings_api_v1_recordings_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_hidden",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Hidden",
+              "type": "boolean"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -9867,6 +9974,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Get Recordings",
@@ -9876,6 +9993,40 @@
       }
     },
     "/api/v1/recordings/{name}": {
+      "delete": {
+        "description": "Delete one local recording. The investigation it replays is not touched.",
+        "operationId": "remove_recording_api_v1_recordings__name__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Recording",
+        "tags": [
+          "replay"
+        ]
+      },
       "get": {
         "description": "One recording: its events and the run's final state.\n\nServed whole. A replay needs every event in order, and paginating them would make the\nclient reassemble a file that is already a single document.",
         "operationId": "get_recording_api_v1_recordings__name__get",

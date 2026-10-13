@@ -12,6 +12,10 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 - **U1a - investigations survive a restart**: each finished run is archived to `.agent/runs/` (result,
   events, evidence, the text it read, case, knowledge graph, challenges) and restored on the
   registry's first use; every route answers for an old run as for a new one
+- **U1b - recordings as records**: each recording carries findings, verified count and case; failed
+  runs with no findings and second copies of a run are hidden with the reason
+  (`?include_hidden=true` shows them); delete one (`DELETE /recordings/{name}`) or many
+  (`DELETE /recordings?scope=hidden|all&confirm=delete`); committed recordings are kept; audited
 
 ### Fixed
 

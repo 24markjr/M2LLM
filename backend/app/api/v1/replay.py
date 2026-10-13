@@ -7,16 +7,22 @@ second place where metrics come from.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Query, status
 
 from app.api.errors import ApiError
-from app.api.recording import list_recordings, load_recording
+from app.api.recording import (
+    delete_recording,
+    delete_recordings,
+    list_recordings,
+    load_recording,
+)
 from app.core.logging import get_logger
 from app.evaluation.quality import QualitySummary, quality_summary
 from app.evaluation.report import LOWER_IS_BETTER, EvalReport
 from app.evaluation.runner import reports_dir
+from app.review.service import audit
 from app.schemas.common import JarvisModel
 
 log = get_logger(__name__)
@@ -34,12 +40,63 @@ class RecordingSummary(JarvisModel):
     duration_ms: int
     # Whether this recording is committed to the repo rather than local scratch.
     committed: bool
+    # Phase U1: what it found, its case, and why it is hidden from the default list ("" = shown).
+    findings: int = 0
+    verified: int = 0
+    case_id: str = ""
+    hidden: str = ""
+
+
+class DeletedRecordings(JarvisModel):
+    deleted: int
+    # Committed recordings are part of the repository and are never deleted from the console.
+    kept: int
 
 
 @router.get("/recordings", response_model=list[RecordingSummary])
-async def get_recordings() -> list[RecordingSummary]:
-    """Recorded runs available to replay, newest first."""
-    return [RecordingSummary(**row) for row in list_recordings()]
+async def get_recordings(
+    include_hidden: bool = Query(default=False),
+) -> list[RecordingSummary]:
+    """Recorded runs available to replay, newest first. Failed runs that found nothing, and second
+    copies of a run, are left out unless `include_hidden`; each says why."""
+    return [RecordingSummary(**row) for row in list_recordings(include_hidden=include_hidden)]
+
+
+@router.delete("/recordings/{name}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_recording(name: str) -> None:
+    """Delete one local recording. The investigation it replays is not touched."""
+    outcome = delete_recording(name)
+    if outcome == "missing":
+        raise ApiError(
+            "RECORDING_NOT_FOUND",
+            f"no recording named {name}",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    if outcome == "kept":
+        raise ApiError(
+            "RECORDING_KEPT",
+            f"{name} is committed to the repository; remove it with git, not from the console",
+            status_code=status.HTTP_409_CONFLICT,
+        )
+    await audit("recording.deleted", target=name)
+
+
+@router.delete("/recordings", response_model=DeletedRecordings)
+async def remove_recordings(
+    scope: Literal["hidden", "all"] = Query(default="hidden"),
+    confirm: str = Query(default=""),
+) -> DeletedRecordings:
+    """Delete the hidden recordings, or all local ones. `confirm=delete` is required, so a stray
+    request cannot empty the history."""
+    if confirm != "delete":
+        raise ApiError(
+            "CONFIRMATION_REQUIRED",
+            "deleting recordings needs confirm=delete",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    deleted, kept = delete_recordings(hidden_only=scope == "hidden")
+    await audit("recordings.deleted", target=f"recordings:{scope}", deleted=deleted, kept=kept)
+    return DeletedRecordings(deleted=deleted, kept=kept)
 
 
 @router.get("/recordings/{name}")

@@ -68,3 +68,5 @@ Each phase records here what was actually built and how it differs from the line
 
 - **U1a** (investigations survive a restart): run archives in `.agent/runs/`, restored on the
   registry's first use; BUG-040 fixed. See `architecture/run-history.md`.
+- **U1b** (recordings as records): findings, case and a hidden reason per recording; delete one,
+  hidden or all with `confirm=delete`; committed recordings kept.

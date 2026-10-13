@@ -42,6 +42,9 @@ kept current while the run proceeds.
 | POST | `/api/v1/missions/{id}/findings/{finding_id}/review` | Approve, reject (reason; `replan` starts a follow-up investigation) or modify (reason, reworded claim); reviewer from `X-Jarvis-User`; approval releases facts to memory |
 | GET | `/api/v1/missions/{id}/investigation-report` | The investigation report as it stands (JSON, no side effects); HIGH/CRITICAL findings are challenged first if nobody has (Phase 51) |
 | GET | `/api/v1/missions/{id}/investigation-report/export/{md,pdf,docx,json}` | A download; REPORTED custody on each cited item and an audit entry with the content hash; `X-Report-Hash` |
+| GET | `/api/v1/recordings` | Recordings newest first, each with findings, verified count, case and why it is `hidden` (failed with no findings, or a second copy); hidden ones only with `include_hidden=true` (Phase U1) |
+| DELETE | `/api/v1/recordings/{name}` | Delete one local recording; `409 RECORDING_KEPT` for a committed one; audited (Phase U1) |
+| DELETE | `/api/v1/recordings` | `scope=hidden\|all`, `confirm=delete` required (`400 CONFIRMATION_REQUIRED`); returns `deleted` and `kept` (Phase U1) |
 | GET | `/api/v1/evaluation/quality` | One quality figure: its formula, its components (each with formula, report and dataset), the newest agent report by category, agent quality over every committed report with its configuration key, and which reports are missing (Phase 54) |
 | GET | `/api/v1/missions/{id}/attack-graph` | The attack path in the 3D explorer's format: observed steps (RELATES), inferred steps (INFERRED, with reasons), ATT&CK techniques (MAPS_TO) (Phase 53) |
 | GET | `/api/v1/missions/{id}/cyber` | The run's security logs: indicators, entities, observed relations with their lines, decoded commands, per-host and per-account timelines; similar cases when the case opted in (context only) (Phase 52) |
