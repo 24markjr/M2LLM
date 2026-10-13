@@ -65,3 +65,18 @@ inferred, UNSUPPORTED and CONTRADICTED -> not established, INCONCLUSIVE or none 
 
 **`#/design`** shows every token and component in the current theme, with a switch between themes.
 It is linked from Settings, and is where a change to the system is reviewed.
+
+## No sideways scrolling; phone widths (U2c)
+
+A section at the end of `styles.css` applies to every existing page:
+
+- table cells wrap (`table.metrics` forced one line per cell, so the Evaluation and Evidence tables
+  ran off the screen); identifiers and file names break anywhere; numbers stay on one line;
+- images, canvases, `code` and `pre` never push the page wider; panels may shrink;
+- the header wraps; the tagline is gone (it wrapped onto four lines and pushed Settings to its own
+  row); below 640 px smaller paddings and no large minimum widths;
+- the page gutter is `--gutter` (16 px, 12 px on phones).
+
+**Checked once, in headless Chrome** against the built app: `#/design` and the cases page at 1366 px
+(light). A note for the next check: headless Chrome on Windows will not lay out narrower than 504 px,
+so a "390 px" screenshot is a 504 px page cropped; phone checks need the browser's device mode.

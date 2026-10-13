@@ -16,10 +16,16 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 - **U2b - the component library**: buttons, fields, cards, badges, the status underline
   (`StatusMark`), tables that wrap and stack on phones, tabs, dialogs with type-to-confirm, notices,
   toasts, icons; `#/design` shows them all, linked from Settings
+- **U2c - no sideways scrolling**: table cells wrap, media and code never widen the page, the
+  header wraps, phone paddings; checked in headless Chrome
 
 ### Fixed
 
 - The primary button put white text on a pale background in the light theme
+
+### Verified
+
+- U2: 87 frontend tests (8 new), tsc, build; screenshots of the light theme in headless Chrome
 
 ---
 

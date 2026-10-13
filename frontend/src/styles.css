@@ -1664,3 +1664,88 @@ ul.conclusion {
   color: var(--warn);
   border-color: var(--warn);
 }
+
+
+/* --- Phase U2c: never scroll the page sideways; phone widths ------------------------------------ */
+
+.shell {
+  max-width: 1280px;
+  padding: 0 var(--gutter) 64px;
+}
+
+/* Media and long tokens never push the page wider. */
+img,
+svg,
+canvas,
+video {
+  max-width: 100%;
+}
+code,
+.mono {
+  overflow-wrap: anywhere;
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Flex and grid children may shrink below their content. */
+.panel,
+.panel-body,
+main,
+section {
+  min-width: 0;
+}
+
+/* Tables wrap instead of forcing one line per cell (the Evaluation and Evidence pages ran off the
+   screen). Identifiers and file names break anywhere; numbers stay on one line. */
+table.metrics th,
+table.metrics td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+table.metrics td.num {
+  white-space: nowrap;
+}
+
+/* The header wraps; the tagline goes where there is no room for it. */
+header.top {
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
+}
+.nav {
+  flex-wrap: wrap;
+}
+/* The tagline wrapped onto four lines and pushed Settings to a row of its own; the shell (U3)
+   replaces this header, so it simply goes. */
+.tagline {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .brand {
+    font-size: 14px;
+    letter-spacing: 0.08em;
+  }
+  .nav a {
+    padding: 6px 8px;
+  }
+  .event {
+    flex-wrap: wrap;
+  }
+  .event .kind,
+  .event .t {
+    min-width: 0;
+  }
+  .explorer-controls input.search {
+    min-width: 0;
+    width: 100%;
+  }
+  .wave {
+    min-width: 140px;
+  }
+  .panel-body {
+    padding: var(--space-3);
+  }
+}
