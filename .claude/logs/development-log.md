@@ -32,6 +32,13 @@ one way to run, so a mode can only change what it is asked; building "modes" tha
 different engines would have claimed something the system does not do. They frame the question,
 the hint line says what each does, and the architecture note says the rest.
 
+U4b and U5. The user asked whether the modes' limit could be overcome; it could, cheaply, because the
+intent engine already unions a deterministic pre-pass with the model and the planner must cover
+required operations - so a mode now adds operations, not words. U5 is the journal. Its logic is
+pure functions over the event stream, the task graph and the report, so the live run and the
+replay share it. The replay check found a type that had been wrong and never read (BUG-041) - and
+that one bad read blanked the whole console, so every page now has an error boundary.
+
 ---
 
 # 2026-10-12 - Phase 53: MITRE ATT&CK mapping and attack paths

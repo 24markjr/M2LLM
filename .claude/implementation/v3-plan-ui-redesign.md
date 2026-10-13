@@ -99,3 +99,10 @@ another name. Review decisions are not yet in "Needs your attention" (U5). See
 `architecture/home-and-composer.md`.
 - **U4b** (the limit removed): modes now make operations required on the engine
   (`MODE_OPERATIONS`), the question is sent as asked; the user asked for the limit to be overcome.
+
+### U5 - as built
+
+As planned, plus the Recordings table with delete (planned for U9, brought forward because replay
+in place needed a way to choose a recording) and an error boundary around every page (the replay
+check found a crash, BUG-041). The old mission page stays reachable as "All details" until U6.
+See `architecture/journal.md`.

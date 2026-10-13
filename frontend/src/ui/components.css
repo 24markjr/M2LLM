@@ -265,7 +265,10 @@
   text-align: left;
   vertical-align: top;
   border-bottom: 1px solid var(--border);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word; /* "anywhere" broke short words letter by letter (U3, U5) */
+}
+.ui-table .nowrap {
+  white-space: nowrap;
 }
 .ui-table th {
   font-size: var(--text-xs);

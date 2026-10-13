@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { api } from "../api/client";
 import { browserStorage } from "../theme/theme";
 import { CommandPalette } from "./CommandPalette";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { type Route, sectionOf, trailOf } from "./routes";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
@@ -98,7 +99,9 @@ export function Shell({ route, children }: { route: Route; children: ReactNode }
               <code>uvicorn app.api.app:create_app --factory --reload</code>
             </div>
           ) : null}
-          <div className="shell-content">{children}</div>
+          <div className="shell-content">
+            <ErrorBoundary key={JSON.stringify(route)}>{children}</ErrorBoundary>
+          </div>
         </main>
       </div>
       <CommandPalette open={palette} onClose={() => setPalette(false)} />

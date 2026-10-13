@@ -8,6 +8,7 @@ import "./ui/ui.css";
 import "./ui/components.css";
 import "./shell/shell.css";
 import "./home/home.css";
+import "./journal/journal.css";
 import { ThemeProvider } from "./theme/ThemeProvider";
 import { applyTheme, browserStorage, loadTheme } from "./theme/theme";
 import { ToastProvider } from "./ui/components";

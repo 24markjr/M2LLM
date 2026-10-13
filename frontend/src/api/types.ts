@@ -566,6 +566,11 @@ export interface NarrativeCheck {
   sentences: SentenceCheck[];
 }
 
+export interface Limitation {
+  description: string;
+  cause: string;
+}
+
 export interface FinalReport {
   run_id: string;
   objective: string;
@@ -576,7 +581,8 @@ export interface FinalReport {
   uncertain_findings: string[];
   rejected_findings: string[];
   unresolved_gaps: string[];
-  limitations: string[];
+  /** What constrains trust in the report, with its cause (BUG-041: was typed as strings). */
+  limitations: Limitation[];
   execution: ExecutionSummary;
   /** Absent on reports recorded before Phase 37. */
   narrative_checks?: NarrativeCheck[];
@@ -603,6 +609,11 @@ export interface RecordingSummary {
   duration_ms: number;
   /** Committed to the repo rather than local scratch. */
   committed: boolean;
+  /** Phase U1: what it found, its case, and why it is hidden from the default list ("" = shown). */
+  findings?: number;
+  verified?: number;
+  case_id?: string;
+  hidden?: string;
 }
 
 /**

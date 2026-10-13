@@ -9,13 +9,15 @@ import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 
 import type { MissionDetail } from "./api/types";
 import { HomePage } from "./home/HomePage";
+import { JournalPage } from "./journal/JournalPage";
+import { RecordingsPage, ReplayJournal } from "./journal/RecordingsPage";
 import { AuditPage } from "./pages/AuditPage";
 import { CasePage, CasesPage } from "./pages/CasesPage";
 import { DesignPage } from "./pages/DesignPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
 import { EvidenceItemPage, EvidenceLockerPage } from "./pages/EvidencePage";
 import { MemoryPage } from "./pages/MemoryPage";
-import { EvaluationPage, MissionDetailPage, MissionList, NewMission, ReplayPage } from "./pages/pages";
+import { EvaluationPage, MissionDetailPage, MissionList, NewMission } from "./pages/pages";
 import { draftFromHash } from "./components/workspaces";
 import { parseRoute, type Route } from "./shell/routes";
 import { INSIGHTS_TABS, LIBRARY_TABS, SectionTabs, Shell } from "./shell/Shell";
@@ -57,7 +59,10 @@ export default function App() {
         />
       ) : null}
 
-      {route.name === "mission" ? <MissionDetailPage runId={route.runId} onBack={() => go("#/missions")} /> : null}
+      {route.name === "mission" ? <JournalPage key={route.runId} runId={route.runId} /> : null}
+      {route.name === "details" ? (
+        <MissionDetailPage runId={route.runId} onBack={() => go(`#/mission/${route.runId}`)} />
+      ) : null}
 
       {route.name === "knowledge" ? (
         <Suspense fallback={<div className="empty">Loading.</div>}>
@@ -112,10 +117,11 @@ export default function App() {
           <SectionTabs tabs={INSIGHTS_TABS} active={route.name} />
           {route.name === "evaluation" ? <EvaluationPage onBack={() => go("#/")} /> : null}
           {route.name === "memory" ? <MemoryPage key={route.entity} entity={route.entity} /> : null}
-          {route.name === "replay" ? <ReplayPage onBack={() => go("#/")} /> : null}
+          {route.name === "replay" ? <RecordingsPage /> : null}
         </>
       ) : null}
 
+      {route.name === "replayOne" ? <ReplayJournal key={route.file} file={route.file} /> : null}
       {route.name === "audit" ? <AuditPage /> : null}
       {route.name === "design" ? <DesignPage /> : null}
     </Shell>

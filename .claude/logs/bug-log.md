@@ -1326,3 +1326,21 @@ the registry writes a recording into `.agent/traces/` when a run ends. No fixtur
 **Fix.** An autouse fixture points recordings and run archives at the test's temporary folder. The 80
 files already written are left for the user to remove with the history page's delete (U1b); they are
 hidden there by default as failed runs with no findings.
+
+
+## BUG-041 - The frontend typed the report's limitations as text; they are objects
+
+**Found:** 2026-10-13, Phase U5, replaying the Aurora demo recording in the new journal
+**Severity:** Medium. The first page to read the field crashed, and took the whole console with it
+**Status:** Fixed (`frontend/src/api/types.ts`, `journal/journal.ts`)
+
+**Symptom.** Partway through the replay the console went blank. With an error boundary in place the
+page said: `u.trim is not a function`.
+
+**Cause.** `FinalReport.limitations` is `list[Limitation]` (`description`, `cause`) on the backend;
+the hand-written frontend type said `string[]`. No page read the field until the journal's closing
+sections, which trimmed each one as a string.
+
+**Fix.** The type is `Limitation[]`; the journal shows "description (cause)". An `ErrorBoundary`
+around every page means a failure like this now shows its message instead of a blank screen. The
+Phase 51 investigation report's `limitations` really are strings, and are unchanged.

@@ -33,6 +33,9 @@ describe("the shell (Phase U3)", () => {
       "Knowledge graph",
     ]);
     expect(trailOf(parseRoute("#/replay"))).toEqual(["Insights", "Recordings"]);
+    expect(parseRoute("#/mission/run_0123456789ab/details")).toEqual({ name: "details", runId: "run_0123456789ab" });
+    expect(parseRoute("#/replay/run_0123456789ab.local.json")).toEqual({ name: "replayOne", file: "run_0123456789ab.local.json" });
+    expect(sectionOf(parseRoute("#/replay/a.json"))).toBe("insights");
   });
 
   it("groups cases pinned first, then today, this week and earlier", () => {

@@ -5,6 +5,30 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-13 - Phase U5: the investigation journal
+
+### Added
+
+- **The journal** (`#/mission/{id}`): the question, seven plain steps while it runs, the answer with
+  every sentence marked verified / inferred / not established / unknown, findings with numbered
+  citations to file and line, review and challenge, and three closing sections - what could not be
+  established, what would change the answer, the best next evidence; a follow-up in the same case;
+  stop and delete. The previous page is "All details" (`#/mission/{id}/details`)
+- **Replay in place** (`#/replay/{file}`): a recording plays in the journal, under a replay bar
+- **Recordings as a table** with delete one, delete failed and duplicates, delete all
+- **A failing page says why** and leaves the rest of the console working
+
+### Fixed
+
+- **BUG-041**: the report's limitations were typed as text; the journal crashed reading them
+
+### Verified
+
+- 104 frontend tests (7 new), tsc, build; the demo recording replayed in the journal in headless
+  Chrome, mid-run and to the end
+
+---
+
 ## 2026-10-13 - Phase U4: home and the composer
 
 ### Added

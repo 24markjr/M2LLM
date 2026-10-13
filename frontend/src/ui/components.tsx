@@ -199,6 +199,8 @@ export interface Column<T> {
   align?: "left" | "right";
   /** Shown in the stacked layout on narrow screens; defaults to `header`. */
   label?: string;
+  /** Short values (dates, counts, ids) stay on one line; the long column takes the rest (U5). */
+  nowrap?: boolean;
 }
 
 /**
@@ -225,7 +227,7 @@ export function DataTable<T>({
       <thead>
         <tr>
           {columns.map((c) => (
-            <th key={c.key} className={c.align === "right" ? "num" : undefined} scope="col">
+            <th key={c.key} className={cellClass(c)} scope="col">
               {c.header}
             </th>
           ))}
@@ -235,7 +237,7 @@ export function DataTable<T>({
         {rows.map((row) => (
           <tr key={rowKey(row)}>
             {columns.map((c) => (
-              <td key={c.key} data-label={c.label ?? c.header} className={c.align === "right" ? "num" : undefined}>
+              <td key={c.key} data-label={c.label ?? c.header} className={cellClass(c)}>
                 {c.render(row)}
               </td>
             ))}
@@ -244,6 +246,11 @@ export function DataTable<T>({
       </tbody>
     </table>
   );
+}
+
+function cellClass<T>(c: Column<T>): string | undefined {
+  const names = [c.align === "right" ? "num" : "", c.nowrap ? "nowrap" : ""].filter(Boolean).join(" ");
+  return names || undefined;
 }
 
 // --- tabs ------------------------------------------------------------------------------------------
@@ -371,7 +378,7 @@ export function ConfirmDialog({
   body: ReactNode;
   confirmLabel: string;
   danger?: boolean;
-  typeToConfirm?: string;
+  typeToConfirm?: string | undefined;
   busy?: boolean;
   onConfirm: () => void;
   onClose: () => void;

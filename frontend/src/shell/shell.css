@@ -540,3 +540,29 @@ kbd {
     transition: none;
   }
 }
+
+/* --- a page that failed (U5) ------------------------------------------------------------------ */
+
+.page-error {
+  max-width: 640px;
+  margin: var(--space-8) auto;
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--unsupported);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.page-error h2 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+}
+.page-error p {
+  color: var(--text-muted);
+}
+.page-error pre {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+}

@@ -30,10 +30,12 @@ export type Route =
   | { name: "documents"; workspace: string }
   | { name: "evidence"; evidenceId: string }
   | { name: "mission"; runId: string }
+  | { name: "details"; runId: string }
   | { name: "graph"; runId: string; focus: string; search: string }
   | { name: "knowledge" }
   | { name: "memory"; entity: string }
   | { name: "replay" }
+  | { name: "replayOne"; file: string }
   | { name: "evaluation" }
   | { name: "audit" }
   | { name: "design" }
@@ -46,6 +48,9 @@ export function parseRoute(full: string): Route {
   const hash = full.split("?")[0] ?? full;
   const attack = /^#\/mission\/([\w-]+)\/attack$/.exec(hash);
   if (attack?.[1]) return { name: "attack", runId: attack[1] };
+  // Every panel of a run, as before U5; the evidence board (U6) replaces it.
+  const details = /^#\/mission\/([\w-]+)\/details$/.exec(hash);
+  if (details?.[1]) return { name: "details", runId: details[1] };
   const graph = /^#\/mission\/([\w-]+)\/graph$/.exec(hash);
   if (graph?.[1]) return { name: "graph", runId: graph[1], focus: query.focus ?? "", search: query.q ?? "" };
   if (hash === "#/knowledge") return { name: "knowledge" };
@@ -59,6 +64,9 @@ export function parseRoute(full: string): Route {
   }
   if (hash === "#/documents") return { name: "documents", workspace: query.workspace ?? "default" };
   if (hash === "#/replay") return { name: "replay" };
+  // One recording, played back in the journal (U5).
+  const replayOne = /^#\/replay\/(.+)$/.exec(hash);
+  if (replayOne?.[1]) return { name: "replayOne", file: decodeURIComponent(replayOne[1]) };
   if (hash === "#/evaluation" || hash === "#/insights") return { name: "evaluation" };
   if (hash === "#/audit" || hash === "#/activity") return { name: "audit" };
   if (hash === "#/design") return { name: "design" };
@@ -85,6 +93,7 @@ export function sectionOf(route: Route): Section {
     case "evaluation":
     case "memory":
     case "replay":
+    case "replayOne":
       return "insights";
     case "audit":
       return "activity";
@@ -112,6 +121,8 @@ export function trailOf(route: Route): string[] {
       return ["New investigation", "Quick analysis"];
     case "mission":
       return ["Investigations", route.runId];
+    case "details":
+      return ["Investigations", route.runId, "All details"];
     case "graph":
       return ["Investigations", route.runId, "Knowledge graph"];
     case "attack":
@@ -126,6 +137,8 @@ export function trailOf(route: Route): string[] {
       return ["Insights", "Memory"];
     case "replay":
       return ["Insights", "Recordings"];
+    case "replayOne":
+      return ["Insights", "Recordings", "Replay"];
     case "audit":
       return ["Activity"];
     case "design":

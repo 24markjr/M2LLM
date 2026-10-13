@@ -86,6 +86,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(response.status, body);
   }
 
+  // A deletion answers 204 with no body (Phase U1).
+  if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
 }
 
@@ -185,7 +187,17 @@ export const api = {
   /** The URL an `EventSource` connects to. Streaming is not a fetch. */
   streamUrl: (runId: string) => `${BASE}/missions/${runId}/stream`,
 
-  listRecordings: () => request<RecordingSummary[]>(`${BASE}/recordings`),
+  /** Recordings as records (U1); failed runs with no findings and second copies only with `includeHidden`. */
+  listRecordings: (includeHidden = false) =>
+    request<RecordingSummary[]>(`${BASE}/recordings${includeHidden ? "?include_hidden=true" : ""}`),
+
+  /** Delete one local recording; a committed one answers RECORDING_KEPT (U1). */
+  deleteRecording: (file: string) =>
+    request<void>(`${BASE}/recordings/${encodeURIComponent(file)}`, { method: "DELETE" }),
+
+  /** Delete the hidden recordings, or all local ones (U1). */
+  deleteRecordings: (scope: "hidden" | "all") =>
+    request<{ deleted: number; kept: number }>(`${BASE}/recordings?scope=${scope}&confirm=delete`, { method: "DELETE" }),
 
   getRecording: (name: string) =>
     request<Recording>(`${BASE}/recordings/${encodeURIComponent(name)}`),
