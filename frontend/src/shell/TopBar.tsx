@@ -9,11 +9,12 @@ import { IconChevronRight, IconMenu, IconMoon, IconSearch, IconSun } from "../ui
 
 /** The link for each trail item that is a place of its own. */
 const TRAIL_LINKS: Record<string, string> = {
-  Cases: "#/",
+  Home: "#/",
+  Cases: "#/cases",
   Library: "#/library",
   Insights: "#/insights",
   Activity: "#/activity",
-  "New investigation": "#/new",
+  "New investigation": "#/",
 };
 
 export function TopBar({

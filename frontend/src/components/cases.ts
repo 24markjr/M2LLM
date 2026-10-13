@@ -10,7 +10,7 @@ export const SEVERITIES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
 export const CASE_STATUSES = ["OPEN", "INVESTIGATING", "REVIEW", "CLOSED"] as const;
 
 export function caseLink(caseId?: string): string {
-  return caseId && CASE_ID.test(caseId) ? `#/case/${caseId}` : "#/";
+  return caseId && CASE_ID.test(caseId) ? `#/case/${caseId}` : "#/cases";
 }
 
 export function caseIdFromHash(hash: string): string {

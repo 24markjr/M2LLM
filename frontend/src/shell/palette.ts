@@ -10,9 +10,10 @@ export interface PaletteEntry {
 }
 
 export const PLACES: PaletteEntry[] = [
-  { label: "New investigation", hint: "Ask a question over your files", href: "#/new" },
+  { label: "New investigation", hint: "Ask a question over your files", href: "#/" },
+  { label: "Detailed investigation form", hint: "Every option of a new investigation", href: "#/new" },
   { label: "Quick analysis", hint: "Entities, claims and conflicts, without a full investigation", href: "#/knowledge" },
-  { label: "Cases", hint: "Every case", href: "#/" },
+  { label: "Cases", hint: "Every case", href: "#/cases" },
   { label: "All investigations", hint: "Every investigation, in a case or not", href: "#/missions" },
   { label: "Library: evidence", hint: "Every file, its hash and chain of custody", href: "#/evidence" },
   { label: "Library: documents", hint: "Workspaces searched by meaning", href: "#/documents" },

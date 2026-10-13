@@ -79,7 +79,7 @@ export function Sidebar({
   return (
     <nav className={`sidebar ${collapsed ? "collapsed" : ""}`} aria-label="Main">
       <div className="sidebar-head">
-        <a className="sidebar-brand" href="#/" onClick={onNavigate} aria-label="JARVIS - cases">
+        <a className="sidebar-brand" href="#/" onClick={onNavigate} aria-label="JARVIS - home">
           <IconLogo />
           <span className="sidebar-label">JARVIS</span>
         </a>
@@ -94,7 +94,7 @@ export function Sidebar({
       </div>
 
       <div className="sidebar-actions">
-        <a className={`sidebar-new ${section === "new" ? "on" : ""}`} href="#/new" onClick={onNavigate} title="New investigation">
+        <a className={`sidebar-new ${section === "new" ? "on" : ""}`} href="#/" onClick={onNavigate} title="New investigation">
           <IconPlus size={18} />
           <span className="sidebar-label">New investigation</span>
         </a>
@@ -122,12 +122,12 @@ export function Sidebar({
                 </div>
               ) : null,
             )}
-            <a className="sidebar-all" href="#/" onClick={onNavigate}>
+            <a className="sidebar-all" href="#/cases" onClick={onNavigate}>
               All cases
             </a>
           </>
         ) : (
-          <a className={`sidebar-item ${section === "cases" ? "on" : ""}`} href="#/" onClick={onNavigate} title="Cases">
+          <a className={`sidebar-item ${section === "cases" ? "on" : ""}`} href="#/cases" onClick={onNavigate} title="Cases">
             <IconFolder size={18} />
           </a>
         )}

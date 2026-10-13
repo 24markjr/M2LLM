@@ -27,6 +27,11 @@ duplicated pages needed no redirects - the old addresses simply render inside Li
 the right tab - so none of the links between pages had to change. One headless check against a
 temporary API caught a U2c regression (words broken letter by letter in narrow table columns).
 
+U4: the home page and the composer. The one design question was what the modes are. The engine has
+one way to run, so a mode can only change what it is asked; building "modes" that looked like
+different engines would have claimed something the system does not do. They frame the question,
+the hint line says what each does, and the architecture note says the rest.
+
 ---
 
 # 2026-10-12 - Phase 53: MITRE ATT&CK mapping and attack paths

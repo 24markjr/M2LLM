@@ -19,7 +19,7 @@ const node = (over: Partial<TaskNode>): TaskNode => ({
 describe("cases", () => {
   it("links to a case only when the id is one", () => {
     expect(caseLink("CASE-2026-00001")).toBe("#/case/CASE-2026-00001");
-    expect(caseLink("nope")).toBe("#/");
+    expect(caseLink("nope")).toBe("#/cases"); // the case list since U4
     expect(caseIdFromHash("#/case/CASE-2026-00001")).toBe("CASE-2026-00001");
     expect(caseIdFromHash("#/case/x")).toBe("");
   });

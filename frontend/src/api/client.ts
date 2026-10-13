@@ -265,7 +265,7 @@ export const api = {
   deleteMission: (runId: string) =>
     request<DeletionReport>(`${BASE}/missions/${runId}`, { method: "DELETE" }),
 
-  openCase: (body: { title: string; description?: string; severity?: CaseSeverity }) =>
+  openCase: (body: { title: string; description?: string; severity?: CaseSeverity; mode?: "GENERAL" | "CYBER" }) =>
     request<Case>(`${BASE}/cases`, { method: "POST", body: JSON.stringify(body) }),
 
   getCase: (caseId: string) => request<CaseDetail>(`${BASE}/cases/${caseId}`),

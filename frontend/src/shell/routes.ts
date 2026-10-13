@@ -13,6 +13,8 @@
  * | `#/evidence`, `#/documents` | Library, on Evidence or Documents |
  * | `#/evaluation`, `#/memory`, `#/replay` | Insights, on Quality, Memory or Recordings |
  * | `#/audit` | Activity |
+ *
+ * Since U4 `#/` is the home page with the composer; the case list is `#/cases`.
  */
 
 import { caseIdFromHash } from "../components/cases";
@@ -20,6 +22,7 @@ import { evidenceIdFromHash } from "../components/evidence";
 import { hashQuery } from "../components/graph3d/investigation";
 
 export type Route =
+  | { name: "home" }
   | { name: "cases" }
   | { name: "case"; caseId: string }
   | { name: "list" }
@@ -62,7 +65,9 @@ export function parseRoute(full: string): Route {
   // Cases are the home page (Phase 44); the flat list of every investigation is `#/missions`.
   if (caseIdFromHash(hash)) return { name: "case", caseId: caseIdFromHash(hash) };
   if (hash === "#/missions") return { name: "list" };
-  return { name: "cases" };
+  if (hash === "#/cases") return { name: "cases" };
+  // Home: the composer (U4). The case list is `#/cases`.
+  return { name: "home" };
 }
 
 /** The sidebar entry a route belongs to. */
@@ -70,6 +75,7 @@ export type Section = "new" | "cases" | "library" | "insights" | "activity" | "s
 
 export function sectionOf(route: Route): Section {
   switch (route.name) {
+    case "home":
     case "new":
     case "knowledge":
       return "new";
@@ -92,6 +98,8 @@ export function sectionOf(route: Route): Section {
 /** The top bar's trail: where the page sits. The last item is the page itself. */
 export function trailOf(route: Route): string[] {
   switch (route.name) {
+    case "home":
+      return ["Home"];
     case "cases":
       return ["Cases"];
     case "case":

@@ -5,6 +5,24 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-13 - Phase U4: home and the composer
+
+### Added
+
+- **Home** (`#/`): "What do you need to find out?", the composer, domain packs with starter
+  questions, "Needs your attention"; the case list moved to `#/cases`
+- **The composer**: the question; files by upload, drop, the Library or pasted text, uploaded at once
+  as evidence; modes Investigate, Compare, Timeline, Security logs (framing of the question, the
+  same engine); the case (new by default), sensitivity for new uploads; Enter starts
+- **Domain packs**: General, Investigation, Finance and audit, Legal, Healthcare (decision support,
+  never diagnosis), Cyber; starters attach real example files where the repository has them
+
+### Verified
+
+- 97 frontend tests (7 new), tsc, build; headless Chrome at 1440 px and 600 px
+
+---
+
 ## 2026-10-13 - Phase U3: the application shell
 
 ### Added

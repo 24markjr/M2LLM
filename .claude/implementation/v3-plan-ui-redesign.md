@@ -89,3 +89,11 @@ Each phase records here what was actually built and how it differs from the line
 Sidebar, top bar, Ctrl+K and the merged Library / Insights / Activity, as planned; the user asked
 for it during U2 ("add a side bar and a nav bar ... make it look professional"). The old addresses
 open inside the merged pages instead of redirecting. See `architecture/app-shell.md`.
+
+### U4 - as built
+
+As planned, with two decisions: modes frame the question rather than select a different engine (one
+engine, said so in the UI), and a new investigation opens a new case by default so it is always in
+the sidebar. "Ask" was not built as a separate mode - it would have run the same investigation under
+another name. Review decisions are not yet in "Needs your attention" (U5). See
+`architecture/home-and-composer.md`.

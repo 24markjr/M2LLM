@@ -8,6 +8,7 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 
 import type { MissionDetail } from "./api/types";
+import { HomePage } from "./home/HomePage";
 import { AuditPage } from "./pages/AuditPage";
 import { CasePage, CasesPage } from "./pages/CasesPage";
 import { DesignPage } from "./pages/DesignPage";
@@ -39,6 +40,7 @@ export default function App() {
 
   return (
     <Shell route={route}>
+      {route.name === "home" ? <HomePage /> : null}
       {route.name === "cases" ? <CasesPage /> : null}
       {route.name === "case" ? <CasePage key={route.caseId} caseId={route.caseId} /> : null}
 

@@ -194,7 +194,7 @@ export function CasePage({ caseId }: { caseId: string }) {
   return (
     <>
       <div className="row" style={{ marginBottom: 20 }}>
-        <a className="button" href="#/">
+        <a className="button" href="#/cases">
           &larr; Cases
         </a>
         <span className="spacer" />

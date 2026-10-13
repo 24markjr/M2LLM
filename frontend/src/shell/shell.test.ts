@@ -19,7 +19,9 @@ describe("the shell (Phase U3)", () => {
     expect(sectionOf(parseRoute("#/insights"))).toBe("insights");
     expect(sectionOf(parseRoute("#/activity"))).toBe("activity");
     expect(sectionOf(parseRoute("#/knowledge"))).toBe("new");
-    expect(sectionOf(parseRoute("#/"))).toBe("cases");
+    expect(sectionOf(parseRoute("#/"))).toBe("new");
+    expect(sectionOf(parseRoute("#/cases"))).toBe("cases");
+    expect(trailOf(parseRoute("#/"))).toEqual(["Home"]);
     expect(sectionOf(parseRoute("#/mission/run_0123456789ab"))).toBe("cases");
   });
 
