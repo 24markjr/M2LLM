@@ -1518,6 +1518,41 @@
         "title": "DeletedRecordings",
         "type": "object"
       },
+      "DeletionReport": {
+        "additionalProperties": false,
+        "properties": {
+          "deleted": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Deleted",
+            "type": "array"
+          },
+          "kept": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Kept",
+            "type": "array"
+          },
+          "removed": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Removed",
+            "type": "array"
+          },
+          "skipped": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Skipped",
+            "type": "array"
+          }
+        },
+        "title": "DeletionReport",
+        "type": "object"
+      },
       "EntityInvestigation": {
         "additionalProperties": false,
         "description": "Everything known about one entity, in one response.\n\nThe original `/investigation/{name}` endpoint, which its README called the main one.",
@@ -6685,6 +6720,58 @@
       }
     },
     "/api/v1/cases/{case_id}": {
+      "delete": {
+        "description": "Delete a case and every investigation in it (Phase U1). Its evidence stays in the Evidence\nLocker; only the case's links to it go.",
+        "operationId": "remove_case_api_v1_cases__case_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Case",
+        "tags": [
+          "cases"
+        ]
+      },
       "get": {
         "operationId": "get_case_api_v1_cases__case_id__get",
         "parameters": [
@@ -7945,6 +8032,59 @@
       }
     },
     "/api/v1/missions": {
+      "delete": {
+        "description": "Delete every finished investigation; `confirm=delete` required, running ones skipped.",
+        "operationId": "delete_missions_api_v1_missions_delete",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "confirm",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Confirm",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Missions",
+        "tags": [
+          "missions"
+        ]
+      },
       "get": {
         "operationId": "list_missions_api_v1_missions_get",
         "parameters": [
@@ -8034,6 +8174,58 @@
       }
     },
     "/api/v1/missions/{run_id}": {
+      "delete": {
+        "description": "Delete one finished investigation everywhere it is held (Phase U1): the run, its archive and\nrecordings, the stored run, its memory support, its place in its case. The response says what\nwent and what is kept: custody, review decisions and the audit log are append-only.",
+        "operationId": "delete_mission_api_v1_missions__run_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Mission",
+        "tags": [
+          "missions"
+        ]
+      },
       "get": {
         "operationId": "get_mission_api_v1_missions__run_id__get",
         "parameters": [

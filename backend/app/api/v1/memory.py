@@ -150,6 +150,15 @@ async def forget_run(run_id: str) -> Forgotten:
     )
 
 
+async def forget_quietly(run_id: str) -> Forgotten | None:
+    """`forget_run` for deletion (Phase U1): None when no memory store is reachable, rather than
+    an error - deleting an investigation must not fail because memory is off."""
+    try:
+        return await forget_run(run_id)
+    except MemoryUnavailableError:
+        return None
+
+
 @router.get("/entities/{name}", response_model=EntityMemoryView)
 async def entity(name: str) -> EntityMemoryView:
     """An entity as seen across investigations, with the facts known about it."""

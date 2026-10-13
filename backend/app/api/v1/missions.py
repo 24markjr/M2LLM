@@ -14,6 +14,7 @@ from fastapi import APIRouter, Header, Query, Request, Response, status
 from fastapi.responses import PlainTextResponse
 
 from app.api.archive import write_archive
+from app.api.deletion import DeletionReport, delete_all_investigations, delete_investigation
 from app.api.errors import ApiError, MissionNotFinishedError, MissionNotFoundError
 from app.api.registry import MissionRecord, case_investigation, get_registry
 from app.api.v1.schemas import (
@@ -127,6 +128,32 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
         await file_evidence(case.case_id, list(admitted.values()))
         await start_investigating(case)
     return _detail(record)
+
+
+@router.delete("/{run_id}", response_model=DeletionReport)
+async def delete_mission(
+    run_id: str,
+    actor: str = Header(default="console", alias="X-Jarvis-User", max_length=128),
+) -> DeletionReport:
+    """Delete one finished investigation everywhere it is held (Phase U1): the run, its archive and
+    recordings, the stored run, its memory support, its place in its case. The response says what
+    went and what is kept: custody, review decisions and the audit log are append-only."""
+    return await delete_investigation(run_id, actor=actor)
+
+
+@router.delete("", response_model=DeletionReport)
+async def delete_missions(
+    confirm: str = Query(default=""),
+    actor: str = Header(default="console", alias="X-Jarvis-User", max_length=128),
+) -> DeletionReport:
+    """Delete every finished investigation; `confirm=delete` required, running ones skipped."""
+    if confirm != "delete":
+        raise ApiError(
+            "CONFIRMATION_REQUIRED",
+            "deleting every investigation needs confirm=delete",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    return await delete_all_investigations(actor=actor)
 
 
 @router.get("", response_model=list[MissionSummary])

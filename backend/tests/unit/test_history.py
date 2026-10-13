@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.api import archive
@@ -14,6 +15,12 @@ from app.schemas.evidence import EvidenceRef, ResolutionStatus
 from app.schemas.finding import Finding
 from app.schemas.objective import Objective
 from app.schemas.verification import VerificationResult, VerificationStatus
+
+
+@pytest.fixture(autouse=True)
+def _clean_registry() -> None:
+    """Each test starts with no investigations: other modules leave theirs in the registry."""
+    reset_registry()
 
 
 def _finished(objective: str = "Does the budget exceed its approval?") -> MissionRecord:
@@ -177,3 +184,80 @@ async def test_deleting_many_needs_confirmation_and_reports_counts() -> None:
     assert {r["file"] for r in left} == {"run_aaaaaaaaaaaa.local.json", "aurora-demo.json"}
     assert every == {"deleted": 1, "kept": 1}
     assert [r["file"] for r in last] == ["aurora-demo.json"]
+
+
+# --- U1c: deleting investigations and cases -------------------------------------------------------
+
+
+async def test_deleting_an_investigation_removes_it_everywhere_and_says_what_is_kept() -> None:
+    from app.cases.service import get_case_store
+    from app.schemas.case import CaseInvestigation
+
+    record = _finished()
+    archive.write_archive(record)
+    _recording(f"{record.run_id}.local.json", record.run_id, "COMPLETED", 1, "2026-10-13T05")
+    cases = await get_case_store()
+    await cases.save_investigation(
+        CaseInvestigation(case_id=record.case_id, run_id=record.run_id, objective="x")
+    )
+
+    async with await _client() as client:
+        report = (await client.delete(f"/api/v1/missions/{record.run_id}")).json()
+        again = await client.delete(f"/api/v1/missions/{record.run_id}")
+        audit = (await client.get("/api/v1/audit")).json()
+
+    assert report["deleted"] == [record.run_id]
+    assert report["removed"][:3] == ["the investigation", "its archive", "its recording"]
+    assert "the evidence's chain of custody (append-only)" in report["kept"]
+    assert again.status_code == 404
+    assert get_registry().get(record.run_id) is None
+    assert not archive.path_for(record.run_id).exists()
+    assert await cases.case_of_run(record.run_id) is None
+    assert any(e["action"] == "mission.deleted" for e in audit)
+    reset_registry()
+    assert get_registry().get(record.run_id) is None, "not restored after a restart either"
+
+
+async def test_a_running_investigation_is_not_deleted() -> None:
+    record = _finished()
+    record.status = MissionStatus.RUNNING
+    async with await _client() as client:
+        response = await client.delete(f"/api/v1/missions/{record.run_id}")
+    assert response.status_code == 409 and response.json()["error_code"] == "MISSION_RUNNING"
+
+
+async def test_deleting_every_investigation_needs_confirmation_and_skips_running_ones() -> None:
+    _finished("one")
+    _finished("two")
+    running = _finished("three")
+    running.status = MissionStatus.RUNNING
+    async with await _client() as client:
+        refused = await client.delete("/api/v1/missions")
+        report = (await client.delete("/api/v1/missions?confirm=delete")).json()
+    assert refused.status_code == 400
+    assert len(report["deleted"]) == 2
+    assert report["skipped"] == [f"{running.run_id} (still running)"]
+    assert [r.run_id for r in get_registry().records()] == [running.run_id]
+
+
+async def test_deleting_a_case_takes_its_investigations_and_keeps_its_evidence() -> None:
+    async with await _client() as client:
+        case = (await client.post("/api/v1/cases", json={"title": "Budget overrun"})).json()
+        record = _finished()
+        record.case_id = case["case_id"]
+        from app.cases.service import get_case_store
+        from app.schemas.case import CaseEvidence, CaseInvestigation
+
+        cases = await get_case_store()
+        await cases.save_investigation(
+            CaseInvestigation(case_id=case["case_id"], run_id=record.run_id, objective="x")
+        )
+        await cases.add_evidence(CaseEvidence(case_id=case["case_id"], evidence_id="EV-000001"))
+        report = (await client.delete(f"/api/v1/cases/{case['case_id']}")).json()
+        missing = await client.get(f"/api/v1/cases/{case['case_id']}")
+
+    assert report["deleted"] == [case["case_id"], record.run_id]
+    assert "the case's links to 1 evidence item(s)" in report["removed"]
+    assert "the evidence items themselves, in the Evidence Locker" in report["kept"]
+    assert missing.status_code == 404
+    assert get_registry().get(record.run_id) is None

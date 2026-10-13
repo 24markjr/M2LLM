@@ -9,7 +9,7 @@ from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
 from datetime import datetime
 
-from sqlalchemy import select, text
+from sqlalchemy import delete, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.session import session_scope
@@ -145,6 +145,24 @@ class PgCaseStore:
                 )
                 for r in rows
             ]
+
+    async def remove_investigation(self, run_id: str) -> bool:
+        async with self._scope() as session:
+            result = await session.execute(
+                delete(CaseInvestigationRow).where(CaseInvestigationRow.run_id == run_id)
+            )
+            return bool(getattr(result, "rowcount", 0))
+
+    async def delete(self, case_id: str) -> bool:
+        async with self._scope() as session:
+            if await session.get(CaseRow, case_id) is None:
+                return False
+            await session.execute(delete(CaseEvidenceRow).where(CaseEvidenceRow.case_id == case_id))
+            await session.execute(
+                delete(CaseInvestigationRow).where(CaseInvestigationRow.case_id == case_id)
+            )
+            await session.execute(delete(CaseRow).where(CaseRow.case_id == case_id))
+            return True
 
     async def case_of_run(self, run_id: str) -> str | None:
         async with self._scope() as session:

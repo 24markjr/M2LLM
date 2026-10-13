@@ -11,6 +11,7 @@ import re
 from fastapi import APIRouter, Header, status
 from pydantic import Field
 
+from app.api.deletion import DeletionReport, delete_case
 from app.api.errors import ApiError
 from app.api.registry import get_registry
 from app.cases.service import counters, file_evidence, get_case_store, this_year
@@ -153,6 +154,16 @@ async def update_case(case_id: str, body: CaseUpdate) -> Case:
     )
     assert updated is not None
     return updated
+
+
+@router.delete("/{case_id}", response_model=DeletionReport)
+async def remove_case(
+    case_id: str,
+    actor: str = Header(default="console", alias="X-Jarvis-User", max_length=128),
+) -> DeletionReport:
+    """Delete a case and every investigation in it (Phase U1). Its evidence stays in the Evidence
+    Locker; only the case's links to it go."""
+    return await delete_case(case_id, actor=actor)
 
 
 @router.post("/{case_id}/evidence", response_model=Filed)

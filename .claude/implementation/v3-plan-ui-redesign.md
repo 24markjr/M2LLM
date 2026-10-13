@@ -70,3 +70,5 @@ Each phase records here what was actually built and how it differs from the line
   registry's first use; BUG-040 fixed. See `architecture/run-history.md`.
 - **U1b** (recordings as records): findings, case and a hidden reason per recording; delete one,
   hidden or all with `confirm=delete`; committed recordings kept.
+- **U1c** (deletion): investigations, all investigations and cases, each removed everywhere it is
+  held and audited; custody, reviews and the audit log kept by design.

@@ -51,3 +51,35 @@ request cannot empty the history. Every deletion is in the audit log (`recording
 
 Deleting a recording leaves the investigation: the archive still restores it. Deleting an
 investigation (U1c) removes both.
+
+## Deleting investigations and cases (U1c)
+
+Code: `backend/app/api/deletion.py`.
+
+An investigation lives in several places, and `delete_investigation` removes it from each, listing
+what it removed:
+
+| Where | Removed by |
+|---|---|
+| The registry | `MissionRegistry.forget` |
+| Its archive | `archive.delete_archive` |
+| Its local recordings | `recording.delete_recording` (committed ones are kept) |
+| The stored run, with its tasks, findings, events and episodic memory | `RunRepository.delete`; every child table cascades from `agent_runs` |
+| Its support for facts in semantic memory | `api/v1/memory.forget_quietly` (the existing forget route; None when memory is off) |
+| Its place in its case | `CaseStore.remove_investigation` |
+
+**Kept, by design, and said so in every response (`kept`):** the evidence's chain of custody, review
+decisions and the audit log. All three are append-only by database trigger; none references
+`agent_runs`, so the cascade never touches them. The audit log gains `mission.deleted` with the
+list of what went.
+
+A running investigation is refused (`409 MISSION_RUNNING`): cancel it first. Deleting every
+investigation (`DELETE /missions?confirm=delete`) skips running ones and names them.
+
+**A case** (`DELETE /cases/{id}`) is deleted with every investigation in it, each as above, and its
+links to evidence. The evidence items stay in the Evidence Locker: they can belong to other cases,
+and an item's existence is part of its custody. If any of its investigations is running, nothing is
+deleted.
+
+Memory is still reached only through the API's memory routes: deletion calls `forget_quietly` in
+`api/v1/memory.py`, so the boundary test (`test_memory_boundary.py`) is unchanged.

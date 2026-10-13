@@ -60,6 +60,11 @@ class CaseStore(Protocol):
 
     async def cases_of_evidence(self, evidence_id: str) -> list[str]: ...
 
+    # Phase U1: deletion. Evidence items themselves are never deleted, only a case's links to them.
+    async def remove_investigation(self, run_id: str) -> bool: ...
+
+    async def delete(self, case_id: str) -> bool: ...
+
 
 class MemoryCaseStore:
     name = "memory"
@@ -143,3 +148,16 @@ class MemoryCaseStore:
 
     async def cases_of_evidence(self, evidence_id: str) -> list[str]:
         return sorted(c for (c, e) in self._evidence if e == evidence_id)
+
+    async def remove_investigation(self, run_id: str) -> bool:
+        return self._investigations.pop(run_id, None) is not None
+
+    async def delete(self, case_id: str) -> bool:
+        if case_id not in self._cases:
+            return False
+        for key in [k for k in self._evidence if k[0] == case_id]:
+            del self._evidence[key]
+        for run_id in [r for r, i in self._investigations.items() if i.case_id == case_id]:
+            del self._investigations[run_id]
+        del self._cases[case_id]
+        return True

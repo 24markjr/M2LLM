@@ -42,6 +42,9 @@ kept current while the run proceeds.
 | POST | `/api/v1/missions/{id}/findings/{finding_id}/review` | Approve, reject (reason; `replan` starts a follow-up investigation) or modify (reason, reworded claim); reviewer from `X-Jarvis-User`; approval releases facts to memory |
 | GET | `/api/v1/missions/{id}/investigation-report` | The investigation report as it stands (JSON, no side effects); HIGH/CRITICAL findings are challenged first if nobody has (Phase 51) |
 | GET | `/api/v1/missions/{id}/investigation-report/export/{md,pdf,docx,json}` | A download; REPORTED custody on each cited item and an audit entry with the content hash; `X-Report-Hash` |
+| DELETE | `/api/v1/missions/{id}` | Delete a finished investigation everywhere it is held; returns what was `removed` and what is `kept` (custody, reviews, audit); `409 MISSION_RUNNING` (Phase U1) |
+| DELETE | `/api/v1/missions` | Every finished investigation; `confirm=delete` required; running ones `skipped` (Phase U1) |
+| DELETE | `/api/v1/cases/{id}` | A case and its investigations; evidence stays in the Locker (Phase U1) |
 | GET | `/api/v1/recordings` | Recordings newest first, each with findings, verified count, case and why it is `hidden` (failed with no findings, or a second copy); hidden ones only with `include_hidden=true` (Phase U1) |
 | DELETE | `/api/v1/recordings/{name}` | Delete one local recording; `409 RECORDING_KEPT` for a committed one; audited (Phase U1) |
 | DELETE | `/api/v1/recordings` | `scope=hidden\|all`, `confirm=delete` required (`400 CONFIRMATION_REQUIRED`); returns `deleted` and `kept` (Phase U1) |

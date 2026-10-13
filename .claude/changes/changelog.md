@@ -16,6 +16,11 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
   runs with no findings and second copies of a run are hidden with the reason
   (`?include_hidden=true` shows them); delete one (`DELETE /recordings/{name}`) or many
   (`DELETE /recordings?scope=hidden|all&confirm=delete`); committed recordings are kept; audited
+- **U1c - deleting investigations and cases**: `DELETE /missions/{id}` removes a finished
+  investigation from the registry, its archive, recordings, stored run (tasks, findings, events,
+  episodes), memory support and its case; `DELETE /missions?confirm=delete` for all;
+  `DELETE /cases/{id}` with its investigations. Custody, review decisions and the audit log are kept
+  and every response says so; evidence items are never deleted with a case
 
 ### Fixed
 
