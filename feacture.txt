@@ -1,0 +1,17 @@
+1. the investigation pin board, kind of design in the knowledge graphs area..to make it more accurat..like to find the connectins....
+Part B: everything else, built after the UI
+Phase	What	Notes
+B1. Benchmark against the plain model and frontier models	The same scenarios scored for correct claims, invented claims, citation accuracy and false alarms against known answers, using the FActScore and ALCE methods. Results shown in Insights.	Your main defence evidence
+B2. Multimodal evaluation	Scenarios with an audio recording against minutes, video frames against a report, a scan against a spreadsheet, a photo against a log. Held-out scenarios written by teammates. Scored per type of file.	Matches the "multimodal" title
+B3. Better reading of files	docling for PDF layout and tables; pyannote for who spoke when; native Windows .evtx logs.	Ported from the repos we discussed
+B4. Independent checks	AlignScore (a verifier that isn't a language model); a second local model reviewing serious findings (the llm-council pattern).	Fully offline
+B5. Security log coverage	Sigma community rules, to raise ATT&CK recall from 0.400.	
+B6. Enterprise controls (the old Phase 55)	Accounts and six roles, a route-by-role permission matrix, model routing that never sends sensitive evidence to a cloud model, offline mode, encrypted evidence, share links.	Already drafted in the scratchpad
+B7. Domain packs in full	Per-pack entity types, severity rules, report templates and starter questions; masking personal details; the healthcare decision-support rule.	U4 builds the picker; this builds the substance
+B8. Held-out tuning	An autoresearch-style loop that keeps a prompt or setting change only if the held-out score improves.	Only after B2
+B9. Extras	Watch folders, voice questions, multiple languages.	
+B10. Academic deliverables	Workflow diagram, the problem-statement chapter, benchmark and multimodal results, defence slides; add a license file (MIT recommended).	
+Two decisions before I start:
+
+Should U0 (the Phase 54 docs) come first?
+Which domain packs should U4 include? I'd suggest General, Investigation, Healthcare, Legal, Finance / Audit and Cyber, with the rest added in B7.
