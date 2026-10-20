@@ -15,7 +15,8 @@ import { AuditPage } from "./pages/AuditPage";
 import { CasePage, CasesPage } from "./pages/CasesPage";
 import { DesignPage } from "./pages/DesignPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
-import { EvidenceItemPage, EvidenceLockerPage } from "./pages/EvidencePage";
+import { EvidenceItemPage } from "./pages/EvidencePage";
+import { LibraryPage } from "./library/LibraryPage";
 import { MemoryPage } from "./pages/MemoryPage";
 import { EvaluationPage, MissionDetailPage, MissionList, NewMission } from "./pages/pages";
 import { draftFromHash } from "./components/workspaces";
@@ -106,7 +107,7 @@ export default function App() {
           ) : route.evidenceId ? (
             <EvidenceItemPage key={route.evidenceId} evidenceId={route.evidenceId} />
           ) : (
-            <EvidenceLockerPage />
+            <LibraryPage />
           )}
         </>
       ) : null}

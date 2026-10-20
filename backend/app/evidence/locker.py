@@ -50,6 +50,7 @@ class EvidenceLocker(Protocol):
         parser: str | None = None,
         authority: str | None = None,
         authority_reason: str | None = None,
+        case_id: str | None = None,
     ) -> EvidenceItem | None: ...
 
     async def record(self, event: CustodyEvent) -> CustodyEvent: ...
@@ -113,6 +114,7 @@ class MemoryEvidenceLocker:
         parser: str | None = None,
         authority: str | None = None,
         authority_reason: str | None = None,
+        case_id: str | None = None,
     ) -> EvidenceItem | None:
         item = self._items.get(evidence_id)
         if item is None:
@@ -132,6 +134,9 @@ class MemoryEvidenceLocker:
         }
         if integrity is not None:
             changes["integrity_checked_at"] = utcnow()
+        # Filing (U8): "" takes an item out of its case.
+        if case_id is not None:
+            changes["case_id"] = case_id or None
         updated = item.model_copy(update=changes)
         self._items[evidence_id] = updated
         return updated

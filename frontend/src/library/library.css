@@ -1,0 +1,255 @@
+/* The Library (Phase U8): folders, the table, and the custody drawer. Three columns on a wide
+   screen; the folders fold above the table below 1100 px, and the drawer covers the page on a phone. */
+
+.library {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+.library.with-drawer {
+  grid-template-columns: 220px minmax(0, 1fr) minmax(320px, 400px);
+}
+@media (max-width: 1100px) {
+  .library,
+  .library.with-drawer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.library h2 {
+  font-size: var(--text-lg);
+  margin: 0 0 var(--space-2);
+}
+.library .count {
+  color: var(--text-muted);
+  font-weight: normal;
+  font-size: var(--text-sm);
+}
+.library-note {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.library-sub {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+.library .mono {
+  font-family: var(--mono);
+}
+
+/* --- folders --- */
+.library-folders ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.library-folders button {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.library-folders button:hover {
+  background: var(--surface-hover);
+}
+.library-folders button.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+.library-folder-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 1100px) {
+  .library-folders ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .library-folders button {
+    width: auto;
+  }
+}
+
+/* --- table --- */
+.library-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.library-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin: var(--space-2) 0 var(--space-3);
+}
+.library-filters input[type="search"] {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+.library-check {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: var(--text-sm);
+}
+.library-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+}
+.library-table th,
+.library-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.library-table th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  background: var(--surface-sunken);
+}
+.library-table tbody tr {
+  cursor: pointer;
+}
+.library-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+.library-table tbody tr.on {
+  background: var(--accent-soft);
+}
+.library-table tbody tr:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.library-name {
+  font-weight: 600;
+}
+@media (max-width: 700px) {
+  /* On a phone the table keeps the file, its integrity and when it came in. */
+  .library-table th:nth-child(2),
+  .library-table td:nth-child(2),
+  .library-table th:nth-child(3),
+  .library-table td:nth-child(3),
+  .library-table th:nth-child(5),
+  .library-table td:nth-child(5),
+  .library-table th:nth-child(6),
+  .library-table td:nth-child(6) {
+    display: none;
+  }
+}
+
+/* --- drawer --- */
+.library-drawer {
+  position: sticky;
+  top: var(--space-4);
+  max-height: calc(100vh - 96px);
+  overflow: auto;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+@media (max-width: 1100px) {
+  .library-drawer {
+    position: fixed;
+    inset: auto 0 0 0;
+    top: 15vh;
+    max-height: none;
+    z-index: 30;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: var(--shadow-lg);
+  }
+}
+.library-drawer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: var(--space-2);
+}
+.library-drawer h3 {
+  margin: 0 0 var(--space-2);
+  overflow-wrap: anywhere;
+}
+.library-drawer h4 {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: var(--text-md);
+}
+.library-facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px var(--space-3);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-3);
+}
+.library-facts dt {
+  color: var(--text-muted);
+}
+.library-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.library-hash {
+  font-size: var(--text-xs);
+}
+.library-file-under {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.library-cites,
+.library-custody {
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: var(--text-sm);
+}
+.library-cites li,
+.library-custody li {
+  padding: 4px 0;
+}
+.library-when {
+  display: block;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+.library-table th,
+.library-table .nowrap {
+  white-space: nowrap;
+}
+/* With the drawer open the table keeps the file, its integrity, citations and date. */
+.library.with-drawer .library-table th:nth-child(2),
+.library.with-drawer .library-table td:nth-child(2),
+.library.with-drawer .library-table th:nth-child(3),
+.library.with-drawer .library-table td:nth-child(3),
+.library.with-drawer .library-table th:nth-child(5),
+.library.with-drawer .library-table td:nth-child(5) {
+  display: none;
+}
+.library-check {
+  white-space: nowrap;
+}

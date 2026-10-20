@@ -265,6 +265,25 @@ async def test_a_metadata_change_is_recorded_from_and_to() -> None:
 
 
 @pytest.mark.usefixtures("agent")
+async def test_an_item_is_filed_under_a_case_and_taken_out_again() -> None:
+    """The Library's folders (U8): filing is a metadata change, recorded from and to."""
+    async with await _client() as client:
+        uploaded = await _upload(client, "helix.txt", REPORT)
+        await wait_for_indexing()
+        case = (await client.post("/api/v1/cases", json={"title": "Helix budget review"})).json()
+        url = f"/api/v1/evidence/{uploaded['evidence_id']}"
+        filed = await client.patch(url, json={"case_id": case["case_id"]})
+        unfiled = await client.patch(url, json={"case_id": ""})
+        missing = await client.patch(url, json={"case_id": "CASE-1999-99999"})
+        detail = (await client.get(url)).json()
+    assert filed.json()["case_id"] == case["case_id"]
+    assert unfiled.json()["case_id"] is None
+    assert (missing.status_code, missing.json()["error_code"]) == (404, "CASE_NOT_FOUND")
+    moves = [e["details"]["case"] for e in detail["custody"] if e["action"] == "METADATA_CHANGED"]
+    assert moves == [{"from": "", "to": case["case_id"]}, {"from": case["case_id"], "to": ""}]
+
+
+@pytest.mark.usefixtures("agent")
 async def test_the_original_downloads_byte_for_byte() -> None:
     async with await _client() as client:
         uploaded = await _upload(client, "helix.txt", REPORT)

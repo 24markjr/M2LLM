@@ -5,6 +5,34 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-21 - Phase U8: the Library
+
+### Added
+
+- **One table of every file** (`#/library`, `#/evidence`): name and EV number, integrity, citations,
+  date, and kind, size and classification on wider screens; sorted newest, by name, largest or most
+  cited; "Add files" uploads into the open folder with custody started
+- **Folders are cases**: All files, Unfiled, and every open case or case holding a file, with counts.
+  A case missing from the case list keeps its folder, so no file becomes unreachable
+- **Filters**: search by name, EV number, SHA-256 prefix, source or collector; kind, integrity,
+  classification, cited by a finding; clear in one click
+- **The custody drawer** beside the table: identity and SHA-256, integrity with re-verify, the
+  findings that cite the file (each linked to its investigation), the chain of custody, other
+  versions under the name, filing under a case, the original for download, the full item page
+- `PATCH /evidence/{id}` takes `case_id` (`""` unfiles); filing is recorded in custody as
+  METADATA_CHANGED, from and to; an unknown case is `CASE_NOT_FOUND`
+
+### Changed
+
+- Library tabs are Files and Workspaces; the old Evidence Locker list is replaced by the Library
+
+### Verified
+
+- 1283 backend tests (1 new), 53 integration, mypy, ruff, OpenAPI; 120 frontend tests (3 new), tsc,
+  build; the Library on the live store (17 files) in headless Chrome
+
+---
+
 ## 2026-10-20 - Phase U7: proof - the verification receipt, and the plain model side by side
 
 ### Added

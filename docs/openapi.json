@@ -2287,6 +2287,18 @@
             ],
             "title": "Authority Reason"
           },
+          "case_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
           "classification": {
             "anyOf": [
               {

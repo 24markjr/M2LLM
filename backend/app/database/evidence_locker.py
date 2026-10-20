@@ -106,6 +106,7 @@ class PgEvidenceLocker:
         parser: str | None = None,
         authority: str | None = None,
         authority_reason: str | None = None,
+        case_id: str | None = None,
     ) -> EvidenceItem | None:
         async with self._scope() as session:
             row = await session.get(EvidenceItemRow, evidence_id)
@@ -126,6 +127,9 @@ class PgEvidenceLocker:
             if integrity is not None:
                 row.integrity = integrity.value
                 row.integrity_checked_at = utcnow()
+            # Filing (U8): "" takes an item out of its case.
+            if case_id is not None:
+                row.case_id = case_id or None
             await session.flush()
             return _item(row)
 

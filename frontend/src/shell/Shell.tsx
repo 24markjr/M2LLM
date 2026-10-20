@@ -125,8 +125,8 @@ export function SectionTabs({ tabs, active }: { tabs: { href: string; label: str
 }
 
 export const LIBRARY_TABS = [
-  { id: "evidence", label: "Evidence", href: "#/evidence" },
-  { id: "documents", label: "Documents", href: "#/documents" },
+  { id: "evidence", label: "Files", href: "#/evidence" },
+  { id: "documents", label: "Workspaces", href: "#/documents" },
 ];
 
 export const INSIGHTS_TABS = [

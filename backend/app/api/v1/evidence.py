@@ -65,6 +65,8 @@ class EvidenceUpdate(JarvisModel):
     # A tier id from `.agent/config/authority.yaml` (Phase 45), with the reason a person gives.
     authority: str | None = Field(default=None, max_length=32)
     authority_reason: str | None = Field(default=None, max_length=300)
+    # The case it is filed under (U8, the Library's folders); "" takes it out of its case.
+    case_id: str | None = Field(default=None, max_length=64)
 
 
 @router.get("", response_model=EvidenceList)
@@ -172,6 +174,10 @@ async def update_evidence(
             )
         reason = f"set by {actor}" + (f": {body.authority_reason}" if body.authority_reason else "")
         changes["authority"] = {"from": item.authority, "to": body.authority}
+    if body.case_id is not None and body.case_id != (item.case_id or ""):
+        if body.case_id:
+            await _require_case(body.case_id)
+        changes["case"] = {"from": item.case_id or "", "to": body.case_id}
     if not changes:
         return item
     updated = await locker.update(
@@ -180,6 +186,7 @@ async def update_evidence(
         source=body.source,
         authority=body.authority if reason is not None else None,
         authority_reason=reason,
+        case_id=body.case_id if "case" in changes else None,
     )
     await service.note(locker, evidence_id, CustodyAction.METADATA_CHANGED, actor=actor, **changes)
     return updated or item
@@ -240,3 +247,22 @@ async def _import_uploads(locker: EvidenceLocker) -> int:
         await service.register(locker, path, name=path.name)
         count += 1
     return count
+
+
+async def _require_case(case_id: str) -> None:
+    """The case an item is filed under must exist (U8). A closed case still holds its files."""
+    from app.cases.service import get_case_store
+
+    try:
+        cases = await get_case_store()
+        case = await cases.get(case_id)
+    except Exception as exc:
+        raise ApiError(
+            "CASES_UNAVAILABLE",
+            f"the case store could not be read: {type(exc).__name__}",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        ) from exc
+    if case is None:
+        raise ApiError(
+            "CASE_NOT_FOUND", f"no case {case_id}", status_code=status.HTTP_404_NOT_FOUND
+        )

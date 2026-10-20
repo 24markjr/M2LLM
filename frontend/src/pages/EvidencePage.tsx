@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { ApiError, api } from "../api/client";
-import type { AuthorityTier, EvidenceDetail, EvidenceList, IntegrityCheck } from "../api/types";
+import type { AuthorityTier, EvidenceDetail, IntegrityCheck } from "../api/types";
 import {
   CLASSIFICATIONS,
   authorityWords,
@@ -33,94 +33,6 @@ function LockerNote({ locker }: { locker: string }) {
       the engine restarts. Start it with <code>docker compose up -d postgres</code>.
     </div>
   ) : null;
-}
-
-export function EvidenceLockerPage() {
-  const [list, setList] = useState<EvidenceList | null>(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api
-      .listEvidence()
-      .then(setList)
-      .catch((exc: unknown) => setError(errorText(exc)));
-  }, []);
-
-  const items = list?.items ?? [];
-  const failed = items.filter((s) => s.item.integrity === "FAILED").length;
-
-  return (
-    <>
-      <div className="panel">
-        <h2>
-          Evidence Locker{" "}
-          <span className="count">
-            {list ? `${items.length} item(s)${failed ? ` · ${failed} failed integrity` : ""} · ${list.locker}` : ""}
-          </span>
-        </h2>
-        <div className="panel-body dim">
-          Every file a mission or an upload has touched, identified by the SHA-256 of its bytes. Each item&apos;s
-          chain of custody - acquired, stored, read, analysed, cited - is append-only. A file whose bytes changed
-          behind custody&apos;s back fails its integrity check and is left out of new missions. Files are added
-          through <a href="#/documents">Documents</a> or a <a href="#/new">new mission</a>.
-          {list?.imported ? ` ${list.imported} earlier upload(s) were registered just now.` : ""}
-        </div>
-      </div>
-      {list ? <LockerNote locker={list.locker} /> : null}
-      {error ? <div className="notice error">{error}</div> : null}
-
-      <div className="panel">
-        <div className="panel-body">
-          {items.length ? (
-            <div className="table-scroll">
-              <table className="metrics">
-                <thead>
-                  <tr>
-                    <th>Evidence</th>
-                    <th>Name</th>
-                    <th>Kind</th>
-                    <th>SHA-256</th>
-                    <th>Integrity</th>
-                    <th>Classification</th>
-                    <th>Authority</th>
-                    <th>Collected</th>
-                    <th>Cited by</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map(({ item, citations }) => (
-                    <tr key={item.evidence_id}>
-                      <td>
-                        <a className="mono" href={evidenceLink(item.evidence_id)}>
-                          {item.evidence_id}
-                        </a>
-                      </td>
-                      <td className="mono">{item.name}</td>
-                      <td>{item.kind || "-"}</td>
-                      <td className="mono dim" title={item.sha256}>
-                        {shortHash(item.sha256)}
-                      </td>
-                      <td>
-                        <span className={`integrity ${item.integrity.toLowerCase()}`}>{item.integrity}</span>
-                      </td>
-                      <td>{item.classification}</td>
-                      <td title={item.authority_reason}>{authorityWords(item.authority)}</td>
-                      <td className="dim">
-                        {new Date(item.collected_at).toLocaleString()} · {item.collected_by}
-                      </td>
-                      <td>{citations ? `${citations} finding(s)` : "-"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="empty">Nothing in the locker yet.</div>
-          )}
-        </div>
-      </div>
-    </>
-  );
 }
 
 export function EvidenceItemPage({ evidenceId }: { evidenceId: string }) {

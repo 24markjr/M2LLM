@@ -122,3 +122,9 @@ are scored by the existing sentence checker against every line of the files, so 
 judged by a model. On the first live run the checker credited the plain model's restatements and not
 JARVIS's cross-document conclusions; recorded as measured in the changelog, to be addressed by B4.
 Not done: the receipt is not yet inside the PDF/DOCX export (the Report tab links both).
+
+### U8 - as built
+
+Folders are cases rather than a second, free-form hierarchy: filing a file is filing it under the
+case it belongs to, which is the grouping the rest of the console already uses, and the move is
+recorded in the file's custody. The table, filters and custody drawer are as planned.

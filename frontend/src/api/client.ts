@@ -357,7 +357,7 @@ export const api = {
 
   updateEvidence: (
     evidenceId: string,
-    body: { classification?: string; source?: string; authority?: string; authority_reason?: string },
+    body: { classification?: string; source?: string; authority?: string; authority_reason?: string; case_id?: string },
   ) =>
     request<EvidenceItem>(`${BASE}/evidence/${evidenceId}`, { method: "PATCH", body: JSON.stringify(body) }),
 

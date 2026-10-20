@@ -128,9 +128,9 @@ export function trailOf(route: Route): string[] {
     case "attack":
       return ["Investigations", route.runId, "Attack path"];
     case "evidence":
-      return route.evidenceId ? ["Library", "Evidence", route.evidenceId] : ["Library", "Evidence"];
+      return route.evidenceId ? ["Library", "Files", route.evidenceId] : ["Library", "Files"];
     case "documents":
-      return ["Library", "Documents"];
+      return ["Library", "Workspaces"];
     case "evaluation":
       return ["Insights", "Quality"];
     case "memory":
