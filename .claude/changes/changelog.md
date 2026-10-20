@@ -5,6 +5,26 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-21 - Phase U9: Insights
+
+### Changed
+
+- **Quality** is a headline figure with its arithmetic and a meter, then one card per component
+  (value, meter, formula, the scenarios it was measured on, the report it comes from)
+- **The agent-quality trend is a chart**, not a line of text: one series, a dashed break wherever
+  the model, prompts or configuration changed (points either side are never joined), a tooltip per
+  report (value, date, report file), keyboard focus on every point, and the figures as a table
+- **By category** shows verified and claims found as meters; a category's scenarios are behind its
+  count; underscores read as words
+- Memory and Recordings were already in their U9 form (U5 brought Recordings forward); unchanged
+
+### Verified
+
+- 122 frontend tests (2 new: the chart joins only within a configuration, and places 0 to 1),
+  tsc, build; the Quality tab on the 23 committed reports in headless Chrome
+
+---
+
 ## 2026-10-21 - Phase U8: the Library
 
 ### Added

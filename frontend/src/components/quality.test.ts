@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { QualitySummary } from "../api/types";
-import { figure, qualitySum, trendSegments } from "./quality";
+import { figure, qualitySum, trendChart, trendSegments } from "./quality";
 
 const summary: QualitySummary = {
   formula: "quality = mean(...)",
@@ -36,5 +36,23 @@ describe("quality (Phase 54)", () => {
   it("shows an absent figure as a dash, not a zero", () => {
     expect(figure(null)).toBe("-");
     expect(figure(0)).toBe("0.000");
+  });
+});
+
+describe("the quality trend chart (U9)", () => {
+  const pad = { top: 0, right: 0, bottom: 0, left: 0 };
+
+  it("joins points only within one configuration, and breaks between them", () => {
+    const { segments, breaks } = trendChart(summary, 200, 100, pad);
+    expect(segments.map((s) => s.map((p) => p.report))).toEqual([["a", "b"], ["c"]]);
+    expect(breaks).toEqual([150]);
+  });
+
+  it("places 0 at the bottom and 1 at the top, spread across the width", () => {
+    const { segments } = trendChart(summary, 200, 100, pad);
+    const [first, second] = segments[0]!;
+    expect(first).toMatchObject({ x: 0, y: 12 });
+    expect(second!.x).toBe(100);
+    expect(second!.y).toBeCloseTo(6);
   });
 });

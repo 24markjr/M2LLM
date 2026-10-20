@@ -128,3 +128,9 @@ Not done: the receipt is not yet inside the PDF/DOCX export (the Report tab link
 Folders are cases rather than a second, free-form hierarchy: filing a file is filing it under the
 case it belongs to, which is the grouping the rest of the console already uses, and the move is
 recorded in the file's custody. The table, filters and custody drawer are as planned.
+
+### U9 - as built
+
+The Quality tab was redesigned (headline, component cards, the trend as a chart with breaks at every
+configuration change, categories with meters). Memory search and the Recordings table already met
+the plan and were left as they are.

@@ -74,8 +74,8 @@ export function EvaluationDashboard() {
   return (
     <>
       <QualityPanel />
-      <label className="row">
-        <input type="checkbox" checked={technical} onChange={(e) => setTechnical(e.target.checked)} />{" "}
+      <label className="insight-toggle">
+        <input type="checkbox" checked={technical} onChange={(e) => setTechnical(e.target.checked)} />
         Technical: every raw metric, every committed report
       </label>
       {technical ? <TechnicalView points={points} directions={directions} keys={keys} latest={latest} /> : null}
