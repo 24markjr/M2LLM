@@ -134,3 +134,9 @@ recorded in the file's custody. The table, filters and custody drawer are as pla
 The Quality tab was redesigned (headline, component cards, the trend as a chart with breaks at every
 configuration change, categories with meters). Memory search and the Recordings table already met
 the plan and were left as they are.
+
+### U10 - as built
+
+Settings is a page (the gear menu keeps the quick theme switch and links to it). Retention has no
+server-side timer: it is a person's action that lists what would go and deletes each through the
+audited single-delete route, so a retention run is in the audit log entry by entry.

@@ -14,6 +14,7 @@ import { RecordingsPage, ReplayJournal } from "./journal/RecordingsPage";
 import { AuditPage } from "./pages/AuditPage";
 import { CasePage, CasesPage } from "./pages/CasesPage";
 import { DesignPage } from "./pages/DesignPage";
+import { SettingsPage } from "./settings/SettingsPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
 import { EvidenceItemPage } from "./pages/EvidencePage";
 import { LibraryPage } from "./library/LibraryPage";
@@ -125,6 +126,7 @@ export default function App() {
       {route.name === "replayOne" ? <ReplayJournal key={route.file} file={route.file} /> : null}
       {route.name === "audit" ? <AuditPage /> : null}
       {route.name === "design" ? <DesignPage /> : null}
+      {route.name === "settings" ? <SettingsPage /> : null}
     </Shell>
   );
 }

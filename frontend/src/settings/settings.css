@@ -1,0 +1,113 @@
+/* Settings (Phase U10): one column of cards, readable width. */
+
+.settings {
+  max-width: 820px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.settings h1 {
+  margin: 0;
+  font-size: var(--text-2xl);
+}
+.settings-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+.settings-card.danger {
+  border-color: var(--unsupported);
+}
+.settings-card h2 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+}
+.settings-note {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  margin: 4px 0 var(--space-3);
+}
+.settings .mono {
+  font-family: var(--mono);
+}
+.settings-choice {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.settings-choice button {
+  padding: 6px 18px;
+  border: 0;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.settings-choice button.on {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+.settings-packs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-2);
+}
+.settings-packs label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.settings-packs label.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.settings-packs input {
+  grid-row: span 2;
+  margin-top: 3px;
+}
+.settings-packs span {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+.settings-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px var(--space-4);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-3);
+}
+.settings-facts dt {
+  color: var(--text-muted);
+}
+.settings-facts dt::first-letter {
+  text-transform: uppercase;
+}
+.settings-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.settings-fact-row {
+  display: contents;
+}
+.settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+.settings-row .settings-note {
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .settings-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

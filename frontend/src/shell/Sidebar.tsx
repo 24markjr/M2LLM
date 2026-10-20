@@ -11,6 +11,7 @@ import type { CaseList } from "../api/types";
 import { Button, ConfirmDialog, Dialog, TextInput, useToast } from "../ui/components";
 import {
   IconActivity,
+  IconSettings,
   IconEdit,
   IconFolder,
   IconInsights,
@@ -137,6 +138,7 @@ export function Sidebar({
         <SidebarLink href="#/library" icon={<IconLibrary size={18} />} label="Library" on={section === "library"} onNavigate={onNavigate} />
         <SidebarLink href="#/insights" icon={<IconInsights size={18} />} label="Insights" on={section === "insights"} onNavigate={onNavigate} />
         <SidebarLink href="#/activity" icon={<IconActivity size={18} />} label="Activity" on={section === "activity"} onNavigate={onNavigate} />
+        <SidebarLink href="#/settings" icon={<IconSettings size={18} />} label="Settings" on={section === "settings"} onNavigate={onNavigate} />
         <div className="sidebar-engine" title={engineTitle(engine)}>
           <span className={`engine-dot ${engineState(engine)}`} aria-hidden="true" />
           <span className="sidebar-label">{engineLabel(engine)}</span>

@@ -315,6 +315,9 @@ export const api = {
     request<DeletionReport>(`${BASE}/cases/${caseId}`, { method: "DELETE" }),
 
   /** Delete one finished investigation everywhere it is held (U1). */
+  /** Every finished investigation (U10, Settings); running ones are skipped. */
+  deleteAllMissions: () => request<DeletionReport>(`${BASE}/missions?confirm=delete`, { method: "DELETE" }),
+
   deleteMission: (runId: string) =>
     request<DeletionReport>(`${BASE}/missions/${runId}`, { method: "DELETE" }),
 

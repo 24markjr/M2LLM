@@ -39,6 +39,7 @@ export type Route =
   | { name: "evaluation" }
   | { name: "audit" }
   | { name: "design" }
+  | { name: "settings" }
   | { name: "attack"; runId: string };
 
 export function parseRoute(full: string): Route {
@@ -70,6 +71,7 @@ export function parseRoute(full: string): Route {
   if (hash === "#/evaluation" || hash === "#/insights") return { name: "evaluation" };
   if (hash === "#/audit" || hash === "#/activity") return { name: "audit" };
   if (hash === "#/design") return { name: "design" };
+  if (hash === "#/settings") return { name: "settings" };
   // Cases are the home page (Phase 44); the flat list of every investigation is `#/missions`.
   if (caseIdFromHash(hash)) return { name: "case", caseId: caseIdFromHash(hash) };
   if (hash === "#/missions") return { name: "list" };
@@ -98,6 +100,7 @@ export function sectionOf(route: Route): Section {
     case "audit":
       return "activity";
     case "design":
+    case "settings":
       return "settings";
     default:
       return "cases";
@@ -143,6 +146,8 @@ export function trailOf(route: Route): string[] {
       return ["Activity"];
     case "design":
       return ["Settings", "Design system"];
+    case "settings":
+      return ["Settings"];
   }
 }
 

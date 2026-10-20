@@ -5,6 +5,28 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-21 - Phase U10: Settings
+
+### Added
+
+- **`#/settings`**, linked from the sidebar and the gear menu: appearance (light / dark); the
+  default domain pack a new investigation starts in (the same preference the home page keeps); the
+  engine - model and whether it is answering, that it runs on this computer through Ollama and works
+  offline, every store (cases, evidence, audit log, investigations) and memory; a link to Activity
+- **Retention**, applied by the person, never on a timer: finished investigations older than 7, 30,
+  90 or 365 days, counted before anything is deleted, each then deleted through the same audited
+  route as a single delete; running investigations are never selected
+- **Delete everything**: every finished investigation and every local recording, typed confirmation,
+  saying what is kept (Library files and custody, reviews, the audit log)
+- `api.deleteAllMissions` for the existing `DELETE /missions?confirm=delete`
+
+### Verified
+
+- 124 frontend tests (2 new: retention selects by when a run ended, and never a running one), tsc,
+  build; the page against the live engine in headless Chrome
+
+---
+
 ## 2026-10-21 - Phase U9: Insights
 
 ### Changed
