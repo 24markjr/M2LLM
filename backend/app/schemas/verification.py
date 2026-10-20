@@ -49,6 +49,8 @@ class IssueType(StrEnum):
     # Phase 39: every cited line is a vision model's description of an image (`[seen]`), so the
     # claim rests on a model's account, not on source text.
     DESCRIBED_ONLY = "DESCRIBED_ONLY"
+    # Phase B4: the second reviewer (another local model) did not confirm an approved finding.
+    REVIEWER_DISSENT = "REVIEWER_DISSENT"
 
 
 class VerificationIssue(JarvisModel):

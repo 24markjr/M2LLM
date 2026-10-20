@@ -3871,7 +3871,8 @@
           "UNIT_MISMATCH",
           "DATE_AMBIGUITY",
           "ARITHMETIC_ERROR",
-          "DESCRIBED_ONLY"
+          "DESCRIBED_ONLY",
+          "REVIEWER_DISSENT"
         ],
         "title": "IssueType",
         "type": "string"

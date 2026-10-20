@@ -29,7 +29,7 @@ from app.intelligence.trust.lexical import verify_claim
 from app.intelligence.trust.specifics import numbers_as_dates, ungrounded_specifics
 from app.llm.errors import StructuredOutputError
 from app.llm.prompts import get_prompt_library
-from app.llm.provider import LLMProvider
+from app.llm.provider import CompletionRequest, CompletionResponse, EmbeddingResponse, LLMProvider
 from app.llm.structured import generate_structured
 from app.schemas.common import JarvisModel, Severity
 from app.schemas.event import EventType
@@ -472,8 +472,81 @@ class CompositeVerifier:
         return combined
 
 
+class _OtherModel:
+    """The same provider, every call sent to another model: the second reviewer's voice."""
+
+    def __init__(self, provider: LLMProvider, model: str) -> None:
+        self._provider = provider
+        self._model = model
+
+    @property
+    def model_id(self) -> str:
+        return self._model
+
+    async def complete(self, request: CompletionRequest) -> CompletionResponse:
+        return await self._provider.complete(request.model_copy(update={"model": self._model}))
+
+    async def embed(self, texts: list[str]) -> EmbeddingResponse:
+        return await self._provider.embed(texts)
+
+    async def health(self) -> bool:
+        return await self._provider.health()
+
+
+class CouncilVerifier:
+    """A second, independent reviewer for what the verifier approved (Phase B4, llm-council).
+
+    Only SUPPORTED findings are re-checked - the failure that matters is a wrong claim approved, and
+    re-checking rejections would double the cost for nothing. The reviewer is another model with the
+    same evidence and no reasoning trail. If it does not confirm, the finding is downgraded to
+    PARTIALLY_SUPPORTED with a REVIEWER_DISSENT issue, and both opinions are recorded.
+    """
+
+    name = "council"
+
+    def __init__(
+        self, inner: VerificationProvider, reviewer: VerificationProvider, model: str
+    ) -> None:
+        self._inner = inner
+        self._reviewer = reviewer
+        self._model = model
+
+    async def verify(self, request: VerificationRequest) -> VerificationResult:
+        first = await self._inner.verify(request)
+        if first.status is not VerificationStatus.SUPPORTED:
+            return first
+        second = await self._reviewer.verify(request)
+        opinions = [
+            *(first.opinions or [VerifierOpinion(verifier=first.verifier, status=first.status)]),
+            VerifierOpinion(verifier=f"reviewer:{self._model}", status=second.status),
+        ]
+        if second.status is VerificationStatus.SUPPORTED:
+            return first.model_copy(update={"opinions": opinions})
+        dissent = VerificationIssue(
+            issue_type=IssueType.REVIEWER_DISSENT,
+            description=(
+                f"the second reviewer ({self._model}) found it {second.status.value.lower()}"
+            ),
+        )
+        return first.model_copy(
+            update={
+                "status": VerificationStatus.PARTIALLY_SUPPORTED,
+                "issues": [*first.issues, dissent],
+                "opinions": opinions,
+            }
+        )
+
+
 def build_verification_provider(llm: LLMProvider) -> VerificationProvider:
-    """The configured verifier."""
+    """The configured verifier, with the second reviewer around it when one is configured."""
+    chosen = _configured_verifier(llm)
+    model = get_settings().reviewer_model
+    if not model:
+        return chosen
+    return CouncilVerifier(chosen, BaselineVerifier(_OtherModel(llm, model)), model)
+
+
+def _configured_verifier(llm: LLMProvider) -> VerificationProvider:
     settings = get_settings()
     baseline = BaselineVerifier(llm)
 

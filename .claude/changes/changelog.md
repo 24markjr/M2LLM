@@ -5,6 +5,31 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-21 - Phase B4: independent checks
+
+### Added
+
+- **The second reviewer** (llm-council pattern, `REVIEWER_MODEL=<an Ollama model>`, off by
+  default): every finding the configured verifier approves is re-checked by another local model with
+  the same evidence and no reasoning trail. A dissent downgrades it to PARTIALLY_SUPPORTED with a
+  `REVIEWER_DISSENT` issue; both opinions are recorded, so disagreement is measurable. Rejections
+  are not re-sent - the costly failure is a wrong claim approved
+- `CouncilVerifier` wraps whichever verifier is configured (`app/integrations/verification.py`)
+
+### Not done
+
+- **AlignScore** (a non-LLM entailment verifier) needs PyTorch and a model download; not installed.
+  It is the check that could credit a conclusion drawn across two documents, which B1 showed the
+  line-level lexical checker does not - the most valuable next step for the benchmark
+- The council has not been measured: only `qwen3:4b` is pulled here, and a reviewer must be a
+  different model (`ollama pull llama3.2:3b`, then `REVIEWER_MODEL=llama3.2:3b` and re-run B1)
+
+### Verified
+
+- 4 new tests (confirm, dissent, rejections not re-sent, off by default); the verification suite passes
+
+---
+
 ## 2026-10-21 - Phase B3: better reading of files
 
 ### Added

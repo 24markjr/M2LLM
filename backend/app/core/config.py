@@ -160,6 +160,9 @@ class Settings(BaseSettings):
     # and `diarize` labels who spoke when (pip install pyannote.audio, plus HF_TOKEN for its
     # gated model). Without them the default readers run unchanged.
     pdf_reader: str = "pypdf"
+    # Phase B4: a second local model that re-checks every finding the verifier approved (the
+    # llm-council pattern); empty turns it off. Must be pulled in Ollama, e.g. `llama3.2:3b`.
+    reviewer_model: str = ""
     diarize: bool = False
     hf_token: str = ""
     video_frame_every_s: float = 15.0
