@@ -344,6 +344,13 @@ async def get_report(run_id: str) -> FinalReport:
     return _report(run_id)
 
 
+@router.get("/{run_id}/sources", response_model=dict[str, str])
+async def get_sources(run_id: str) -> dict[str, str]:
+    """The text each file was read as, by document (U6). Citations are character ranges in this
+    text, so the evidence board highlights exactly what a finding rests on."""
+    return dict(_require(run_id).texts)
+
+
 @router.get("/{run_id}/report.md", response_class=PlainTextResponse)
 async def get_report_markdown(run_id: str) -> str:
     """The same report a human reads, as Markdown."""
@@ -495,6 +502,9 @@ def snapshot_payloads(record: MissionRecord) -> dict[str, object]:
     """
     result = record.result
     payload: dict[str, object] = {"mission": _detail(record).model_dump(mode="json")}
+    # The text each file was read as (U6), so the evidence board's viewer works in a replay.
+    if record.texts:
+        payload["sources"] = dict(record.texts)
 
     if result is None:
         return payload

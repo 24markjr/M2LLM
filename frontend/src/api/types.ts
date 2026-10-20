@@ -642,6 +642,8 @@ export interface Recording {
     hypotheses?: HypothesisSet;
     /** The run's knowledge graph, so replay opens the 3D explorer from the recording (absent before this fix). */
     knowledge?: { snapshot: KnowledgeSnapshot; timeline: TimelineEvent[]; graph: KnowledgeGraphView };
+    /** The text each file was read as (U6); absent in recordings made before it. */
+    sources?: Record<string, string>;
   };
 }
 

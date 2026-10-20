@@ -1,0 +1,324 @@
+/* The evidence board (Phase U6) and the workspace it sits in: the journal and the board side by
+   side on a wide screen, the board beneath the journal below 1200 px, and the board alone across
+   the page when expanded (the pin board needs the room). */
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+  gap: var(--space-5);
+  align-items: start;
+}
+.workspace > .journal {
+  max-width: 860px;
+  width: 100%;
+  margin: 0 auto;
+}
+.workspace.board-wide {
+  grid-template-columns: minmax(0, 1fr);
+}
+.workspace.board-wide > .journal {
+  display: none;
+}
+@media (max-width: 1200px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.board {
+  position: sticky;
+  top: var(--space-4);
+  max-height: calc(100vh - 96px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  min-width: 0;
+}
+.board.wide {
+  max-height: none;
+  position: static;
+}
+@media (max-width: 1200px) {
+  .board {
+    position: static;
+    max-height: none;
+  }
+}
+.board-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+.board-head .ui-tabs {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  border-bottom: 0;
+}
+.board-expand {
+  flex: none;
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+.board-head .ui-tabs button {
+  white-space: nowrap;
+}
+.board-body {
+  padding: var(--space-3);
+  overflow: auto;
+  min-height: 0;
+}
+.board-note {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.board-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.board-field select {
+  max-width: 100%;
+}
+
+/* --- sources --- */
+.board-text {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  max-height: 55vh;
+  overflow: auto;
+  margin: var(--space-2) 0;
+}
+.board.wide .board-text {
+  max-height: none;
+}
+.board-text mark {
+  background: var(--inferred-soft);
+  color: inherit;
+  border-bottom: 2px solid var(--inferred);
+  cursor: pointer;
+}
+.board-text mark.on {
+  background: var(--accent-soft);
+  border-bottom-color: var(--accent);
+  outline: 2px solid var(--accent);
+}
+.board-selected {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  flex-wrap: wrap;
+  font-size: var(--text-sm);
+}
+.board-id {
+  font-family: var(--mono);
+  color: var(--text-muted);
+}
+
+/* --- pin board --- */
+.pins-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: var(--text-xs);
+}
+.pins-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+}
+.pins-key::before {
+  content: "";
+  width: 18px;
+  height: 0;
+  border-top: 3px solid var(--line-bright);
+}
+.pins-key.same-line::before {
+  border-color: var(--accent);
+}
+.pins-key.contradiction::before {
+  border-color: var(--unsupported);
+}
+.pins-key.same-explanation::before {
+  border-color: var(--inferred);
+  border-top-style: dashed;
+}
+.pins-key.cites::before {
+  border-color: var(--line-bright);
+  border-top-width: 1px;
+}
+.pins-canvas {
+  position: relative;
+  overflow: auto;
+  /* A cork-board feel without an image: a faint dotted grid. */
+  background-color: var(--surface-sunken);
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 18px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  touch-action: none;
+}
+.pins-strings {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.string {
+  stroke: var(--line-bright);
+  stroke-width: 1;
+  transition: opacity 0.15s;
+}
+.string.same-line {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+.string.contradiction {
+  stroke: var(--unsupported);
+  stroke-width: 3;
+}
+.string.same-explanation {
+  stroke: var(--inferred);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+.string.lit {
+  stroke-width: 4;
+}
+.string.dim {
+  opacity: 0.15;
+}
+.pin {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  cursor: grab;
+  user-select: none;
+  font-size: var(--text-xs);
+  overflow: hidden;
+  transition: opacity 0.15s;
+}
+.pin::before {
+  /* The pin's head. */
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: var(--unsupported);
+  box-shadow: var(--shadow-sm);
+}
+.pin.document {
+  background: var(--accent-soft);
+}
+.pin.document::before {
+  background: var(--accent);
+}
+.pin.active {
+  outline: 2px solid var(--accent);
+  z-index: 2;
+}
+.pin.dim {
+  opacity: 0.35;
+}
+.pin:active {
+  cursor: grabbing;
+}
+.pin-top {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+.pin-detail {
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pin-label {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+.pins-why {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+/* --- timeline, explanations, report --- */
+.board-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 var(--space-3);
+  border-left: 2px solid var(--border);
+}
+.board-timeline li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) 0;
+  font-size: var(--text-sm);
+}
+.board-when {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--accent);
+}
+.board-src {
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+.board-hyp {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+.board-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.board-report h4 {
+  margin: var(--space-3) 0 var(--space-2);
+}
+
+/* The citation is a button now (it opens the board), so it keeps the look of the link it was. */
+button.citation {
+  font: inherit;
+  cursor: pointer;
+}
+button.citation:hover {
+  border-color: var(--accent);
+}
+.citation-custody {
+  margin-left: 6px;
+  font-size: var(--text-xs);
+}

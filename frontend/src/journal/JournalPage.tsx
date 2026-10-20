@@ -10,6 +10,7 @@ import { useState } from "react";
 
 import { api, ApiError } from "../api/client";
 import type { Finding, FindingReview } from "../api/types";
+import { EvidenceBoard, type BoardFocus, type BoardTab } from "../board/EvidenceBoard";
 import { ChallengePanel } from "../components/ChallengePanel";
 import { ConfidenceWhy } from "../components/ConfidenceWhy";
 import { ReviewPanel } from "../components/ReviewPanel";
@@ -41,6 +42,15 @@ export function Journal({ view, runId, onStop }: { view: MissionView; runId?: st
   const [showSteps, setShowSteps] = useState<boolean | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [busy, setBusy] = useState(false);
+  // The evidence board (U6): a citation clicked in a finding opens its file there, marked.
+  const [focus, setFocus] = useState<BoardFocus | null>(null);
+  const [tab, setTab] = useState<BoardTab>("sources");
+  const [wide, setWide] = useState(false);
+  const cite = (document: string, findingId: string) => {
+    setFocus({ document, findingId, nonce: Date.now() });
+    setTab("sources");
+    setWide(false);
+  };
 
   if (!mission) {
     return view.error ? <Notice tone="error">{view.error}</Notice> : <div className="journal-loading">Opening the investigation.</div>;
@@ -71,6 +81,7 @@ export function Journal({ view, runId, onStop }: { view: MissionView; runId?: st
   };
 
   return (
+    <div className={`workspace ${wide ? "board-wide" : ""}`}>
     <article className="journal">
       {/* --- the question ------------------------------------------------------------------------ */}
       <header className="journal-ask">
@@ -194,7 +205,7 @@ export function Journal({ view, runId, onStop }: { view: MissionView; runId?: st
         {findings.length === 0 ? (
           <p className="journal-note">{finished ? "No finding: nothing in the files established an answer." : "None yet."}</p>
         ) : (
-          findings.map((f) => <FindingCard key={f.finding_id} finding={f} evidence={evidence} review={reviewOf(f.finding_id)} runId={runId} />)
+          findings.map((f) => <FindingCard key={f.finding_id} finding={f} evidence={evidence} review={reviewOf(f.finding_id)} runId={runId} onCite={cite} />)
         )}
       </section>
 
@@ -225,6 +236,8 @@ export function Journal({ view, runId, onStop }: { view: MissionView; runId?: st
         onConfirm={() => void remove()}
       />
     </article>
+    <EvidenceBoard view={view} runId={runId} focus={focus} tab={tab} onTab={setTab} wide={wide} onWide={setWide} />
+    </div>
   );
 }
 
@@ -233,11 +246,13 @@ function FindingCard({
   evidence,
   review,
   runId,
+  onCite,
 }: {
   finding: Finding;
   evidence: Record<string, string>;
   review: FindingReview | undefined;
   runId: string | undefined;
+  onCite: (document: string, findingId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const status = findingStatus(finding);
@@ -258,15 +273,19 @@ function FindingCard({
       <ul className="citations" aria-label="Cited lines">
         {citations.map((c, i) => (
           <li key={c.key}>
+            <button
+              type="button"
+              className={`citation ${c.resolved ? "" : "unresolved"}`}
+              title={c.resolved ? "Show the cited line on the evidence board" : "This citation did not resolve"}
+              onClick={() => onCite(c.document, finding.finding_id)}
+            >
+              <span className="citation-n">{i + 1}</span> {c.label}
+            </button>
             {c.href ? (
-              <a className={`citation ${c.resolved ? "" : "unresolved"}`} href={c.href} title={c.resolved ? "Open the evidence" : "This citation did not resolve"}>
-                <span className="citation-n">{i + 1}</span> {c.label}
+              <a className="citation-custody" href={c.href} title="The file's chain of custody">
+                custody
               </a>
-            ) : (
-              <span className={`citation ${c.resolved ? "" : "unresolved"}`}>
-                <span className="citation-n">{i + 1}</span> {c.label}
-              </span>
-            )}
+            ) : null}
           </li>
         ))}
       </ul>

@@ -25,6 +25,7 @@ import type {
   MissionSummary,
   Stage,
   TaskGraphResponse,
+  TimelineEvent,
 } from "../api/types";
 
 /**
@@ -92,6 +93,12 @@ export interface MissionView {
   /** Each finding's review (Phase 50); a live run only. */
   reviews?: FindingReview[];
   events: EventRecord[];
+  /**
+   * Set by a replay (U6): the files' text and the timeline from the recording, `null` when the
+   * recording predates them. A live view leaves them undefined and the board asks the API.
+   */
+  sources?: Record<string, string> | null;
+  timeline?: TimelineEvent[] | null;
   /** Derived from the stream, so the tracker moves before any request returns. */
   liveStage: Stage | null;
   streaming: boolean;

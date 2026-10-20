@@ -106,3 +106,11 @@ As planned, plus the Recordings table with delete (planned for U9, brought forwa
 in place needed a way to choose a recording) and an error boundary around every page (the replay
 check found a crash, BUG-041). The old mission page stays reachable as "All details" until U6.
 See `architecture/journal.md`.
+
+### U6 - as built
+
+As planned. The pin board draws a string only for a connection the run holds (shared cited line,
+contradiction over the same file, same hypothesis, citation), never for a similarity guessed after
+the fact. The viewer needed the text each file was read as, so `GET /missions/{id}/sources` was added
+and recordings now carry it. The attack path and knowledge graph open from the board's Report tab
+rather than being re-implemented inside it. See `src/board/`.

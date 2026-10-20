@@ -316,3 +316,18 @@ def _ids_in(text: str) -> list[str]:
     return [
         line.removeprefix("id: ").strip() for line in text.splitlines() if line.startswith("id: ")
     ]
+
+
+# --- the evidence board (U6) ----------------------------------------------------
+
+
+async def test_sources_serve_the_text_each_file_was_read_as() -> None:
+    """Citations are character ranges in this text, so the board highlights exactly them."""
+    record = _record()
+    record.texts = {"report.txt": "line one\nline two"}
+
+    async with await _client() as client:
+        response = await client.get(f"/api/v1/missions/{record.run_id}/sources")
+
+    assert response.status_code == 200
+    assert response.json() == {"report.txt": "line one\nline two"}

@@ -190,6 +190,9 @@ export const api = {
 
   getReport: (runId: string) => request<FinalReport>(`${BASE}/missions/${runId}/report`),
 
+  /** The text each file was read as, by document (U6): the evidence board's viewer. */
+  getSources: (runId: string) => request<Record<string, string>>(`${BASE}/missions/${runId}/sources`),
+
   cancelMission: (runId: string) =>
     request<{ run_id: string; cancelling: boolean }>(`${BASE}/missions/${runId}/cancel`, {
       method: "POST",

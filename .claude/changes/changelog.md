@@ -5,6 +5,31 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-20 - Phase U6: the evidence board
+
+### Added
+
+- **The evidence board**, the right pane of the investigation: the journal and the board side by side
+  (the board beneath it below 1200 px; "Expand" gives it the page). Tabs:
+  - **Sources**: the text each file was read as, every cited span marked; a citation clicked in a
+    finding opens its file there and scrolls to the span; a mark names the finding and the line
+  - **Pin board** (the "investigation pin board"): findings and the files they cite as pins, joined
+    by strings only for connections the run holds - the same cited line, a contradiction over the
+    same file, the same competing explanation, a citation. Drag to arrange (kept per run in the
+    browser), select a pin to light its strings and list why each exists
+  - **Timeline**, **Explanations** (the hypotheses, for and against), **Report** (counts, PDF / DOCX /
+    MD / JSON export, the knowledge graph, the attack path, all details)
+- `GET /missions/{id}/sources`; recordings carry `snapshot.sources`, so a replay has the viewer;
+  recordings made before this say so instead of showing nothing
+- A citation's custody link stays beside it
+
+### Verified
+
+- 114 frontend tests (10 new), tsc, build; backend test for the route, OpenAPI regenerated; a live
+  Aurora run on qwen3:4b checked in headless Chrome
+
+---
+
 ## 2026-10-20 - Static preview on GitHub Pages
 
 ### Added
