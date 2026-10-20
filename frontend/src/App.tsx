@@ -15,6 +15,7 @@ import { AuditPage } from "./pages/AuditPage";
 import { CasePage, CasesPage } from "./pages/CasesPage";
 import { DesignPage } from "./pages/DesignPage";
 import { SettingsPage } from "./settings/SettingsPage";
+import { BenchmarkPanel } from "./components/BenchmarkPanel";
 import { DocumentsPage } from "./pages/DocumentsPage";
 import { EvidenceItemPage } from "./pages/EvidencePage";
 import { LibraryPage } from "./library/LibraryPage";
@@ -114,10 +115,11 @@ export default function App() {
       ) : null}
 
       {/* Insights: quality, memory and recordings (U3). */}
-      {route.name === "evaluation" || route.name === "memory" || route.name === "replay" ? (
+      {route.name === "evaluation" || route.name === "benchmark" || route.name === "memory" || route.name === "replay" ? (
         <>
           <SectionTabs tabs={INSIGHTS_TABS} active={route.name} />
           {route.name === "evaluation" ? <EvaluationPage onBack={() => go("#/")} /> : null}
+          {route.name === "benchmark" ? <BenchmarkPanel /> : null}
           {route.name === "memory" ? <MemoryPage key={route.entity} entity={route.entity} /> : null}
           {route.name === "replay" ? <RecordingsPage /> : null}
         </>

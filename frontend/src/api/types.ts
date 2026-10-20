@@ -184,6 +184,47 @@ export interface StoreStatus {
   note: string;
 }
 
+/** The benchmark (Phase B1): every system scored against the answer key by one deterministic judge. */
+export interface BenchmarkSystem {
+  system: string;
+  scenarios: number;
+  correct: number | null;
+  factscore: number | null;
+  invented: number;
+  citation_precision: number | null;
+  citations: number;
+  false_alarms: number;
+  alarm_cases: number;
+  mean_latency_s: number;
+  errors: number;
+}
+
+export interface BenchmarkScore {
+  scenario_id: string;
+  system: string;
+  claims: number;
+  correct: number | null;
+  supported: number;
+  sentences: number;
+  invented: string[];
+  citations: number;
+  citations_precise: number;
+  false_alarm: boolean | null;
+  latency_ms: number;
+  error: string;
+  answer: string;
+}
+
+export interface BenchmarkReport {
+  generated_at: string;
+  model: string;
+  prompt_version: number;
+  method: string;
+  systems: BenchmarkSystem[];
+  results: BenchmarkScore[];
+  skipped: Record<string, string>;
+}
+
 /** Evaluation v2 (Phase 54): one quality figure, its components, categories and trend. */
 export interface QualitySummary {
   formula: string;
@@ -196,6 +237,9 @@ export interface QualitySummary {
     negative_passed: number | null;
     claims_found: number | null;
   }[];
+  /** Phase B2: the multimodal suite by kind of file, from its newest report (absent before B2). */
+  file_types?: QualitySummary["categories"];
+  file_types_source?: string;
   agent_formula: string;
   trend: { generated_at: string; report: string; agent_quality: number; comparable_key: string }[];
   missing: string[];

@@ -183,6 +183,7 @@ export const LIBRARY_TABS = [
 
 export const INSIGHTS_TABS = [
   { id: "evaluation", label: "Quality", href: "#/evaluation" },
+  { id: "benchmark", label: "Benchmark", href: "#/benchmark" },
   { id: "memory", label: "Memory", href: "#/memory" },
   { id: "replay", label: "Recordings", href: "#/replay" },
 ];

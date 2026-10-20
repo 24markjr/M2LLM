@@ -19,6 +19,7 @@ from app.api.recording import (
     load_recording,
 )
 from app.core.logging import get_logger
+from app.evaluation.benchmark import BenchmarkReport, newest_report
 from app.evaluation.quality import QualitySummary, quality_summary
 from app.evaluation.report import LOWER_IS_BETTER, EvalReport
 from app.evaluation.runner import reports_dir
@@ -177,6 +178,20 @@ async def get_evaluation_quality() -> QualitySummary:
     """One quality figure with its formula, its components (each naming the report and scenarios it
     came from), the figures by category, and the agent-quality trend (Phase 54)."""
     return quality_summary()
+
+
+@router.get("/evaluation/benchmark", response_model=BenchmarkReport)
+async def get_evaluation_benchmark() -> BenchmarkReport:
+    """The newest benchmark (Phase B1): JARVIS, the plain model and any frontier model, scored
+    against the answer key by the same deterministic judge. Produced locally and committed."""
+    report = newest_report()
+    if report is None:
+        raise ApiError(
+            "BENCHMARK_NOT_RUN",
+            "no benchmark yet: run python -m app.evaluation.benchmark",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    return report
 
 
 @router.get("/evaluation/directions", response_model=dict[str, str])

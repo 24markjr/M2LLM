@@ -241,3 +241,7 @@
   margin-top: var(--space-4);
   font-size: var(--text-sm);
 }
+.bench-alarm {
+  color: var(--unsupported);
+  font-weight: 600;
+}

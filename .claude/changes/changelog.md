@@ -5,6 +5,32 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-21 - Phase B1: benchmark against the plain model (and frontier models, opt-in)
+
+### Added
+
+- `app/evaluation/benchmark.py` (`python -m app.evaluation.benchmark`): the same 16 scenarios, files
+  and question to JARVIS, the plain local model (numbered lines, asked to cite `[file:line]`) and any
+  frontier model named in `JARVIS_BENCH_FRONTIER` with its API key; scored against a written answer
+  key (`.agent/evals/benchmark/answers.yaml`) by one deterministic judge - correct facts,
+  FActScore-style supported sentences, invented values, ALCE-style citation precision, false alarms
+- `GET /evaluation/benchmark`; Insights > Benchmark (systems, and every scenario with its answer)
+
+### Measured (20261020T190405, qwen3:4b, 16 scenarios)
+
+| System | Correct | Supported | Invented | Citation precision | False alarms | Mean time |
+|---|---|---|---|---|---|---|
+| JARVIS | 0.515 | 0.375 | 1 | 0.583 (24) | 0 / 6 | 49.3 s |
+| Plain model | 1.000 | 0.607 | 2 | 0.933 (30) | 0 / 6 | 4.5 s |
+
+Reported as measured, and it does not favour JARVIS. With all files fitting one prompt and asked to
+cite numbered lines, the plain model states more of the key facts; JARVIS states fewer, because its
+findings are shorter claims that pass a relevance gate and verification. Both had no false alarm on
+the six negative and injection scenarios. Frontier models were not run: no API key was configured.
+This is the main open question for the defence and for B4/B8.
+
+---
+
 ## 2026-10-21 - Phase U11: polish
 
 ### Added

@@ -37,6 +37,7 @@ export type Route =
   | { name: "replay" }
   | { name: "replayOne"; file: string }
   | { name: "evaluation" }
+  | { name: "benchmark" }
   | { name: "audit" }
   | { name: "design" }
   | { name: "settings" }
@@ -65,6 +66,7 @@ export function parseRoute(full: string): Route {
   }
   if (hash === "#/documents") return { name: "documents", workspace: query.workspace ?? "default" };
   if (hash === "#/replay") return { name: "replay" };
+  if (hash === "#/benchmark") return { name: "benchmark" };
   // One recording, played back in the journal (U5).
   const replayOne = /^#\/replay\/(.+)$/.exec(hash);
   if (replayOne?.[1]) return { name: "replayOne", file: decodeURIComponent(replayOne[1]) };
@@ -93,6 +95,7 @@ export function sectionOf(route: Route): Section {
     case "documents":
       return "library";
     case "evaluation":
+    case "benchmark":
     case "memory":
     case "replay":
     case "replayOne":
@@ -136,6 +139,8 @@ export function trailOf(route: Route): string[] {
       return ["Library", "Workspaces"];
     case "evaluation":
       return ["Insights", "Quality"];
+    case "benchmark":
+      return ["Insights", "Benchmark"];
     case "memory":
       return ["Insights", "Memory"];
     case "replay":

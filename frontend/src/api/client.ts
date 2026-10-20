@@ -39,7 +39,7 @@ import type { CyberAnalysis } from "./types";
 import type { QualitySummary } from "./types";
 import type { StoreStatus } from "./types";
 import type { DeletionReport } from "./types";
-import type { Comparison, Receipt } from "./types";
+import type { BenchmarkReport, Comparison, Receipt } from "./types";
 import { DemoError, STATIC_DEMO, demoRequest } from "./demo";
 
 const BASE = "/api/v1";
@@ -344,6 +344,9 @@ export const api = {
   getCyber: (runId: string) => request<CyberAnalysis>(`${BASE}/missions/${runId}/cyber`),
 
   /** One quality figure with its formula, categories and trend (Phase 54). */
+  /** The newest benchmark (B1); BENCHMARK_NOT_RUN until one is run locally. */
+  getBenchmark: () => request<BenchmarkReport>(`${BASE}/evaluation/benchmark`),
+
   getQuality: () => request<QualitySummary>(`${BASE}/evaluation/quality`),
 
   /** The attack path as the 3D explorer draws it (Phase 53). */
