@@ -35,6 +35,41 @@ anyway, and it is not dismissible.
 
 ---
 
+## The console walk-through (U1-U11, about 8 minutes)
+
+Start everything with one command (Docker Desktop open): `powershell -ExecutionPolicy Bypass -File
+scripts\start-jarvis.ps1`. It opens the API and console windows and the browser; keep both windows open.
+
+1. **Home** - "What do you need to find out?". Pick the *General* pack and the starter question "Do
+   the Aurora project reports contradict each other on the timeline or the finances?" (three example
+   files attach themselves). Press **Start**.
+2. **The journal** - seven plain steps while it runs (30-60 s). When it finishes, point at the answer:
+   every sentence is marked verified / inferred / not established, and every finding cites a file
+   and a line. Two contradictions: 30 April vs 14 May, and 380,000 vs 450,000.
+3. **Evidence board, Sources** - click a citation on F-001: the file opens on the right with the
+   cited line highlighted. *"Every claim is two clicks from the line it rests on."*
+4. **Pin board** - press the expand arrow: files above, findings below, a red string for the
+   contradiction. Select a pin: each string says why it exists. *"Strings are only connections the
+   run actually holds - nothing guessed."*
+5. **Proof** - the verification receipt (a SHA-256 of each file as read, every finding's check, a
+   hash over the receipt), then **Ask the plain model**: the same model, files and question with no
+   plan and no verification, scored by the same checker. Say honestly what it shows: the plain
+   model's sentences cite nothing checkable; JARVIS's findings are verified with resolved citations;
+   the line-level checker does not yet credit cross-document conclusions (B4 addresses that).
+6. **Library** (`g` then `l`) - every file, its folder (case), integrity and citations; open one for
+   its chain of custody.
+7. **Insights** (`g` then `i`) - the quality figure and its eight components, and the trend chart
+   that breaks wherever the configuration changed.
+8. **Settings** (`g` then `s`) - the model runs on this computer, offline; retention and delete,
+   each audited in **Activity**.
+
+Press `?` at any time for the shortcuts. **Fallback:** if the model stalls, open
+**Insights > Recordings** and replay *aurora-evidence-board-demo*: it plays through the same journal
+and board, says it is a replay, and carries its receipt and plain-model comparison. The same
+recording plays on the public preview at https://24markjr.github.io/M2LLM/.
+
+---
+
 ## The one-sentence framing (30 s)
 
 > Most systems built on a language model ask the model how confident it is. This one never does.

@@ -5,6 +5,25 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-21 - Phase U11: polish
+
+### Added
+
+- **Keyboard shortcuts**: `n` new investigation; `g` then `c` / `l` / `i` / `a` / `s` for cases,
+  Library, Insights, Activity, Settings; `/` search; `?` lists them. Never while typing in a field,
+  never with a modifier (Ctrl+K stays the palette); a two-key sequence lapses after a second
+- **The first-run tour** on the home page: four steps (ask, watch, check the receipts, everything is
+  kept), dismissed once per browser, reopened from the shortcuts dialog
+- **Demo script**: the console walk-through for the redesigned interface, with its recorded fallback
+- The "engine not reachable" banner names `scripts\start-jarvis.ps1`
+
+### Verified
+
+- 127 frontend tests (3 new), tsc, build; the tour and the shortcuts dialog in headless Chrome
+- Part A (U1-U11) is complete
+
+---
+
 ## 2026-10-21 - Phase U10: Settings
 
 ### Added

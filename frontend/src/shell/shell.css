@@ -566,3 +566,34 @@ kbd {
   font-family: var(--mono);
   font-size: var(--text-sm);
 }
+
+/* The shortcuts dialog (U11). */
+.shortcuts {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+.shortcuts td {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.shortcuts td:first-child {
+  white-space: nowrap;
+  width: 40%;
+}
+kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 1px 6px;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+.shortcuts-note {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}

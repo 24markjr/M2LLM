@@ -13,6 +13,7 @@ import { IconChevronRight } from "../ui/icons";
 import { attentionItems } from "./attention";
 import { Composer, type ComposerDraft } from "./Composer";
 import { MODES } from "./modes";
+import { Tour } from "./Tour";
 import { PACK_KEY, packById, PACKS } from "./packs";
 
 function loadPack(): string {
@@ -46,6 +47,7 @@ export function HomePage() {
 
   return (
     <div className="home">
+      <Tour />
       <section className="home-hero">
         <h1>What do you need to find out?</h1>
         <p>

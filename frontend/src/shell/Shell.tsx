@@ -6,7 +6,7 @@
  * Escape, or by tapping outside it.
  */
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { api } from "../api/client";
 import { browserStorage } from "../theme/theme";
@@ -15,6 +15,9 @@ import { ErrorBoundary } from "./ErrorBoundary";
 import { type Route, sectionOf, trailOf } from "./routes";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
+import { reopenTour } from "../home/Tour";
+import { Dialog } from "../ui/components";
+import { isTyping, resolveKey, SHORTCUTS } from "./shortcuts";
 
 const COLLAPSED_KEY = "jarvis.sidebar";
 
@@ -30,6 +33,9 @@ export function Shell({ route, children }: { route: Route; children: ReactNode }
   const [collapsed, setCollapsed] = useState(loadCollapsed);
   const [drawer, setDrawer] = useState(false);
   const [palette, setPalette] = useState(false);
+  const [help, setHelp] = useState(false);
+  // The first key of a two-key shortcut ("g", then "l"), forgotten after a second.
+  const pending = useRef({ key: "", at: 0 });
   const [engine, setEngine] = useState<{ model: string; healthy: boolean } | null | "unreachable">(null);
 
   useEffect(() => {
@@ -46,6 +52,15 @@ export function Shell({ route, children }: { route: Route; children: ReactNode }
         setPalette(true);
       } else if (e.key === "Escape") {
         setDrawer(false);
+      } else if (!e.ctrlKey && !e.metaKey && !e.altKey && !isTyping(e.target)) {
+        const was = Date.now() - pending.current.at < 1000 ? pending.current.key : "";
+        const hit = resolveKey(e.key, was);
+        pending.current = hit === "pending" ? { key: e.key, at: Date.now() } : { key: "", at: 0 };
+        if (hit === null || hit === "pending") return;
+        e.preventDefault();
+        if (hit.to === "help") setHelp(true);
+        else if (hit.to === "search") setPalette(true);
+        else window.location.hash = hit.to;
       }
     };
     window.addEventListener("keydown", onKey);
@@ -95,8 +110,8 @@ export function Shell({ route, children }: { route: Route; children: ReactNode }
         <main className="shell-main" id="main-content" tabIndex={-1}>
           {engine === "unreachable" ? (
             <div className="engine-banner" role="alert">
-              The engine is not reachable. Start it from <code>backend/</code> with{" "}
-              <code>uvicorn app.api.app:create_app --factory --reload</code>
+              The engine is not reachable. Start everything with <code>scripts\start-jarvis.ps1</code>, or the API alone from{" "}
+              <code>backend/</code> with <code>uvicorn app.api.app:create_app --factory</code>, then reload.
             </div>
           ) : null}
           <div className="shell-content">
@@ -105,6 +120,43 @@ export function Shell({ route, children }: { route: Route; children: ReactNode }
         </main>
       </div>
       <CommandPalette open={palette} onClose={() => setPalette(false)} />
+      <Dialog open={help} title="Keyboard shortcuts" onClose={() => setHelp(false)}>
+        <table className="shortcuts">
+          <tbody>
+            <tr>
+              <td>
+                <kbd>Ctrl</kbd> <kbd>K</kbd>
+              </td>
+              <td>Search everything</td>
+            </tr>
+            {SHORTCUTS.map((s) => (
+              <tr key={s.keys}>
+                <td>
+                  {s.keys.split(" ").map((k, i) => (
+                    <span key={i}>
+                      {i ? " then " : ""}
+                      <kbd>{k}</kbd>
+                    </span>
+                  ))}
+                </td>
+                <td>{s.label}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="shortcuts-note">Shortcuts never fire while you are typing in a field.</p>
+        <button
+          type="button"
+          className="ui-button ghost sm"
+          onClick={() => {
+            reopenTour();
+            window.location.hash = "#/";
+            window.location.reload();
+          }}
+        >
+          Show the welcome tour again
+        </button>
+      </Dialog>
     </div>
   );
 }

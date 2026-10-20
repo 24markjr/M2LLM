@@ -140,3 +140,9 @@ the plan and were left as they are.
 Settings is a page (the gear menu keeps the quick theme switch and links to it). Retention has no
 server-side timer: it is a person's action that lists what would go and deletes each through the
 audited single-delete route, so a retention run is in the audit log entry by entry.
+
+### U11 - as built
+
+Shortcuts, the first-run tour and the demo script as planned. Empty, error and loading states were
+already handled page by page (U3's error boundary, each page's notices), and the skip link and
+keyboard-operable components came with U2-U3, so U11 added no new mechanism for them. Part A done.
