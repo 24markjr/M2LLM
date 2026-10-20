@@ -156,6 +156,12 @@ class Settings(BaseSettings):
     # A video is seen through at most `max_video_frames` sampled frames (invariant 7: every loop is
     # bounded), spread evenly over its duration; `video_frame_every_s` only when it is unknown.
     max_video_frames: int = 8
+    # Phase B3, both opt-in: "docling" reads PDFs keeping layout and tables (pip install docling),
+    # and `diarize` labels who spoke when (pip install pyannote.audio, plus HF_TOKEN for its
+    # gated model). Without them the default readers run unchanged.
+    pdf_reader: str = "pypdf"
+    diarize: bool = False
+    hf_token: str = ""
     video_frame_every_s: float = 15.0
     # Longest recording transcribed, in seconds.
     max_media_seconds: int = 1800

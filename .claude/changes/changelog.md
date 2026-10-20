@@ -5,6 +5,26 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-21 - Phase B3: better reading of files
+
+### Added
+
+- **Native Windows `.evtx`** (`python-evtx`, now a dependency): each binary record becomes the XML a
+  Windows export holds and goes through `events_from_xml`, so it normalises and cites exactly like an
+  export (`security.evtx:r7`). An `.evtx` with no events is refused with the reason
+- **docling for PDFs, opt-in** (`PDF_READER=docling`, `pip install docling`): layout and tables kept
+  as Markdown lines. Off by default because citations then point at converted lines, not pages
+- **pyannote speaker turns, opt-in** (`DIARIZE=true`, `pip install pyannote.audio`, `HF_TOKEN` for
+  the gated model): transcript lines labelled `[SPEAKER_00]`; unlabelled, as before, without it
+
+### Verified
+
+- 3 new tests (stand-in modules for evtx, docling and pyannote: used when present, unchanged when
+  not); formats, cyber and media suites pass. docling and pyannote themselves were not installed
+  here (multi-GB; pyannote needs a Hugging Face token) - measuring them is still to do
+
+---
+
 ## 2026-10-21 - Phase B2: multimodal evaluation
 
 ### Added

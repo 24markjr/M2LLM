@@ -10,7 +10,8 @@ so a finding cites `security.xml:r7` and the verifier reads exactly that event. 
 mapped from the common schemas (Windows Security, Sysmon, generic JSON) onto one short vocabulary;
 anything unmapped is kept as `key=value`, never dropped.
 
-Native `.evtx` (binary) is not read yet (D13: later); export it as XML or JSON.
+Native `.evtx` (binary) is read since Phase B3: each record becomes the same XML a Windows export
+holds (`python-evtx`), so it goes through `events_from_xml` and cites exactly like an export.
 
 XML is parsed with the standard library only after a document carrying a DTD or an entity
 declaration is refused: an event export has no use for one, and refusing it closes the entity
@@ -23,6 +24,7 @@ import json
 import re
 import xml.etree.ElementTree as ElementTree
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from pydantic import Field
@@ -150,6 +152,17 @@ _SYSTEM_FIELDS = ("EventID", "Computer", "Channel", "Provider")
 
 def _strip(tag: str) -> str:
     return tag.split("}", 1)[-1]
+
+
+def xml_from_evtx(path: Path) -> str:
+    """A native `.evtx` as the XML of its records, wrapped in one <Events> element (Phase B3)."""
+    try:
+        from Evtx.Evtx import Evtx
+    except ImportError as exc:
+        raise ValueError("reading .evtx needs python-evtx: pip install python-evtx") from exc
+    with Evtx(str(path)) as log:
+        records = [record.xml() for record in log.records()]
+    return "<Events>" + "".join(re.sub(r"<\?xml[^>]*\?>", "", r) for r in records) + "</Events>"
 
 
 def events_from_xml(text: str) -> list[Event]:

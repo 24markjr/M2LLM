@@ -78,10 +78,11 @@ FORMATS: list[FormatSpec] = [
     ),
     FormatSpec(
         kind=FormatKind.EVENT_LOG,
-        extensions=[".jsonl", ".ndjson", ".xml"],
+        extensions=[".jsonl", ".ndjson", ".xml", ".evtx"],
         parser="eventlog",
         becomes=(
-            "one security event per line - JSON Lines, or a Windows / Sysmon XML export - its "
+            "one security event per line - JSON Lines, a Windows / Sysmon XML export or a native "
+            ".evtx - its "
             "fields named host=, user=, event=, image=, cmd=, src_ip= ..."
         ),
     ),
@@ -399,8 +400,30 @@ def load_audio(path: Path) -> LoadedDocument:
     return document.model_copy(update={"has_text": False})
 
 
+def load_pdf_with_docling(path: Path) -> LoadedDocument | None:
+    """A PDF through docling (Phase B3), when `PDF_READER=docling` and docling is installed: layout
+    and tables kept, as Markdown lines. None otherwise, and the default reader runs. Opt-in because
+    citations then point at lines of the converted text rather than pages."""
+    from app.core.config import get_settings
+
+    if get_settings().pdf_reader != "docling":
+        return None
+    try:
+        from docling.document_converter import DocumentConverter
+    except ImportError:
+        from app.core.logging import get_logger
+
+        get_logger(__name__).warning("docling_not_installed", file=path.name)
+        return None
+    markdown = DocumentConverter().convert(str(path)).document.export_to_markdown()
+    return _bounded(path, markdown.splitlines(), kind=FormatKind.PDF.value, note="read by docling")
+
+
 def load_pdf_with_ocr(path: Path) -> LoadedDocument:
     """A PDF's text layer, with OCR'd text for the pages that have none (a scan)."""
+    laid_out = load_pdf_with_docling(path)
+    if laid_out is not None:
+        return laid_out
     document = load_pdf(path)
     found = _understood(path)
     if found is None or not found.pages:
@@ -471,14 +494,20 @@ async def prepare(paths: list[Path], provider: Any) -> None:
 def load_event_log(path: Path) -> LoadedDocument:
     """A security event log, one event per line (Phase 52). A file that turns out not to hold
     events is read as text, so nothing is lost by the extension promising more than it had."""
-    from app.cyber.eventlog import events_from_json, events_from_xml, to_line
+    from app.cyber.eventlog import Event, events_from_json, events_from_xml, to_line, xml_from_evtx
 
-    raw = path.read_text(encoding="utf-8", errors="replace")
+    suffix = path.suffix.lower()
     try:
-        events = events_from_xml(raw) if path.suffix.lower() == ".xml" else events_from_json(raw)
+        if suffix == ".evtx":
+            events: list[Event] | None = events_from_xml(xml_from_evtx(path))
+        else:
+            raw = path.read_text(encoding="utf-8", errors="replace")
+            events = events_from_xml(raw) if suffix == ".xml" else events_from_json(raw)
     except (ValueError, SyntaxError) as exc:
         raise DocumentLoadError(f"{path.name}: not a readable event log ({exc})") from exc
     if not events:
+        if suffix == ".evtx":
+            raise DocumentLoadError(f"{path.name}: the .evtx holds no events")
         return load_text(path)
     return _bounded(
         path,

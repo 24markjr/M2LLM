@@ -207,14 +207,44 @@ def transcribe(path: Path) -> list[tuple[float, str]]:
 
         _whisper_models[size] = WhisperModel(size, device="cpu", compute_type="int8")
     segments, _info = _whisper_models[size].transcribe(_decode_audio(path), vad_filter=True)
+    turns = speaker_turns(path)
     spoken = []
     for segment in segments:
         if segment.start > settings.max_media_seconds:
             break
         text = segment.text.strip()
         if text:
-            spoken.append((float(segment.start), text))
+            who = speaker_at(turns, float(segment.start))
+            spoken.append((float(segment.start), f"[{who}] {text}" if who else text))
     return spoken
+
+
+def speaker_turns(path: Path) -> list[tuple[float, float, str]]:
+    """Who spoke when (Phase B3), through pyannote, when `DIARIZE=true`, pyannote.audio is installed
+    and HF_TOKEN reaches its gated model. Empty otherwise: the transcript is then unlabelled."""
+    settings = get_settings()
+    if not settings.diarize:
+        return []
+    try:
+        from pyannote.audio import Pipeline
+    except ImportError:
+        log.warning("pyannote_not_installed", file=path.name)
+        return []
+    pipeline = Pipeline.from_pretrained(
+        "pyannote/speaker-diarization-3.1", use_auth_token=settings.hf_token or None
+    )
+    if pipeline is None:
+        log.warning("pyannote_model_unavailable", file=path.name)
+        return []
+    return [
+        (float(turn.start), float(turn.end), str(label))
+        for turn, _, label in pipeline(str(path)).itertracks(yield_label=True)
+    ]
+
+
+def speaker_at(turns: list[tuple[float, float, str]], at: float) -> str:
+    """The speaker whose turn covers `at`, or "" when none does."""
+    return next((label for start, end, label in turns if start <= at <= end), "")
 
 
 def _decode_audio(path: Path) -> Any:
