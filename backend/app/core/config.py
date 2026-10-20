@@ -153,8 +153,8 @@ class Settings(BaseSettings):
     # faster-whisper model size: tiny | base | small | medium. Runs on the CPU, so it never
     # competes with Ollama for the GPU. Downloaded on first use.
     whisper_model: str = "base"
-    # A video is seen through sampled frames: one every `video_frame_every_s` seconds, at most
-    # `max_video_frames` (invariant 7: every loop is bounded).
+    # A video is seen through at most `max_video_frames` sampled frames (invariant 7: every loop is
+    # bounded), spread evenly over its duration; `video_frame_every_s` only when it is unknown.
     max_video_frames: int = 8
     video_frame_every_s: float = 15.0
     # Longest recording transcribed, in seconds.

@@ -276,3 +276,26 @@ def test_audio_is_decoded_to_16khz_mono_for_speech_recognition(tmp_path: Path) -
     samples = media._decode_audio(path)
     assert samples.dtype.name == "float32"
     assert abs(samples.size - 16000) < 400  # one second at 16 kHz
+
+
+def test_frames_are_spread_over_a_short_video_not_taken_every_15_seconds(tmp_path: Path) -> None:
+    """B2: a 16 s clip of four 4 s cards. The fixed interval saw cards 1 and 4 only; the finding was
+    on card 3. Spread over the duration, every card is sampled."""
+    import av
+    import numpy as np
+
+    path = tmp_path / "cards.mp4"
+    with av.open(str(path), mode="w") as container:
+        stream = container.add_stream("mpeg4", rate=1)
+        stream.width, stream.height, stream.pix_fmt = 64, 64, "yuv420p"
+        for shade in (0, 80, 160, 240):
+            picture = np.full((64, 64, 3), shade, dtype=np.uint8)
+            for _ in range(4):
+                for packet in stream.encode(av.VideoFrame.from_ndarray(picture, format="rgb24")):
+                    container.mux(packet)
+        for packet in stream.encode():
+            container.mux(packet)
+
+    times = [t for t, _ in media.sample_frames(path)]
+    assert len(times) <= get_settings().max_video_frames
+    assert {int(t // 4) for t in times} == {0, 1, 2, 3}

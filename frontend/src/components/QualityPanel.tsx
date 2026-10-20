@@ -67,44 +67,61 @@ export function QualityPanel() {
       <TrendChart summary={summary} />
 
       {summary.categories.length > 0 ? (
-        <section className="insight-panel" aria-labelledby="categories-title">
-          <h3 id="categories-title">
-            By category <span className="count">{summary.categories.length}</span>
-          </h3>
-          <table className="insight-table">
-            <thead>
-              <tr>
-                <th>Category</th>
-                <th>Verified</th>
-                <th>Claims found</th>
-                <th>Unsupported</th>
-                <th>Negatives passed</th>
-                <th>Scenarios</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summary.categories.map((c) => (
-                <tr key={c.category}>
-                  <td className="insight-cat">{c.category.replace(/_/g, " ")}</td>
-                  <td>
-                    <Meter value={c.metrics.verification_success} label />
-                  </td>
-                  <td>{c.claims_found === null ? "-" : <Meter value={c.claims_found} label />}</td>
-                  <td className="mono">{c.metrics.unsupported_claim_rate.toFixed(3)}</td>
-                  <td className="mono">{figure(c.negative_passed)}</td>
-                  <td className="insight-scenarios" title={c.scenarios.join(", ")}>
-                    {c.scenarios.length}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="insight-note">
-            A category of one or two scenarios is an anecdote, not a rate; hover a scenario count to see which.
-          </p>
-        </section>
+        <CategoryTable
+          id="categories-title"
+          title="By category"
+          rows={summary.categories}
+          note="A category of one or two scenarios is an anecdote, not a rate; hover a scenario count to see which."
+        />
+      ) : null}
+      {summary.file_types?.length ? (
+        <CategoryTable
+          id="file-types-title"
+          title="By kind of file"
+          rows={summary.file_types}
+          note={`The multimodal suite (${summary.file_types_source ?? ""}): each finding exists only inside the audio, video, scan or photo, so it is found only if that file was understood. Not part of the quality figure above.`}
+        />
       ) : null}
     </div>
+  );
+}
+
+function CategoryTable({ id, title, rows, note }: { id: string; title: string; rows: QualitySummary["categories"]; note: string }) {
+  return (
+    <section className="insight-panel" aria-labelledby={id}>
+      <h3 id={id}>
+        {title} <span className="count">{rows.length}</span>
+      </h3>
+      <table className="insight-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Verified</th>
+            <th>Claims found</th>
+            <th>Unsupported</th>
+            <th>Negatives passed</th>
+            <th>Scenarios</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((c) => (
+            <tr key={c.category}>
+              <td className="insight-cat">{c.category.replace(/_/g, " ")}</td>
+              <td>
+                <Meter value={c.metrics.verification_success} label />
+              </td>
+              <td>{c.claims_found === null ? "-" : <Meter value={c.claims_found} label />}</td>
+              <td className="mono">{c.metrics.unsupported_claim_rate.toFixed(3)}</td>
+              <td className="mono">{figure(c.negative_passed)}</td>
+              <td className="insight-scenarios" title={c.scenarios.join(", ")}>
+                {c.scenarios.length}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="insight-note">{note}</p>
+    </section>
   );
 }
 

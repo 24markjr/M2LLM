@@ -65,6 +65,10 @@ class QualitySummary(JarvisModel):
     value: float | None = None
     components: list[QualityComponent] = Field(default_factory=list)
     categories: list[CategorySummary] = Field(default_factory=list)
+    # Phase B2: the multimodal suite, by the kind of file each scenario tests. Shown beside the
+    # quality figure, not inside it, so the headline stays comparable with every earlier one.
+    file_types: list[CategorySummary] = Field(default_factory=list)
+    file_types_source: str = ""
     agent_formula: str = AGENT_FORMULA
     trend: list[TrendPoint] = Field(default_factory=list)
     missing: list[str] = Field(default_factory=list)
@@ -151,6 +155,10 @@ def quality_summary() -> QualitySummary:
         report, name = agent
         components += agent_components(report, name)
         summary.categories = report.categories()
+
+    multimodal = _newest(reports_dir(), "*-multimodal.json", EvalReport)
+    if multimodal is not None:
+        summary.file_types, summary.file_types_source = multimodal[0].categories(), multimodal[1]
 
     challenge = _newest(challenge_dir() / "reports", "*.json", ChallengeReport)
     if challenge is None:

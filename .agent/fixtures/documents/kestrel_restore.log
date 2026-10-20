@@ -1,0 +1,4 @@
+2026-06-04T01:05:12Z restore-job INFO restore started source=backup-2026-06-03
+2026-06-04T02:30:40Z restore-job INFO 61% of tables restored
+2026-06-04T05:15:03Z restore-job INFO restore completed tables=412 errors=0
+2026-06-04T05:16:10Z restore-job INFO integrity check passed

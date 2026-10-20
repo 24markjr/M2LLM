@@ -1,0 +1,22 @@
+# Phase B2: video frames against a report. The site video shows, on screen, generator B failing its
+# load test on 2 June 2026; the inspection report says every generator passed. The failure is only in
+# the frames (no sound), so it is found only if the sampled frames were read.
+id: kestrel_video_inspection
+category: video
+suites: [multimodal]
+objective: >
+  Compare the Kestrel site inspection video with the written inspection report and identify any
+  contradiction about the generator load tests.
+documents:
+  - kestrel_site.mp4
+  - kestrel_inspection_report.txt
+
+expected_operations:
+  - compare_sources
+  - detect_inconsistencies
+
+min_tasks: 2
+minimal_tasks: 3
+
+expected_claims:
+  - "generator"

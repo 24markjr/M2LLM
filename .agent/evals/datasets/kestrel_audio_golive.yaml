@@ -1,0 +1,22 @@
+# Phase B2: audio against minutes. The steering call (speech, `kestrel_call.wav`) agrees go-live on
+# 9 June 2026; the written minutes record 16 June 2026. The finding exists only in the recording, so
+# it is found only if the speech was transcribed. Fixtures: `.agent/fixtures/make_kestrel_fixtures.py`.
+id: kestrel_audio_golive
+category: audio
+suites: [multimodal]
+objective: >
+  Compare the Kestrel steering call recording with the written minutes and identify any
+  contradiction about the go-live date.
+documents:
+  - kestrel_call.wav
+  - kestrel_minutes.docx
+
+expected_operations:
+  - compare_sources
+  - detect_inconsistencies
+
+min_tasks: 2
+minimal_tasks: 3
+
+expected_claims:
+  - "June"

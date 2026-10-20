@@ -258,7 +258,13 @@ def _clock(seconds: float) -> str:
 
 
 def sample_frames(path: Path) -> list[tuple[float, Any]]:
-    """(seconds, image) at a fixed interval, at most `max_video_frames`."""
+    """(seconds, image), at most `max_video_frames`, spread evenly over the whole video.
+
+    B2 found the fixed 15 s interval this replaced seeing 2 frames of a 16 s clip - missing the card
+    that held the finding - and only the first 2 minutes of any long video. With the duration known,
+    the frames are spaced duration / max_video_frames apart (never closer than a second); without
+    it, every `video_frame_every_s` as before.
+    """
     import av
 
     settings = get_settings()
@@ -267,6 +273,13 @@ def sample_frames(path: Path) -> list[tuple[float, Any]]:
         stream = next((s for s in container.streams if s.type == "video"), None)
         if stream is None:
             return []
+        duration = float(container.duration) / 1_000_000 if container.duration else 0.0
+        duration = min(duration, float(settings.max_media_seconds))
+        every = (
+            max(1.0, duration / settings.max_video_frames)
+            if duration > 0
+            else settings.video_frame_every_s
+        )
         next_at = 0.0
         for frame in container.decode(stream):
             if not isinstance(frame, av.VideoFrame):
@@ -274,7 +287,7 @@ def sample_frames(path: Path) -> list[tuple[float, Any]]:
             if frame.time is None or frame.time < next_at:
                 continue
             frames.append((float(frame.time), frame.to_image()))  # type: ignore[no-untyped-call]  # PyAV leaves it unannotated
-            next_at = frame.time + settings.video_frame_every_s
+            next_at = frame.time + every
             if len(frames) >= settings.max_video_frames or frame.time > settings.max_media_seconds:
                 break
     return frames

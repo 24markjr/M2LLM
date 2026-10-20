@@ -1,0 +1,20 @@
+# Phase B2: a NEGATIVE case across speech and Word. The call and the minutes both put the budget cap at
+# INR 120,000 (said "one hundred and twenty thousand rupees" in the call). They disagree about the
+# go-live date, which this question does not ask about: reporting it is not an answer here.
+id: kestrel_audio_budget_consistent
+category: audio
+suites: [multimodal]
+objective: >
+  Determine whether the Kestrel steering call recording and the written minutes disagree on the
+  budget cap.
+documents:
+  - kestrel_call.wav
+  - kestrel_minutes.docx
+
+expected_operations:
+  - detect_inconsistencies
+
+min_tasks: 2
+minimal_tasks: 3
+
+expect_zero_findings: true

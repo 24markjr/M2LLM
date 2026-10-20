@@ -1,0 +1,9 @@
+KESTREL - SITE INSPECTION REPORT
+Report ID: KES-INS-2026-06
+Inspection date: 2 June 2026
+
+1. GENERATORS
+All generators passed the load test on 2 June 2026.
+
+2. READINESS
+The site is ready for go-live.

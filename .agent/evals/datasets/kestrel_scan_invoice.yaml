@@ -1,0 +1,21 @@
+# Phase B2: a scan against a spreadsheet. The scanned invoice bills 48 licences for INR 96,000; the
+# approved order sheet is 40 licences for INR 80,000. The invoice is only an image.
+id: kestrel_scan_invoice
+category: scan
+suites: [multimodal]
+objective: >
+  Determine whether the scanned Northwind invoice matches the approved Kestrel licence order in
+  quantity and total.
+documents:
+  - kestrel_invoice_scan.png
+  - kestrel_licences.xlsx
+
+expected_operations:
+  - compare_sources
+  - detect_inconsistencies
+
+min_tasks: 2
+minimal_tasks: 3
+
+expected_claims:
+  - "48"

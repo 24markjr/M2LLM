@@ -5,6 +5,36 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-21 - Phase B2: multimodal evaluation
+
+### Added
+
+- The Kestrel family (`.agent/fixtures/make_kestrel_fixtures.py`): a spoken call (Windows speech
+  synthesis) against Word minutes, an inspection video (on-screen text) against a report, a scanned
+  invoice against a spreadsheet, a skewed noisy whiteboard photo against a job log, and a negative
+  audio case. Each finding exists only inside the non-text file
+- Five scenarios in the `multimodal` suite, categorised by kind of file; answer-key entries for the
+  benchmark; Insights > Quality shows "By kind of file" from the newest multimodal report
+- `.agent/evals/heldout/README.md`: the held-out protocol. No held-out scenario is committed: they
+  must be written by teammates who have not seen the prompts
+
+### Fixed
+
+- **Video frames were taken every 15 s, at most 8**: a 16 s clip was seen as 2 frames and the card
+  with the finding was skipped; a long video was seen only for its first 2 minutes. Frames are now
+  spread over the whole duration (`media.sample_frames`), with a regression test
+
+### Measured (qwen3:4b)
+
+- Suite `multimodal` (20261020T191916): **thresholds FAILED** - no finding on
+  `kestrel_audio_golive` or `kestrel_photo_restore`, though the transcript and the OCR both read the
+  planted values (checked directly). Committed as it came out; CI's eval-regression job is red on it,
+  correctly, until the reasoning step uses what was read
+- Benchmark on the five (20261020T192625-benchmark-multimodal): JARVIS correct 0.375, citation
+  precision 1.0 (4); plain model correct 1.0, citation precision 0.8 (5); no false alarm either side
+
+---
+
 ## 2026-10-21 - Phase B1: benchmark against the plain model (and frontier models, opt-in)
 
 ### Added

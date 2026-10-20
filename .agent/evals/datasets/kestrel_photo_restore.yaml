@@ -1,0 +1,22 @@
+# Phase B2: a photo against a log. A skewed, noisy photo of a whiteboard says the database restore
+# finished at 03:40; the job log records it completing at 05:15 (2026-06-04). The photo is not a scan:
+# uneven light, blur and sensor noise, as a phone picture of a whiteboard would have.
+id: kestrel_photo_restore
+category: photo
+suites: [multimodal]
+objective: >
+  Compare the photo of the restore whiteboard with the restore job log and identify any
+  contradiction about when the database restore finished.
+documents:
+  - kestrel_whiteboard.jpg
+  - kestrel_restore.log
+
+expected_operations:
+  - compare_sources
+  - detect_inconsistencies
+
+min_tasks: 2
+minimal_tasks: 3
+
+expected_claims:
+  - "05:15"
