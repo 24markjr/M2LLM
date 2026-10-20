@@ -240,6 +240,8 @@ function reconstruct(
     hypotheses: finished ? (snapshot.hypotheses ?? null) : null,
     plan: finished ? (snapshot.plan ?? null) : null,
     sources: snapshot.sources ?? null,
+    receipt: finished ? (snapshot.receipt ?? null) : null,
+    comparison: finished ? (snapshot.comparison ?? null) : null,
     timeline: finished ? (snapshot.knowledge?.timeline ?? null) : null,
     events: emitted,
     liveStage: finished ? "DONE" : stage,

@@ -41,6 +41,7 @@ from app.integrations.verification import build_verification_provider
 from app.intelligence.challenge import ChallengeResult, challenge
 from app.intelligence.confidence import why
 from app.intelligence.planner.engine import execution_levels
+from app.intelligence.proof import Comparison, Receipt, build_receipt, compare
 from app.intelligence.synthesis.renderers import to_markdown
 from app.llm import get_provider
 from app.orchestration.labels import step_label
@@ -344,6 +345,81 @@ async def get_report(run_id: str) -> FinalReport:
     return _report(run_id)
 
 
+# --- proof (Phase U7) ------------------------------------------------------------
+
+
+@router.get("/{run_id}/receipt", response_model=Receipt)
+async def get_receipt(run_id: str) -> Receipt:
+    """The verification receipt: model, prompt versions, a hash of each file as read, every
+    finding's verification, the answer's sentence checks. Hashed over itself."""
+    return _receipt(_require_finished(run_id, "receipt"))
+
+
+@router.get("/{run_id}/comparison", response_model=Comparison)
+async def get_comparison(run_id: str) -> Comparison:
+    record = _require_finished(run_id, "comparison")
+    if record.comparison is None:
+        raise ApiError(
+            "COMPARISON_NOT_RUN",
+            "the plain model has not been asked yet; POST to this route to ask it",
+            status_code=status.HTTP_404_NOT_FOUND,
+            run_id=run_id,
+        )
+    return Comparison.model_validate(record.comparison)
+
+
+@router.post("/{run_id}/comparison", response_model=Comparison)
+async def run_comparison(run_id: str) -> Comparison:
+    """Put the same question and files to the same model in one plain prompt, and score both
+    answers with the same sentence checker. One model call; kept with the run."""
+    record = _require_finished(run_id, "comparison")
+    result = record.result
+    elapsed = (
+        int((record.finished_at - record.started_at).total_seconds() * 1000)
+        if record.finished_at and record.started_at
+        else 0
+    )
+    comparison = await compare(
+        get_provider(),
+        run_id=run_id,
+        question=record.objective.text,
+        texts=record.texts,
+        findings=result.findings if result else [],
+        report=result.report if result else None,
+        jarvis_latency_ms=elapsed,
+    )
+    record.comparison = comparison.model_dump(mode="json")
+    write_archive(record)
+    return comparison
+
+
+def _require_finished(run_id: str, what: str) -> MissionRecord:
+    record = _require(run_id)
+    if not record.is_finished():
+        raise MissionNotFinishedError(run_id, what, record.stage.value)
+    return record
+
+
+def _receipt(record: MissionRecord) -> Receipt:
+    result = record.result
+    execution = result.report.execution if result and result.report else None
+    return build_receipt(
+        run_id=record.run_id,
+        question=record.objective.text,
+        model=get_provider().model_id,
+        prompt_versions=record.prompt_versions,
+        started_at=record.started_at,
+        finished_at=record.finished_at,
+        texts=record.texts,
+        evidence=record.evidence,
+        findings=result.findings if result else [],
+        report=result.report if result else None,
+        tasks_planned=execution.tasks_planned if execution else 0,
+        tasks_completed=execution.tasks_completed if execution else 0,
+        gaps_open=sum(1 for g in result.gaps if not g.resolved) if result else 0,
+    )
+
+
 @router.get("/{run_id}/sources", response_model=dict[str, str])
 async def get_sources(run_id: str) -> dict[str, str]:
     """The text each file was read as, by document (U6). Citations are character ranges in this
@@ -505,6 +581,11 @@ def snapshot_payloads(record: MissionRecord) -> dict[str, object]:
     # The text each file was read as (U6), so the evidence board's viewer works in a replay.
     if record.texts:
         payload["sources"] = dict(record.texts)
+    # The receipt and the plain-model comparison (U7), so a replay shows the proof too.
+    if record.is_finished():
+        payload["receipt"] = _receipt(record).model_dump(mode="json")
+    if record.comparison is not None:
+        payload["comparison"] = record.comparison
 
     if result is None:
         return payload

@@ -5,6 +5,44 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-20 - Phase U7: proof - the verification receipt, and the plain model side by side
+
+### Added
+
+- **The verification receipt** (`GET /missions/{id}/receipt`, the board's Proof tab): model, prompt
+  versions, start and finish, a SHA-256 of each file as read, every finding with its verification,
+  verifier and resolved citations, the answer's sentence checks, tasks and open gaps; hashed over its
+  own canonical JSON so a printed copy can be checked against the run. Download as text or JSON
+- **The plain model, side by side** (`POST|GET /missions/{id}/comparison`): the same question and
+  files to the same model in one plain prompt, no plan and no verification; both answers checked
+  sentence by sentence against every line of the files by the same checker (`check_narrative`),
+  with dates and figures found in no file, and the findings with a resolved citation behind each.
+  One model call, kept with the run and its archive, and carried by recordings
+- The run now stamps the prompt versions it used when it finishes; the receipt reports those, and
+  says "not recorded" for a run from before rather than today's versions
+- `app/intelligence/proof.py`; the baseline prompt lives there, not in `.agent/prompts/`, so it cannot
+  split the evaluation trend series it never takes part in
+
+### Measured (one live run, Aurora, qwen3:4b)
+
+- Plain model: 5 of 7 sentences supported by a line, no invented figures, nothing citable
+- JARVIS: 0 of 3 summary sentences supported by a single line; 2 verified findings, 5/5 citations
+  resolved. The checker matches a sentence to one line, so it credits restatements and not
+  conclusions drawn across two documents ("30 April versus 14 May"). Reported as measured; the fix is
+  B4's independent checker, not a softer comparison
+
+### Fixed
+
+- The baseline first returned qwen3's working ("Okay, the user wants me to...") as its answer, even
+  with thinking off; it now asks for JSON like every engine role does
+
+### Verified
+
+- 1282 backend tests (8 new), mypy, ruff, OpenAPI; 117 frontend tests (3 new), tsc, build; the Proof
+  tab on a live run in headless Chrome
+
+---
+
 ## 2026-10-20 - Phase U6: the evidence board
 
 ### Added

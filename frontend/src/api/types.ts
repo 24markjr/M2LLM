@@ -560,6 +560,74 @@ export interface SentenceCheck {
   ungrounded: string[];
 }
 
+/** The verification receipt (Phase U7): counted from the run, hashed over itself. */
+export interface ReceiptDocument {
+  name: string;
+  sha256: string;
+  characters: number;
+  evidence_id: string;
+}
+
+export interface ReceiptFinding {
+  finding_id: string;
+  claim: string;
+  classification: string;
+  verification: string;
+  verifier: string;
+  degraded: boolean;
+  confidence: number;
+  citations: number;
+  citations_resolved: number;
+}
+
+export interface AnswerTally {
+  sentences: number;
+  supported: number;
+  partial: number;
+  unsupported: number;
+  contradicted: number;
+  insufficient: number;
+}
+
+export interface Receipt {
+  run_id: string;
+  question: string;
+  model: string;
+  prompt_versions: Record<string, number>;
+  started_at: string | null;
+  finished_at: string | null;
+  documents: ReceiptDocument[];
+  findings: ReceiptFinding[];
+  answer: AnswerTally;
+  tasks_planned: number;
+  tasks_completed: number;
+  gaps_open: number;
+  receipt_hash: string;
+}
+
+/** One answer in the plain-model comparison (Phase U7), scored by the same sentence checker. */
+export interface AnswerSide {
+  label: string;
+  answer: string;
+  check: NarrativeCheck | null;
+  tally: AnswerTally;
+  ungrounded: string[];
+  cited_findings: number;
+  latency_ms: number;
+}
+
+export interface Comparison {
+  run_id: string;
+  question: string;
+  model: string;
+  evidence_lines: number;
+  truncated: boolean;
+  baseline_prompt_version: number;
+  plain: AnswerSide;
+  jarvis: AnswerSide;
+  generated_at: string;
+}
+
 export interface NarrativeCheck {
   section: string;
   overall: string;
@@ -644,6 +712,9 @@ export interface Recording {
     knowledge?: { snapshot: KnowledgeSnapshot; timeline: TimelineEvent[]; graph: KnowledgeGraphView };
     /** The text each file was read as (U6); absent in recordings made before it. */
     sources?: Record<string, string>;
+    /** The receipt and the plain-model comparison (U7); absent in recordings made before it. */
+    receipt?: Receipt;
+    comparison?: Comparison;
   };
 }
 

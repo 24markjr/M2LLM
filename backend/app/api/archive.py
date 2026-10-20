@@ -60,6 +60,8 @@ class RunArchive(JarvisModel):
     knowledge_view: dict[str, Any] | None = None
     knowledge_timeline: list[dict[str, Any]] | None = None
     challenges: dict[str, ChallengeResult] = Field(default_factory=dict)
+    comparison: dict[str, Any] | None = None
+    prompt_versions: dict[str, int] = Field(default_factory=dict)
 
 
 def archives_dir() -> Path:
@@ -95,6 +97,8 @@ def write_archive(record: MissionRecord) -> Path | None:
             knowledge_view=dict(record.knowledge_view) if record.knowledge_view else None,
             knowledge_timeline=list(record.knowledge_timeline or []) or None,
             challenges=dict(record.challenges),
+            comparison=record.comparison,
+            prompt_versions=dict(record.prompt_versions),
         )
         directory = archives_dir()
         directory.mkdir(parents=True, exist_ok=True)

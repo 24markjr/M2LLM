@@ -52,6 +52,55 @@
         "title": "AnalyzeResponse",
         "type": "object"
       },
+      "AnswerSide": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "title": "Answer",
+            "type": "string"
+          },
+          "check": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NarrativeCheck"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cited_findings": {
+            "default": 0,
+            "title": "Cited Findings",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "latency_ms": {
+            "default": 0,
+            "title": "Latency Ms",
+            "type": "integer"
+          },
+          "tally": {
+            "$ref": "#/components/schemas/ReceiptAnswer"
+          },
+          "ungrounded": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ungrounded",
+            "type": "array"
+          }
+        },
+        "required": [
+          "label",
+          "answer"
+        ],
+        "title": "AnswerSide",
+        "type": "object"
+      },
       "ArchivedInvestigation": {
         "additionalProperties": false,
         "properties": {
@@ -1017,6 +1066,58 @@
         ],
         "title": "ClaimOrder",
         "type": "string"
+      },
+      "Comparison": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline_prompt_version": {
+            "default": 1,
+            "title": "Baseline Prompt Version",
+            "type": "integer"
+          },
+          "evidence_lines": {
+            "title": "Evidence Lines",
+            "type": "integer"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "jarvis": {
+            "$ref": "#/components/schemas/AnswerSide"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "plain": {
+            "$ref": "#/components/schemas/AnswerSide"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "truncated": {
+            "default": false,
+            "title": "Truncated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "run_id",
+          "question",
+          "model",
+          "evidence_lines",
+          "plain",
+          "jarvis"
+        ],
+        "title": "Comparison",
+        "type": "object"
       },
       "Confidence": {
         "additionalProperties": false,
@@ -5078,6 +5179,218 @@
         "title": "QualitySummary",
         "type": "object"
       },
+      "Receipt": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "$ref": "#/components/schemas/ReceiptAnswer"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/ReceiptDocument"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/ReceiptFinding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "gaps_open": {
+            "default": 0,
+            "title": "Gaps Open",
+            "type": "integer"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "prompt_versions": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Prompt Versions",
+            "type": "object"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "receipt_hash": {
+            "default": "",
+            "title": "Receipt Hash",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "tasks_completed": {
+            "default": 0,
+            "title": "Tasks Completed",
+            "type": "integer"
+          },
+          "tasks_planned": {
+            "default": 0,
+            "title": "Tasks Planned",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run_id",
+          "question",
+          "model"
+        ],
+        "title": "Receipt",
+        "type": "object"
+      },
+      "ReceiptAnswer": {
+        "additionalProperties": false,
+        "properties": {
+          "contradicted": {
+            "default": 0,
+            "title": "Contradicted",
+            "type": "integer"
+          },
+          "insufficient": {
+            "default": 0,
+            "title": "Insufficient",
+            "type": "integer"
+          },
+          "partial": {
+            "default": 0,
+            "title": "Partial",
+            "type": "integer"
+          },
+          "sentences": {
+            "default": 0,
+            "title": "Sentences",
+            "type": "integer"
+          },
+          "supported": {
+            "default": 0,
+            "title": "Supported",
+            "type": "integer"
+          },
+          "unsupported": {
+            "default": 0,
+            "title": "Unsupported",
+            "type": "integer"
+          }
+        },
+        "title": "ReceiptAnswer",
+        "type": "object"
+      },
+      "ReceiptDocument": {
+        "additionalProperties": false,
+        "properties": {
+          "characters": {
+            "title": "Characters",
+            "type": "integer"
+          },
+          "evidence_id": {
+            "default": "",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "sha256",
+          "characters"
+        ],
+        "title": "ReceiptDocument",
+        "type": "object"
+      },
+      "ReceiptFinding": {
+        "additionalProperties": false,
+        "properties": {
+          "citations": {
+            "title": "Citations",
+            "type": "integer"
+          },
+          "citations_resolved": {
+            "title": "Citations Resolved",
+            "type": "integer"
+          },
+          "claim": {
+            "title": "Claim",
+            "type": "string"
+          },
+          "classification": {
+            "title": "Classification",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "degraded": {
+            "default": false,
+            "title": "Degraded",
+            "type": "boolean"
+          },
+          "finding_id": {
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "verification": {
+            "title": "Verification",
+            "type": "string"
+          },
+          "verifier": {
+            "default": "",
+            "title": "Verifier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "finding_id",
+          "claim",
+          "classification",
+          "verification",
+          "confidence",
+          "citations",
+          "citations_resolved"
+        ],
+        "title": "ReceiptFinding",
+        "type": "object"
+      },
       "RecordingSummary": {
         "additionalProperties": false,
         "properties": {
@@ -8504,6 +8817,89 @@
         ]
       }
     },
+    "/api/v1/missions/{run_id}/comparison": {
+      "get": {
+        "operationId": "get_comparison_api_v1_missions__run_id__comparison_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comparison"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Comparison",
+        "tags": [
+          "missions"
+        ]
+      },
+      "post": {
+        "description": "Put the same question and files to the same model in one plain prompt, and score both\nanswers with the same sentence checker. One model call; kept with the run.",
+        "operationId": "run_comparison_api_v1_missions__run_id__comparison_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comparison"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Comparison",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
     "/api/v1/missions/{run_id}/cyber": {
       "get": {
         "operationId": "get_cyber_analysis_api_v1_missions__run_id__cyber_get",
@@ -9967,6 +10363,49 @@
           }
         },
         "summary": "Get Plan Tree",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/receipt": {
+      "get": {
+        "description": "The verification receipt: model, prompt versions, a hash of each file as read, every\nfinding's verification, the answer's sentence checks. Hashed over itself.",
+        "operationId": "get_receipt_api_v1_missions__run_id__receipt_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Receipt",
         "tags": [
           "missions"
         ]

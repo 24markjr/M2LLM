@@ -23,9 +23,10 @@ import {
   STRING_LABEL,
   type Point,
 } from "./board";
+import { ProofPanel } from "./ProofPanel";
 import "./board.css";
 
-export type BoardTab = "sources" | "pins" | "timeline" | "hypotheses" | "report";
+export type BoardTab = "sources" | "pins" | "timeline" | "hypotheses" | "proof" | "report";
 
 export interface BoardFocus {
   document: string;
@@ -39,6 +40,7 @@ const TABS: { id: BoardTab; label: string }[] = [
   { id: "pins", label: "Pin board" },
   { id: "timeline", label: "Timeline" },
   { id: "hypotheses", label: "Explanations" },
+  { id: "proof", label: "Proof" },
   { id: "report", label: "Report" },
 ];
 
@@ -112,6 +114,7 @@ export function EvidenceBoard({
         {tab === "pins" ? <PinBoard view={view} runId={runId} sources={sources} wide={wide} /> : null}
         {tab === "timeline" ? <Timeline view={view} runId={runId} finished={finished} /> : null}
         {tab === "hypotheses" ? <Explanations view={view} /> : null}
+        {tab === "proof" ? <ProofPanel view={view} runId={runId} finished={finished} /> : null}
         {tab === "report" ? <Report view={view} runId={runId} finished={finished} /> : null}
       </div>
     </aside>

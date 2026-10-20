@@ -322,3 +322,82 @@ button.citation:hover {
   margin-left: 6px;
   font-size: var(--text-xs);
 }
+
+/* --- proof (U7) --- */
+.proof section + section {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+.proof h4 {
+  margin: 0 0 var(--space-2);
+}
+.receipt-meta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px var(--space-3);
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+}
+.receipt-meta dt {
+  color: var(--text-muted);
+}
+.receipt-meta dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.receipt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-3);
+}
+.receipt-table caption {
+  text-align: left;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  padding-bottom: 4px;
+}
+.receipt-table th,
+.receipt-table td {
+  text-align: left;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.mono {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+}
+.receipt-hash {
+  font-size: var(--text-sm);
+}
+.compare-diff {
+  padding-left: var(--space-4);
+  font-size: var(--text-sm);
+}
+.compare-sides {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+.board.wide .compare-sides {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.compare-side {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  background: var(--surface-raised);
+}
+.compare-side h5 {
+  margin: 0 0 4px;
+  font-size: var(--text-md);
+}
+.compare-answer {
+  line-height: 1.7;
+}
+.compare-flag {
+  color: var(--unsupported);
+  font-size: var(--text-sm);
+}

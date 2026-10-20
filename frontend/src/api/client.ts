@@ -39,6 +39,7 @@ import type { CyberAnalysis } from "./types";
 import type { QualitySummary } from "./types";
 import type { StoreStatus } from "./types";
 import type { DeletionReport } from "./types";
+import type { Comparison, Receipt } from "./types";
 import { DemoError, STATIC_DEMO, demoRequest } from "./demo";
 
 const BASE = "/api/v1";
@@ -189,6 +190,13 @@ export const api = {
   getGaps: (runId: string) => request<GapRecord[]>(`${BASE}/missions/${runId}/gaps`),
 
   getReport: (runId: string) => request<FinalReport>(`${BASE}/missions/${runId}/report`),
+
+  /** The verification receipt (U7). */
+  getReceipt: (runId: string) => request<Receipt>(`${BASE}/missions/${runId}/receipt`),
+
+  /** The plain-model comparison (U7): COMPARISON_NOT_RUN until it is asked for with `runComparison`. */
+  getComparison: (runId: string) => request<Comparison>(`${BASE}/missions/${runId}/comparison`),
+  runComparison: (runId: string) => request<Comparison>(`${BASE}/missions/${runId}/comparison`, { method: "POST" }),
 
   /** The text each file was read as, by document (U6): the evidence board's viewer. */
   getSources: (runId: string) => request<Record<string, string>>(`${BASE}/missions/${runId}/sources`),

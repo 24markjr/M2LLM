@@ -26,6 +26,8 @@ import type {
   Stage,
   TaskGraphResponse,
   TimelineEvent,
+  Receipt,
+  Comparison,
 } from "../api/types";
 
 /**
@@ -99,6 +101,9 @@ export interface MissionView {
    */
   sources?: Record<string, string> | null;
   timeline?: TimelineEvent[] | null;
+  /** Set by a replay (U7): the receipt and comparison from the recording, `null` when absent. */
+  receipt?: Receipt | null;
+  comparison?: Comparison | null;
   /** Derived from the stream, so the tracker moves before any request returns. */
   liveStage: Stage | null;
   streaming: boolean;

@@ -32,6 +32,7 @@ from app.core.events import (
 from app.core.logging import get_logger
 from app.database.event_sink import DatabaseEventSink
 from app.intelligence.challenge import ChallengeResult
+from app.llm.prompts import get_prompt_library
 from app.memory.service import record_run
 from app.orchestration.mission import MissionResult, MissionStatus, Stage, run_mission
 from app.review.service import audit
@@ -80,6 +81,10 @@ class MissionRecord:
         self.texts: dict[str, str] = {}
         self.page_starts: dict[str, list[int]] = {}
         self.challenges: dict[str, ChallengeResult] = {}
+        # The same question put to the plain model (Phase U7), once someone asks for it.
+        self.comparison: dict[str, object] | None = None
+        # The prompt versions the run used, stamped when it finishes: the receipt's (Phase U7).
+        self.prompt_versions: dict[str, int] = {}
         # The lines an ATT&CK mapping rests on (Phase 53), computed once from `texts` on first use.
         self.attack_locators: set[str] | None = None
         # The case the mission belongs to (Phase 44).
@@ -105,6 +110,8 @@ class MissionRecord:
         record.knowledge_view = archive.knowledge_view
         record.knowledge_timeline = archive.knowledge_timeline
         record.challenges = dict(archive.challenges)
+        record.comparison = archive.comparison
+        record.prompt_versions = dict(archive.prompt_versions)
         return record
 
     def is_finished(self) -> bool:
@@ -293,6 +300,7 @@ class MissionRegistry:
             # too. A recording of only the successful runs would make the demo look better
             # than the system is.
             await _capture_knowledge(record)
+            record.prompt_versions = get_prompt_library().versions()
             write_recording(record)
             write_archive(record)
             if self._database is not None:

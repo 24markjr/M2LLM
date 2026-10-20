@@ -114,3 +114,11 @@ contradiction over the same file, same hypothesis, citation), never for a simila
 the fact. The viewer needed the text each file was read as, so `GET /missions/{id}/sources` was added
 and recordings now carry it. The attack path and knowledge graph open from the board's Report tab
 rather than being re-implemented inside it. See `src/board/`.
+
+### U7 - as built
+
+The receipt and the comparison are the board's Proof tab rather than a separate page. Both answers
+are scored by the existing sentence checker against every line of the files, so neither side is
+judged by a model. On the first live run the checker credited the plain model's restatements and not
+JARVIS's cross-document conclusions; recorded as measured in the changelog, to be addressed by B4.
+Not done: the receipt is not yet inside the PDF/DOCX export (the Report tab links both).
