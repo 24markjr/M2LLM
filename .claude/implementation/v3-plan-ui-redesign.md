@@ -146,3 +146,18 @@ audited single-delete route, so a retention run is in the audit log entry by ent
 Shortcuts, the first-run tour and the demo script as planned. Empty, error and loading states were
 already handled page by page (U3's error boundary, each page's notices), and the skip link and
 keyboard-operable components came with U2-U3, so U11 added no new mechanism for them. Part A done.
+
+## Part B - status (2026-10-21)
+
+| Phase | Status |
+|---|---|
+| B1 | Done: benchmark vs the plain model; frontier models wired, not run (no key). Plain model scored higher |
+| B2 | Done: Kestrel audio/video/scan/photo; video sampling fixed; suite fails 2 of 5 (CI red, honestly) |
+| B3 | Done: native .evtx; docling and pyannote opt-in, not installed or measured |
+| B4 | Partly: second-reviewer council (off by default, unmeasured); AlignScore not done |
+| B5 | Done: Sigma converter and 5 rules; recall 1.000, held-out fixture no longer held out |
+| B6 | Not started: accounts, roles, permission matrix, routing, offline mode, encryption, share links |
+| B7 | Not started: full domain packs, masking personal details |
+| B8 | Not started: held-out tuning; needs teammates' held-out scenarios first |
+| B9 | Not started: watch folders, voice questions, languages |
+| B10 | Partly: MIT licence added; project report in docs/report/; slides and diagrams not done |
