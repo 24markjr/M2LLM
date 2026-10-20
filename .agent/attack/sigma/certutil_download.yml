@@ -1,0 +1,13 @@
+title: Certutil used to download a file
+id: 7c5f2a10-b5a1-4c2e-9f0e-certutil-dl
+status: experimental
+description: certutil with -urlcache or -verifyctl and a URL fetches a payload (a living-off-the-land download).
+tags: [attack.command_and_control, attack.t1105]
+logsource: { category: process_creation, product: windows }
+detection:
+  selection_image:
+    Image|endswith: '\certutil.exe'
+  selection_cmd:
+    CommandLine|contains: ['-urlcache', '/urlcache', '-verifyctl']
+  condition: selection_image and selection_cmd
+level: high

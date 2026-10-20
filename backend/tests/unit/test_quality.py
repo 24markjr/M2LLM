@@ -20,7 +20,7 @@ def _scenario(sid: str, category: str, **kwargs: object) -> ScenarioReport:
 
 def test_every_scenario_has_a_category() -> None:
     expectations = load_expectations("all")
-    assert len(expectations) == 20
+    assert len(expectations) == 25  # five Kestrel scenarios since B2
     assert all(e.category != "uncategorised" for e in expectations)
     assert {e.category for e in expectations} >= {
         "temporal_contradiction",

@@ -5,6 +5,44 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-21 - Phase B5: Sigma rules for ATT&CK coverage
+
+### Added
+
+- `app/cyber/sigma.py`: detections in the Sigma format (`.agent/attack/sigma/*.yml`) converted at
+  load time into the same rules as `attack_rules.yaml` - so a Sigma match is cited, mapped, checked
+  against the vendored ATT&CK extract and reviewed exactly like them. Supported subset: `selection*`
+  joined by `and` / `or`; modifiers `contains`, `startswith`, `endswith`, exact; any-of lists. Anything
+  else is skipped and logged, never half-applied
+- Five rules written in Sigma form after well-known community detections: certutil download
+  (T1105), schtasks /create (T1053.005), RDP logon type 10 (T1021.001), bitsadmin /transfer (T1105,
+  T1197), mshta remote script (T1218.005)
+
+### Measured (ATT&CK benchmark, deterministic, re-run in CI)
+
+| | Before | After |
+|---|---|---|
+| technique precision | 1.000 | 1.000 |
+| technique recall | 0.824 | 1.000 |
+| held-out recall | 0.400 | 1.000 |
+
+**The held-out fixture is no longer held out**: its three misses were visible when these rules were
+chosen. The 1.000 shows the rules work, not that they generalise; a new held-out log from a teammate
+(`.agent/evals/heldout/`) is needed to measure that. No false alarm on the benign log.
+
+### Fixed (B1)
+
+- The architecture tests caught B1 calling HTTP and reading `os.environ` outside their packages: the
+  frontier clients moved to `app/llm/frontier.py`, and `BENCH_FRONTIER`, `OPENAI_API_KEY`,
+  `OPENAI_BASE_URL`, `ANTHROPIC_API_KEY` are `Settings` fields
+- Three tests counted 20 scenarios (25 since B2), and the ATT&CK test asserted the old recall
+
+### Verified
+
+- 1304 backend tests (6 new for Sigma), mypy, ruff; the committed ATT&CK report is current
+
+---
+
 ## 2026-10-21 - Phase B4: independent checks
 
 ### Added

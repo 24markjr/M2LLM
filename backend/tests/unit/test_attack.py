@@ -158,10 +158,11 @@ def test_the_3d_view_draws_inferred_steps_as_inferred() -> None:
 def test_the_benchmark_is_precise_and_honest_about_what_it_misses() -> None:
     report = run_attack_benchmark()
     assert report.technique_precision == 1.0
-    assert report.technique_recall == pytest.approx(14 / 17)
-    assert report.held_out_recall == pytest.approx(2 / 5)
+    # B5: the Sigma rules map what the held-out fixture used to miss (it is no longer held out).
+    assert report.technique_recall == pytest.approx(1.0)
+    assert report.held_out_recall == pytest.approx(1.0)
     held = next(c for c in report.cases if c.fixture == "cyber_persistence_held_out.jsonl")
-    assert held.missed == ["T1021.001", "T1053.005", "T1105"]
+    assert held.missed == []
 
 
 # --- a finding on a mapped event needs an analyst (Phase 50) --------------------------------------

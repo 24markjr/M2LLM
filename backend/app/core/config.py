@@ -163,6 +163,12 @@ class Settings(BaseSettings):
     # Phase B4: a second local model that re-checks every finding the verifier approved (the
     # llm-council pattern); empty turns it off. Must be pulled in Ollama, e.g. `llama3.2:3b`.
     reviewer_model: str = ""
+    # Phase B1: frontier models for the benchmark only, e.g. "openai:gpt-4o",
+    # each needing its key. Never used by an investigation.
+    bench_frontier: str = ""
+    openai_api_key: str = ""
+    openai_base_url: str = "https://api.openai.com/v1"
+    anthropic_api_key: str = ""
     diarize: bool = False
     hf_token: str = ""
     video_frame_every_s: float = 15.0

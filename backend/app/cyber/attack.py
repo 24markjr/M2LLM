@@ -32,6 +32,7 @@ from pydantic import Field
 
 from app.core.agent_config import AgentConfigError, load_yaml
 from app.core.config import get_settings
+from app.cyber.sigma import load_sigma
 from app.schemas.common import JarvisModel
 from app.schemas.cyber import (
     AttackPath,
@@ -107,6 +108,8 @@ def _rules(agent_dir: str) -> list[Rule]:
     if not (Path(agent_dir) / "config" / "attack_rules.yaml").exists():
         return []
     rules = [Rule.model_validate(r) for r in load_yaml("attack_rules.yaml").get("rules", [])]
+    # Phase B5: Sigma detections, converted to the same rules and checked the same way.
+    rules += [Rule.model_validate(r) for r in load_sigma(Path(agent_dir) / "attack" / "sigma")]
     catalogue = _catalogue(agent_dir)
     for rule in rules:
         if catalogue is not None and rule.technique not in catalogue.techniques:

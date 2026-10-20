@@ -1,0 +1,12 @@
+title: Scheduled task created from the command line
+id: 3e0d8b44-b5a1-4b71-8f7a-schtasks-create
+status: experimental
+description: schtasks /create registers a task - persistence or execution (T1053.005).
+tags: [attack.persistence, attack.execution, attack.t1053.005]
+logsource: { category: process_creation, product: windows }
+detection:
+  selection:
+    Image|endswith: '\schtasks.exe'
+    CommandLine|contains: ['/create', '-create']
+  condition: selection
+level: medium

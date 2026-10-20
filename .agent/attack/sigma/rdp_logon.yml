@@ -1,0 +1,12 @@
+title: Remote interactive logon (RDP)
+id: 9a41c0d2-b5a1-4d8e-a1a2-rdp-logon-10
+status: experimental
+description: A successful logon of type 10 (RemoteInteractive) is a Remote Desktop session.
+tags: [attack.lateral_movement, attack.t1021.001]
+logsource: { product: windows, service: security }
+detection:
+  selection:
+    EventID: 4624
+    LogonType: 10
+  condition: selection
+level: medium

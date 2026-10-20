@@ -18,3 +18,6 @@ was tuned on. B8 (held-out tuning) keeps a change only if the held-out score imp
 None committed yet. The suite name is reserved and the runner already accepts it; the scenarios
 have to come from the teammates, because a held-out scenario written by the person tuning the system
 is not held out.
+
+**Needed first:** a held-out security log. `cyber_persistence_held_out.jsonl` stopped being held out
+in B5, when its misses guided which Sigma rules were added.

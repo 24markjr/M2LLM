@@ -10,7 +10,7 @@ Systems:
   an instruction to cite `[file:line]`. Numbered lines and the citation instruction help the plain
   model; the comparison is meant to be fair to it.
 - **frontier** - the same prompt to a cloud model, only when its API key is set and named in
-  `JARVIS_BENCH_FRONTIER` (e.g. `openai:gpt-4o,anthropic:claude-sonnet-4-5`). Benchmark fixtures are
+  `BENCH_FRONTIER` (e.g. `openai:gpt-4o,anthropic:claude-sonnet-4-5`). Benchmark fixtures are
   synthetic, so sending them is safe; real case files never take this path. Without a key the system
   is reported as skipped, with the reason.
 
@@ -33,14 +33,12 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-import os
 import re
 import time
 from collections.abc import Awaitable, Callable
 from datetime import datetime
 from pathlib import Path
 
-import httpx
 import yaml
 from pydantic import Field
 
@@ -52,7 +50,7 @@ from app.intelligence.proof import answer_of, evidence_lines
 from app.intelligence.synthesis.grounding import check_narrative
 from app.intelligence.trust.answer import split_into_claims
 from app.intelligence.trust.lexical import verify_claim
-from app.llm import get_provider
+from app.llm import frontier, get_provider
 from app.llm.errors import LLMError
 from app.llm.provider import CompletionRequest
 from app.schemas.common import JarvisModel, SourceLocator, utcnow
@@ -243,53 +241,27 @@ async def _ask_local(prompt: str) -> tuple[str, int]:
 
 
 def _frontier(spec: str) -> tuple[Ask | None, str]:
-    """An `Ask` for `provider:model`, or None and why not."""
+    """An `Ask` for `provider:model`, or None and why not (the HTTP is in app/llm/frontier.py)."""
     provider, _, model = spec.partition(":")
+    settings = get_settings()
     if provider == "openai":
-        key = os.environ.get("OPENAI_API_KEY", "")
-        base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
-        if not key:
+        if not settings.openai_api_key:
             return None, "OPENAI_API_KEY is not set"
 
         async def ask_openai(prompt: str) -> tuple[str, int]:
-            started = time.perf_counter()
-            async with httpx.AsyncClient(timeout=180) as client:
-                r = await client.post(
-                    f"{base}/chat/completions",
-                    headers={"Authorization": f"Bearer {key}"},
-                    json={
-                        "model": model,
-                        "temperature": 0,
-                        "response_format": {"type": "json_object"},
-                        "messages": [{"role": "user", "content": prompt}],
-                    },
-                )
-                r.raise_for_status()
-                text = str(r.json()["choices"][0]["message"]["content"])
-            return answer_of(text), int((time.perf_counter() - started) * 1000)
+            text, ms = await frontier.openai_chat(
+                prompt, model, settings.openai_api_key, settings.openai_base_url
+            )
+            return answer_of(text), ms
 
         return ask_openai, ""
     if provider == "anthropic":
-        key = os.environ.get("ANTHROPIC_API_KEY", "")
-        if not key:
+        if not settings.anthropic_api_key:
             return None, "ANTHROPIC_API_KEY is not set"
 
         async def ask_anthropic(prompt: str) -> tuple[str, int]:
-            started = time.perf_counter()
-            async with httpx.AsyncClient(timeout=180) as client:
-                r = await client.post(
-                    "https://api.anthropic.com/v1/messages",
-                    headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
-                    json={
-                        "model": model,
-                        "max_tokens": 1200,
-                        "temperature": 0,
-                        "messages": [{"role": "user", "content": prompt}],
-                    },
-                )
-                r.raise_for_status()
-                text = "".join(b.get("text", "") for b in r.json()["content"])
-            return answer_of(text), int((time.perf_counter() - started) * 1000)
+            text, ms = await frontier.anthropic_messages(prompt, model, settings.anthropic_api_key)
+            return answer_of(text), ms
 
         return ask_anthropic, ""
     return None, f"unknown provider '{provider}' (openai or anthropic)"
@@ -375,13 +347,14 @@ async def run_benchmark(
     asks: dict[str, Ask] = {}
     if "plain" in wanted:
         asks["plain"] = _ask_local
-    for spec in [s.strip() for s in os.environ.get("JARVIS_BENCH_FRONTIER", "").split(",") if s]:
+    specs = [x.strip() for x in get_settings().bench_frontier.split(",") if x.strip()]
+    for spec in specs:
         ask, why = _frontier(spec)
         if ask is None:
             report.skipped[spec] = why
         else:
             asks[spec] = ask
-    if not os.environ.get("JARVIS_BENCH_FRONTIER"):
+    if not specs:
         report.skipped["frontier models"] = (
             "none configured: set JARVIS_BENCH_FRONTIER (e.g. openai:gpt-4o) and its API key"
         )
@@ -431,7 +404,7 @@ async def run_benchmark(
                     )
                 )
             # One system failing must not lose the others' results.
-            except (httpx.HTTPError, KeyError, ValueError, LLMError) as exc:
+            except (frontier.FrontierError, KeyError, ValueError, LLMError) as exc:
                 log.warning("benchmark_system_failed", system=name, error=str(exc))
                 report.results.append(
                     score(expectation.scenario_id, name, [], key, texts, error=type(exc).__name__)

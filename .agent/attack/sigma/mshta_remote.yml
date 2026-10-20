@@ -1,0 +1,12 @@
+title: Mshta running remote or inline script
+id: 0f9c3d21-b5a1-4a77-8e3e-mshta-remote
+status: experimental
+description: mshta.exe with a URL or inline script runs code through a signed binary (T1218.005).
+tags: [attack.defense_evasion, attack.t1218.005]
+logsource: { category: process_creation, product: windows }
+detection:
+  selection:
+    Image|endswith: '\mshta.exe'
+    CommandLine|contains: ['http://', 'https://', 'javascript:', 'vbscript:']
+  condition: selection
+level: high

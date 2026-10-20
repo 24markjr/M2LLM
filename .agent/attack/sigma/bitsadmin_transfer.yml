@@ -1,0 +1,12 @@
+title: Bitsadmin download
+id: 5b2e7f63-b5a1-4f4b-b3c9-bitsadmin-xfer
+status: experimental
+description: bitsadmin /transfer fetches a file over BITS.
+tags: [attack.command_and_control, attack.t1105, attack.t1197]
+logsource: { category: process_creation, product: windows }
+detection:
+  selection:
+    Image|endswith: '\bitsadmin.exe'
+    CommandLine|contains: '/transfer'
+  condition: selection
+level: medium
