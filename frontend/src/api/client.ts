@@ -39,6 +39,7 @@ import type { CyberAnalysis } from "./types";
 import type { QualitySummary } from "./types";
 import type { StoreStatus } from "./types";
 import type { DeletionReport } from "./types";
+import { DemoError, STATIC_DEMO, demoRequest } from "./demo";
 
 const BASE = "/api/v1";
 
@@ -62,6 +63,16 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  // The GitHub Pages build has no API: committed recordings are served as static files.
+  if (STATIC_DEMO) {
+    try {
+      return await demoRequest<T>(path, init);
+    } catch (error) {
+      if (error instanceof DemoError) throw new ApiError(503, error.body);
+      throw error;
+    }
+  }
+
   // A file upload sends FormData, whose content type (with its boundary) the browser must set.
   const isForm = init?.body instanceof FormData;
   const response = await fetch(path, {

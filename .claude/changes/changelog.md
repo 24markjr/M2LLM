@@ -5,6 +5,23 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-20 - Static preview on GitHub Pages
+
+### Added
+
+- **`.github/workflows/pages.yml`**: the console built with `VITE_STATIC_DEMO=1` and a relative base,
+  the committed recordings in `.agent/traces/` published beside it, deployed to GitHub Pages
+- **`frontend/src/api/demo.ts`**: with no API, `/recordings` and `/recordings/{name}` are served from
+  the published files, so Recordings and replay in the journal work; every other call fails with
+  `STATIC_DEMO` and says the engine runs locally
+
+### Verified
+
+- 104 frontend tests, tsc, both builds; the static build served under `/M2LLM/` in headless Chrome:
+  home, Recordings and the Aurora replay in the journal
+
+---
+
 ## 2026-10-13 - Phase U5: the investigation journal
 
 ### Added

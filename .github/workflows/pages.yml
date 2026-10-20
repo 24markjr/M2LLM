@@ -1,0 +1,63 @@
+name: Pages
+
+# The console as a static site on GitHub Pages. There is no engine on Pages - no API, no database,
+# no model - so this is the static demo build (`frontend/src/api/demo.ts`): the committed
+# recordings are published beside the page and replay in the journal; anything that needs the
+# engine says so. Live investigations run on the local stack (README, Quickstart).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: npm ci
+        working-directory: frontend
+        run: npm ci
+
+      # A relative base, so the site works under /<repository>/ without naming it.
+      - name: build (static demo)
+        working-directory: frontend
+        env:
+          VITE_STATIC_DEMO: "1"
+        run: npm run build -- --base=./
+
+      - name: publish the committed recordings
+        run: |
+          mkdir -p frontend/dist/demo
+          cp .agent/traces/*.json frontend/dist/demo/
+          node -e "const fs=require('fs');fs.writeFileSync('frontend/dist/demo/index.json',JSON.stringify(fs.readdirSync('frontend/dist/demo').filter(f=>f.endsWith('.json')&&f!=='index.json')))"
+          cat frontend/dist/demo/index.json
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

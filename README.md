@@ -184,6 +184,11 @@ missions, with Docker up), `#/knowledge` (a knowledge graph from documents, no m
 (a recorded run replayed at up to 20x, including its knowledge graph), and `#/evaluation` (the
 committed evaluation reports, charted).
 
+**Static preview on GitHub Pages.** `.github/workflows/pages.yml` publishes the console on every push
+to `main` at <https://24markjr.github.io/M2LLM/>. Pages has no engine (no API, database or model), so
+it is the static demo build: the committed recordings replay in the journal (`#/replay`), and
+anything that needs the engine says so. Live investigations run on the local stack above.
+
 ### 6. The tests
 
 ```bash
