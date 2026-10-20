@@ -76,10 +76,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   // A file upload sends FormData, whose content type (with its boundary) the browser must set.
   const isForm = init?.body instanceof FormData;
-  const response = await fetch(path, {
-    ...init,
-    headers: { ...(isForm ? {} : { "Content-Type": "application/json" }), ...(init?.headers ?? {}) },
-  });
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      ...init,
+      headers: { ...(isForm ? {} : { "Content-Type": "application/json" }), ...(init?.headers ?? {}) },
+    });
+  } catch {
+    // No answer at all: the API is not running. Say so, rather than the browser's "Failed to fetch".
+    throw new ApiError(0, {
+      error_code: "UNREACHABLE",
+      message: "The JARVIS engine is not running. Start it with scripts\\start-jarvis.ps1, then reload this page.",
+      run_id: null,
+      details: {},
+    });
+  }
 
   if (!response.ok) {
     let body: ApiErrorBody;
