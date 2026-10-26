@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import App from "./App";
+import { AuthGate } from "./auth/AuthGate";
 import "./theme/tokens.css";
 import "./styles.css";
 import "./ui/ui.css";
@@ -23,7 +24,9 @@ createRoot(root).render(
   <StrictMode>
     <ThemeProvider>
       <ToastProvider>
-        <App />
+        <AuthGate>
+          <App />
+        </AuthGate>
       </ToastProvider>
     </ThemeProvider>
   </StrictMode>,

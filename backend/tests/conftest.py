@@ -116,3 +116,11 @@ requires_media = pytest.mark.skipif(
     not _media_installed(),
     reason='needs the media extra: pip install -e "backend[media]"',
 )
+
+
+@pytest.fixture(autouse=True)
+def _accounts_off_unless_tested(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """v4 Phase 1a: the suite predates accounts and tests the routes, not the sign-in in front of
+    them. tests/unit/test_auth.py switches accounts back on for itself."""
+    monkeypatch.setattr(get_settings(), "auth_required", False)
+    yield

@@ -5,6 +5,42 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-26 - v4 Phase 1a: accounts, sessions and roles
+
+### Added
+
+- **Every `/api/` route requires a signed-in user** (`app/auth/middleware.py`, one check in front
+  of all routes, so a new route cannot be added unprotected). `/health` and `POST /auth/login` are
+  the only public routes; `/docs` and `/openapi.json` are protected too
+- **Accounts in JARVIS's own database** (`users`, `sessions`; migration `b1a0a07e0001`), not an
+  external identity service, so the product runs the same in the cloud, locally and air-gapped.
+  scrypt password hashes (standard library); session tokens kept only as SHA-256; an HttpOnly,
+  SameSite=Lax cookie, `Secure` behind HTTPS (`COOKIE_SECURE`), so the EventSource stream is
+  authenticated like every other request
+- **Roles** (`app/auth/permissions.py`): viewer (reads only), reviewer (also reviews and challenges),
+  analyst (everything except admin routes), admin (people, bulk deletions)
+- **The audit actor is now trustworthy**: a signed-in request's `X-Jarvis-User` header is replaced
+  by the user's email; before, any caller could set it to anyone
+- First admin from `ADMIN_EMAIL` / `ADMIN_PASSWORD` when no account exists, ignored afterwards; five
+  failed sign-ins lock an email for 15 minutes; wrong email and wrong password look the same;
+  password rules (12+, mixed case, a digit); an admin cannot demote or deactivate themselves;
+  deactivating, re-roling or resetting a password signs that person out everywhere
+- Routes: `POST /auth/login|logout|password`, `GET /auth/me`, `GET|POST /auth/users`,
+  `PATCH /auth/users/{id}`
+- Console: the sign-in page; any 401 brings it back instead of broken pages; the signed-in user and
+  Sign out in the sidebar; Settings > Your account (change password) and People (admin: add, change
+  role, deactivate). The static GitHub Pages preview has no accounts
+
+### Verified
+
+- 18 new tests, including a sweep that calls **every `/api/` route** without a session and expects
+  401; 1299 backend unit tests; the migration up, down and up on Postgres; signed in for real
+  through the console's proxy against Postgres; 129 frontend tests, tsc, build
+- Known: `tests/integration/test_review_store.py` fails on a local database that already holds audit
+  entries containing "x" - it fails identically without this change; CI's empty database passes
+
+---
+
 ## 2026-10-21 - Phase B5: Sigma rules for ATT&CK coverage
 
 ### Added

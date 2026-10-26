@@ -586,3 +586,34 @@ class AuditLogRow(Base):
     target: Mapped[str] = mapped_column(String(200), default="", index=True)
     status_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
     details: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+
+
+class UserRow(Base):
+    """An account (v4 Phase 1a). The password is an scrypt hash; the email is stored lower-case."""
+
+    __tablename__ = "users"
+
+    user_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    email: Mapped[str] = mapped_column(String(254), nullable=False, unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(128), default="")
+    role: Mapped[str] = mapped_column(String(16), nullable=False)
+    org_id: Mapped[str] = mapped_column(String(64), nullable=False, default="default", index=True)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class SessionRow(Base):
+    """A signed-in browser. Only the SHA-256 of the cookie token is kept."""
+
+    __tablename__ = "sessions"
+
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        String(32), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )

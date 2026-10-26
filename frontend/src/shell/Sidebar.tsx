@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { api, ApiError } from "../api/client";
+import { useUser } from "../auth/AuthGate";
 import type { CaseList } from "../api/types";
 import { Button, ConfirmDialog, Dialog, TextInput, useToast } from "../ui/components";
 import {
@@ -52,6 +53,7 @@ export function Sidebar({
   onSearch: () => void;
   onNavigate: () => void;
 }) {
+  const { user, signOut } = useUser();
   const [cases, setCases] = useState<CaseRow[]>([]);
   const [failed, setFailed] = useState(false);
 
@@ -139,6 +141,20 @@ export function Sidebar({
         <SidebarLink href="#/insights" icon={<IconInsights size={18} />} label="Insights" on={section === "insights"} onNavigate={onNavigate} />
         <SidebarLink href="#/activity" icon={<IconActivity size={18} />} label="Activity" on={section === "activity"} onNavigate={onNavigate} />
         <SidebarLink href="#/settings" icon={<IconSettings size={18} />} label="Settings" on={section === "settings"} onNavigate={onNavigate} />
+        {user ? (
+          <div className="sidebar-user" title={`${user.email} · ${user.role}`}>
+            <span className="sidebar-avatar" aria-hidden="true">
+              {(user.name || user.email).slice(0, 1).toUpperCase()}
+            </span>
+            <span className="sidebar-label">
+              {user.name || user.email}
+              <span className="sidebar-role">{user.role}</span>
+            </span>
+            <button type="button" className="sidebar-signout sidebar-label" onClick={signOut}>
+              Sign out
+            </button>
+          </div>
+        ) : null}
         <div className="sidebar-engine" title={engineTitle(engine)}>
           <span className={`engine-dot ${engineState(engine)}`} aria-hidden="true" />
           <span className="sidebar-label">{engineLabel(engine)}</span>

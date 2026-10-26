@@ -184,3 +184,13 @@ linked, 11 APIs enabled, ₹5,000/month budget guard. Licence register, pinned v
 policy written. Two items wait on the owner: the paid-account upgrade plus GPU quota (a free trial
 cannot attach GPUs), and the Bhashini application. Found: the vision model qwen2.5vl:3b is under a
 non-commercial licence and must be replaced before launch. Details: `phase-0-decisions.md`.
+
+### Phase 1a - as built (2026-10-26)
+
+Accounts live in JARVIS's own Postgres (not Identity Platform), so the same product runs in the
+cloud, locally and air-gapped. One middleware guards every `/api/` route; a test calls each route
+anonymously and expects 401. Roles viewer / reviewer / analyst / admin; `org_id` is on every account
+already, for 1c. The audit actor is now the signed-in user, not a header the caller sets.
+Deployment shape decided with the owner: **hybrid** - GCP runs the console, backend, databases and
+evidence; the laptop's GPU runs the model over Tailscale, so the cloud GPU costs nothing until a
+customer needs it.

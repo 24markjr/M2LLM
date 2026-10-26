@@ -44,6 +44,22 @@ import { DemoError, STATIC_DEMO, demoRequest } from "./demo";
 
 const BASE = "/api/v1";
 
+/** Fired on `window` when the API says nobody is signed in (v4 Phase 1a). */
+export const SIGNED_OUT = "jarvis:signed-out";
+
+export type Role = "viewer" | "reviewer" | "analyst" | "admin";
+
+export interface User {
+  user_id: string;
+  email: string;
+  name: string;
+  role: Role;
+  org_id: string;
+  active: boolean;
+  created_at: string;
+  last_login_at: string | null;
+}
+
 export class ApiError extends Error {
   readonly code: string;
   readonly status: number;
@@ -106,6 +122,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
         details: {},
       };
     }
+    // A session that ended (signed out elsewhere, expired, account deactivated): the app shows the
+    // sign-in page instead of a broken page (v4 Phase 1a).
+    if (response.status === 401 && body.error_code === "UNAUTHENTICATED") window.dispatchEvent(new Event(SIGNED_OUT));
     throw new ApiError(response.status, body);
   }
 
@@ -115,6 +134,19 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  /** Accounts (v4 Phase 1a). */
+  me: () => request<User>(`${BASE}/auth/me`),
+  login: (email: string, password: string) =>
+    request<User>(`${BASE}/auth/login`, { method: "POST", body: JSON.stringify({ email, password }) }),
+  logout: () => request<void>(`${BASE}/auth/logout`, { method: "POST" }),
+  changePassword: (current: string, next: string) =>
+    request<void>(`${BASE}/auth/password`, { method: "POST", body: JSON.stringify({ current, new: next }) }),
+  listUsers: () => request<User[]>(`${BASE}/auth/users`),
+  createUser: (body: { email: string; name: string; role: Role; password: string }) =>
+    request<User>(`${BASE}/auth/users`, { method: "POST", body: JSON.stringify(body) }),
+  updateUser: (userId: string, body: { name?: string; role?: Role; active?: boolean; password?: string }) =>
+    request<User>(`${BASE}/auth/users/${userId}`, { method: "PATCH", body: JSON.stringify(body) }),
+
   health: () =>
     request<{ status: string; model: string; provider_healthy: boolean }>("/health"),
 

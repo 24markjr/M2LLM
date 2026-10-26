@@ -160,6 +160,14 @@ class Settings(BaseSettings):
     # and `diarize` labels who spoke when (pip install pyannote.audio, plus HF_TOKEN for its
     # gated model). Without them the default readers run unchanged.
     pdf_reader: str = "pypdf"
+    # v4 Phase 1a: accounts. Every /api/ route needs a signed-in user unless AUTH_REQUIRED=false
+    # (the test suite and the static demo only). ADMIN_EMAIL / ADMIN_PASSWORD create the first
+    # admin when no account exists, and are ignored afterwards. COOKIE_SECURE=true behind HTTPS.
+    auth_required: bool = True
+    session_hours: int = Field(default=12, ge=1, le=168)
+    admin_email: str = ""
+    admin_password: str = ""
+    cookie_secure: bool = False
     # Phase B4: a second local model that re-checks every finding the verifier approved (the
     # llm-council pattern); empty turns it off. Must be pulled in Ollama, e.g. `llama3.2:3b`.
     reviewer_model: str = ""

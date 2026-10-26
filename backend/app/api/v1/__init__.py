@@ -8,6 +8,7 @@ makes such a change possible without a flag day.
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    auth,
     cases,
     context,
     cyber,
@@ -35,5 +36,6 @@ router.include_router(review.router)
 router.include_router(reports.router)
 router.include_router(cyber.router)
 router.include_router(system.router)
+router.include_router(auth.router)
 
 __all__ = ["router"]
