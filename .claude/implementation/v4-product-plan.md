@@ -177,4 +177,10 @@ Each phase: built, tested, documented here under "As built", committed, then pau
 
 ## As built
 
-Nothing yet.
+### Phase 0 - in progress (2026-10-26)
+
+GCP project **Tessera** (`tessera-jarvis`, Mumbai) created under `chackomartin123@gmail.com`, billing
+linked, 11 APIs enabled, ₹5,000/month budget guard. Licence register, pinned versions and routing
+policy written. Two items wait on the owner: the paid-account upgrade plus GPU quota (a free trial
+cannot attach GPUs), and the Bhashini application. Found: the vision model qwen2.5vl:3b is under a
+non-commercial licence and must be replaced before launch. Details: `phase-0-decisions.md`.
