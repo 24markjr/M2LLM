@@ -1,0 +1,35 @@
+# What never goes into an image (v4 Phase 1b). Secrets, customer documents and local state stay on
+# the machine they came from; an image is pushed to a registry and must hold code and config only.
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Customer and working documents
+AURORA/
+docs/report/
+*.docx
+!.agent/fixtures/documents/*.docx
+
+# Local runtime state (each deployment has its own, on volumes)
+.agent/runs/
+.agent/uploads/
+.agent/evidence/
+.agent/media-cache/
+.agent/traces/*.local.json
+
+# Tooling and build output
+.git/
+**/node_modules/
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+frontend/dist/
+**/*.log
+!.agent/fixtures/documents/*.log
+.vscode/
+.claude/
+JARVIS_Demo_Pack.zip

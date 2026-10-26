@@ -1,0 +1,14 @@
+# The web console for production (v4 Phase 1b): the Vite build served by Caddy, which also proxies
+# /api and /health to the backend and obtains the HTTPS certificate. Build context: repo root.
+#   docker build -f deploy/Dockerfile.web -t jarvis-web .
+
+FROM node:22-alpine AS build
+WORKDIR /web
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY frontend/ ./
+RUN npm run build
+
+FROM caddy:2.8-alpine
+COPY deploy/Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /web/dist /srv/web

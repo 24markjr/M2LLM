@@ -1,0 +1,34 @@
+# The public edge (v4 Phase 1b). SITE_ADDRESS is the hostname Caddy obtains a certificate for
+# (e.g. 34.93.1.2.sslip.io before a domain is bought); ":80" serves plain HTTP for a local test.
+
+{$SITE_ADDRESS::80} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(self), geolocation=()"
+		-Server
+	}
+
+	# Uploads: at most 200 MB per request.
+	request_body {
+		max_size 200MB
+	}
+
+	@api path /api/* /health /docs /openapi.json
+	handle @api {
+		# Live progress is Server-Sent Events: never buffer them.
+		reverse_proxy backend:8000 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		root * /srv/web
+		try_files {path} /index.html
+		file_server
+	}
+}

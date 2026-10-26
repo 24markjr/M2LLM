@@ -1,0 +1,109 @@
+# JARVIS in production (v4 Phase 1b): the web edge, the backend, Postgres and Neo4j on one VM.
+#
+#   docker compose -f docker-compose.prod.yml --env-file .env up -d
+#
+# Only the web edge publishes ports (80, 443). Postgres and Neo4j are reachable from the backend
+# alone. The model runs on the laptop's GPU, reached over Tailscale (OLLAMA_BASE_URL) - the hybrid
+# deployment decided in Phase 0. Images are tagged by git commit (TAG), which is what a rollback
+# switches back to.
+
+name: tessera
+
+services:
+  web:
+    image: ${REGISTRY}/jarvis-web:${TAG}
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS}
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backend:
+    image: ${REGISTRY}/jarvis-backend:${TAG}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://jarvis:${POSTGRES_PASSWORD}@postgres:5432/jarvis
+      GRAPH_STORE: neo4j
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+      LLM_PROVIDER: ollama
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:4b}
+      AUTH_REQUIRED: "true"
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      CORS_ORIGINS: '["https://${SITE_ADDRESS}"]'
+    volumes:
+      - agent-runs:/srv/.agent/runs
+      - agent-uploads:/srv/.agent/uploads
+      - agent-evidence:/srv/.agent/evidence
+      - agent-media-cache:/srv/.agent/media-cache
+      - agent-traces:/srv/.agent/traces
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      neo4j:
+        condition: service_healthy
+
+  # Runs the database migrations to head before every start; the backend waits for it.
+  migrate:
+    image: ${REGISTRY}/jarvis-backend:${TAG}
+    restart: "no"
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://jarvis:${POSTGRES_PASSWORD}@postgres:5432/jarvis
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jarvis
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: jarvis
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jarvis -d jarvis"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  neo4j:
+    image: neo4j:5-community
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 512m
+      NEO4J_server_memory_pagecache_size: 256m
+    volumes:
+      - neo4j-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 20s
+
+volumes:
+  caddy-data:
+  caddy-config:
+  pgdata:
+  neo4j-data:
+  agent-runs:
+  agent-uploads:
+  agent-evidence:
+  agent-media-cache:
+  agent-traces:

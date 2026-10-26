@@ -1,0 +1,38 @@
+# The JARVIS backend for production (v4 Phase 1b). Build context: the repository root.
+#   docker build -f deploy/Dockerfile.backend -t jarvis-backend .
+#
+# The code sits at /srv/backend and .agent/ beside it at /srv/.agent, the layout config.py expects.
+# Runtime state (.agent/runs, uploads, evidence, media-cache, traces) lives on volumes, never in the
+# image, so a redeploy never loses an investigation or a piece of evidence.
+
+FROM python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+# libgomp: onnxruntime (OCR); ffmpeg libraries come with PyAV's wheel.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgomp1 curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd --create-home --uid 10001 jarvis
+WORKDIR /srv/backend
+
+# Dependencies first, so source changes do not reinstall them.
+COPY backend/pyproject.toml ./
+RUN mkdir -p app && touch app/__init__.py \
+    && pip install --upgrade pip \
+    && pip install ".[media]" \
+    && rm -rf app
+
+COPY backend/ ./
+COPY .agent/ /srv/.agent/
+RUN pip install --no-deps . \
+    && mkdir -p /srv/.agent/runs /srv/.agent/uploads /srv/.agent/evidence /srv/.agent/media-cache \
+    && chown -R jarvis:jarvis /srv/.agent
+
+USER jarvis
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:8000/health || exit 1
+CMD ["uvicorn", "app.api.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
