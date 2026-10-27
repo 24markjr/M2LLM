@@ -5,6 +5,43 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-27 - v4 Phase 5: professional reports
+
+### Added
+
+- **A designed report** (`app/reporting/document.py`): built from the typed report, adding no words of
+  its own - an executive brief (risk with its reason, what was established, the counts), a findings
+  matrix (status as standing over verdict, severity, evidence strength, sources, each coloured *and*
+  worded), contradictions side by side with both cited lines quoted, the timeline, gaps and next
+  evidence, competing explanations, limitations, and an appendix with the receipt (run, model,
+  content and receipt hashes) and every file's SHA-256, authority and integrity
+- **One document, three drawings** (`app/reporting/render.py`): a self-contained HTML page (screen and
+  print, no scripts), a PDF laid out by ReportLab (A4, tables that never split a word, page numbers
+  and both hashes on every page, a Unicode font so the rupee sign prints; `fonts-dejavu-core` in the
+  image), and a DOCX with real tables and shaded status cells. They cannot disagree. The
+  hand-written PDF writer and the list-of-lines DOCX are gone
+- **Signed report versions** (`app/reporting/versions.py`,
+  `GET /missions/{run_id}/investigation-report/versions`): every export is numbered and recorded with
+  the report's content hash, the run's receipt hash (now in the report and its footer) and a snapshot
+  hash of the case - every finding's standing and every evidence item. Response headers carry the
+  version and receipt hash. The report panel lists the versions
+- "Open the report" in the console (the HTML export opens in the browser; the files download)
+
+### Verified
+
+- The same findings on screen, in the PDF and in the DOCX (read back with pypdf and python-docx);
+  a contradiction shown with both sides quoted; the rupee sign printed or spelled out; two exports,
+  two numbered versions with the same snapshot hash; 1358 backend unit tests, 136 frontend, build
+- Rendered and looked at: page 1 (brief, matrix, contradictions, timeline, gaps) and page 2 (receipt,
+  file hashes) - two column-width defects (words split mid-word) found that way and fixed
+
+### Not done
+
+- Checked against the four AURORA test reports named in the plan: those are the Internal - Arcaisys
+  documents, which stay off the cloud and out of the repository; to be run locally with the owner
+
+---
+
 ## 2026-10-27 - v4 Phase 4: responsiveness and workspace
 
 ### Added

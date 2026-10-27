@@ -1385,3 +1385,17 @@ export interface StaleFinding {
   finished_at: string;
   newer_evidence: string[];
 }
+
+/** One export of an investigation report (v4 Phase 5), signed with its hashes. */
+export interface ReportVersion {
+  version: number;
+  format: string;
+  report_id: string;
+  content_hash: string;
+  receipt_hash: string;
+  snapshot_hash: string;
+  findings: Record<string, string>;
+  evidence: string[];
+  actor: string;
+  exported_at: string;
+}

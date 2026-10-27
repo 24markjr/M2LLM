@@ -25,6 +25,8 @@ dependencies = [
     "neo4j>=5.20",
     # Document formats (Phase 38, Member 2): Word, Excel and images. Imported only by app/tools/formats.py.
     "python-docx>=1.1",
+    # The designed report as PDF (v4 Phase 5): a layout engine, BSD-licensed, pure Python.
+    "reportlab>=4.2",
     "openpyxl>=3.1",
     "Pillow>=10.4",
     # Native Windows .evtx event logs (Phase B3). Pure Python.

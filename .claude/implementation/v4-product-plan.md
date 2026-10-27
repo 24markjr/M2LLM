@@ -258,3 +258,11 @@ has written them, each claim's mark when checked. Answers regenerate and message
 they replace; investigations re-run as-is or edited. Conversation citations open the cited line in a
 drawer. Measured: activity < 0.1 s, answer words 9-21 s on qwen3:4b - the 2 s bar holds for the
 activity line only, and waits on the larger model. Deferred: three panes, rendered-PDF highlights.
+
+### Phase 5 - as built (2026-10-27)
+
+One designed document built from the typed report - brief, findings matrix, contradictions quoted
+side by side, timeline, gaps, appendix with receipt and file hashes - drawn as HTML, PDF (ReportLab,
+not headless Chromium: a 300 MB browser in the image for text and tables was not worth it) and DOCX.
+Every export is a numbered version signed with the content, receipt and case-snapshot hashes.
+Remaining: reading it against the four AURORA test reports, locally, with the owner.

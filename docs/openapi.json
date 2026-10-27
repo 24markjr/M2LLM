@@ -3922,6 +3922,11 @@
             "title": "Path",
             "type": "array"
           },
+          "receipt_hash": {
+            "default": "",
+            "title": "Receipt Hash",
+            "type": "string"
+          },
           "recommendations": {
             "items": {
               "type": "string"
@@ -5979,6 +5984,13 @@
             "title": "Finding Id",
             "type": "string"
           },
+          "quotes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Quotes",
+            "type": "object"
+          },
           "review": {
             "title": "Review",
             "type": "string"
@@ -6057,6 +6069,69 @@
           "heading"
         ],
         "title": "ReportSection",
+        "type": "object"
+      },
+      "ReportVersion": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "default": "",
+            "title": "Actor",
+            "type": "string"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "exported_at": {
+            "format": "date-time",
+            "title": "Exported At",
+            "type": "string"
+          },
+          "findings": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Findings",
+            "type": "object"
+          },
+          "format": {
+            "title": "Format",
+            "type": "string"
+          },
+          "receipt_hash": {
+            "title": "Receipt Hash",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "snapshot_hash": {
+            "title": "Snapshot Hash",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "format",
+          "report_id",
+          "content_hash",
+          "receipt_hash",
+          "snapshot_hash"
+        ],
+        "title": "ReportVersion",
         "type": "object"
       },
       "Rerun": {
@@ -11381,6 +11456,53 @@
           }
         },
         "summary": "Export Investigation Report",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/investigation-report/versions": {
+      "get": {
+        "description": "Every export of this run's report: number, format, who, and the content, receipt and case\nsnapshot hashes it was signed with (v4 Phase 5).",
+        "operationId": "get_report_versions_api_v1_missions__run_id__investigation_report_versions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReportVersion"
+                  },
+                  "title": "Response Get Report Versions Api V1 Missions  Run Id  Investigation Report Versions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Report Versions",
         "tags": [
           "reports"
         ]

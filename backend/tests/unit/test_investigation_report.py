@@ -8,7 +8,9 @@ REPORTED event into the custody of every cited document and an entry into the au
 
 from __future__ import annotations
 
+import html
 import io
+from pathlib import Path
 
 import pytest
 from docx import Document
@@ -20,11 +22,12 @@ from app.api.registry import MissionRecord, get_registry
 from app.evidence import service as evidence_service
 from app.orchestration.mission import MissionResult, MissionStatus, Stage
 from app.reporting.builder import build_report, content_hash, get_severity_rules, severity_of
-from app.reporting.export import to_docx, to_markdown, to_pdf
+from app.reporting.document import build_document
+from app.reporting.export import to_markdown
+from app.reporting.render import render_docx, render_html, render_pdf
 from app.reporting.units import currencies, unit_mismatch
 from app.review.service import get_review_store
 from app.schemas.common import SourceLocator, new_run_id
-from app.schemas.event import EventType, ExecutionEvent
 from app.schemas.evidence import EvidenceRef, ResolutionStatus
 from app.schemas.evidence_locker import EvidenceItem
 from app.schemas.finding import Finding, StatementType
@@ -32,6 +35,14 @@ from app.schemas.investigation_report import Severity
 from app.schemas.objective import AttachedDocument, Objective, ObjectiveScope
 from app.schemas.review import FindingReview, ReviewDecision, ReviewState
 from app.schemas.verification import VerificationResult, VerificationStatus
+
+
+@pytest.fixture(autouse=True)
+def _versions_in_tmp(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Report versions are written beside the run archives; tests keep them out of `.agent/`."""
+    from app.reporting import versions
+
+    monkeypatch.setattr(versions, "_path", lambda run_id: tmp_path / f"{run_id}.json")
 
 
 def _finding(
@@ -207,35 +218,77 @@ def test_the_timeline_and_recommendations_come_from_the_run() -> None:
 # --- the exports ----------------------------------------------------------------------------------
 
 
-def test_every_export_carries_the_same_sections_and_the_hash() -> None:
-    report = build_report(
-        _result(),
-        events=[
-            ExecutionEvent(run_id=_result().run_id, event_type=EventType.RUN_STARTED, t_offset_ms=0)
-        ]
-        * 120,
-    )
+def test_every_export_carries_the_same_content_and_the_hash() -> None:
+    """v4 Phase 5: screen, PDF and DOCX are drawn from one document, so they hold the same words."""
+    report = build_report(_result(), receipt_hash="r" * 64)
+    document = build_document(report)
+    claims = [
+        f.claim for f in [*report.established, *report.awaiting_review, *report.not_established]
+    ]
+    assert claims, "the fixture has findings to show"
+
     markdown = to_markdown(report)
     assert "## Executive summary" in markdown and report.content_hash in markdown
 
-    pdf = PdfReader(io.BytesIO(to_pdf(report)))
-    text = "\n".join(page.extract_text() for page in pdf.pages)
-    assert len(pdf.pages) >= 2, "a long trace runs over pages"
-    assert "Investigation Report" in text and "Executive summary" in text
-    assert "12 June 2026" in text
-    assert report.content_hash[:23] in text
+    page = render_html(document)
+    assert page.startswith("<!doctype html>") and "<script" not in page
+    for words in ("Executive brief", "Findings", "Appendix B - Evidence and file hashes"):
+        assert words in page
+    assert report.content_hash[:16] in page and report.receipt_hash[:16] in page
 
-    document = Document(io.BytesIO(to_docx(report)))
-    headings = [p.text for p in document.paragraphs if p.style.name.startswith("Heading")]
-    assert "Executive summary" in headings and "Trace" in headings
-    assert any(report.content_hash in p.text for p in document.paragraphs)
+    pdf = PdfReader(io.BytesIO(render_pdf(document)))
+    text = " ".join(" ".join(p.extract_text().split()) for p in pdf.pages)
+    assert "Investigation Report" in text and "Executive brief" in text and "Findings" in text
+    assert report.content_hash[:16] in text and "Page 1" in text
+
+    docx = Document(io.BytesIO(render_docx(document)))
+    headings = [p.text for p in docx.paragraphs if p.style.name.startswith("Heading")]
+    assert headings[:2] == ["Executive brief", "Findings"]
+    assert "Appendix A - Receipt" in headings
+    cells = {c.text for t in docx.tables for row in t.rows for c in row.cells}
+    assert report.receipt_hash in cells
+    assert report.content_hash[:16] in docx.sections[0].footer.paragraphs[0].text
+
+    # The same findings on screen, in the PDF and in the DOCX.
+    for claim in claims:
+        assert html.escape(claim) in page
+        assert " ".join(claim.split())[:40] in text
+        assert claim in cells
 
 
-def test_characters_a_pdf_font_lacks_are_written_readably() -> None:
+def test_a_contradiction_is_shown_with_both_sides_quoted() -> None:
+    from app.schemas.investigation_report import ReportFinding, Severity
+
+    report = build_report(_result())
+    report.established = [
+        ReportFinding(
+            finding_id="F-009",
+            claim="The completion dates differ",
+            statement="CONTRADICTION",
+            severity=Severity.MEDIUM,
+            severity_reason="dates",
+            confidence=0.8,
+            confidence_explained="",
+            verification="SUPPORTED",
+            review="not required",
+            citations=["plan.txt:r2", "ledger.txt:r5"],
+            quotes={
+                "plan.txt:r2": "Completion: 30 April 2026",
+                "ledger.txt:r5": "Closed 14 May 2026",
+            },
+        )
+    ]
+    pair = next(b for b in build_document(report).blocks if b.kind == "pair")
+    assert pair.left == ("plan.txt:r2", "Completion: 30 April 2026")
+    assert pair.right == ("ledger.txt:r5", "Closed 14 May 2026")
+    assert '"Closed 14 May 2026"' in render_html(build_document(report))
+
+
+def test_the_rupee_sign_prints_or_is_spelled_out() -> None:
     report = build_report(_result())
     report.objective = "Spend → ₹ 40,000 — “approved”"
-    text = PdfReader(io.BytesIO(to_pdf(report))).pages[0].extract_text()
-    assert 'Spend -> INR  40,000 - "approved"' in text
+    text = PdfReader(io.BytesIO(render_pdf(build_document(report)))).pages[0].extract_text()
+    assert "₹ 40,000" in text or "INR  40,000" in text
 
 
 # --- the API --------------------------------------------------------------------------------------
@@ -282,3 +335,32 @@ async def test_an_unfinished_run_has_no_report() -> None:
     async with AsyncClient(transport=ASGITransport(app=create_app()), base_url="http://test") as c:
         response = await c.get(f"/api/v1/missions/{record.run_id}/investigation-report")
     assert response.status_code == 409
+
+
+async def test_each_export_is_a_signed_version_of_the_report() -> None:
+    """v4 Phase 5: every export is numbered and signed with the content, receipt and case-snapshot
+    hashes; the HTML opens in the browser, the files download."""
+    result = _result()
+    record = MissionRecord(result.run_id, result.objective, ["ledger.txt", "plan.txt"])
+    record.status = MissionStatus.COMPLETED
+    record.stage = Stage.DONE
+    record.result = result
+    get_registry()._missions[record.run_id] = record
+    base = f"/api/v1/missions/{record.run_id}/investigation-report"
+    async with AsyncClient(transport=ASGITransport(app=create_app()), base_url="http://test") as c:
+        page = await c.get(f"{base}/export/html", headers={"X-Jarvis-User": "lead-1"})
+        docx = await c.get(f"{base}/export/docx")
+        versions = (await c.get(f"{base}/versions")).json()
+
+    assert page.status_code == 200 and page.headers["content-type"].startswith("text/html")
+    assert page.headers["content-disposition"].startswith("inline")
+    assert docx.headers["content-disposition"].startswith("attachment")
+    assert docx.headers["X-Report-Version"] == "2"
+    assert [(v["version"], v["format"]) for v in versions] == [(1, "html"), (2, "docx")]
+    first, second = versions
+    assert first["actor"] == "lead-1"
+    assert first["receipt_hash"] and first["receipt_hash"] == page.headers["X-Receipt-Hash"]
+    # Nothing changed between the two exports: the same state of the case, the same snapshot.
+    assert first["snapshot_hash"] == second["snapshot_hash"]
+    assert first["findings"] and first["findings"] == second["findings"]
+    assert set(first["findings"]) == {f.finding_id for f in result.findings}

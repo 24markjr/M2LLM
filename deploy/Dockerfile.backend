@@ -11,9 +11,10 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1
 
-# libgomp: onnxruntime (OCR); ffmpeg libraries come with PyAV's wheel.
+# libgomp: onnxruntime (OCR); ffmpeg libraries come with PyAV's wheel. DejaVu: a Unicode font for
+# the PDF report, so the rupee sign and accented names print (v4 Phase 5).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libgomp1 curl \
+    && apt-get install -y --no-install-recommends libgomp1 curl fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd --create-home --uid 10001 jarvis

@@ -137,6 +137,7 @@ def build_report(
     challenges: dict[str, ChallengeResult] | None = None,
     events: list[ExecutionEvent] | None = None,
     model: str = "",
+    receipt_hash: str = "",
 ) -> InvestigationReport:
     rules = get_severity_rules()
     items = items or {}
@@ -173,6 +174,7 @@ def build_report(
             challenge=f"{challenge.outcome.value}: {challenge.summary}" if challenge else "",
             citations=cited,
             unit_issues=[issue] if issue else [],
+            quotes={c: _quote(result.evidence_text.get(c, ""), c) for c in cited},
         )
         rejected_by_review = review is not None and review.state is ReviewState.REJECTED
         if counts_as_established(finding, review) and not issue and not rejected_by_review:
@@ -247,9 +249,16 @@ def build_report(
         ],
         narrative=_narrative(result),
         trace=_trace(events or []),
+        receipt_hash=receipt_hash,
     )
     report.content_hash = content_hash(report)
     return report
+
+
+def _quote(text: str, locator: str) -> str:
+    """The cited line's text, without the locator some evidence text carries in front of it."""
+    prefix = f"{locator}: "
+    return (text[len(prefix) :] if text.startswith(prefix) else text).strip()[:400]
 
 
 def _shown_claim(finding: Finding, review: FindingReview | None) -> str:

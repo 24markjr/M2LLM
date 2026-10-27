@@ -30,7 +30,7 @@ import type { EntityMemory, Episode, Fact, InvestigationMemory, MemoryStatus } f
 import type { ClaimComparison, ClaimConflict, EntityInvestigation, SearchHit, TimelineEvent } from "./types";
 import type { FormatSpec, StoredDocument, UploadedDocument } from "./types";
 import type { RetrieveResponse, WorkspaceView } from "./types";
-import type { FindingHistory, RunComparison, StaleFinding, Thread } from "./types";
+import type { FindingHistory, ReportVersion, RunComparison, StaleFinding, Thread } from "./types";
 import type { AuthorityTier, EvidenceDetail, EvidenceItem, EvidenceList, IntegrityCheck } from "./types";
 import type { Case, CaseDetail, CaseList, CaseSeverity, CaseStatus } from "./types";
 import type { ChallengeResult, HypothesisSet, PlanTree } from "./types";
@@ -219,6 +219,10 @@ export const api = {
   /** The investigation report as it stands (Phase 51). */
   getInvestigationReport: (runId: string) =>
     request<InvestigationReport>(`${BASE}/missions/${runId}/investigation-report`),
+
+  /** Every export of the report, signed with its hashes (v4 Phase 5). */
+  reportVersions: (runId: string) =>
+    request<ReportVersion[]>(`${BASE}/missions/${runId}/investigation-report/versions`),
 
   /** A download of the report; recorded in custody and the audit log. */
   investigationReportUrl: (runId: string, fmt: string) =>

@@ -46,6 +46,8 @@ class ReportFinding(JarvisModel):
     citations: list[str] = Field(default_factory=list)
     # Currency or unit problems found by the deterministic check (UNIT_MISMATCH).
     unit_issues: list[str] = Field(default_factory=list)
+    # The text at each cited line (v4 Phase 5): what a contradiction is shown as, both sides quoted.
+    quotes: dict[str, str] = Field(default_factory=dict)
 
 
 class ReportEvidence(JarvisModel):
@@ -96,6 +98,9 @@ class InvestigationReport(JarvisModel):
     limitations: list[str] = Field(default_factory=list)
     narrative: list[str] = Field(default_factory=list)
     trace: list[dict[str, Any]] = Field(default_factory=list)
+    # The run's receipt hash (v4 Phase 5): the report is signed with it, so a copy names the exact
+    # run - documents, prompts, model, verdicts - it was written from.
+    receipt_hash: str = ""
 
     def sections(self) -> list[ReportSectionText]:
         """The report in reading order, as headed lists of lines - what every renderer draws."""

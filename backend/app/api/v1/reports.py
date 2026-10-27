@@ -18,13 +18,16 @@ from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.evidence import service as evidence_service
 from app.intelligence.challenge import challenge
+from app.reporting import versions as report_versions
 from app.reporting.builder import (
     build_report,
     get_report_settings,
     get_severity_rules,
     severity_of,
 )
-from app.reporting.export import to_docx, to_markdown, to_pdf
+from app.reporting.document import build_document
+from app.reporting.export import to_markdown
+from app.reporting.render import render_docx, render_html, render_pdf
 from app.reporting.units import unit_mismatch
 from app.review.service import audit, get_review_store, requirements, review_of
 from app.schemas.evidence_locker import CustodyAction, EvidenceItem
@@ -41,6 +44,8 @@ FORMATS = {
         "docx",
     ),
     "json": ("application/json", "json"),
+    # v4 Phase 5: the designed report as one self-contained page, for the screen and for printing.
+    "html": ("text/html; charset=utf-8", "html"),
 }
 
 
@@ -61,6 +66,7 @@ def _record(run_id: str) -> MissionRecord:
 
 async def assemble(record: MissionRecord) -> InvestigationReport:
     from app.api.registry import _case_severity, attack_locators, cites
+    from app.api.v1.missions import _receipt
 
     result = record.result
     assert result is not None
@@ -96,6 +102,7 @@ async def assemble(record: MissionRecord) -> InvestigationReport:
         challenges=record.challenges,
         events=list(record.events),
         model=get_settings().ollama_model,
+        receipt_hash=_receipt(record).receipt_hash,
     )
 
 
@@ -162,10 +169,14 @@ async def export_investigation_report(
         )
     record = _record(run_id)
     report = await assemble(record)
+    # The designed document (v4 Phase 5): HTML, PDF and DOCX draw the same blocks.
+    document = build_document(report)
     if fmt == "pdf":
-        body: bytes = to_pdf(report)
+        body: bytes = render_pdf(document)
     elif fmt == "docx":
-        body = to_docx(report)
+        body = render_docx(document)
+    elif fmt == "html":
+        body = render_html(document).encode("utf-8")
     elif fmt == "json":
         body = report.model_dump_json(indent=2).encode("utf-8")
     else:
@@ -196,12 +207,29 @@ async def export_investigation_report(
         content_hash=report.content_hash,
         evidence=[e.evidence_id for e in cited],
     )
+    version = report_versions.record(report, fmt, actor)
     media, extension = FORMATS[fmt]
+    # HTML opens in the browser; the files download.
+    disposition = "inline" if fmt == "html" else "attachment"
     return Response(
         content=body,
         media_type=media,
         headers={
-            "Content-Disposition": f'attachment; filename="{report.report_id}.{extension}"',
+            "Content-Disposition": f'{disposition}; filename="{report.report_id}-v{version.version}'
+            f'.{extension}"',
             "X-Report-Hash": report.content_hash,
+            "X-Report-Version": str(version.version),
+            "X-Receipt-Hash": report.receipt_hash,
         },
     )
+
+
+@router.get(
+    "/missions/{run_id}/investigation-report/versions",
+    response_model=list[report_versions.ReportVersion],
+)
+async def get_report_versions(run_id: str) -> list[report_versions.ReportVersion]:
+    """Every export of this run's report: number, format, who, and the content, receipt and case
+    snapshot hashes it was signed with (v4 Phase 5)."""
+    _record(run_id)
+    return report_versions.versions(run_id)
