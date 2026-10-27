@@ -17,6 +17,7 @@ from typing import Protocol, runtime_checkable
 
 from app.core.config import ProviderMode, get_settings
 from app.core.logging import get_logger
+from app.intelligence.context.hybrid import fuse
 from app.intelligence.context.manager import (
     LocalContextProvider,
     RetrievedChunk,
@@ -184,8 +185,16 @@ async def search_store(
     if not response.vectors:
         return []
     query_vector = response.vectors[0]
-    hits = await store.search(workspace_id, query_vector, limit=k, document_ids=document_ids)
-    return await _pinpoint(llm, query_vector, [h for h in hits if h.score >= min_score])
+    # Meaning and words, fused (v4 Phase 2, `hybrid.py`): each list a little deeper than asked, so a
+    # passage near the cut in one can still rise on the other.
+    wide = max(k * 3, k)
+    nearest = await store.search(workspace_id, query_vector, limit=wide, document_ids=document_ids)
+    by_meaning = [h for h in nearest if h.score >= min_score]
+    by_words = await store.keyword_search(
+        workspace_id, query, limit=wide, document_ids=document_ids
+    )
+    hits = fuse([by_meaning, by_words], k)
+    return await _pinpoint(llm, query_vector, hits)
 
 
 async def _pinpoint(

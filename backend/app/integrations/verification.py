@@ -25,6 +25,7 @@ from pydantic import Field
 from app.core.agent_config import get_lexical_thresholds
 from app.core.config import VerificationProviderName, get_settings
 from app.core.logging import get_logger
+from app.intelligence.arithmetic import is_computed
 from app.intelligence.trust.lexical import verify_claim
 from app.intelligence.trust.specifics import numbers_as_dates, ungrounded_specifics
 from app.llm.errors import StructuredOutputError
@@ -432,6 +433,9 @@ class CompositeVerifier:
         if chosen.status is VerificationStatus.SUPPORTED:
             issues: list[VerificationIssue] = []
             missing = ungrounded_specifics(request.claim, evidence_pool(request))
+            # A difference or total worked out from the claim's own figures is on no line, and is
+            # not unsupported for that (v4 Phase 2): an overrun of 37,500 from 287,500 and 250,000.
+            missing = [m for m in missing if not is_computed(request.claim, m)]
             if missing:
                 issues.append(
                     VerificationIssue(
@@ -466,10 +470,76 @@ class CompositeVerifier:
                     }
                 )
 
+        chosen = await _with_entailment(request, chosen, opinions)
         combined: VerificationResult = chosen.model_copy(
             update={"verifier": self.name, "opinions": opinions}
         )
         return combined
+
+
+# Where the entailment model is trusted (v4 Phase 2): it is strong on a stated status ("was
+# approved" against "no budget line covers it") and weak on comparing numbers, so it may only lower
+# an approval it confidently contradicts, or decide where the model verifier reached no verdict.
+NLI_DECIDES = 0.8
+
+
+async def _with_entailment(
+    request: VerificationRequest, chosen: VerificationResult, opinions: list[VerifierOpinion]
+) -> VerificationResult:
+    from app.intelligence.trust.nli import entailment
+
+    pool = evidence_pool(request)
+    try:
+        verdict = await entailment(
+            " ".join(f"{e.source}: {e.content}" for e in pool), request.claim
+        )
+    except Exception as exc:  # noqa: BLE001 - a third opinion never costs the first two
+        log.warning("nli_failed", error=f"{type(exc).__name__}: {exc}")
+        return chosen
+    if verdict is None:
+        return chosen
+    status = {
+        "entailment": VerificationStatus.SUPPORTED,
+        "contradiction": VerificationStatus.CONTRADICTED,
+    }.get(verdict.label, VerificationStatus.INCONCLUSIVE)
+    opinions.append(VerifierOpinion(verifier="nli", status=status))
+
+    if chosen.status is VerificationStatus.SUPPORTED and verdict.contradiction >= NLI_DECIDES:
+        return chosen.model_copy(
+            update={
+                "status": VerificationStatus.PARTIALLY_SUPPORTED,
+                "issues": [
+                    *chosen.issues,
+                    VerificationIssue(
+                        issue_type=IssueType.EVIDENCE_MISMATCH,
+                        description=(
+                            "an entailment model reads the cited evidence as contradicting the "
+                            f"claim ({verdict.contradiction:.2f})"
+                        ),
+                    ),
+                ],
+            }
+        )
+    # The model verifier reached no verdict (the lexical fallback may have stood in): an entailment
+    # model reads meaning, word overlap does not - but a lexical contradiction is never overridden.
+    undecided = opinions[0].status is VerificationStatus.INCONCLUSIVE
+    if (
+        undecided
+        and chosen.status is not VerificationStatus.CONTRADICTED
+        and (verdict.entailment >= NLI_DECIDES or verdict.contradiction >= NLI_DECIDES)
+    ):
+        return chosen.model_copy(
+            update={
+                "status": status,
+                "degraded": True,
+                "degraded_reason": (
+                    "the model verifier reached no verdict; the entailment model's "
+                    f"{verdict.label} "
+                    f"({max(verdict.entailment, verdict.contradiction):.2f}) was used"
+                ),
+            }
+        )
+    return chosen
 
 
 class _OtherModel:

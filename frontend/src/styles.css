@@ -1576,6 +1576,12 @@ ul.conclusion {
   font-weight: 600;
   margin-bottom: 4px;
 }
+.why-note {
+  display: block;
+  font-weight: 400;
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
 .why-sum {
   margin-bottom: 6px;
 }

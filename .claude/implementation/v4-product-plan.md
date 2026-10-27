@@ -220,3 +220,15 @@ in the caller's own uploads. Per-account rate limits added. The VM's disk - so P
 the evidence - and the backup bucket are encrypted at rest by Google's default encryption;
 customer-managed keys are not set up.
 Phase 1 is complete except error alerts (Cloud Monitoring), deferred with the uptime checks.
+
+### Phase 2 - as built (2026-10-27)
+
+Diagnosed stage by stage, the losses were not where B1 suggested: the model read only the last
+2,048 tokens of every long prompt (Ollama's default context), the tools showed it values without
+their sentences, and two gates discarded correct claims before verification. Fixed those; added
+whole-document reading, value-based citation of uncited claims, arithmetic by code, an entailment
+model (DeBERTa, ONNX, CPU) as a third verifier, automatic counter-evidence on every verified finding,
+hybrid BM25 + vector search, Indian number formats, and evidence labels in place of percentages.
+Benchmark: correct facts 0.444 -> 0.900 (plain model 0.978), supported sentences 0.917 (plain
+0.577), invented values 0 (plain 2), citation precision 0.775 (plain 0.744), no false alarms.
+Not yet at the bar (correct >= plain, citation precision >= 0.9); the larger model waits on the GPU.

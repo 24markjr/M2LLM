@@ -39,6 +39,7 @@ class OllamaProvider:
         self._model = model or settings.ollama_model
         self._timeout_s = timeout_s or settings.ollama_timeout_s
         self._embedding_model = settings.embedding_model
+        self._num_ctx = settings.ollama_num_ctx
 
     @property
     def model_id(self) -> str:
@@ -50,6 +51,8 @@ class OllamaProvider:
             "top_p": request.top_p,
             "num_predict": request.max_tokens,
             "seed": request.seed,
+            # Without it Ollama reads only the last 2,048 tokens of the prompt (`ollama_num_ctx`).
+            "num_ctx": self._num_ctx,
         }
         if request.stop:
             options["stop"] = request.stop

@@ -93,6 +93,14 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "qwen3:4b"
     ollama_timeout_s: float = 120.0
+    # The model's context window, sent on every call (v4 Phase 2). Ollama's default is 2,048 tokens
+    # and it drops the start of a longer prompt silently: measured, a 9,030-token prompt was read as
+    # its last 2,050. Every reasoning prompt (up to 6,000 tokens of observations plus instructions)
+    # was being cut. 16k fits qwen3:4b's weights and cache in a 6 GB GPU.
+    ollama_num_ctx: int = 16384
+    # The entailment model, a third and non-LLM opinion on every verified claim (v4 Phase 2,
+    # `app/intelligence/trust/nli.py`). Empty switches it off.
+    nli_model: str = "cross-encoder/nli-deberta-v3-xsmall"
     llm_temperature: float = 0.0
     llm_seed: int = 42
 

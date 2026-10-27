@@ -46,6 +46,8 @@ verification:
 penalties:
   # The finding cites a line another finding reports as one side of a contradiction.
   disputed: 0.15
+  # A difference or total the claim states that its own figures do not give (v4 Phase 2).
+  arithmetic: 0.3
 
 # The most a finding can show when the verifier rejected it, whatever else is in its favour: without
 # it a rejected single-document claim still read 0.47 ("medium") on the recorded runs.

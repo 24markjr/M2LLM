@@ -28,6 +28,7 @@ import type {
   TaskNode,
 } from "../api/types";
 import { graphSearchLink } from "./graph3d/investigation";
+import { evidenceLabel, SCORE_NOTE } from "./confidence";
 
 const STAGES: Stage[] = [
   "UNDERSTANDING",
@@ -188,7 +189,9 @@ export function FindingCard({
           <span className="bar">
             <i className={band} style={{ width: `${Math.round(confidence * 100)}%` }} />
           </span>
-          {confidence.toFixed(2)} {band}
+          <span title={SCORE_NOTE}>
+            {confidence.toFixed(2)} {evidenceLabel(confidence)}
+          </span>
         </span>
         <span className="spacer" />
         <button className="evidence-toggle" onClick={() => setOpen(!open)}>
@@ -460,7 +463,7 @@ export function Report({ report }: { report: FinalReport | null }) {
         <span className="count">
           {/* Nothing verified is no score at all, not a score of zero (BUG-032). */}
           {report.verified_findings.length
-            ? `overall confidence ${report.overall_confidence.toFixed(2)}`
+            ? `overall: ${evidenceLabel(report.overall_confidence)} (${report.overall_confidence.toFixed(2)})`
             : "no confidence to report: nothing verified"}{" "}
           &middot;{" "}
           {report.verified_findings.length} verified, {report.uncertain_findings.length} uncertain,{" "}

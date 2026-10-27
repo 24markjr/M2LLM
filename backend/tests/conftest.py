@@ -129,4 +129,6 @@ def _accounts_off_unless_tested(monkeypatch: pytest.MonkeyPatch) -> Iterator[Non
     """v4 Phase 1a: the suite predates accounts and tests the routes, not the sign-in in front of
     them. tests/unit/test_auth.py switches accounts back on for itself."""
     monkeypatch.setattr(get_settings(), "auth_required", False)
+    # v4 Phase 2: the entailment model is an 87 MB download. Tests that need it use a stand-in.
+    monkeypatch.setattr(get_settings(), "nli_model", "")
     yield

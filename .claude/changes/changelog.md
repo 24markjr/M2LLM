@@ -5,6 +5,72 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-27 - v4 Phase 2: answer quality
+
+### Measured (benchmark, qwen3:4b, 21 scenarios, the same answer key and judge as B1)
+
+| Run | Correct | FActScore | Invented | Citation precision | False alarms | Latency |
+|---|---|---|---|---|---|---|
+| JARVIS before (context fix only, `20261027T052440`) | 0.444 | 0.524 | 1 | 0.548 | 0/7 | 97.6 s |
+| JARVIS + whole documents, prompt v6 (`20261027T060223`) | 0.767 | 0.905 | 0 | 0.765 | 0/7 | 91.3 s |
+| **JARVIS, Phase 2 (`20261027T065122`)** | **0.900** | **0.917** | **0** | **0.775** | **0/7** | 67.9 s |
+| Plain model, same run | 0.978 | 0.577 | 2 | 0.744 | 0/7 | 6.6 s |
+
+JARVIS now states more supported sentences than the plain model, invents nothing (the plain model
+invented two values) and cites more precisely - but still states slightly fewer key facts. The
+"done" bar is not fully met: correct facts 0.900 against 0.978, citation precision 0.775 against
+0.9. Three scenarios are half right: the scanned note (36 units on 19 March found, the 40 ordered on
+12 March not), the video (the model wrote "the results differ" without the figures, and verification
+rejected it), and the Aurora reports (the date conflict, not also the budget overrun).
+
+### Fixed
+
+- **The model read only the end of every long prompt.** Ollama's default context is 2,048 tokens
+  and it drops the start silently; measured, a 9,030-token prompt was read as its last 2,050.
+  `OLLAMA_NUM_CTX` (16,384) is now sent on every call. It did not move this benchmark, whose files
+  are small, but every larger investigation was affected
+- **Right answers thrown away before verification** (found by tracing each stage): a correct claim
+  stated without citations was discarded as "a restatement supported by 0 locators", and "450,000
+  was not approved, but 450,000 was spent" was discarded as "the same value twice". An uncited claim
+  is now cited by its own dates and figures when every one is on a line the run read
+  (`cite_by_values`); a status contrast (not, without, unapproved, missing...) is not agreement
+- **Indian amounts**: `4,80,000` was read as two figures of 000, and extracted as `80,000`. Lakh and
+  crore grouping and the rupee sign are read in claims, checks and extraction
+
+### Added
+
+- **Whole-document reading** (`reasoning/whole.py`): when every document fits in half the
+  observation budget, reasoning reads them in full, one locator per line, beside the tool
+  observations. Tools give values without their context - B1's answers named IP addresses where the
+  logs named hosts, and gave a difference without the figures
+- **Reasoning prompt v6**: state the values from every side, name things as the documents do,
+  report each issue the objective asks about
+- **Arithmetic redone by code** (`intelligence/arithmetic.py`): a difference or total a claim states
+  is recomputed from its own figures; a wrong one is a confidence penalty that says what the figures
+  give, and a right one is no longer marked "not on any cited line"
+- **An entailment model as a third opinion** (`trust/nli.py`): `cross-encoder/nli-deberta-v3-xsmall`
+  (Apache-2.0), 87 MB ONNX on CPU, ~0.3 s a claim, downloaded once into the media-cache volume. It
+  lowers an approval it confidently contradicts (it caught "the Helix spend was approved") and decides
+  where the model verifier reached none; it never overrides a rejection. `NLI_MODEL=` switches it off
+- **Every verified finding is challenged when the run ends** - the Phase 48 counter-evidence search,
+  which had to be asked for one finding at a time
+- **Hybrid search** (`context/hybrid.py`): stored retrieval searches by words (BM25; Postgres
+  full-text search finds the candidates) as well as meaning, fused by reciprocal rank
+- **Evidence labels instead of percentages** in the console: "strong / moderate / weak evidence";
+  the number is shown only in "Why?", marked as a score that has not been calibrated
+
+### Not done
+
+- A larger model, chosen by re-running the benchmark: needs the L4 GPU (paid upgrade)
+- Calibration itself: there is still no set of findings labelled right or wrong to measure against
+
+### Verified
+
+- 21 new unit tests, a keyword-search integration test on the memory store and on Postgres; 1361
+  backend unit tests, mypy, ruff; 130 frontend tests, tsc
+
+---
+
 ## 2026-10-27 - v4 Phase 1c: customer organisations with isolated data; API file paths closed
 
 ### Security fix

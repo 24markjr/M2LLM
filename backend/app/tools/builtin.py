@@ -260,7 +260,10 @@ _DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}\s+\w+\s+\d{4}\b")
 # Commas only in groups of three (BUG-028). The old pattern took any run of digits and commas, so in
 # the spreadsheet row "Cooling units,Polar Systems,2026-03-19,162000" the date's day and the column
 # separator became one figure, "19,162000", and the reasoning model was handed $19,162,000.
-_AMOUNT = re.compile(r"(?:[$£€]\s?)?\b(?:\d{1,3}(?:,\d{3})+|\d{3,})(?:\.\d{2})?\b")
+# Indian grouping first (4,80,000): otherwise it matched as "80,000" (v4 Phase 2).
+_AMOUNT = re.compile(
+    r"(?:[$£€₹]\s?)?\b(?:\d{1,2}(?:,\d{2})+,\d{3}|\d{1,3}(?:,\d{3})+|\d{3,})(?:\.\d{2})?\b"
+)
 
 
 def _amounts(line: str) -> list[str]:

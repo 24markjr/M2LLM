@@ -63,6 +63,13 @@ def ungrounded_specifics(claim: str, evidence: list[EvidenceText]) -> list[str]:
     return list(dict.fromkeys(missing))
 
 
+_STATUS_CONTRAST = re.compile(
+    r"\b(not|never|no|without|unapproved|unauthori[sz]ed|unbudgeted|missing|absent|rejected|"
+    r"cancel+ed|withdrawn)\b",
+    re.IGNORECASE,
+)
+
+
 def single_value(claim: str) -> str:
     """The one value a claim states on every side, when it names two or more and they agree.
 
@@ -72,6 +79,10 @@ def single_value(claim: str) -> str:
     whose dates (or whose figures) are all the same value has none. Returns the value as written,
     or "" when the claim states fewer than two, or different ones.
     """
+    if _STATUS_CONTRAST.search(claim):
+        # The conflict is a status, not a value (v4 Phase 2): "450,000 was not approved, but 450,000
+        # was spent" names one figure twice because both sides are about it.
+        return ""
     dates = find_dates(claim)
     figures = find_figures(claim)
     if len(dates) >= 2 and not figures:

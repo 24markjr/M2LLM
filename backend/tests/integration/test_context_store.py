@@ -110,3 +110,19 @@ async def test_search_never_leaves_its_workspace_or_documents(
         if DB_AVAILABLE and isinstance(store, PgVectorContextStore):
             async with session_scope() as session:
                 await session.execute(delete(Document).where(Document.workspace_id == other))
+
+
+async def test_keyword_search_finds_an_exact_identifier(
+    store: ContextStore, workspace: str
+) -> None:
+    """v4 Phase 2: both stores search by words as well as meaning, ranked the same way (BM25)."""
+    text = "\n".join(
+        [f"Routine note {i} about deliveries and weather." for i in range(30)]
+        + ["Invoice INV-1042 was paid twice to Blue Harbor."]
+    )
+    await ingest_document(
+        store, EchoProvider(), workspace_id=workspace, document_id="l.txt", text=text
+    )
+    found = await store.keyword_search(workspace, "INV-1042 Blue Harbor", limit=3)
+    assert found and "INV-1042" in found[0].chunk.text and found[0].score == 1.0
+    assert await store.keyword_search(workspace, "nothing-like-this", limit=3) == []

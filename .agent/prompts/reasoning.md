@@ -1,6 +1,6 @@
 ---
 role: reasoning
-version: 5
+version: 6
 output_schema: app.intelligence.reasoning.engine.CandidateFindings
 phase: 13
 ---
@@ -9,7 +9,8 @@ phase: 13
 
 - `{{objective}}` — what the investigation is for
 - `{{observations}}` — what the tasks actually found, with source locators, inside one
-  `<document source="task observations">` block (v5, Phase 27)
+  `<document source="task observations">` block (v5, Phase 27). When the documents are small
+  enough, it also holds them in full, one line per locator (v6, v4 Phase 2)
 
 ## Task
 
@@ -52,6 +53,14 @@ Rules:
    source is in scope and it is internally consistent, there is no contradiction to report.
 5. **Say nothing you cannot cite.** If the observations do not support a claim, leave it
    out. There is no credit for volume.
+6. **State the values, not only the conclusion** (v6). A claim carries the specifics it rests
+   on, from every side: `ledger.txt gives a budget of 250,000 and spend of 287,500, an overrun of
+   37,500` - not `spend exceeded the budget by 37,500`. Name hosts, accounts, people, files and
+   programs exactly as the documents name them (`srv-db`, `PsExec`), not by a description or an
+   address the document gives elsewhere.
+7. **Answer all of the objective** (v6). When the documents show more than one issue the
+   objective asks about - a date conflict *and* a budget overrun - report each as its own finding.
+   Stopping at the first leaves the rest of the answer out.
 
 ### Classification
 

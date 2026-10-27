@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Confidence } from "../api/types";
-import { confidenceSum, costs, factorRows } from "./confidence";
+import { confidenceSum, costs, evidenceLabel, factorRows, SCORE_NOTE } from "./confidence";
 
 const decomposed: Confidence = {
   value: 0.89,
@@ -59,5 +59,19 @@ describe("confidence (Phase 46)", () => {
     const old: Confidence = { value: 0.85, resolution_rate: 1, evidence_strength: 1, source_agreement: 0.85, classification_ceiling: 1 };
     expect(factorRows(old)).toEqual([]);
     expect(confidenceSum(old)).toBe("");
+  });
+});
+
+describe("evidence labels (v4 Phase 2)", () => {
+  it("names the score in words, and says it is not a probability", () => {
+    expect([0, 0.2, 0.4, 0.69, 0.7, 1].map(evidenceLabel)).toEqual([
+      "no evidence",
+      "weak evidence",
+      "moderate evidence",
+      "moderate evidence",
+      "strong evidence",
+      "strong evidence",
+    ]);
+    expect(SCORE_NOTE).toContain("not a probability");
   });
 });

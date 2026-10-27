@@ -219,7 +219,9 @@ def _mask_dates(text: str) -> str:
 # A run of digits, commas and one decimal part, not glued to a letter: "450,000", "180000,70000"
 # in a CSV row, "1,200.50". "r10" and "M4" are labels and never match.
 _DIGIT_RUN = re.compile(r"(?<![A-Za-z_\d])\d[\d,]*(?:\.\d+)?(?![A-Za-z_\d])")
-_THOUSANDS = re.compile(r"^\d{1,3}(?:,\d{3})+(?:\.\d+)?$")
+# Western (450,000) and Indian (4,50,000 - lakhs and crores) grouping. Without the Indian form,
+# "Rs 4,80,000" was read as two figures of 000 (v4 Phase 2).
+_THOUSANDS = re.compile(r"^(?:\d{1,3}(?:,\d{3})+|\d{1,2}(?:,\d{2})+,\d{3})(?:\.\d+)?$")
 # Figures worth checking have three or more digits. Smaller integers ("2 reports", "phase 3")
 # are counts and labels.
 MIN_FIGURE_DIGITS = 3

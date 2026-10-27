@@ -8,9 +8,12 @@ store maps cosine similarity, so the two stores score alike.
 
 from __future__ import annotations
 
+import re
+
 from sqlalchemy import delete, func, select
 
 from app.database.session import session_scope
+from app.intelligence.context.hybrid import bm25, terms
 from app.intelligence.context.manager import Chunk, RetrievedChunk
 from app.intelligence.context.store import DEFAULT_WORKSPACE, MAX_RESULTS, StoredDocument
 from app.models.tables import Document, DocumentChunk
@@ -112,6 +115,55 @@ class PgVectorContextStore:
                 RetrievedChunk(chunk=chunk, score=max(0.0, min(1.0, 1.0 - float(dist) / 2.0)))
             )
         return hits
+
+    async def keyword_search(
+        self,
+        workspace_id: str,
+        query: str,
+        *,
+        limit: int,
+        document_ids: list[str] | None = None,
+    ) -> list[RetrievedChunk]:
+        """Postgres full-text search finds the passages that share any of the query's words; BM25
+        ranks them, the same scoring the in-memory store uses (v4 Phase 2)."""
+        words = terms(query)
+        if not words:
+            return []
+        tsquery = func.to_tsquery("simple", " | ".join(re.sub(r"[^a-z0-9]", "", w) for w in words))
+        query_ = (
+            select(DocumentChunk, Document.document_id)
+            .join(Document, DocumentChunk.document_pk == Document.id)
+            .where(
+                Document.workspace_id == workspace_id,
+                func.to_tsvector("simple", DocumentChunk.text).op("@@")(tsquery),
+            )
+            .order_by(
+                func.ts_rank(func.to_tsvector("simple", DocumentChunk.text), tsquery).desc(),
+                DocumentChunk.chunk_id,
+            )
+            .limit(max(1, min(limit, MAX_RESULTS)) * 4)
+        )
+        if document_ids:
+            query_ = query_.where(Document.document_id.in_(document_ids))
+        async with session_scope() as session:
+            rows = (await session.execute(query_)).all()
+        passages = [
+            RetrievedChunk(
+                chunk=Chunk(
+                    chunk_id=row.chunk_id,
+                    locator=SourceLocator(
+                        document_id=document_id,
+                        document_name=document_id,
+                        row=row.row,
+                        page=row.page,
+                    ),
+                    text=row.text,
+                ),
+                score=0.0,
+            )
+            for row, document_id in rows
+        ]
+        return bm25(query, passages)[: max(1, min(limit, MAX_RESULTS))]
 
     async def documents(self, workspace_id: str) -> list[StoredDocument]:
         async with session_scope() as session:

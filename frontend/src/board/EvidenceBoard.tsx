@@ -25,6 +25,7 @@ import {
 } from "./board";
 import { ProofPanel } from "./ProofPanel";
 import "./board.css";
+import { evidenceLabel, SCORE_NOTE } from "../components/confidence";
 
 export type BoardTab = "sources" | "pins" | "timeline" | "hypotheses" | "proof" | "report";
 
@@ -445,8 +446,8 @@ function Report({ view, runId, finished }: { view: MissionView; runId?: string |
       {report ? (
         <p>
           {report.verified_findings.length} verified, {report.uncertain_findings.length} uncertain,{" "}
-          {report.rejected_findings.length} rejected; {report.unresolved_gaps.length} gap(s) open. Overall confidence{" "}
-          {Math.round(report.overall_confidence * 100)}%.
+          {report.rejected_findings.length} rejected; {report.unresolved_gaps.length} gap(s) open. Overall:{" "}
+          <span title={`${report.overall_confidence.toFixed(2)}. ${SCORE_NOTE}`}>{evidenceLabel(report.overall_confidence)}</span>.
         </p>
       ) : (
         <p className="board-note">The report is written once every finding is checked.</p>

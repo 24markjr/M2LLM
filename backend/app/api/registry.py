@@ -307,6 +307,7 @@ class MissionRegistry:
                 authority=record.authority,
             )
             record.status = record.result.status
+            await _challenge_findings(record, provider)
         except asyncio.CancelledError:
             record.status = MissionStatus.CANCELLED
             log.info("mission_cancelled", run_id=record.run_id)
@@ -340,6 +341,35 @@ class MissionRegistry:
                 status=record.status.value,
                 findings=len(record.result.findings) if record.result else 0,
             )
+
+
+async def _challenge_findings(record: MissionRecord, provider: object) -> None:
+    """Every verified finding is challenged when the run ends (v4 Phase 2): the counter-evidence
+    search of Phase 48, which had to be asked for one finding at a time, now runs on each. Lines
+    that disagree are found without a model; the verifier is called only when some do. Recorded
+    beside the finding as the system's challenge - the finding itself is not changed - and a
+    person can still challenge again. Never fails the run."""
+    from app.integrations.verification import build_verification_provider
+    from app.intelligence.challenge import challenge
+    from app.llm.provider import LLMProvider
+
+    result = record.result
+    if result is None or not isinstance(provider, LLMProvider):
+        return
+    verifier = build_verification_provider(provider)
+    for finding in result.verified_findings:
+        try:
+            record.challenges[finding.finding_id] = await challenge(
+                finding,
+                record.texts,
+                page_starts=record.page_starts,
+                authority=record.authority,
+                evidence_text=result.evidence_text,
+                verifier=verifier.verify,
+                actor="automatic",
+            )
+        except Exception:  # a second opinion never costs the first
+            log.exception("auto_challenge_failed", finding_id=finding.finding_id)
 
 
 async def _capture_knowledge(record: MissionRecord) -> None:

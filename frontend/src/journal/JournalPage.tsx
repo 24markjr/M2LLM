@@ -13,6 +13,7 @@ import type { Finding, FindingReview } from "../api/types";
 import { EvidenceBoard, type BoardFocus, type BoardTab } from "../board/EvidenceBoard";
 import { ChallengePanel } from "../components/ChallengePanel";
 import { ConfidenceWhy } from "../components/ConfidenceWhy";
+import { evidenceLabel, SCORE_NOTE } from "../components/confidence";
 import { ReviewPanel } from "../components/ReviewPanel";
 import { useMission, type MissionView } from "../hooks/useMission";
 import { MODE_PLANS, MODES, type Mode } from "../home/modes";
@@ -262,8 +263,8 @@ function FindingCard({
       <div className="finding-head">
         <StatusBadge status={status} />
         {finding.statement_type ? <Badge>{finding.statement_type.replaceAll("_", " ").toLowerCase()}</Badge> : null}
-        <span className="finding-confidence" title="Computed from the evidence, never asked of the model">
-          {Math.round(finding.confidence.value * 100)}% confidence
+        <span className="finding-confidence" title={`${finding.confidence.value.toFixed(2)}. ${SCORE_NOTE}`}>
+          {evidenceLabel(finding.confidence.value)}
         </span>
         {review?.state && review.state !== "PENDING" ? <Badge tone="accent">{review.state.toLowerCase()}</Badge> : null}
         {review?.required && review.state === "PENDING" ? <Badge tone="inferred">needs review</Badge> : null}

@@ -10,7 +10,7 @@ import { useState } from "react";
 
 import { api } from "../api/client";
 import type { Finding, FindingChain } from "../api/types";
-import { confidenceSum, costs, factorRows } from "./confidence";
+import { confidenceSum, costs, factorRows, SCORE_NOTE } from "./confidence";
 import { evidenceLink } from "./evidence";
 import { graphSearchLink } from "./graph3d/investigation";
 
@@ -41,7 +41,9 @@ export function ConfidenceWhy({ finding, runId }: { finding: Finding; runId?: st
 
   return (
     <div className="why">
-      <div className="why-head">Why {finding.confidence.value.toFixed(2)}?</div>
+      <div className="why-head" title={SCORE_NOTE}>
+        Why {finding.confidence.value.toFixed(2)}? <span className="why-note">{SCORE_NOTE}</span>
+      </div>
       <div className="mono why-sum">{confidenceSum(finding.confidence)}</div>
       <table className="metrics why-factors">
         <thead>

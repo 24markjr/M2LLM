@@ -60,3 +60,19 @@ export function costs(confidence: Confidence): { name: string; cost: number }[] 
     .filter((c) => c.cost >= 0.005)
     .sort((a, b) => b.cost - a.cost);
 }
+
+/**
+ * A label for a confidence value (v4 Phase 2). The value is an evidence score - how much and how
+ * good the evidence is - and has not been shown to be calibrated: nobody has measured that findings
+ * scored 0.8 are right four times in five. So the console says what the score is, in words, and
+ * shows the number only where its factors explain it, never as a percentage that reads as a
+ * probability.
+ */
+export const SCORE_NOTE = "An evidence score from named factors, not a probability: calibration has not been measured.";
+
+export function evidenceLabel(value: number): string {
+  if (value <= 0) return "no evidence";
+  if (value >= 0.7) return "strong evidence";
+  if (value >= 0.4) return "moderate evidence";
+  return "weak evidence";
+}

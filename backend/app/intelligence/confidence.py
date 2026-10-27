@@ -19,6 +19,8 @@ So the final confidence is computed from named factors, each with its value, wei
 - **temporal_consistency** - the share of the claim's dates and figures found on its cited lines,
   not checked (and unweighted) when the lines' text is not available;
 - **disputed** (penalty) - it cites a line another finding reports as one side of a contradiction.
+- **arithmetic** (penalty, v4 Phase 2) - a difference or total the claim states that its own figures
+  do not give (`arithmetic.py`).
 
 Entity resolution, named in the plan, is not a factor: nothing in the pipeline resolves entities
 across documents yet, and a factor fixed at 1.0 would be decoration. It arrives with the cyber
@@ -39,6 +41,7 @@ from app.core.agent_config import load_yaml
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.evidence.authority import get_authority_config, tier_for_name
+from app.intelligence.arithmetic import check_arithmetic
 from app.intelligence.temporal import find_dates, find_figures
 from app.intelligence.trust.specifics import ungrounded_specifics
 from app.schemas.common import JarvisModel
@@ -204,6 +207,16 @@ def assess(
         if disputed_by
         else []
     )
+    # Its own arithmetic, redone (v4 Phase 2): a difference or total its figures do not give.
+    arithmetic = check_arithmetic(finding.claim)
+    if not arithmetic.holds:
+        penalties.append(
+            ConfidenceFactor(
+                name="arithmetic",
+                value=config.penalties.get("arithmetic", 0.3),
+                reason=f"its arithmetic does not hold: {arithmetic.reason}",
+            )
+        )
 
     ceiling = _CLASSIFICATION_CEILING[finding.classification]
     cap_reason = ""

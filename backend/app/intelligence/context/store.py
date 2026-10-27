@@ -21,6 +21,7 @@ from typing import Protocol
 
 from pydantic import Field
 
+from app.intelligence.context.hybrid import bm25
 from app.intelligence.context.manager import (
     Chunk,
     RetrievedChunk,
@@ -114,6 +115,17 @@ class ContextStore(Protocol):
         document_ids: list[str] | None = None,
     ) -> list[RetrievedChunk]: ...
 
+    async def keyword_search(
+        self,
+        workspace_id: str,
+        query: str,
+        *,
+        limit: int,
+        document_ids: list[str] | None = None,
+    ) -> list[RetrievedChunk]:
+        """Passages sharing the query's words, best first (v4 Phase 2, `hybrid.py`)."""
+        ...
+
     async def documents(self, workspace_id: str) -> list[StoredDocument]: ...
 
     async def workspaces(self) -> list[str]: ...
@@ -153,6 +165,22 @@ class MemoryContextStore:
         ]
         scored.sort(key=lambda r: (-r.score, r.chunk.chunk_id))
         return scored[: max(1, min(limit, MAX_RESULTS))]
+
+    async def keyword_search(
+        self,
+        workspace_id: str,
+        query: str,
+        *,
+        limit: int,
+        document_ids: list[str] | None = None,
+    ) -> list[RetrievedChunk]:
+        passages = [
+            RetrievedChunk(chunk=chunk, score=0.0)
+            for (workspace, document_id), chunks in self._chunks.items()
+            if workspace == workspace_id and (not document_ids or document_id in document_ids)
+            for chunk in chunks
+        ]
+        return bm25(query, passages)[: max(1, min(limit, MAX_RESULTS))]
 
     async def documents(self, workspace_id: str) -> list[StoredDocument]:
         return sorted(

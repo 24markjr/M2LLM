@@ -23,6 +23,7 @@ from pydantic import Field
 
 from app.core.agent_config import get_agent_bounds
 from app.core.logging import get_logger
+from app.intelligence.reasoning.whole import WHOLE_DOCUMENT, cite_by_values, line_at
 from app.intelligence.trust.specifics import (
     numbers_as_dates,
     single_value,
@@ -178,6 +179,8 @@ class EvidenceBinder:
         observation = self._by_source.get(key)
         if observation is None:
             return key
+        if observation.task_type == WHOLE_DOCUMENT:  # the cited line, not every document
+            return f"{key}: {line_at(observation, key)}"
         return f"{key}: {observation.content}"
 
 
@@ -347,6 +350,7 @@ class ReasoningEngine:
 
         no_detection = asks_about_attack(objective.text) and quiet_logs(documents)
         binder = EvidenceBinder(observations)
+        whole = next((o for o in observations if o.task_type == WHOLE_DOCUMENT), None)
         findings: list[Finding] = []
 
         for offset, candidate in enumerate(candidates.findings, start=start_index + 1):
@@ -364,7 +368,14 @@ class ReasoningEngine:
                 self.discarded[DISCARD_NO_DETECTION] += 1
                 continue
 
-            refs, _evidence = binder.bind(candidate.all_citations)
+            citations = candidate.all_citations
+            by_values: list[str] = []
+            if whole is not None and not any(c in binder.available_locators for c in citations):
+                # Stated without a citation that resolves: cited by its own dates and figures, when
+                # every one is on a line the run read whole (v4 Phase 2). Recorded on its event.
+                by_values = cite_by_values(claim, whole)
+                citations = by_values or citations
+            refs, _evidence = binder.bind(citations)
             finding = Finding(
                 finding_id=finding_id(offset),
                 claim=claim,
@@ -487,6 +498,7 @@ class ReasoningEngine:
                     "confidence": round(finding.confidence.value, 3),
                     "resolved_evidence": finding.resolved_evidence_count,
                     "cited": len(refs),
+                    **({"cited_by_values": by_values} if by_values else {}),
                 },
                 finding_id=finding.finding_id,
             )
@@ -586,6 +598,14 @@ class ReasoningEngine:
         """Render observations with their locators, so citations can be copied verbatim."""
         lines: list[str] = []
         for observation in observations:
+            if observation.task_type == WHOLE_DOCUMENT and not observation.compacted:
+                # Already one locator per line (v4 Phase 2): listing the sources again would
+                # print every line twice.
+                lines.append(
+                    f"\n[{observation.task_id}] the documents in full, each line after its "
+                    f"locator:\n{observation.content}"
+                )
+                continue
             lines.append(
                 f"\n[{observation.task_id}] {observation.task_type}: {observation.content}"
             )

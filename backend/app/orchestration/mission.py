@@ -27,7 +27,7 @@ from enum import StrEnum
 
 from pydantic import Field
 
-from app.core.agent_config import CrossSourcePass, get_knowledge_policy
+from app.core.agent_config import CrossSourcePass, get_agent_bounds, get_knowledge_policy
 from app.core.logging import get_logger
 from app.evidence.authority import authority_map
 from app.integrations.graph_store import open_knowledge_base, record_findings
@@ -42,6 +42,7 @@ from app.intelligence.planner.engine import PlanInvalidError, Planner
 from app.intelligence.planner.rationale import EXTRACT, annotate
 from app.intelligence.reasoning.engine import ReasoningEngine, requires_comparison
 from app.intelligence.reasoning.statements import type_statements
+from app.intelligence.reasoning.whole import whole_documents
 from app.intelligence.replanning.controller import (
     ReplanningController,
     evidence_from_observations,
@@ -241,6 +242,29 @@ async def run_mission(
         await _advance(result, Stage.EXECUTING, on_stage)
         router = ToolRouter(registry, provider)
         result.observations = await ExecutionEngine(graph, registry, router, emit=emitter).run(ctx)
+        # Small enough to read whole? Then reasoning reads every line, not only what the tools
+        # extracted (v4 Phase 2, `whole.py`). Half the budget: the tool observations need room.
+        reader = next(
+            (t.task_id for t in graph.tasks if t.task_type is TaskType.PROCESS_DOCUMENTS),
+            graph.tasks[0].task_id if graph.tasks else None,
+        )
+        whole = (
+            whole_documents(
+                documents,
+                task_id=reader,
+                budget_tokens=get_agent_bounds().observation_budget_tokens // 2,
+            )
+            if reader
+            else None
+        )
+        if whole is not None:
+            result.observations = [*result.observations, whole]
+            await _emit(
+                emitter,
+                EventType.OBSERVATION_RECORDED,
+                {"whole_documents": len(documents), "lines": len(whole.sources)},
+                task_id=reader,
+            )
 
         # Reasoning, verification, gap detection and replanning are one closed loop, not
         # four stages in sequence. The stage is announced as REASONING because that is
