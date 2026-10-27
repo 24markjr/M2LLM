@@ -18,7 +18,7 @@
 		max_size 200MB
 	}
 
-	@api path /api/* /health /docs /openapi.json
+	@api path /api/* /health /health/* /docs /openapi.json
 	handle @api {
 		# Live progress is Server-Sent Events: never buffer them.
 		reverse_proxy backend:8000 {
