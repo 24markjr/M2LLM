@@ -3,7 +3,8 @@
  * without rendering.
  */
 
-import type { StopReason, ToolStep, Turn } from "../api/types";
+import type { TalkEvent } from "../api/stream";
+import type { AnsweredClaim, StopReason, ToolStep, Turn } from "../api/types";
 
 /** Why an answer stopped, in words a person reads - never silent about a budget or a failure. */
 export function stopLabel(reason: StopReason | null): string {
@@ -47,4 +48,34 @@ export function toolSummary(steps: ToolStep[]): string {
 export function pendingQuestion(turns: Turn[]): string {
   const last = turns.at(-1);
   return last?.role === "assistant" && last.stop_reason === "ASKED_USER" ? last.question : "";
+}
+
+/** An answer as it streams in (v4 Phase 4): what it is doing, and each claim - words first, the
+ * verifier's mark once its check is done. A claim with no status yet is still being checked. */
+export interface LiveAnswer {
+  question: string;
+  activity: string;
+  claims: AnsweredClaim[];
+}
+
+export function liveClaims(now: LiveAnswer | null, event: TalkEvent): LiveAnswer | null {
+  if (now === null) return now;
+  switch (event.type) {
+    case "activity":
+      return { ...now, activity: event.text };
+    case "words": {
+      const claims = [...now.claims];
+      const current = claims[event.claim] ?? { text: "", citations: [], status: "", issues: [] };
+      claims[event.claim] = { ...current, text: current.text + event.text };
+      return { ...now, claims };
+    }
+    case "verdict": {
+      const claims = [...now.claims];
+      const current = claims[event.claim] ?? { text: "", citations: [], status: "", issues: [] };
+      claims[event.claim] = { ...current, status: event.status, citations: event.citations };
+      return { ...now, claims };
+    }
+    default:
+      return now;
+  }
 }

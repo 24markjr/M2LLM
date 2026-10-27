@@ -82,3 +82,51 @@ export function FindingHistoryPanel({ runId, findingId }: { runId: string; findi
     </div>
   );
 }
+
+/** Run the investigation again (v4 Phase 4): the same question, or an edited one - a new run on the
+ * same documents; the case page compares the two. */
+export function RunAgain({ runId, objective }: { runId: string; objective: string }) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(objective);
+  const [busy, setBusy] = useState(false);
+
+  const start = async (edited: string) => {
+    setBusy(true);
+    try {
+      const next = await api.rerun(runId, edited);
+      window.location.hash = `#/mission/${next.run_id}`;
+    } catch {
+      setBusy(false);
+    }
+  };
+
+  if (editing) {
+    return (
+      <form
+        className="row"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void start(text.trim());
+        }}
+      >
+        <input value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} aria-label="Edited question" />
+        <Button size="sm" type="submit" disabled={busy || !text.trim()}>
+          Run this instead
+        </Button>
+        <Button size="sm" variant="ghost" type="button" onClick={() => setEditing(false)}>
+          Cancel
+        </Button>
+      </form>
+    );
+  }
+  return (
+    <>
+      <Button variant="ghost" size="sm" onClick={() => void start("")} disabled={busy}>
+        Run again
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => setEditing(true)} disabled={busy}>
+        Edit the question
+      </Button>
+    </>
+  );
+}

@@ -222,3 +222,98 @@ async def test_the_conversation_routes_are_per_case_and_organisation(
         case_id = (await c.post("/api/v1/cases", json={"title": "Aurora"})).json()["case_id"]
         thread = (await c.get(f"/api/v1/cases/{case_id}/conversation")).json()
         assert thread == {"case_id": case_id, "turns": []}
+
+
+# --- Phase 4: streamed, regenerated, edited ------------------------------------------------------
+
+
+def _answer(text: str, cite: str) -> Step:
+    return Step(action="answer", claims=[AnswerClaim(text=text, citations=[cite])])
+
+
+async def test_a_turn_streams_activity_then_words_then_each_mark(script: dict[str, Any]) -> None:
+    import time
+
+    events: list[dict[str, Any]] = []
+    stamps: list[float] = []
+
+    async def emit(event: dict[str, Any]) -> None:
+        events.append(event)
+        stamps.append(time.perf_counter())
+
+    script["steps"] += [
+        Step(action="search_evidence", arguments={"query": "completion"}),
+        _answer("Aurora was due on 30 April 2026.", "project_report.txt:r2"),
+    ]
+    started = time.perf_counter()
+    await service.converse(CASE, "When was Aurora due?", MODEL, emit=emit)
+    kinds = [e["type"] for e in events]
+    assert kinds[0] == "activity" and stamps[0] - started < 2.0  # first words well under 2 s
+    assert events[1] == {"type": "activity", "text": "Searching the case for 'completion'"}
+    words = "".join(e["text"] for e in events if e["type"] == "words")
+    assert words.strip() == "Aurora was due on 30 April 2026."
+    # Every word arrives before the mark, and the mark comes once the check is done.
+    assert kinds.index("verdict") > max(i for i, k in enumerate(kinds) if k == "words")
+    verdict = next(e for e in events if e["type"] == "verdict")
+    assert verdict == {
+        "type": "verdict",
+        "claim": 0,
+        "status": "SUPPORTED",
+        "citations": ["project_report.txt:r2"],
+    }
+
+
+async def test_regenerate_keeps_the_earlier_answer_beside_the_new_one(
+    script: dict[str, Any],
+) -> None:
+    script["steps"] += [_answer("Spend was 450,000.", "project_report.txt:r3")]
+    thread = await service.converse(CASE, "What was spent?", MODEL)
+    first = thread.turns[-1]
+    script["steps"] += [_answer("Spend was 450,000.", "financial_report.txt:r3")]
+    thread = await service.regenerate(CASE, first.turn_id, MODEL)
+    old, new = thread.turns[1], thread.turns[2]
+    assert old.turn_id == first.turn_id and old.superseded and old.claims[0].status == "UNSUPPORTED"
+    assert new.replaces == first.turn_id and new.claims[0].status == "SUPPORTED"
+    # The regenerated answer was asked with the history before the message, not the old answer.
+    assert "Spend was 450,000. [UNSUPPORTED" not in script["prompts"][-1]
+    with pytest.raises(service.TurnNotFoundError):
+        await service.regenerate(CASE, first.turn_id, MODEL)  # superseded: not current
+
+
+async def test_editing_a_message_branches_the_thread(script: dict[str, Any]) -> None:
+    script["steps"] += [_answer("Aurora was due on 30 April 2026.", "project_report.txt:r2")]
+    script["steps"] += [_answer("The milestone is 14 May 2026.", "financial_report.txt:r2")]
+    thread = await service.converse(CASE, "When was it due?", MODEL)
+    thread = await service.converse(CASE, "And the milestone?", MODEL)
+    second_question = thread.turns[2]
+    script["steps"] += [_answer("Spend was 450,000.", "financial_report.txt:r3")]
+    thread = await service.edit(CASE, second_question.turn_id, "What was spent?", MODEL)
+    live = [t for t in thread.turns if not t.superseded]
+    assert [t.text for t in live if t.role == "user"] == ["When was it due?", "What was spent?"]
+    assert live[-2].replaces == second_question.turn_id
+    assert len(thread.turns) == 6  # nothing deleted: the old branch is kept, superseded
+    # The edited message was asked with the history before the original, not the old branch.
+    assert "And the milestone?" not in script["prompts"][-1]
+
+
+async def test_the_stream_route_sends_server_sent_events(
+    script: dict[str, Any], monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    import json
+
+    from app.api.app import create_app
+
+    script["steps"] += [_answer("Aurora was due on 30 April 2026.", "project_report.txt:r2")]
+    async with AsyncClient(transport=ASGITransport(app=create_app()), base_url="http://t") as c:
+        case_id = (await c.post("/api/v1/cases", json={"title": "Aurora"})).json()["case_id"]
+        response = await c.post(
+            f"/api/v1/cases/{case_id}/conversation/stream", json={"text": "When was it due?"}
+        )
+        assert response.headers["content-type"].startswith("text/event-stream")
+        events = [
+            json.loads(line[6:]) for line in response.text.splitlines() if line.startswith("data: ")
+        ]
+        assert events[-1]["type"] == "done" and len(events[-1]["thread"]["turns"]) == 2
+        empty = await c.post(f"/api/v1/cases/{case_id}/conversation/stream", json={"text": " "})
+        assert empty.status_code == 422
+        assert (await c.get(f"/api/v1/cases/{case_id}/sources")).json() == {}  # a new case

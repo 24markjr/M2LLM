@@ -6059,6 +6059,19 @@
         "title": "ReportSection",
         "type": "object"
       },
+      "Rerun": {
+        "additionalProperties": false,
+        "properties": {
+          "objective": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Objective",
+            "type": "string"
+          }
+        },
+        "title": "Rerun",
+        "type": "object"
+      },
       "ResolutionStatus": {
         "description": "Whether a citation was matched against content the system actually retrieved.",
         "enum": [
@@ -6734,6 +6747,32 @@
         "title": "StoreStatus",
         "type": "object"
       },
+      "StreamRequest": {
+        "additionalProperties": false,
+        "description": "Exactly one of: a new message (`text`), an answer to regenerate, or a message to edit\n(`edit` with the new `text`).",
+        "properties": {
+          "edit": {
+            "default": "",
+            "maxLength": 32,
+            "title": "Edit",
+            "type": "string"
+          },
+          "regenerate": {
+            "default": "",
+            "maxLength": 32,
+            "title": "Regenerate",
+            "type": "string"
+          },
+          "text": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "title": "StreamRequest",
+        "type": "object"
+      },
       "SystemStores": {
         "additionalProperties": false,
         "properties": {
@@ -7309,6 +7348,11 @@
             "title": "Rechecks",
             "type": "array"
           },
+          "replaces": {
+            "default": "",
+            "title": "Replaces",
+            "type": "string"
+          },
           "role": {
             "title": "Role",
             "type": "string"
@@ -7329,6 +7373,11 @@
                 "type": "null"
               }
             ]
+          },
+          "superseded": {
+            "default": false,
+            "title": "Superseded",
+            "type": "boolean"
           },
           "text": {
             "title": "Text",
@@ -8669,6 +8718,128 @@
         ]
       }
     },
+    "/api/v1/cases/{case_id}/conversation/stream": {
+      "post": {
+        "operationId": "ask_streamed_api_v1_cases__case_id__conversation_stream_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ask Streamed",
+        "tags": [
+          "conversation"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/conversation/{turn_id}/edit": {
+      "post": {
+        "operationId": "edit_api_v1_cases__case_id__conversation__turn_id__edit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "turn_id",
+            "required": true,
+            "schema": {
+              "title": "Turn Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Message"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Edit",
+        "tags": [
+          "conversation"
+        ]
+      }
+    },
     "/api/v1/cases/{case_id}/conversation/{turn_id}/pin": {
       "post": {
         "operationId": "pin_api_v1_cases__case_id__conversation__turn_id__pin_post",
@@ -8725,6 +8896,57 @@
           }
         },
         "summary": "Pin",
+        "tags": [
+          "conversation"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/conversation/{turn_id}/regenerate": {
+      "post": {
+        "operationId": "regenerate_api_v1_cases__case_id__conversation__turn_id__regenerate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "turn_id",
+            "required": true,
+            "schema": {
+              "title": "Turn Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Regenerate",
         "tags": [
           "conversation"
         ]
@@ -8791,6 +9013,53 @@
         "summary": "File Case Evidence",
         "tags": [
           "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/sources": {
+      "get": {
+        "description": "The text each of the case's documents was read as - what a citation's line number counts.",
+        "operationId": "sources_api_v1_cases__case_id__sources_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Sources Api V1 Cases  Case Id  Sources Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sources",
+        "tags": [
+          "conversation"
         ]
       }
     },
@@ -12127,6 +12396,70 @@
         "summary": "Get Report Markdown",
         "tags": [
           "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/rerun": {
+      "post": {
+        "description": "Run an investigation again on the same documents and case - the same question, or an edited\none. The first run is untouched; compare the two with `GET /cases/{case_id}/compare`.",
+        "operationId": "rerun_api_v1_missions__run_id__rerun_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Rerun"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rerun",
+        "tags": [
+          "follow-up"
         ]
       }
     },

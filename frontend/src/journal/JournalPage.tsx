@@ -15,7 +15,7 @@ import { ChallengePanel } from "../components/ChallengePanel";
 import { ConfidenceWhy } from "../components/ConfidenceWhy";
 import { evidenceLabel, SCORE_NOTE } from "../components/confidence";
 import { ReviewPanel } from "../components/ReviewPanel";
-import { ClarifyReply, FindingHistoryPanel } from "./FollowUp";
+import { ClarifyReply, FindingHistoryPanel, RunAgain } from "./FollowUp";
 import { useMission, type MissionView } from "../hooks/useMission";
 import { MODE_PLANS, MODES, type Mode } from "../home/modes";
 import { casesChanged } from "../shell/Sidebar";
@@ -121,6 +121,7 @@ export function Journal({ view, runId, onStop }: { view: MissionView; runId?: st
                   Knowledge graph
                 </a>
               ) : null}
+              {finished ? <RunAgain runId={runId} objective={mission.objective} /> : null}
               {finished ? (
                 <Button variant="ghost" size="sm" icon={<IconTrash size={14} />} onClick={() => setDeleting(true)}>
                   Delete

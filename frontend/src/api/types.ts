@@ -1334,6 +1334,9 @@ export interface Turn {
   rechecks: Recheck[];
   question: string;
   pinned: boolean;
+  // v4 Phase 4: replaced by a regenerated answer or an edited message, kept and shown on request.
+  superseded: boolean;
+  replaces: string;
   created_at: string;
 }
 

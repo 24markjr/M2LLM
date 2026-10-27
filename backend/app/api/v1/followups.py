@@ -2,6 +2,7 @@
 
     POST /missions/{run_id}/clarify                         answer a clarifying question: the same
                                                             documents and case, the answer added
+    POST /missions/{run_id}/rerun                           the question again, or an edited one
     GET  /missions/{run_id}/findings/{finding_id}/history   every recorded change to a finding
     GET  /cases/{case_id}/compare?a=run_x&b=run_y           what changed between two runs of a case
     GET  /cases/{case_id}/stale                             findings older than the case's evidence
@@ -70,6 +71,50 @@ async def clarify(
         )
     )
     await audit("mission.clarified", actor=actor, target=detail.run_id, answers=run_id)
+    return detail
+
+
+# --- running it again (v4 Phase 4) ---------------------------------------------------------------
+
+
+class Rerun(JarvisModel):
+    # Empty: the same question again (regenerate). Otherwise the edited question (a branch).
+    objective: str = Field(default="", max_length=2000)
+
+
+@missions.post("/{run_id}/rerun", response_model=MissionDetail, status_code=202)
+async def rerun(
+    run_id: str,
+    body: Rerun,
+    actor: str = Header(default="console", alias="X-Jarvis-User", max_length=128),
+) -> MissionDetail:
+    """Run an investigation again on the same documents and case - the same question, or an edited
+    one. The first run is untouched; compare the two with `GET /cases/{case_id}/compare`."""
+    from app.api.v1.missions import create_mission
+
+    record = _record(run_id)
+    if not record.is_finished():
+        raise ApiError(
+            "STILL_RUNNING",
+            f"{run_id} is still running; stop it or wait for it",
+            status_code=status.HTTP_409_CONFLICT,
+        )
+    objective = body.objective.strip() or record.objective.text
+    detail = await create_mission(
+        CreateMissionRequest(
+            objective=objective,
+            documents=list(record.documents),
+            case_id=record.case_id or None,
+            mode=record.objective.mode,
+        )
+    )
+    await audit(
+        "mission.rerun",
+        actor=actor,
+        target=detail.run_id,
+        of=run_id,
+        edited=bool(body.objective.strip()),
+    )
     return detail
 
 

@@ -250,3 +250,11 @@ case. Each finding has a history assembled from what the run, reviews, challenge
 conversation already record. Two runs of a case compare finding by finding. Evidence added to a case
 after a run marks that run's findings for re-checking (computed from custody times, not a flag that
 could go stale). **Phase 3 is complete.**
+
+### Phase 4 - as built (2026-10-27)
+
+The conversation streams over SSE: activity in words at once, the answer's words when the model
+has written them, each claim's mark when checked. Answers regenerate and messages edit, keeping what
+they replace; investigations re-run as-is or edited. Conversation citations open the cited line in a
+drawer. Measured: activity < 0.1 s, answer words 9-21 s on qwen3:4b - the 2 s bar holds for the
+activity line only, and waits on the larger model. Deferred: three panes, rendered-PDF highlights.

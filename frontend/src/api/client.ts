@@ -379,6 +379,9 @@ export const api = {
     request<FindingHistory>(`${BASE}/missions/${runId}/findings/${findingId}/history`),
   compareRuns: (caseId: string, a: string, b: string) =>
     request<RunComparison>(`${BASE}/cases/${caseId}/compare?a=${a}&b=${b}`),
+  caseSources: (caseId: string) => request<Record<string, string>>(`${BASE}/cases/${caseId}/sources`),
+  rerun: (runId: string, objective = "") =>
+    request<MissionDetail>(`${BASE}/missions/${runId}/rerun`, { method: "POST", body: JSON.stringify({ objective }) }),
   staleFindings: (caseId: string) => request<StaleFinding[]>(`${BASE}/cases/${caseId}/stale`),
   pinTurn: (caseId: string, turnId: string, pinned: boolean) =>
     request<Thread>(`${BASE}/cases/${caseId}/conversation/${turnId}/pin`, {

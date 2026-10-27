@@ -198,3 +198,23 @@ async def test_evidence_added_after_a_run_marks_its_findings_for_rechecking() ->
     assert [(s["finding_id"], s["newer_evidence"]) for s in stale] == [
         ("F-001", ["new_contract.pdf"])
     ]
+
+
+async def test_an_investigation_is_run_again_as_it_was_or_edited() -> None:
+    done = _run([("F-001", "Spend was 450,000", "SUPPORTED")])
+    async with _client() as client:
+        same = await client.post(f"/api/v1/missions/{done.run_id}/rerun", json={})
+        edited = await client.post(
+            f"/api/v1/missions/{done.run_id}/rerun", json={"objective": "Only the budget, please."}
+        )
+        assert same.status_code == edited.status_code == 202
+        again = get_registry().get(same.json()["run_id"])
+        branch = get_registry().get(edited.json()["run_id"])
+        assert again is not None and again.objective.text == "Check the reports."
+        assert branch is not None and branch.objective.text == "Only the budget, please."
+        assert again.documents == branch.documents == done.documents
+
+        running = _run([])
+        running.status = MissionStatus.RUNNING
+        refused = await client.post(f"/api/v1/missions/{running.run_id}/rerun", json={})
+        assert refused.status_code == 409

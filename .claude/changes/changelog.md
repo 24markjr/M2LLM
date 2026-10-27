@@ -5,6 +5,46 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-27 - v4 Phase 4: responsiveness and workspace
+
+### Added
+
+- **The conversation streams** (`POST /cases/{case_id}/conversation/stream`, server-sent events):
+  what it is doing in plain words ("Searching the case for 'approved budget'" - never the model's
+  thinking), the answer a few words at a time as soon as the model has written it, then each claim's
+  mark the moment its check is done. A claim shows "checking" until then; words never carry a mark
+  they have not earned
+- **Regenerate and edit**: "ask again" on an answer, "edit" on a message (the thread branches there).
+  What they replace is kept, marked superseded, shown with "show earlier versions", and left out of
+  what the model reads. Investigations too: "Run again" and "Edit the question"
+  (`POST /missions/{run_id}/rerun`) start a new run on the same documents; the case page compares
+  the two (Phase 3b)
+- **A citation opens its line in one click**: a conversation's citations open a side drawer with the
+  document at the cited line, highlighted and scrolled into view (`GET /cases/{case_id}/sources`).
+  A finding's citations already opened the evidence board with the cited spans marked
+
+### Measured (live, qwen3:4b on the laptop GPU)
+
+The activity line appears in under 0.1 s. The answer's first words at 9-21 s, its first mark 5 s
+later. **"First words in under 2 s" is met by the activity line, not by the answer**: the model
+decides its action (search, then answer) as one structured step, and streaming its tokens would mean
+a free-text answer the citation check cannot hold to. The larger model on the L4 is what shortens it.
+A two-part question ("when was it due, and does finance agree?") got no answer in one live run.
+
+### Not done
+
+- Three panes (case / conversation / evidence board side by side) and a PDF page viewer with
+  highlights on the rendered page; the drawer shows the text the PDF was read as
+
+### Verified
+
+- 5 new backend tests (event order with the first event under 2 s; regenerate keeps the old answer and
+  asks without it; an edit branches without losing the old branch; the stream route's events and its
+  422; rerun as-is and edited, refused while running) and 3 frontend tests (SSE parsing across chunks,
+  claims built word by word then marked, citation parsing); 1379 backend unit tests, 136 frontend
+
+---
+
 ## 2026-10-27 - v4 Phase 3b: following an investigation up
 
 ### Added

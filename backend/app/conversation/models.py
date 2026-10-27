@@ -65,6 +65,10 @@ class Turn(JarvisModel):
     # A question the assistant put to the person (`ask_user`), answered by their next message.
     question: str = ""
     pinned: bool = False
+    # Phase 4: replaced by a regenerated answer or an edited message - kept, never deleted, and left
+    # out of what the model reads. `replaces` names the turn a new one stands in for.
+    superseded: bool = False
+    replaces: str = ""
     created_at: datetime = Field(default_factory=utcnow)
 
 
