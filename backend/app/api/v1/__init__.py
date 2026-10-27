@@ -12,6 +12,7 @@ from app.api.v1 import (
     auth,
     cases,
     context,
+    conversation,
     cyber,
     documents,
     evidence,
@@ -34,6 +35,7 @@ router.include_router(memory.router)
 router.include_router(context.router)
 router.include_router(evidence.router)
 router.include_router(cases.router)
+router.include_router(conversation.router)
 router.include_router(review.router)
 router.include_router(reports.router)
 router.include_router(cyber.router)

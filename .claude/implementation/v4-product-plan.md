@@ -232,3 +232,14 @@ hybrid BM25 + vector search, Indian number formats, and evidence labels in place
 Benchmark: correct facts 0.444 -> 0.900 (plain model 0.978), supported sentences 0.917 (plain
 0.577), invented values 0 (plain 2), citation precision 0.775 (plain 0.744), no false alarms.
 Not yet at the bar (correct >= plain, citation precision >= 0.9); the larger model waits on the GPU.
+
+### Phase 3a - as built (2026-10-27)
+
+A thread per case, kept beside the run archives in a folder per organisation. Each message runs a
+bounded loop (five tool calls) over the case's documents and findings - search, read a span, query
+findings, calculate, compare, ask the person - and every claim of the answer is resolved to lines of
+the case and verified before it is shown. "Recheck F-002" re-verifies that finding and records
+before/after. Small cases are given to the model whole: with searched lines alone it answered
+nothing to two of three live questions. `query_graph` became `query_findings` (the case's verified
+claims); `verify_claim` is not optional for the model - the service verifies every claim. Remaining
+for 3b: clarification replies, mid-case uploads with re-check marking, finding history.

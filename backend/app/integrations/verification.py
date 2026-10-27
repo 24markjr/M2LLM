@@ -25,7 +25,7 @@ from pydantic import Field
 from app.core.agent_config import get_lexical_thresholds
 from app.core.config import VerificationProviderName, get_settings
 from app.core.logging import get_logger
-from app.intelligence.arithmetic import is_computed
+from app.intelligence.arithmetic import is_computed, worked_out
 from app.intelligence.trust.lexical import verify_claim
 from app.intelligence.trust.specifics import numbers_as_dates, ungrounded_specifics
 from app.llm.errors import StructuredOutputError
@@ -504,7 +504,13 @@ async def _with_entailment(
     }.get(verdict.label, VerificationStatus.INCONCLUSIVE)
     opinions.append(VerifierOpinion(verifier="nli", status=status))
 
-    if chosen.status is VerificationStatus.SUPPORTED and verdict.contradiction >= NLI_DECIDES:
+    # Arithmetic is beyond it: a figure worked out from the evidence reads as a contradiction.
+    computed = worked_out(request.claim, [e.content for e in pool])
+    if (
+        chosen.status is VerificationStatus.SUPPORTED
+        and verdict.contradiction >= NLI_DECIDES
+        and not computed
+    ):
         return chosen.model_copy(
             update={
                 "status": VerificationStatus.PARTIALLY_SUPPORTED,

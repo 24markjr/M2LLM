@@ -1759,3 +1759,16 @@ header.top {
     padding: var(--space-3);
   }
 }
+/* The investigation conversation (v4 Phase 3) */
+.talk { display: flex; flex-direction: column; gap: 10px; }
+.talk-turn { padding: 10px 12px; border-radius: var(--radius); max-width: 92%; }
+.talk-turn.user { align-self: flex-end; background: var(--accent-soft); }
+.talk-turn.assistant { align-self: flex-start; background: var(--surface-sunken); border: 1px solid var(--border); }
+.talk-turn.pinned { border-color: var(--accent); }
+.talk-claims { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.talk-issue { font-size: 0.85em; margin-left: 4px; }
+.talk-question { font-weight: 600; }
+.talk-rechecks { margin-top: 8px; }
+.talk-meta { display: flex; gap: 8px; align-items: center; margin-top: 6px; font-size: 0.85em; }
+.talk-meta .link { margin-left: auto; }
+.talk-ask input { flex: 1; min-width: 0; }

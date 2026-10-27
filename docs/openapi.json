@@ -101,6 +101,39 @@
         "title": "AnswerSide",
         "type": "object"
       },
+      "AnsweredClaim": {
+        "additionalProperties": false,
+        "properties": {
+          "citations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "issues": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "status": {
+            "default": "UNVERIFIED",
+            "title": "Status",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "AnsweredClaim",
+        "type": "object"
+      },
       "ArchivedInvestigation": {
         "additionalProperties": false,
         "properties": {
@@ -4304,6 +4337,22 @@
         "title": "MemoryStatus",
         "type": "object"
       },
+      "Message": {
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "Message",
+        "type": "object"
+      },
       "MetricPoint": {
         "additionalProperties": false,
         "description": "One suite run, as a point on a trend line.",
@@ -5098,6 +5147,18 @@
         "title": "PathEdge",
         "type": "object"
       },
+      "Pin": {
+        "additionalProperties": false,
+        "properties": {
+          "pinned": {
+            "default": true,
+            "title": "Pinned",
+            "type": "boolean"
+          }
+        },
+        "title": "Pin",
+        "type": "object"
+      },
       "PlanChange": {
         "additionalProperties": false,
         "description": "One \"JARVIS changed its plan\": what triggered it, why, and the plan before and after.",
@@ -5589,6 +5650,51 @@
           "citations_resolved"
         ],
         "title": "ReceiptFinding",
+        "type": "object"
+      },
+      "Recheck": {
+        "additionalProperties": false,
+        "description": "A finding checked again against the case's documents as they are now.",
+        "properties": {
+          "after": {
+            "title": "After",
+            "type": "string"
+          },
+          "before": {
+            "title": "Before",
+            "type": "string"
+          },
+          "changed": {
+            "title": "Changed",
+            "type": "boolean"
+          },
+          "claim": {
+            "title": "Claim",
+            "type": "string"
+          },
+          "finding_id": {
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "finding_id",
+          "claim",
+          "before",
+          "after",
+          "changed"
+        ],
+        "title": "Recheck",
         "type": "object"
       },
       "RecordingSummary": {
@@ -6398,6 +6504,17 @@
         "title": "StatementType",
         "type": "string"
       },
+      "StopReason": {
+        "enum": [
+          "ANSWERED",
+          "ASKED_USER",
+          "STEP_LIMIT",
+          "FAILED",
+          "RECHECKED"
+        ],
+        "title": "StopReason",
+        "type": "string"
+      },
       "StoreStatus": {
         "additionalProperties": false,
         "properties": {
@@ -6738,6 +6855,27 @@
         "title": "TechniqueMapping",
         "type": "object"
       },
+      "Thread": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "turns": {
+            "items": {
+              "$ref": "#/components/schemas/Turn"
+            },
+            "title": "Turns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "case_id"
+        ],
+        "title": "Thread",
+        "type": "object"
+      },
       "TimelineEntry": {
         "additionalProperties": false,
         "properties": {
@@ -6867,6 +7005,30 @@
         "title": "TimelineRelation",
         "type": "string"
       },
+      "ToolStep": {
+        "additionalProperties": false,
+        "properties": {
+          "arguments": {
+            "additionalProperties": true,
+            "title": "Arguments",
+            "type": "object"
+          },
+          "result": {
+            "default": "",
+            "title": "Result",
+            "type": "string"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tool"
+        ],
+        "title": "ToolStep",
+        "type": "object"
+      },
       "TrendPoint": {
         "additionalProperties": false,
         "properties": {
@@ -6907,6 +7069,88 @@
         ],
         "title": "TrustStatus",
         "type": "string"
+      },
+      "Turn": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "default": "",
+            "title": "Actor",
+            "type": "string"
+          },
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/AnsweredClaim"
+            },
+            "title": "Claims",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "findings_referred": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Findings Referred",
+            "type": "array"
+          },
+          "pinned": {
+            "default": false,
+            "title": "Pinned",
+            "type": "boolean"
+          },
+          "question": {
+            "default": "",
+            "title": "Question",
+            "type": "string"
+          },
+          "rechecks": {
+            "items": {
+              "$ref": "#/components/schemas/Recheck"
+            },
+            "title": "Rechecks",
+            "type": "array"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ToolStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "stop_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StopReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "turn_id": {
+            "title": "Turn Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "turn_id",
+          "role",
+          "text"
+        ],
+        "title": "Turn",
+        "type": "object"
       },
       "UploadedDocument": {
         "additionalProperties": false,
@@ -8060,6 +8304,171 @@
         "summary": "Update Case",
         "tags": [
           "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/conversation": {
+      "get": {
+        "operationId": "get_conversation_api_v1_cases__case_id__conversation_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Conversation",
+        "tags": [
+          "conversation"
+        ]
+      },
+      "post": {
+        "description": "Answer one message. Slow by design: up to five tool calls and a verdict per claim.",
+        "operationId": "ask_api_v1_cases__case_id__conversation_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Message"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ask",
+        "tags": [
+          "conversation"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/conversation/{turn_id}/pin": {
+      "post": {
+        "operationId": "pin_api_v1_cases__case_id__conversation__turn_id__pin_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "turn_id",
+            "required": true,
+            "schema": {
+              "title": "Turn Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Pin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pin",
+        "tags": [
+          "conversation"
         ]
       }
     },

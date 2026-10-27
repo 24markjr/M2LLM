@@ -30,6 +30,7 @@ import type { EntityMemory, Episode, Fact, InvestigationMemory, MemoryStatus } f
 import type { ClaimComparison, ClaimConflict, EntityInvestigation, SearchHit, TimelineEvent } from "./types";
 import type { FormatSpec, StoredDocument, UploadedDocument } from "./types";
 import type { RetrieveResponse, WorkspaceView } from "./types";
+import type { Thread } from "./types";
 import type { AuthorityTier, EvidenceDetail, EvidenceItem, EvidenceList, IntegrityCheck } from "./types";
 import type { Case, CaseDetail, CaseList, CaseSeverity, CaseStatus } from "./types";
 import type { ChallengeResult, HypothesisSet, PlanTree } from "./types";
@@ -367,6 +368,15 @@ export const api = {
     request<Case>(`${BASE}/cases`, { method: "POST", body: JSON.stringify(body) }),
 
   getCase: (caseId: string) => request<CaseDetail>(`${BASE}/cases/${caseId}`),
+  // The investigation conversation (v4 Phase 3).
+  conversation: (caseId: string) => request<Thread>(`${BASE}/cases/${caseId}/conversation`),
+  ask: (caseId: string, text: string) =>
+    request<Thread>(`${BASE}/cases/${caseId}/conversation`, { method: "POST", body: JSON.stringify({ text }) }),
+  pinTurn: (caseId: string, turnId: string, pinned: boolean) =>
+    request<Thread>(`${BASE}/cases/${caseId}/conversation/${turnId}/pin`, {
+      method: "POST",
+      body: JSON.stringify({ pinned }),
+    }),
 
   updateCase: (
     caseId: string,

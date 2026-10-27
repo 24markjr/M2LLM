@@ -16,6 +16,7 @@ import type { CaseCounters, CaseDetail, CaseList, CaseSeverity, CaseStatus } fro
 import { CASE_STATUSES, SEVERITIES, caseLink } from "../components/cases";
 import { evidenceLink } from "../components/evidence";
 import { newMissionLink, shortHash } from "../components/workspaces";
+import { ConversationPanel } from "./Conversation";
 
 function errorText(exc: unknown): string {
   return exc instanceof ApiError ? `${exc.code}: ${exc.message}` : String(exc);
@@ -277,6 +278,8 @@ export function CasePage({ caseId }: { caseId: string }) {
           )}
         </div>
       </div>
+
+      <ConversationPanel caseId={caseId} closed={closed} />
 
       <div className="panel">
         <h2>

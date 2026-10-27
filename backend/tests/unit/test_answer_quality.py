@@ -277,3 +277,24 @@ async def test_hybrid_search_finds_what_meaning_alone_ranks_low() -> None:
     await ingest_document(store, EchoProvider(), workspace_id="w", document_id="log.txt", text=text)
     hits = await search_store(store, EchoProvider(), workspace_id="w", query="INV-1042", k=3)
     assert any("INV-1042" in h.chunk.text for h in hits)
+
+
+async def test_entailment_does_not_judge_a_figure_worked_out_from_the_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Measured live: "INR 70,000 over the approved budget", from 450,000 and 380,000, was read as a
+    contradiction (0.95). An entailment model compares words; it does not subtract."""
+    from app.intelligence.arithmetic import worked_out
+    from app.intelligence.trust.nli import Entailment
+    from app.schemas.verification import VerificationRequest
+
+    line = "finance.txt:r15: expenditure of INR 450,000 against an approved baseline of INR 380,000"
+    assert worked_out("INR 70,000 over the approved budget", [line])
+    assert not worked_out("INR 90,000 over the approved budget", [line])
+    verifier = await _composite_with(
+        monkeypatch, "SUPPORTED", Entailment(entailment=0.02, neutral=0.03, contradiction=0.95)
+    )
+    request = VerificationRequest(
+        claim="INR 70,000 over the approved budget", evidence_content={"finance.txt:r15": line}
+    )
+    assert (await verifier.verify(request)).status.value == "SUPPORTED"

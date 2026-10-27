@@ -5,6 +5,54 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-27 - v4 Phase 3a: the investigation conversation
+
+### Added
+
+- **A conversation per case** (`app/conversation/`, Cases > a case > "Ask about this case"): every
+  message, the tools each answer used, the findings it named, re-checks and the loop's stop reason,
+  kept as one file per case in the runs volume, in a folder per organisation (Phase 1c)
+- **A bounded tool loop**: each step the model returns one action - `search_evidence`, `read_span`,
+  `query_findings`, `calculate`, `compare_values`, `ask_user` or `answer`; at most five tool calls,
+  then it must answer from what it has. The stop reason (answered, asked you, tool budget, failed,
+  re-checked) is recorded and shown. When the case's documents are small they are in every step
+  whole, as in a mission (Phase 2); larger cases are read through the tools
+- **Every claim verified before it is shown**: a claim's citations must be lines of the case (an
+  uncited claim is cited by its own values when every one is on a line); the configured verifier
+  (model, lexical, entailment) gives each its mark. A claim citing nothing is shown "not verified"
+- **Re-checks by reference**: "recheck F-002" (or `run_x/F-002`) re-verifies exactly that finding
+  against the case's lines as they are now and records before and after; a message that only asks
+  that runs no model loop
+- **Pins**: a turn can be pinned
+- Routes: `GET|POST /cases/{case_id}/conversation`, `POST .../conversation/{turn_id}/pin`; the case
+  id is checked to be the caller's organisation's like every other
+- Prompt `conversation` v1
+
+### Fixed
+
+- The entailment verifier read a figure worked out from the evidence ("INR 70,000 over the approved
+  budget", from 450,000 and 380,000) as contradicting it (0.95) and downgraded a correct answer.
+  It no longer judges claims whose figures are differences or sums of the evidence's
+
+### Measured (live, qwen3:4b, the synthetic Aurora reports)
+
+Three turns, 10-18 s each: "when was it due" - 30 April 2026, cited, SUPPORTED; "does finance agree"
+(context from turn 1) - two SUPPORTED claims, 30 April and 14 May; "how much over budget" - INR
+70,000, SUPPORTED. Before the documents were given whole, turns 2 and 3 answered nothing.
+
+### Not yet (Phase 3b)
+
+- A reply box for a mission's CLARIFICATION_NEEDED; mid-case uploads that mark affected findings for
+  re-checking; each finding's version history and run-to-run comparison
+
+### Verified
+
+- A scripted five-turn investigation (context kept, every claim verified, a wrong citation shown
+  unverified, the tool budget enforced, a re-check's before/after) and four more tests; 1347 backend
+  unit tests, mypy, ruff; 133 frontend tests, tsc, build
+
+---
+
 ## 2026-10-27 - v4 Phase 2: answer quality
 
 ### Measured (benchmark, qwen3:4b, 21 scenarios, the same answer key and judge as B1)

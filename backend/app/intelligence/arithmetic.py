@@ -99,3 +99,16 @@ def is_computed(claim: str, figure: str) -> bool:
     if len(others) >= 2 and _close(target, sum(others, Decimal(0))):
         return True
     return any(a > b and _close(a - b, target) for a, b in permutations(others, 2))
+
+
+def worked_out(claim: str, evidence: list[str]) -> bool:
+    """Whether the claim states a figure in none of the evidence that is the difference or sum
+    of two figures that are - "70,000 over budget" from 450,000 and 380,000. An entailment model
+    reads such a claim as contradicting its evidence: it compares words, it does not subtract."""
+    pool = {v for text in evidence for _, v in find_figures(text)}
+    for _, value in find_figures(claim):
+        if value in pool:
+            continue
+        if any(_close(a - b, value) or _close(a + b, value) for a in pool for b in pool if a != b):
+            return True
+    return False

@@ -1293,3 +1293,51 @@ export interface CaseDetail {
   investigations: CaseInvestigation[];
   evidence: { item: EvidenceItem; added_at: string; added_by: string }[];
 }
+
+// --- the investigation conversation (v4 Phase 3) ---------------------------------------------
+
+export type StopReason = "ANSWERED" | "ASKED_USER" | "STEP_LIMIT" | "FAILED" | "RECHECKED";
+
+export interface AnsweredClaim {
+  text: string;
+  citations: string[];
+  // The verifier's verdict, or UNVERIFIED when nothing it cites is a line of the case.
+  status: string;
+  issues: string[];
+}
+
+export interface ToolStep {
+  tool: string;
+  arguments: Record<string, unknown>;
+  result: string;
+}
+
+export interface Recheck {
+  run_id: string;
+  finding_id: string;
+  claim: string;
+  before: string;
+  after: string;
+  changed: boolean;
+  reason: string;
+}
+
+export interface Turn {
+  turn_id: string;
+  role: "user" | "assistant";
+  text: string;
+  actor: string;
+  claims: AnsweredClaim[];
+  steps: ToolStep[];
+  stop_reason: StopReason | null;
+  findings_referred: string[];
+  rechecks: Recheck[];
+  question: string;
+  pinned: boolean;
+  created_at: string;
+}
+
+export interface Thread {
+  case_id: string;
+  turns: Turn[];
+}
