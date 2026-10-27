@@ -5,6 +5,59 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-27 - v4 Phase 1b: production deployment on GCP (Tessera)
+
+### Added
+
+- **Production images** (`deploy/Dockerfile.backend`, `deploy/Dockerfile.web`): the backend runs as
+  a non-root user; the web image is Caddy serving the console build and proxying `/api/*`,
+  `/health`, `/health/*`, `/docs`, `/openapi.json` to the backend. `.dockerignore` keeps `.env`,
+  `AURORA/`, reports, `.claude/` and runtime state out of every image
+- **Automatic HTTPS** at https://8.231.91.94.sslip.io (Caddy + Let's Encrypt), HTTP redirected,
+  HSTS, `X-Frame-Options: DENY`, `nosniff`, no `Server` header; session cookie `Secure`
+- **Compose stack** (`deploy/docker-compose.prod.yml`, project `tessera`): web, backend, a one-shot
+  `migrate`, Postgres 16 + pgvector, Neo4j 5. Only web publishes ports (80/443); evidence, runs,
+  uploads, traces and media cache live on named volumes, so a redeploy never loses them
+- **`GET /health/live`**: the process answers without asking the model, for the container health
+  check; `/health` still reports the model (`degraded` when the laptop is away)
+- **Secrets from Secret Manager** (`deploy/vm-env.sh`): `/opt/tessera/.env` is written on the VM,
+  root-only; no password is in the repository, an image or the laptop
+- **Deploy and rollback** (`deploy/deploy.sh`): refuses a dirty tree; images tagged by git commit;
+  `deploy.sh rollback` returns to the previous tag without building
+- **Backups** (`deploy/backup.sh`, `deploy/restore.sh`): `pg_dump` + evidence/runs/traces volumes +
+  SHA-256 sums to `gs://tessera-jarvis-backups` (versioned, 30-day lifecycle), nightly at 02:15 UTC
+  via `/etc/cron.d/tessera-backup`; restore checks every checksum and asks before replacing
+- **Hybrid model link** (`scripts/expose-ollama-tailscale.ps1`): the laptop's Ollama is reachable
+  only from Tailscale addresses (100.64.0.0/10), never the internet or the Wi-Fi
+
+### Infrastructure (project `tessera-jarvis`, asia-south1)
+
+- VM `tessera-vm` (e2-standard-2, Ubuntu 24.04, shielded), static IP 8.231.91.94, service account
+  `tessera-vm@` with only registry read, secret access, logging, metrics and the backup bucket
+- Firewall: the default allow-SSH/RDP-from-anywhere rules deleted; 80/443 open; SSH only through
+  IAP (35.235.240.0/20)
+- Artifact Registry `tessera`; secrets `tessera-postgres-password`, `tessera-neo4j-password`,
+  `tessera-admin-password` (replicated in asia-south1 only)
+
+### Fixed
+
+- The first deploy's backend was "unhealthy": the health check asked `/health`, which waits for the
+  (then unreachable) model - now `/health/live`
+- Caddy forwarded only the exact path `/health`, so `/health/live` returned the console page
+- Unit tests reached a running local Postgres through the new account store ("Event loop is
+  closed"); non-integration tests now force the auth and review stores to memory
+
+### Verified
+
+- 1300 backend unit tests; production stack locally (all migrations, sign-in, 401s, headers,
+  backup/restore round trip)
+- On GCP: valid certificate, HTTP->HTTPS 308, anonymous `/api/*` and `/docs` 401, real sign-in
+  over HTTPS with the Secret Manager password, cookie `HttpOnly; Secure; SameSite=lax`; ports 22,
+  5432, 7687, 8000, 11434 closed from the internet; a real backup in the bucket with checksums;
+  rollback to `a32956b` and forward to `3f27d08`
+
+---
+
 ## 2026-10-26 - v4 Phase 1a: accounts, sessions and roles
 
 ### Added

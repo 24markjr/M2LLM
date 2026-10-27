@@ -194,3 +194,16 @@ already, for 1c. The audit actor is now the signed-in user, not a header the cal
 Deployment shape decided with the owner: **hybrid** - GCP runs the console, backend, databases and
 evidence; the laptop's GPU runs the model over Tailscale, so the cloud GPU costs nothing until a
 customer needs it.
+
+### Phase 1b - as built (2026-10-27)
+
+Live at https://8.231.91.94.sslip.io on `tessera-vm` (e2-standard-2, asia-south1-a), one Docker
+Compose stack: Caddy (automatic HTTPS, security headers) -> backend -> Postgres + pgvector, Neo4j.
+Only 80/443 are open; SSH only through IAP. Secrets come from Secret Manager onto the VM, never the
+repository. Images are tagged by git commit; `deploy/deploy.sh` deploys HEAD, `deploy.sh rollback`
+returns to the previous tag (tested both ways). Nightly backups (database + evidence, runs, traces,
+with SHA-256 sums) go to a versioned bucket kept 30 days; a restore is checked before it replaces
+anything. The model runs on the laptop over Tailscale (`scripts/expose-ollama-tailscale.ps1`); when
+the laptop is off, the console still works and `/health` says `degraded`.
+Deferred: a domain name (sslip.io for now), Tailscale ACLs limiting the VM to port 11434, Cloud
+Monitoring uptime alerts.
