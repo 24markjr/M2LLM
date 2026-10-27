@@ -14,6 +14,7 @@ import { casesChanged } from "../shell/Sidebar";
 import { browserStorage } from "../theme/theme";
 import { useTheme } from "../theme/ThemeProvider";
 import { Badge, Button, ConfirmDialog, Notice, useToast } from "../ui/components";
+import { GovernanceCard, OperationsCard } from "./Operations";
 import { AccountCard, OrganisationsCard, PeopleCard } from "./People";
 import { olderThan, RETENTION_DAYS } from "./settings";
 import "./settings.css";
@@ -111,6 +112,8 @@ export function SettingsPage() {
       <AccountCard />
       <PeopleCard />
       <OrganisationsCard />
+      <OperationsCard />
+      <GovernanceCard />
 
       <section className="settings-card" aria-labelledby="s-appearance">
         <h2 id="s-appearance">Appearance</h2>

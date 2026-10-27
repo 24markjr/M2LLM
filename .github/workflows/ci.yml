@@ -194,6 +194,12 @@ jobs:
         working-directory: backend
         run: python scripts/export_openapi.py --check
 
+      # v4 Phase 9: the release gate. The latest committed benchmark report must clear the floors in
+      # .agent/config/release_gate.yaml; red fails the build and blocks a deploy.
+      - name: release gate
+        working-directory: backend
+        run: python scripts/release_gate.py
+
   frontend:
     name: frontend (tsc + build + vitest)
     runs-on: ubuntu-latest

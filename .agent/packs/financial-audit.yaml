@@ -1,0 +1,18 @@
+# Financial audit: payments, approvals, budgets, ledgers.
+id: financial-audit
+name: Financial audit
+description: Payments against approvals, budgets against spend, ledgers against invoices.
+attributes: [invoice_number, po_number, approved_amount, paid_amount, budget, spend, approver, payee, payment_date, account]
+severity:
+  HIGH: [paid twice, duplicate payment, without approval, not approved, unapproved, exceeds the approved, over budget, overrun, related party, same address]
+  MEDIUM: [variance, no change request, unreconciled, missing invoice, missing approval]
+report:
+  title: Financial Audit Report
+  brief: Audit summary
+  findings: Audit findings
+  contradictions: Conflicting records
+  gaps: Open audit points and evidence requested
+starter_questions:
+  - Did any payment exceed what was approved, and who approved it?
+  - Was any invoice paid twice, or paid without a purchase order?
+  - Do the ledger totals reconcile with the invoices?

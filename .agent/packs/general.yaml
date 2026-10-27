@@ -1,0 +1,8 @@
+# The default pack: changes nothing. Every other pack is measured against it.
+id: general
+name: General
+description: Any documents, any question. No domain-specific severity or wording.
+starter_questions:
+  - Do these documents contradict each other?
+  - What dates, amounts and names do the documents disagree on?
+  - What is missing that the documents should contain?

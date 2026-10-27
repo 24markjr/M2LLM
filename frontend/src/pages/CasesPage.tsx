@@ -17,6 +17,7 @@ import { CASE_STATUSES, SEVERITIES, caseLink } from "../components/cases";
 import { evidenceLink } from "../components/evidence";
 import { newMissionLink, shortHash } from "../components/workspaces";
 import { CompareRuns, StaleNotice } from "./CaseFollowUp";
+import { CaseWatch } from "./CaseWatch";
 import { ConversationPanel } from "./Conversation";
 
 function errorText(exc: unknown): string {
@@ -283,6 +284,7 @@ export function CasePage({ caseId }: { caseId: string }) {
       <StaleNotice caseId={caseId} />
       <ConversationPanel caseId={caseId} closed={closed} />
       <CompareRuns caseId={caseId} investigations={detail.investigations} />
+      {closed ? null : <CaseWatch caseId={caseId} />}
 
       <div className="panel">
         <h2>

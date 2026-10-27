@@ -27,6 +27,10 @@ if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
 fi
 TAG="$(git rev-parse --short HEAD)"
 
+# The release gate (v4 Phase 9): a red benchmark blocks the deploy before anything is built.
+PYTHON="backend/.venv/Scripts/python"; [[ -x "$PYTHON" ]] || PYTHON="backend/.venv/bin/python"
+"$PYTHON" backend/scripts/release_gate.py || { echo "release gate is red: not deploying" >&2; exit 1; }
+
 for image in backend web; do
   docker build -q -f "deploy/Dockerfile.${image}" -t "${REGISTRY}/jarvis-${image}:${TAG}" .
   docker push -q "${REGISTRY}/jarvis-${image}:${TAG}"
@@ -47,3 +51,6 @@ remote "set -e; sudo cp -r /tmp/tessera-deploy/* /opt/tessera/ && sudo chmod 700
   && sudo docker compose -p tessera -f docker-compose.prod.yml --env-file .env pull -q \
   && sudo docker compose -p tessera -f docker-compose.prod.yml --env-file .env up -d \
   && echo ${TAG} | sudo tee TAG >/dev/null && echo deployed ${TAG}"
+
+# After the deploy, the outside view (v4 Phase 8): headers, every route refusing anonymous, ports.
+"$PYTHON" backend/scripts/security_check.py "https://${SITE:-8.231.91.94.sslip.io}"   || echo "WARNING: the security check found problems - see above" >&2

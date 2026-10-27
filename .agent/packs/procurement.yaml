@@ -1,0 +1,18 @@
+# Procurement: tenders, vendors, contracts, deliveries.
+id: procurement
+name: Procurement review
+description: Tenders, vendor selection, contracts and deliveries against orders.
+attributes: [tender_id, vendor, bid_amount, contract_value, po_number, ordered_quantity, delivered_quantity, delivery_date, director]
+severity:
+  HIGH: [single bid, short delivery, delivered less, conflict of interest, related party, same address, same director, split order]
+  MEDIUM: [late delivery, price above, missing quotation, no tender]
+report:
+  title: Procurement Review
+  brief: Review summary
+  findings: Review findings
+  contradictions: Conflicting records
+  gaps: Open points and documents requested
+starter_questions:
+  - Was the delivered quantity what was ordered and paid for?
+  - Are any vendors related to the people who chose them?
+  - Was the contract awarded as the tender rules required?

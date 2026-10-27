@@ -20,7 +20,7 @@ dependencies = [
     "structlog>=24.4",
     "python-multipart>=0.0.12",
     "pyyaml>=6.0",
-    "pypdf>=5.1",
+    "pypdf>=6.21.2",  # v4 Phase 8 audit: CVE-2026-115572, -115580, -115585 fixed in 6.21.2
     # The knowledge graph store (Phase 29, ADR-010). Imported only by app/integrations/.
     "neo4j>=5.20",
     # Document formats (Phase 38, Member 2): Word, Excel and images. Imported only by app/tools/formats.py.

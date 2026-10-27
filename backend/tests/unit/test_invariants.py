@@ -200,6 +200,11 @@ def test_no_unbounded_while_true_outside_a_guarded_loop() -> None:
         # self._max_attempts`; fallbacks are capped by the `tried` set against a finite
         # registry; every remaining path returns. Read 2026-09-25.
         "intelligence/execution/engine.py": 1,
+        # v4 Phases 8 and 10: the daily retention sweep and the five-minute watch sweep. Each sleeps
+        # first, catches its own failures, and ends when the app's lifespan cancels its task at
+        # shutdown (app/api/app.py). Read 2026-10-27.
+        "ops/governance.py": 1,
+        "ops/watch.py": 1,
     }
 
     found: dict[str, int] = {}

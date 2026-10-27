@@ -31,6 +31,8 @@ import type { ClaimComparison, ClaimConflict, EntityInvestigation, SearchHit, Ti
 import type { FormatSpec, StoredDocument, UploadedDocument } from "./types";
 import type { RetrieveResponse, WorkspaceView } from "./types";
 import type { FindingHistory, ReportVersion, RunComparison, StaleFinding, Thread } from "./types";
+import type { GovernancePolicy, OpsSummary, RetentionResult, SubjectReport } from "./types";
+import type { Packs, WatchScan, WatchView } from "./types";
 import type { AuthorityTier, EvidenceDetail, EvidenceItem, EvidenceList, IntegrityCheck } from "./types";
 import type { Case, CaseDetail, CaseList, CaseSeverity, CaseStatus } from "./types";
 import type { ChallengeResult, HypothesisSet, PlanTree } from "./types";
@@ -219,6 +221,29 @@ export const api = {
   /** The investigation report as it stands (Phase 51). */
   getInvestigationReport: (runId: string) =>
     request<InvestigationReport>(`${BASE}/missions/${runId}/investigation-report`),
+
+  /** Operating the organisation (v4 Phase 8): admins only. */
+  opsMetrics: (days = 7) => request<OpsSummary>(`${BASE}/ops/metrics?days=${days}`),
+  governancePolicy: () => request<GovernancePolicy>(`${BASE}/governance/policy`),
+  saveGovernancePolicy: (policy: GovernancePolicy) =>
+    request<GovernancePolicy>(`${BASE}/governance/policy`, { method: "PUT", body: JSON.stringify(policy) }),
+  applyRetention: (dryRun: boolean) =>
+    request<RetentionResult>(`${BASE}/governance/retention?dry_run=${dryRun}`, { method: "POST" }),
+  subjectSearch: (identifier: string) =>
+    request<SubjectReport>(`${BASE}/governance/subject/search`, { method: "POST", body: JSON.stringify({ identifier }) }),
+  subjectErase: (identifier: string) =>
+    request<SubjectReport>(`${BASE}/governance/subject/erase`, {
+      method: "POST",
+      body: JSON.stringify({ identifier, confirm: "erase" }),
+    }),
+  auditCsvUrl: () => `${BASE}/governance/audit.csv`,
+
+  /** Breadth (v4 Phase 10): domain packs, watch folders. */
+  packs: () => request<Packs>(`${BASE}/packs`),
+  caseWatch: (caseId: string) => request<WatchView>(`${BASE}/cases/${caseId}/watch`),
+  saveCaseWatch: (caseId: string, body: { enabled: boolean; rerun_on_new_files: boolean; rerun_every_days: number }) =>
+    request<WatchView>(`${BASE}/cases/${caseId}/watch`, { method: "PUT", body: JSON.stringify(body) }),
+  scanCaseWatch: (caseId: string) => request<WatchScan>(`${BASE}/cases/${caseId}/watch/scan`, { method: "POST" }),
 
   /** Every export of the report, signed with its hashes (v4 Phase 5). */
   reportVersions: (runId: string) =>

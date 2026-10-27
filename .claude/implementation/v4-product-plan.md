@@ -266,3 +266,15 @@ side by side, timeline, gaps, appendix with receipt and file hashes - drawn as H
 not headless Chromium: a 300 MB browser in the image for text and tables was not worth it) and DOCX.
 Every export is a numbered version signed with the content, receipt and case-snapshot hashes.
 Remaining: reading it against the four AURORA test reports, locally, with the owner.
+
+### Phases 8, 9 and 10 - as built (2026-10-27)
+
+**8.** A visible FIFO queue; per-run metrics and cost from the run's own timeline; retention,
+masking, DPDP search and erasure, audit CSV; CSP; a scripted attack after every deploy; dependency
+audit (pypdf CVEs fixed). Bar met: ten at once, all completed, INR 2.64 per investigation. Not done:
+an independent penetration test.
+**9.** A release gate on the benchmark (floors block, targets report) in CI and in `deploy.sh`; user,
+admin, API, security-and-privacy and on-premise guides. Not done: teammate-written held-out sets.
+**10.** Five domain packs; watch folders with scheduled re-investigation; an air-gapped bundle and
+installer. Not done: an install rehearsed on a clean disconnected server.
+Phases 6 and 7 (Indian languages, Bhashini) remain.

@@ -122,6 +122,12 @@ class Settings(BaseSettings):
     # time, so admitting more runs than this does not make them finish sooner - it makes
     # all of them slower and the queue invisible.
     max_concurrent_runs: int = Field(default=2, ge=1, le=32)
+    # What an investigation costs (v4 Phase 8), estimated from time at configured hourly rates: the
+    # model's working time at the GPU rate, the run's time at a share of the server's. Defaults are
+    # GCP asia-south1 list prices: g2-standard-4 with one L4 (~US$0.85/h) and e2-standard-2
+    # (~US$0.067/h), at INR 84 a dollar. On the laptop GPU the GPU part is notional.
+    gpu_cost_per_hour_inr: float = Field(default=71.0, ge=0)
+    server_cost_per_hour_inr: float = Field(default=5.6, ge=0)
     # Knowledge layer (Phase 28). Each chunk is one model call, so this bounds the extraction
     # loop; claims bound the memory a run's knowledge base can take.
     max_knowledge_chunks: int = Field(default=40, ge=1, le=500)

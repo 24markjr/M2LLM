@@ -67,12 +67,11 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
     registry = get_registry()
 
     if registry.at_capacity:
-        # Refusing is more honest than queueing silently. A local model serves one request
-        # at a time, so an accepted-but-queued mission would sit at PENDING with no
-        # indication of why, and look identical to one that had hung.
+        # Runs queue for a slot (v4 Phase 8) and say where they are in it (`queue_position`), so
+        # a waiting run never looks like a hung one. Only a full queue is refused.
         raise ApiError(
             "AT_CAPACITY",
-            "too many missions are already running; retry when one finishes",
+            "the queue of investigations is full; retry when some have finished",
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         )
 
@@ -543,6 +542,7 @@ def _detail(record: MissionRecord) -> MissionDetail:
     base = _summary(record)
     return MissionDetail(
         **base.model_dump(),
+        queue_position=get_registry().queue_position(record.run_id),
         goal=intent.goal if intent else "",
         required_operations=(
             [op.operation.value for op in intent.required_operations] if intent else []

@@ -42,6 +42,7 @@ from app.llm.errors import LLMError
 from app.llm.prompts import get_prompt_library
 from app.llm.provider import LLMProvider
 from app.llm.structured import generate_structured
+from app.packs import current_pack
 from app.schemas.common import JarvisModel
 from app.schemas.evidence import is_seen_line
 from app.schemas.knowledge import KnowledgeSnapshot
@@ -269,7 +270,10 @@ class KnowledgeExtractor:
             document=chunk.document_id,
             lines=wrap_untrusted(chunk.document_id, chunk.numbered()),
             known_entities=_listing(store.entity_names[:limit]),
-            known_attributes=_listing(store.attribute_names[:limit]),
+            # The domain pack's attribute names first (v4 Phase 10): the same value, named alike.
+            known_attributes=_listing(
+                list(dict.fromkeys([*current_pack().attributes, *store.attribute_names]))[:limit]
+            ),
         )
         store.stats.llm_calls += 1
         try:

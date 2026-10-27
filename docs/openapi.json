@@ -4690,6 +4690,11 @@
             "title": "Objective",
             "type": "string"
           },
+          "queue_position": {
+            "default": 0,
+            "title": "Queue Position",
+            "type": "integer"
+          },
           "replan_iterations": {
             "default": 0,
             "title": "Replan Iterations",
@@ -5089,6 +5094,131 @@
         "title": "NodeDetail",
         "type": "object"
       },
+      "OpsSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "by_day": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "title": "By Day",
+            "type": "array"
+          },
+          "cancelled": {
+            "default": 0,
+            "title": "Cancelled",
+            "type": "integer"
+          },
+          "completed": {
+            "default": 0,
+            "title": "Completed",
+            "type": "integer"
+          },
+          "cost_per_investigation_inr": {
+            "default": 0.0,
+            "title": "Cost Per Investigation Inr",
+            "type": "number"
+          },
+          "cost_total_inr": {
+            "default": 0.0,
+            "title": "Cost Total Inr",
+            "type": "number"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "duration_p50_s": {
+            "default": 0.0,
+            "title": "Duration P50 S",
+            "type": "number"
+          },
+          "duration_p95_s": {
+            "default": 0.0,
+            "title": "Duration P95 S",
+            "type": "number"
+          },
+          "error_rate": {
+            "default": 0.0,
+            "title": "Error Rate",
+            "type": "number"
+          },
+          "failed": {
+            "default": 0,
+            "title": "Failed",
+            "type": "integer"
+          },
+          "investigations": {
+            "default": 0,
+            "title": "Investigations",
+            "type": "integer"
+          },
+          "llm_calls": {
+            "default": 0,
+            "title": "Llm Calls",
+            "type": "integer"
+          },
+          "model": {
+            "default": "",
+            "title": "Model",
+            "type": "string"
+          },
+          "model_healthy": {
+            "default": false,
+            "title": "Model Healthy",
+            "type": "boolean"
+          },
+          "queue_wait_p50_s": {
+            "default": 0.0,
+            "title": "Queue Wait P50 S",
+            "type": "number"
+          },
+          "rates": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Rates",
+            "type": "object"
+          },
+          "recent_errors": {
+            "items": {
+              "$ref": "#/components/schemas/RunMetrics"
+            },
+            "title": "Recent Errors",
+            "type": "array"
+          },
+          "running": {
+            "default": 0,
+            "title": "Running",
+            "type": "integer"
+          },
+          "tokens": {
+            "default": 0,
+            "title": "Tokens",
+            "type": "integer"
+          },
+          "waiting": {
+            "default": 0,
+            "title": "Waiting",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days"
+        ],
+        "title": "OpsSummary",
+        "type": "object"
+      },
       "Organisation": {
         "additionalProperties": false,
         "properties": {
@@ -5113,6 +5243,81 @@
           "accounts"
         ],
         "title": "Organisation",
+        "type": "object"
+      },
+      "Pack": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Attributes",
+            "type": "array"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "report": {
+            "$ref": "#/components/schemas/ReportWords"
+          },
+          "severity": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/app__schemas__investigation_report__Severity"
+            },
+            "title": "Severity",
+            "type": "object"
+          },
+          "starter_questions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Starter Questions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "Pack",
+        "type": "object"
+      },
+      "Packs": {
+        "additionalProperties": false,
+        "properties": {
+          "current": {
+            "title": "Current",
+            "type": "string"
+          },
+          "packs": {
+            "items": {
+              "$ref": "#/components/schemas/Pack"
+            },
+            "title": "Packs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "current"
+        ],
+        "title": "Packs",
         "type": "object"
       },
       "Pair": {
@@ -5468,6 +5673,31 @@
           "name"
         ],
         "title": "PlanWorkstream",
+        "type": "object"
+      },
+      "Policy": {
+        "additionalProperties": false,
+        "properties": {
+          "mask_personal_data": {
+            "default": false,
+            "title": "Mask Personal Data",
+            "type": "boolean"
+          },
+          "pack": {
+            "default": "general",
+            "pattern": "^[a-z0-9-]{1,48}$",
+            "title": "Pack",
+            "type": "string"
+          },
+          "retention_days": {
+            "default": 0,
+            "maximum": 3650.0,
+            "minimum": 0.0,
+            "title": "Retention Days",
+            "type": "integer"
+          }
+        },
+        "title": "Policy",
         "type": "object"
       },
       "QualityComponent": {
@@ -6134,6 +6364,38 @@
         "title": "ReportVersion",
         "type": "object"
       },
+      "ReportWords": {
+        "additionalProperties": false,
+        "properties": {
+          "brief": {
+            "default": "Executive brief",
+            "title": "Brief",
+            "type": "string"
+          },
+          "contradictions": {
+            "default": "Contradictions",
+            "title": "Contradictions",
+            "type": "string"
+          },
+          "findings": {
+            "default": "Findings",
+            "title": "Findings",
+            "type": "string"
+          },
+          "gaps": {
+            "default": "Gaps and next evidence",
+            "title": "Gaps",
+            "type": "string"
+          },
+          "title": {
+            "default": "Investigation Report",
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "title": "ReportWords",
+        "type": "object"
+      },
       "Rerun": {
         "additionalProperties": false,
         "properties": {
@@ -6156,6 +6418,39 @@
         ],
         "title": "ResolutionStatus",
         "type": "string"
+      },
+      "RetentionResult": {
+        "additionalProperties": false,
+        "properties": {
+          "deleted": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Deleted",
+            "type": "array"
+          },
+          "dry_run": {
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "kept_running": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Kept Running",
+            "type": "array"
+          },
+          "retention_days": {
+            "title": "Retention Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "retention_days",
+          "dry_run"
+        ],
+        "title": "RetentionResult",
+        "type": "object"
       },
       "RetrievalHit": {
         "additionalProperties": false,
@@ -6451,6 +6746,117 @@
           "b"
         ],
         "title": "RunComparison",
+        "type": "object"
+      },
+      "RunMetrics": {
+        "additionalProperties": false,
+        "properties": {
+          "completion_tokens": {
+            "default": 0,
+            "title": "Completion Tokens",
+            "type": "integer"
+          },
+          "cost_inr": {
+            "default": 0.0,
+            "title": "Cost Inr",
+            "type": "number"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "duration_s": {
+            "default": 0.0,
+            "title": "Duration S",
+            "type": "number"
+          },
+          "error": {
+            "default": "",
+            "title": "Error",
+            "type": "string"
+          },
+          "failed_calls": {
+            "default": 0,
+            "title": "Failed Calls",
+            "type": "integer"
+          },
+          "llm_calls": {
+            "default": 0,
+            "title": "Llm Calls",
+            "type": "integer"
+          },
+          "model_seconds": {
+            "default": 0.0,
+            "title": "Model Seconds",
+            "type": "number"
+          },
+          "prompt_tokens": {
+            "default": 0,
+            "title": "Prompt Tokens",
+            "type": "integer"
+          },
+          "queue_wait_s": {
+            "default": 0.0,
+            "title": "Queue Wait S",
+            "type": "number"
+          },
+          "repairs": {
+            "default": 0,
+            "title": "Repairs",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "status",
+          "created_at"
+        ],
+        "title": "RunMetrics",
+        "type": "object"
+      },
+      "ScanResult": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "folder": {
+            "title": "Folder",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          },
+          "rerun": {
+            "default": "",
+            "title": "Rerun",
+            "type": "string"
+          },
+          "taken": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Taken",
+            "type": "array"
+          }
+        },
+        "required": [
+          "case_id",
+          "folder"
+        ],
+        "title": "ScanResult",
         "type": "object"
       },
       "ScenarioScore": {
@@ -6846,6 +7252,108 @@
           }
         },
         "title": "StreamRequest",
+        "type": "object"
+      },
+      "SubjectHit": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "default": "",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "excerpt": {
+            "default": "",
+            "title": "Excerpt",
+            "type": "string"
+          },
+          "location": {
+            "default": "",
+            "title": "Location",
+            "type": "string"
+          },
+          "run_id": {
+            "default": "",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "where": {
+            "title": "Where",
+            "type": "string"
+          }
+        },
+        "required": [
+          "where"
+        ],
+        "title": "SubjectHit",
+        "type": "object"
+      },
+      "SubjectReport": {
+        "additionalProperties": false,
+        "properties": {
+          "conversations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Conversations",
+            "type": "array"
+          },
+          "erased": {
+            "default": false,
+            "title": "Erased",
+            "type": "boolean"
+          },
+          "evidence_files": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Files",
+            "type": "array"
+          },
+          "hits": {
+            "items": {
+              "$ref": "#/components/schemas/SubjectHit"
+            },
+            "title": "Hits",
+            "type": "array"
+          },
+          "identifier": {
+            "title": "Identifier",
+            "type": "string"
+          },
+          "investigations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Investigations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "identifier"
+        ],
+        "title": "SubjectReport",
+        "type": "object"
+      },
+      "SubjectRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "default": "",
+            "title": "Confirm",
+            "type": "string"
+          },
+          "identifier": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Identifier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "identifier"
+        ],
+        "title": "SubjectRequest",
         "type": "object"
       },
       "SystemStores": {
@@ -7824,6 +8332,78 @@
           "status"
         ],
         "title": "VerifierOpinion",
+        "type": "object"
+      },
+      "WatchUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "default": false,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "rerun_every_days": {
+            "default": 0,
+            "maximum": 365.0,
+            "minimum": 0.0,
+            "title": "Rerun Every Days",
+            "type": "integer"
+          },
+          "rerun_on_new_files": {
+            "default": true,
+            "title": "Rerun On New Files",
+            "type": "boolean"
+          }
+        },
+        "title": "WatchUpdate",
+        "type": "object"
+      },
+      "WatchView": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "default": false,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "folder": {
+            "default": "",
+            "title": "Folder",
+            "type": "string"
+          },
+          "last_rerun_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Rerun At"
+          },
+          "rerun_every_days": {
+            "default": 0,
+            "maximum": 365.0,
+            "minimum": 0.0,
+            "title": "Rerun Every Days",
+            "type": "integer"
+          },
+          "rerun_on_new_files": {
+            "default": true,
+            "title": "Rerun On New Files",
+            "type": "boolean"
+          },
+          "seen": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Seen",
+            "type": "object"
+          }
+        },
+        "title": "WatchView",
         "type": "object"
       },
       "WorkingMemorySnapshot": {
@@ -9185,6 +9765,152 @@
         ]
       }
     },
+    "/api/v1/cases/{case_id}/watch": {
+      "get": {
+        "operationId": "get_watch_api_v1_cases__case_id__watch_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Watch",
+        "tags": [
+          "operations"
+        ]
+      },
+      "put": {
+        "operationId": "put_watch_api_v1_cases__case_id__watch_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Watch",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/watch/scan": {
+      "post": {
+        "description": "Look in the folder now instead of waiting for the next sweep.",
+        "operationId": "scan_now_api_v1_cases__case_id__watch_scan_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Scan Now",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
     "/api/v1/context/ingest": {
       "post": {
         "description": "Chunk, embed and store documents in a workspace. Unchanged files are not re-embedded.",
@@ -9975,6 +10701,247 @@
         "summary": "Verify Evidence",
         "tags": [
           "evidence"
+        ]
+      }
+    },
+    "/api/v1/governance/audit.csv": {
+      "get": {
+        "operationId": "audit_export_api_v1_governance_audit_csv_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Audit Export",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/governance/policy": {
+      "get": {
+        "operationId": "get_policy_api_v1_governance_policy_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Policy"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Policy",
+        "tags": [
+          "operations"
+        ]
+      },
+      "put": {
+        "operationId": "put_policy_api_v1_governance_policy_put",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Policy"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Policy"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Policy",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/governance/retention": {
+      "post": {
+        "operationId": "retention_api_v1_governance_retention_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dry_run",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Dry Run",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retention",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/governance/subject/erase": {
+      "post": {
+        "operationId": "subject_erase_api_v1_governance_subject_erase_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubjectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubjectReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Subject Erase",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/governance/subject/search": {
+      "post": {
+        "operationId": "subject_search_api_v1_governance_subject_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubjectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubjectReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Subject Search",
+        "tags": [
+          "operations"
         ]
       }
     },
@@ -12756,6 +13723,121 @@
         "summary": "Get Tasks",
         "tags": [
           "missions"
+        ]
+      }
+    },
+    "/api/v1/ops/metrics": {
+      "get": {
+        "operationId": "metrics_api_v1_ops_metrics_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Metrics",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/ops/metrics/runs": {
+      "get": {
+        "operationId": "run_list_api_v1_ops_metrics_runs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RunMetrics"
+                  },
+                  "title": "Response Run List Api V1 Ops Metrics Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run List",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/packs": {
+      "get": {
+        "operationId": "packs_api_v1_packs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Packs"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Packs",
+        "tags": [
+          "operations"
         ]
       }
     },

@@ -1,0 +1,22 @@
+# The release gate (v4 Phase 9): what the latest benchmark report must show before a release.
+#
+# `floor` blocks a release: it is the level measured when Phase 2 finished, so a change that makes
+# answers worse cannot ship. `target` is the v4 plan's bar; it is reported, and does not block, until
+# a measured run reaches it - then move it into `floor`. Raise floors when a run beats them; never
+# lower one to let a release through.
+
+benchmark:
+  floor:
+    correct: 0.85              # share of the answer key's facts stated (Phase 2: 0.900)
+    factscore: 0.85            # share of sentences supported by a line of the files (0.917)
+    citation_precision: 0.75   # share of citations whose line is relevant (0.775)
+    invented_max: 0            # dates and figures in no file (0)
+    false_alarms_max: 0        # alarms raised on negative and injection scenarios (0/7)
+    errors_max: 0              # scenarios that crashed
+    mean_latency_s_max: 120    # per investigation, laptop RTX 4050 (67.9 s)
+    scenarios_min: 21          # the report covers the whole suite, multimodal included
+  target:
+    correct_vs_plain: 0.0      # JARVIS's correct minus the plain model's (Phase 2: -0.078)
+    citation_precision: 0.9
+  # A report older than this is not evidence about the code being released.
+  max_age_days: 45

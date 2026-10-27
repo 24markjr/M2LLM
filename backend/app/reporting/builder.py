@@ -24,6 +24,7 @@ from app.intelligence.challenge import ChallengeOutcome, ChallengeResult
 from app.intelligence.temporal import find_dates
 from app.orchestration.labels import step_label
 from app.orchestration.mission import MissionResult
+from app.packs import Pack
 from app.reporting.units import unit_mismatch
 from app.review.service import counts_as_established
 from app.schemas.common import JarvisModel
@@ -138,6 +139,7 @@ def build_report(
     events: list[ExecutionEvent] | None = None,
     model: str = "",
     receipt_hash: str = "",
+    pack: Pack | None = None,
 ) -> InvestigationReport:
     rules = get_severity_rules()
     items = items or {}
@@ -160,6 +162,10 @@ def build_report(
             case_severity=case_severity,
             rules=rules,
         )
+        # The organisation's domain pack can raise a severity, never lower one (v4 Phase 10).
+        raised = pack.severity_for(finding.claim) if pack is not None else None
+        if raised is not None and SEVERITY_ORDER.index(raised[0]) > SEVERITY_ORDER.index(severity):
+            severity, reason = raised
         verdict = finding.verification.status.value if finding.verification else "UNVERIFIED"
         entry = ReportFinding(
             finding_id=finding.finding_id,

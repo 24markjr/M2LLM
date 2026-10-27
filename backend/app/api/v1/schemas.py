@@ -58,6 +58,8 @@ class MissionDetail(MissionSummary):
 
     goal: str = ""
     required_operations: list[str] = Field(default_factory=list)
+    # Where it waits (v4 Phase 8): 1 starts next; 0 when it is not waiting.
+    queue_position: int = 0
     task_count: int = 0
     replan_iterations: int = 0
     termination_reason: str = ""

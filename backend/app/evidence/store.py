@@ -11,6 +11,7 @@ The named copy missions parse stays in `.agent/uploads/`; this one is the origin
 from __future__ import annotations
 
 import hashlib
+import secrets
 import shutil
 from pathlib import Path
 
@@ -44,12 +45,24 @@ def put(source: Path) -> tuple[str, Path]:
     if target.exists():
         return sha, target
     target.parent.mkdir(parents=True, exist_ok=True)
-    partial = target.with_suffix(".part")
+    # A temporary name of its own (v4 Phase 8): investigations that admit the same file at once
+    # each copy to their own, and the first to finish puts it in place. One shared ".part" name
+    # failed on Windows ("being used by another process") and could interleave two writes.
+    partial = target.with_name(f"{target.name}.{secrets.token_hex(6)}.part")
     shutil.copyfile(source, partial)
     if hash_file(partial) != sha:  # the source changed while it was being copied
         partial.unlink(missing_ok=True)
         raise OSError(f"{source.name} changed while it was being stored")
-    partial.replace(target)
+    try:
+        if target.exists():  # another writer finished first: the same bytes are already there
+            partial.unlink(missing_ok=True)
+            return sha, target
+        partial.replace(target)
+    except PermissionError:
+        partial.unlink(missing_ok=True)
+        if not target.exists():
+            raise
+        return sha, target
     target.chmod(0o444)  # read-only: a reminder on disk, not the protection itself
     return sha, target
 

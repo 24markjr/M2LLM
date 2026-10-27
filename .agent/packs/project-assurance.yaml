@@ -1,0 +1,18 @@
+# Project assurance: milestones, schedules, budgets, status reports.
+id: project-assurance
+name: Project assurance
+description: Status, milestone and financial reports of a project, checked against each other.
+attributes: [milestone, planned_date, actual_date, completion_date, approved_budget, spend, change_request, status]
+severity:
+  HIGH: [over budget, overrun, exceeds the approved, no change request, missed milestone]
+  MEDIUM: [delayed, slipped, later than planned, different completion date]
+report:
+  title: Project Assurance Report
+  brief: Assurance summary
+  findings: Assurance findings
+  contradictions: Reports that disagree
+  gaps: Open points and reports requested
+starter_questions:
+  - Do the project, milestone and financial reports agree on dates and money?
+  - Is every overspend covered by an approved change request?
+  - Which milestones slipped, and does each report say so?

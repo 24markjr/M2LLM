@@ -1,0 +1,11 @@
+# With an NVIDIA GPU and the NVIDIA container toolkit: the model runs on it. install.sh adds this
+# file when `nvidia-smi` answers.
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

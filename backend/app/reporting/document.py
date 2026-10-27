@@ -21,6 +21,7 @@ from typing import Literal
 
 from pydantic import Field
 
+from app.packs import ReportWords
 from app.schemas.common import JarvisModel
 from app.schemas.investigation_report import InvestigationReport, ReportFinding
 
@@ -119,12 +120,14 @@ def _contradiction(f: ReportFinding) -> Block | None:
     return Block(kind="pair", text=f"{f.finding_id}: {f.claim}", left=first, right=second)
 
 
-def build_document(report: InvestigationReport) -> ReportDocument:
+def build_document(report: InvestigationReport, words: ReportWords | None = None) -> ReportDocument:
+    """The document; `words` - the title and section names - come from the domain pack."""
+    words = words or ReportWords()
     every = [*report.established, *report.awaiting_review, *report.not_established]
     blocks: list[Block] = []
 
     # 1. The executive brief.
-    blocks.append(_heading("Executive brief"))
+    blocks.append(_heading(words.brief))
     blocks.append(
         Block(
             kind="paragraph",
@@ -150,7 +153,7 @@ def build_document(report: InvestigationReport) -> ReportDocument:
     )
 
     # 2. The findings matrix.
-    blocks.append(_heading("Findings"))
+    blocks.append(_heading(words.findings))
     if every:
         blocks.append(
             Block(
@@ -173,7 +176,7 @@ def build_document(report: InvestigationReport) -> ReportDocument:
         if f.statement.upper() == "CONTRADICTION" and (b := _contradiction(f)) is not None
     ]
     if pairs or report.contradictions:
-        blocks.append(_heading("Contradictions"))
+        blocks.append(_heading(words.contradictions))
         blocks += pairs or [Block(kind="bullets", items=report.contradictions)]
 
     # 4. Timeline, gaps and next evidence, explanations, limitations.
@@ -190,7 +193,7 @@ def build_document(report: InvestigationReport) -> ReportDocument:
             )
         )
     if report.unknowns or report.recommendations:
-        blocks.append(_heading("Gaps and next evidence"))
+        blocks.append(_heading(words.gaps))
         if report.unknowns:
             blocks.append(Block(kind="bullets", items=report.unknowns))
         if report.recommendations:
@@ -254,7 +257,7 @@ def build_document(report: InvestigationReport) -> ReportDocument:
         facts.append(("Case", report.case_id))
     facts += [("Report", report.report_id), ("Generated", f"{report.generated_at:%d %B %Y}")]
     return ReportDocument(
-        title="Investigation Report",
+        title=words.title,
         subtitle=report.objective,
         facts=facts,
         blocks=blocks,

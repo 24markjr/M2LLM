@@ -158,12 +158,18 @@ export function ConversationPanel({ caseId, closed }: { caseId: string; closed: 
   const [earlier, setEarlier] = useState(false);
   const [sources, setSources] = useState<Record<string, string> | null>(null);
   const [opened, setOpened] = useState("");
+  const [starters, setStarters] = useState<string[]>([]);
 
   useEffect(() => {
     api
       .conversation(caseId)
       .then((thread) => setTurns(thread.turns))
       .catch((exc: unknown) => setError(exc instanceof ApiError ? exc.message : "Could not load the conversation."));
+    // The organisation's domain pack suggests first questions (v4 Phase 10).
+    void api
+      .packs()
+      .then((p) => setStarters(p.packs.find((x) => x.id === p.current)?.starter_questions ?? []))
+      .catch(() => setStarters([]));
   }, [caseId]);
 
   const open = useCallback(
@@ -219,6 +225,15 @@ export function ConversationPanel({ caseId, closed }: { caseId: string; closed: 
           <p className="dim">
             Ask about the case's documents and findings. Every claim in an answer is checked against the lines it cites
             before it is marked. Name a finding to re-check it: "recheck F-002".
+            {starters.length ? (
+              <span className="talk-starters">
+                {starters.map((q) => (
+                  <button key={q} className="link" onClick={() => setText(q)}>
+                    {q}
+                  </button>
+                ))}
+              </span>
+            ) : null}
           </p>
         )}
         {hidden ? (

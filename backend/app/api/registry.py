@@ -46,6 +46,10 @@ from app.schemas.objective import Objective
 log = get_logger(__name__)
 
 
+# Runs that may wait for a slot before new ones are refused (v4 Phase 8).
+MAX_QUEUE = 50
+
+
 class MissionRecord:
     """One mission: its result so far, its events, and the task running it."""
 
@@ -156,6 +160,11 @@ class MissionRegistry:
         self._stream = StreamEventSink()
         self._max_concurrent = get_settings().max_concurrent_runs
         self._running = 0
+        # The queue (v4 Phase 8): a run waits for one of `max_concurrent_runs` slots, first come
+        # first served (asyncio's semaphore wakes waiters in order). Waiting runs are PENDING and
+        # know their place; only a full queue is refused.
+        self._slots = asyncio.Semaphore(self._max_concurrent)
+        self._waiting: list[str] = []
         # Created lazily in `create`, because availability is an async question and a registry is
         # constructed synchronously.
         self._database: DatabaseEventSink | None = None
@@ -215,7 +224,23 @@ class MissionRegistry:
 
     @property
     def at_capacity(self) -> bool:
-        return self._running >= self._max_concurrent
+        """The queue is full: refusing is honest only when waiting would be unbounded."""
+        return len(self._waiting) >= MAX_QUEUE
+
+    @property
+    def running(self) -> int:
+        return self._running
+
+    @property
+    def waiting(self) -> int:
+        return len(self._waiting)
+
+    def queue_position(self, run_id: str) -> int:
+        """1 for the next run to start, 0 for one that is running or about to (a slot is free)."""
+        if run_id not in self._waiting:
+            return 0
+        free = self._max_concurrent - self._running
+        return max(0, self._waiting.index(run_id) + 1 - free)
 
     # --- writing -----------------------------------------------------------
 
@@ -257,11 +282,39 @@ class MissionRegistry:
 
         emitter = RunEventEmitter(EventBus(sinks), record.run_id)  # type: ignore[arg-type]
 
+        # In the queue from the moment it exists, so its position is known before its task starts.
+        self._waiting.append(record.run_id)
         record.task = asyncio.create_task(
-            self._run(record, emitter, loaded, page_starts, provider, retriever),
+            self._queued(record, emitter, loaded, page_starts, provider, retriever),
             name=f"mission-{record.run_id}",
         )
         return record
+
+    async def _queued(
+        self,
+        record: MissionRecord,
+        emitter: RunEventEmitter,
+        documents: dict[str, str],
+        page_starts: dict[str, list[int]],
+        provider: object,
+        retriever: object = None,
+    ) -> None:
+        """Wait for a slot, then run. Cancelled while waiting: recorded as cancelled, never run."""
+        try:
+            await self._slots.acquire()
+        except asyncio.CancelledError:
+            self._waiting.remove(record.run_id)
+            record.status = MissionStatus.CANCELLED
+            record.stage = Stage.DONE
+            record.finished_at = utcnow()
+            write_archive(record)
+            log.info("mission_cancelled_in_queue", run_id=record.run_id)
+            return
+        self._waiting.remove(record.run_id)
+        try:
+            await self._run(record, emitter, documents, page_starts, provider, retriever)
+        finally:
+            self._slots.release()
 
     async def cancel(self, record: MissionRecord) -> bool:
         """Ask a running mission to stop. False if it had already finished."""

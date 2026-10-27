@@ -1399,3 +1399,95 @@ export interface ReportVersion {
   actor: string;
   exported_at: string;
 }
+
+// --- operating the organisation (v4 Phase 8) --------------------------------------------------
+
+export interface RunMetrics {
+  run_id: string;
+  status: string;
+  created_at: string;
+  queue_wait_s: number;
+  duration_s: number;
+  llm_calls: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  model_seconds: number;
+  cost_inr: number;
+  error: string;
+}
+
+export interface OpsSummary {
+  days: number;
+  investigations: number;
+  completed: number;
+  failed: number;
+  cancelled: number;
+  running: number;
+  waiting: number;
+  error_rate: number;
+  duration_p50_s: number;
+  duration_p95_s: number;
+  queue_wait_p50_s: number;
+  llm_calls: number;
+  tokens: number;
+  cost_total_inr: number;
+  cost_per_investigation_inr: number;
+  rates: Record<string, number>;
+  by_day: { day: string; investigations: number; failed: number; cost_inr: number }[];
+  recent_errors: RunMetrics[];
+  model: string;
+  model_healthy: boolean;
+}
+
+export interface GovernancePolicy {
+  retention_days: number;
+  mask_personal_data: boolean;
+  pack: string;
+}
+
+export interface RetentionResult {
+  retention_days: number;
+  dry_run: boolean;
+  deleted: string[];
+  kept_running: string[];
+}
+
+export interface SubjectReport {
+  identifier: string;
+  hits: { where: string; run_id: string; case_id: string; location: string; excerpt: string }[];
+  investigations: string[];
+  conversations: string[];
+  evidence_files: string[];
+  erased: boolean;
+}
+
+// --- breadth (v4 Phase 10) -----------------------------------------------------------------------
+
+export interface DomainPack {
+  id: string;
+  name: string;
+  description: string;
+  starter_questions: string[];
+}
+
+export interface Packs {
+  current: string;
+  packs: DomainPack[];
+}
+
+export interface WatchView {
+  enabled: boolean;
+  rerun_on_new_files: boolean;
+  rerun_every_days: number;
+  last_rerun_at: string | null;
+  seen: Record<string, string>;
+  folder: string;
+}
+
+export interface WatchScan {
+  case_id: string;
+  folder: string;
+  taken: string[];
+  rerun: string;
+  reason: string;
+}

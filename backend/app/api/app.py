@@ -10,6 +10,7 @@ API's only route to inference is the orchestrator it hands a provider to.
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
@@ -54,7 +55,16 @@ class HealthResponse(JarvisModel):
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     log.info("api_starting", model=settings.ollama_model, env=settings.app_env)
+    # Each organisation's retention policy, applied daily (v4 Phase 8).
+    from app.ops.governance import retention_sweeps
+    from app.ops.watch import watch_sweeps
+
+    sweeps = asyncio.create_task(retention_sweeps(), name="retention-sweeps")
+    # Watched case folders, and scheduled re-investigation (v4 Phase 10).
+    watching = asyncio.create_task(watch_sweeps(), name="watch-sweeps")
     yield
+    sweeps.cancel()
+    watching.cancel()
     # Missions are background tasks owned by the registry. Dropping it on shutdown cancels
     # them, which is what should happen: a half-finished run has no consumer after the
     # process that was streaming it is gone.

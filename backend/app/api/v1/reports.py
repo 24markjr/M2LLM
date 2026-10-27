@@ -18,6 +18,8 @@ from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.evidence import service as evidence_service
 from app.intelligence.challenge import challenge
+from app.ops import governance
+from app.packs import current_pack
 from app.reporting import versions as report_versions
 from app.reporting.builder import (
     build_report,
@@ -103,6 +105,7 @@ async def assemble(record: MissionRecord) -> InvestigationReport:
         events=list(record.events),
         model=get_settings().ollama_model,
         receipt_hash=_receipt(record).receipt_hash,
+        pack=current_pack(),
     )
 
 
@@ -170,7 +173,9 @@ async def export_investigation_report(
     record = _record(run_id)
     report = await assemble(record)
     # The designed document (v4 Phase 5): HTML, PDF and DOCX draw the same blocks.
-    document = build_document(report)
+    document = build_document(report, current_pack().report)
+    if governance.policy().mask_personal_data:  # v4 Phase 8: what leaves is masked
+        document = governance.mask_document(document)
     if fmt == "pdf":
         body: bytes = render_pdf(document)
     elif fmt == "docx":

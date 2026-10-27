@@ -33,6 +33,8 @@ _REVIEWER_WRITES = [
 # Only an admin: accounts, and the bulk deletions.
 _ADMIN_ONLY = [
     (None, re.compile(r"^/api/v1/auth/(users|organisations)")),
+    # Operating the organisation (v4 Phase 8): metrics, retention, data-subject requests, audit.
+    (None, re.compile(r"^/api/v1/(ops|governance)/")),
     ("DELETE", re.compile(r"^/api/v1/missions$")),
     ("DELETE", re.compile(r"^/api/v1/recordings$")),
 ]

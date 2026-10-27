@@ -281,17 +281,27 @@ async def test_cancelling_a_running_mission_is_accepted() -> None:
 # --- capacity -------------------------------------------------------------------
 
 
-async def test_the_api_refuses_rather_than_queueing_invisibly() -> None:
-    """A local model serves one request at a time. An accepted-but-queued mission would sit
-    at PENDING with no indication of why, looking exactly like one that had hung."""
+async def test_a_busy_api_queues_visibly_and_refuses_only_a_full_queue(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A queued mission must never look like a hung one (the reason this used to refuse at once):
+    since v4 Phase 8 it waits for a slot and says where it is in the queue; only a full queue is
+    refused."""
+    from app.api import registry as registry_module
+
     registry = get_registry()
     registry._running = registry._max_concurrent
+    registry._waiting.extend(["run_aaaaaaaaaaaa", "run_bbbbbbbbbbbb"])
+    record = MissionRecord(new_run_id(), Objective(text="Investigate the Aurora reports."), [])
+    registry._missions[record.run_id] = record
+    registry._waiting.append(record.run_id)
+    assert registry.queue_position(record.run_id) == 3  # third in line, no slot free
 
+    monkeypatch.setattr(registry_module, "MAX_QUEUE", 3)
     async with await _client() as client:
         response = await client.post(
             "/api/v1/missions", json={"objective": "Investigate the Aurora reports."}
         )
-
     assert response.status_code == 429
     assert response.json()["error_code"] == "AT_CAPACITY"
 

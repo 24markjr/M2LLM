@@ -1783,3 +1783,4 @@ header.top {
 .source-lines li { display: flex; gap: 12px; padding: 1px 16px; white-space: pre-wrap; }
 .source-lines li.cited { background: var(--accent-soft); border-left: 3px solid var(--accent); }
 .source-no { color: var(--text-faint); min-width: 3ch; text-align: right; user-select: none; }
+.talk-starters { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: 6px; }

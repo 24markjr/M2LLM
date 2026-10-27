@@ -1,0 +1,19 @@
+# Cyber incident: logs, hosts, accounts, the ATT&CK path.
+id: cyber-incident
+name: Cyber incident
+description: Event logs and alerts - what ran, where, under which account, and what it reached.
+attributes: [host, account, process, command_line, source_ip, destination_ip, port, logon_type, event_id, timestamp]
+severity:
+  CRITICAL: [domain admin, credential dump, lsass, ransomware, encrypted files]
+  HIGH: [lateral movement, psexec, encoded powershell, new service, scheduled task, persistence, exfiltration]
+  MEDIUM: [failed logon, new account, privilege]
+report:
+  title: Incident Investigation Report
+  brief: Incident summary
+  findings: Findings
+  contradictions: Conflicting evidence
+  gaps: Open questions and logs requested
+starter_questions:
+  - What ran on the affected host, under which account, and what did it contact?
+  - Did the attacker move to other hosts, and how?
+  - Is there persistence that survives a reboot?

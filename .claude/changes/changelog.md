@@ -5,6 +5,76 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-27 - v4 Phases 8, 9 and 10: operating as a product, release discipline, breadth
+
+### Phase 8 - operating as a product
+
+- **A queue** (`app/api/registry.py`): investigations wait for one of `MAX_CONCURRENT_RUNS` slots,
+  first come first served, and say where they are (`queue_position`); only a full queue (50) is
+  refused. A run cancelled while waiting is recorded as cancelled
+- **Metrics and cost** (`app/ops/metrics.py`, `GET /ops/metrics`, Settings > Operations): per
+  investigation from its own timeline - queue wait, time, model calls, repairs, tokens, model time -
+  and cost estimated from time at configured hourly rates (`GPU_COST_PER_HOUR_INR`,
+  `SERVER_COST_PER_HOUR_INR`); for the organisation, error rate, p50/p95, cost per investigation,
+  by day, recent failures, model health
+- **Data governance** (`app/ops/governance.py`, Settings > Data governance): retention per
+  organisation, applied daily (evidence and custody kept); masking of e-mail, phone, Aadhaar, PAN and
+  card numbers in exported reports; DPDP data-subject search and erasure (investigations deleted,
+  messages blanked, evidence files listed for a legal-hold decision); the audit log as CSV
+- **Security**: a Content-Security-Policy on the console (its one inline script by hash, guarded by
+  a test); `backend/scripts/security_check.py`, a scripted outside-in attack run after every deploy;
+  dependency audit - **pypdf 6.21.1 had three CVEs** (now >= 6.21.2), Vite and source-map-js updated
+  (npm audit clean)
+- **Fixed**: investigations admitting the same file at once shared one temporary file name in the
+  evidence store - "being used by another process" on Windows, interleaved writes possible on Linux.
+  Each writer now has its own, and the first to finish wins
+
+**Measured - the Phase 8 bar.** Ten investigations submitted at once on the laptop GPU (qwen3:4b):
+all accepted and queued, **all ten completed, none failed**, 16 min in all; median 166 s each,
+median wait 230 s; **INR 2.64 per investigation** at L4 rates (INR 26.36 for the ten). The
+scripted attack on the live site: HTTPS, headers, all 103 routes refusing anonymous, sign-in
+throttling, every internal port closed. Not done: an independent penetration test.
+
+### Phase 9 - release discipline and documentation
+
+- **The release gate** (`backend/scripts/release_gate.py`, `.agent/config/release_gate.yaml`): the
+  latest benchmark report must clear floors - the level Phase 2 measured - on correct facts,
+  supported sentences, citation precision, invented values, false alarms, crashes, latency, the
+  whole suite (multimodal included) and freshness (45 days). Red fails CI and `deploy.sh` refuses to
+  build. The plan's targets are reported and do not block until reached
+- **Documentation** (`docs/guides/`): user guide, administrator guide, API guide, security and privacy
+  (no forensic-grade claims; what is not done is said), on-premise
+- Not done: held-out sets written by teammates; an Indian-language suite (Phase 6)
+
+### Phase 10 - breadth
+
+- **Domain packs** (`app/packs`, `.agent/packs/*.yaml`): general, financial audit, procurement,
+  cyber incident, project assurance - attribute names for extraction, phrases that raise severity
+  (never lower it) with the reason in the report, the report's title and section names, starter
+  questions in the case conversation. Chosen per organisation; "general" changes nothing
+- **Watch folders and scheduled re-investigation** (`app/ops/watch.py`, Case > Watch folder): files
+  dropped in a case's folder become evidence within five minutes - custody first, "found in the watch
+  folder" - are filed in the case, and can re-run its latest investigation with them; or re-run every
+  N days. A file is taken once by name and hash; a changed one again, as a new version
+- **On-premise / air-gapped installer** (`deploy/onprem/`): `make-bundle.sh` packs the images, the
+  pinned models (Ollama blobs, the entailment model) and the installer with SHA-256 sums;
+  `install.sh` checks them, loads everything, writes fresh secrets, runs the model in a container (on
+  the GPU when there is one) and serves HTTPS from Caddy's local authority (`CADDY_GLOBAL_OPTIONS`).
+  Validated: shell syntax, the compose files, the Caddyfile both ways. **Not done: a full install on
+  a clean, disconnected server**
+- **Fixed in the backups (Phase 1b)**: `backup.sh` wrote absolute temporary paths into SHA256SUMS,
+  so `restore.sh` could not have passed its check on any cloud backup. Names are now relative, restore
+  reads both forms, and a local folder works as the destination (on-premise)
+
+### Verified
+
+- 20 new tests (queue of ten, full-queue refusal, metrics and cost, dashboard, masking, retention,
+  data-subject find and erase, admin-only, CSP hash, packs, report wording, pack choice, watch folder
+  intake once and per version, scheduled re-run); the release gate green on the Phase 2 report;
+  1,400+ backend unit tests, mypy, ruff; 136 frontend tests, tsc, build
+
+---
+
 ## 2026-10-27 - v4 Phase 5: professional reports
 
 ### Added

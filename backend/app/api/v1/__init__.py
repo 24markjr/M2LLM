@@ -20,6 +20,7 @@ from app.api.v1 import (
     knowledge,
     memory,
     missions,
+    ops,
     replay,
     reports,
     review,
@@ -44,5 +45,6 @@ router.include_router(reports.router)
 router.include_router(cyber.router)
 router.include_router(system.router)
 router.include_router(auth.router)
+router.include_router(ops.router)
 
 __all__ = ["router"]

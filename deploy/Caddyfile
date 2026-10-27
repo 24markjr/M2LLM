@@ -1,6 +1,12 @@
 # The public edge (v4 Phase 1b). SITE_ADDRESS is the hostname Caddy obtains a certificate for
 # (e.g. 34.93.1.2.sslip.io before a domain is bought); ":80" serves plain HTTP for a local test.
 
+# Global options from the environment (v4 Phase 10): on-premise without internet, "local_certs"
+# makes Caddy issue the site's certificate from its own local authority instead of Let's Encrypt.
+{
+	{$CADDY_GLOBAL_OPTIONS}
+}
+
 {$SITE_ADDRESS::80} {
 	encode zstd gzip
 
@@ -27,6 +33,11 @@
 	}
 
 	handle {
+		# The console only (v4 Phase 8): scripts from this origin, plus the one inline theme script by
+		# its hash (tests/unit/test_security_headers.py keeps it in step with frontend/index.html).
+		# Inline style attributes are allowed: React sets them. The API's /docs page loads Swagger
+		# from a CDN and the HTML report carries its own <style>, so neither gets this policy.
+		header Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-JBqVSYTryn9k3dWFC1mKoX0CoM81bP3tbxQ+eMk2CTE='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 		root * /srv/web
 		try_files {path} /index.html
 		file_server
