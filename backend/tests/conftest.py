@@ -20,6 +20,7 @@ from pathlib import Path
 import pytest
 
 from app.api import persistence
+from app.auth import service as auth_service
 from app.cases import service as case_service
 from app.cases.store import MemoryCaseStore
 from app.core.config import GraphStoreName, get_settings
@@ -97,9 +98,14 @@ def _unit_tests_have_no_database(request: pytest.FixtureRequest) -> Iterator[Non
     if request.node.get_closest_marker("integration") is None:
         persistence._available = False
         context_integration._database = False
+        # v4 Phase 1a: the account store and the audit log probe the database too.
+        auth_service._database, auth_service._checked_at = False, None
+        review_service._database, review_service._checked_at = False, None
     yield
     persistence.reset_persistence_probe()
     context_integration.reset_context_store_probe()
+    auth_service._database = auth_service._checked_at = None
+    review_service._database = review_service._checked_at = None
 
 
 def _media_installed() -> bool:

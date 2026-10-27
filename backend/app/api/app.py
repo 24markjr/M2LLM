@@ -110,6 +110,13 @@ def create_app() -> FastAPI:
     # the signed-in user, never a header the caller chose (v4 Phase 1a).
     app.middleware("http")(require_auth)
 
+    @app.get("/health/live", tags=["system"])
+    async def live() -> dict[str, str]:
+        """The process answers - for container health checks (v4 Phase 1b). Deliberately does not
+        ask the model: in the hybrid deployment the model is on another machine, and a laptop asleep
+        must not make the cloud container be restarted. `/health` reports the model."""
+        return {"status": "ok"}
+
     @app.get("/health", response_model=HealthResponse, tags=["system"])
     async def health() -> HealthResponse:
         """Whether the engine can actually run. Reports the model, not just a 200."""

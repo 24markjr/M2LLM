@@ -331,3 +331,10 @@ async def test_sources_serve_the_text_each_file_was_read_as() -> None:
 
     assert response.status_code == 200
     assert response.json() == {"report.txt": "line one\nline two"}
+
+
+async def test_liveness_answers_without_asking_the_model() -> None:
+    """v4 Phase 1b: a container health check must not depend on a model on another machine."""
+    async with await _client() as client:
+        response = await client.get("/health/live")
+    assert response.status_code == 200 and response.json() == {"status": "ok"}

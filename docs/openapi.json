@@ -11592,6 +11592,32 @@
           "system"
         ]
       }
+    },
+    "/health/live": {
+      "get": {
+        "description": "The process answers - for container health checks (v4 Phase 1b). Deliberately does not\nask the model: in the hybrid deployment the model is on another machine, and a laptop asleep\nmust not make the cloud container be restarted. `/health` reports the model.",
+        "operationId": "live_health_live_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Live Health Live Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Live",
+        "tags": [
+          "system"
+        ]
+      }
     }
   }
 }
