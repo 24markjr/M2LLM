@@ -15,6 +15,7 @@ import { ChallengePanel } from "../components/ChallengePanel";
 import { ConfidenceWhy } from "../components/ConfidenceWhy";
 import { evidenceLabel, SCORE_NOTE } from "../components/confidence";
 import { ReviewPanel } from "../components/ReviewPanel";
+import { ClarifyReply, FindingHistoryPanel } from "./FollowUp";
 import { useMission, type MissionView } from "../hooks/useMission";
 import { MODE_PLANS, MODES, type Mode } from "../home/modes";
 import { casesChanged } from "../shell/Sidebar";
@@ -176,7 +177,11 @@ export function Journal({ view, runId, onStop }: { view: MissionView; runId?: st
         </Notice>
       ) : null}
       {mission.status === "CLARIFICATION_NEEDED" ? (
-        <Notice tone="warning">It needs a clearer question before it can plan: {mission.clarification_question}</Notice>
+        runId ? (
+          <ClarifyReply runId={runId} question={mission.clarification_question} />
+        ) : (
+          <Notice tone="warning">It needs a clearer question before it can plan: {mission.clarification_question}</Notice>
+        )
       ) : null}
 
       {/* --- the answer -------------------------------------------------------------------------- */}
@@ -298,6 +303,7 @@ function FindingCard({
           <ConfidenceWhy finding={finding} runId={runId} />
           {runId ? <ReviewPanel runId={runId} review={review} /> : null}
           {runId ? <ChallengePanel runId={runId} findingId={finding.finding_id} /> : null}
+          {runId ? <FindingHistoryPanel runId={runId} findingId={finding.finding_id} /> : null}
         </div>
       ) : null}
     </div>

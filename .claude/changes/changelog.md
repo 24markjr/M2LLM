@@ -5,6 +5,40 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-27 - v4 Phase 3b: following an investigation up
+
+### Added
+
+- **Answering a clarifying question** (`POST /missions/{run_id}/clarify`): a run that stopped with
+  CLARIFICATION_NEEDED shows a reply box; the answer starts the investigation again with the same
+  documents, case and mode, the answer added to the objective (audited, linked to the run it answers)
+- **A finding's history** (`GET /missions/{run_id}/findings/{finding_id}/history`, "history" on each
+  finding): created (and whether it was cited by its values), the verifier's verdict with each
+  verifier's opinion, reviews, the challenge, and the conversation's re-checks, oldest first -
+  assembled from what is already recorded, so it cannot disagree with it
+- **Run-to-run comparison** (`GET /cases/{case_id}/compare?a=&b=`, "Compare two investigations" on
+  the case page): findings paired by what they claim - unchanged, status changed, only in one run
+- **Mid-case evidence marks findings for re-checking** (`GET /cases/{case_id}/stale`): findings of
+  runs that finished before a file was added to the case are listed with the files they did not read,
+  and the case page says to re-check them ("recheck F-001")
+
+### Fixed
+
+- **Phase 2 had not reached the cloud.** Its deploy failed (Docker Desktop had stopped) and the
+  command reported success because its output was piped through `tail`. Deployed with Phase 3a; a
+  deploy is now confirmed by the tag the VM reports, not the command's exit code
+
+### Verified
+
+- 4 new tests (clarify starts a new run with the answer and refuses a run that did not ask; history in
+  order; a comparison's three kinds of change; evidence added after a run marks its findings);
+  1374 backend unit tests, mypy, ruff; 133 frontend tests, tsc, build
+
+Phase 3 is complete: a scripted five-turn investigation keeps its context, every new claim is
+verified, and re-checks leave a before/after record.
+
+---
+
 ## 2026-10-27 - v4 Phase 3a: the investigation conversation
 
 ### Added

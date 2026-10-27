@@ -241,5 +241,12 @@ findings, calculate, compare, ask the person - and every claim of the answer is 
 the case and verified before it is shown. "Recheck F-002" re-verifies that finding and records
 before/after. Small cases are given to the model whole: with searched lines alone it answered
 nothing to two of three live questions. `query_graph` became `query_findings` (the case's verified
-claims); `verify_claim` is not optional for the model - the service verifies every claim. Remaining
-for 3b: clarification replies, mid-case uploads with re-check marking, finding history.
+claims); `verify_claim` is not optional for the model - the service verifies every claim.
+
+### Phase 3b - as built (2026-10-27)
+
+A run that asks a question gets a reply box; the answer starts it again with the same documents and
+case. Each finding has a history assembled from what the run, reviews, challenges and the
+conversation already record. Two runs of a case compare finding by finding. Evidence added to a case
+after a run marks that run's findings for re-checking (computed from custody times, not a flag that
+could go stale). **Phase 3 is complete.**

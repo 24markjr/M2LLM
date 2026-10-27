@@ -30,7 +30,7 @@ import type { EntityMemory, Episode, Fact, InvestigationMemory, MemoryStatus } f
 import type { ClaimComparison, ClaimConflict, EntityInvestigation, SearchHit, TimelineEvent } from "./types";
 import type { FormatSpec, StoredDocument, UploadedDocument } from "./types";
 import type { RetrieveResponse, WorkspaceView } from "./types";
-import type { Thread } from "./types";
+import type { FindingHistory, RunComparison, StaleFinding, Thread } from "./types";
 import type { AuthorityTier, EvidenceDetail, EvidenceItem, EvidenceList, IntegrityCheck } from "./types";
 import type { Case, CaseDetail, CaseList, CaseSeverity, CaseStatus } from "./types";
 import type { ChallengeResult, HypothesisSet, PlanTree } from "./types";
@@ -372,6 +372,14 @@ export const api = {
   conversation: (caseId: string) => request<Thread>(`${BASE}/cases/${caseId}/conversation`),
   ask: (caseId: string, text: string) =>
     request<Thread>(`${BASE}/cases/${caseId}/conversation`, { method: "POST", body: JSON.stringify({ text }) }),
+  // Following an investigation up (v4 Phase 3b).
+  clarify: (runId: string, answer: string) =>
+    request<MissionDetail>(`${BASE}/missions/${runId}/clarify`, { method: "POST", body: JSON.stringify({ answer }) }),
+  findingHistory: (runId: string, findingId: string) =>
+    request<FindingHistory>(`${BASE}/missions/${runId}/findings/${findingId}/history`),
+  compareRuns: (caseId: string, a: string, b: string) =>
+    request<RunComparison>(`${BASE}/cases/${caseId}/compare?a=${a}&b=${b}`),
+  staleFindings: (caseId: string) => request<StaleFinding[]>(`${BASE}/cases/${caseId}/stale`),
   pinTurn: (caseId: string, turnId: string, pinned: boolean) =>
     request<Thread>(`${BASE}/cases/${caseId}/conversation/${turnId}/pin`, {
       method: "POST",

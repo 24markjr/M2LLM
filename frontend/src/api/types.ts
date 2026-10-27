@@ -1341,3 +1341,44 @@ export interface Thread {
   case_id: string;
   turns: Turn[];
 }
+
+// --- following an investigation up (v4 Phase 3b) ---------------------------------------------
+
+export interface HistoryEntry {
+  at: string | null;
+  kind: string;
+  summary: string;
+  by: string;
+}
+
+export interface FindingHistory {
+  run_id: string;
+  finding_id: string;
+  claim: string;
+  entries: HistoryEntry[];
+}
+
+export interface RunPair {
+  a: string;
+  b: string;
+  claim_a: string;
+  claim_b: string;
+  status_a: string;
+  status_b: string;
+  change: "same" | "status changed" | "only in a" | "only in b";
+}
+
+export interface RunComparison {
+  case_id: string;
+  a: string;
+  b: string;
+  pairs: RunPair[];
+}
+
+export interface StaleFinding {
+  run_id: string;
+  finding_id: string;
+  claim: string;
+  finished_at: string;
+  newer_evidence: string[];
+}

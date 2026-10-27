@@ -1150,6 +1150,22 @@
         "title": "ClaimOrder",
         "type": "string"
       },
+      "Clarification": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Answer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "answer"
+        ],
+        "title": "Clarification",
+        "type": "object"
+      },
       "Comparison": {
         "additionalProperties": false,
         "properties": {
@@ -2917,6 +2933,37 @@
         "title": "FindingClassification",
         "type": "string"
       },
+      "FindingHistory": {
+        "additionalProperties": false,
+        "properties": {
+          "claim": {
+            "title": "Claim",
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "finding_id": {
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "finding_id",
+          "claim"
+        ],
+        "title": "FindingHistory",
+        "type": "object"
+      },
       "FindingRelation": {
         "additionalProperties": false,
         "properties": {
@@ -3371,6 +3418,42 @@
           "provider_healthy"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "HistoryEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At"
+          },
+          "by": {
+            "default": "system",
+            "title": "By",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "summary"
+        ],
+        "title": "HistoryEntry",
         "type": "object"
       },
       "Hypothesis": {
@@ -5027,6 +5110,50 @@
         "title": "Organisation",
         "type": "object"
       },
+      "Pair": {
+        "additionalProperties": false,
+        "properties": {
+          "a": {
+            "default": "",
+            "title": "A",
+            "type": "string"
+          },
+          "b": {
+            "default": "",
+            "title": "B",
+            "type": "string"
+          },
+          "change": {
+            "title": "Change",
+            "type": "string"
+          },
+          "claim_a": {
+            "default": "",
+            "title": "Claim A",
+            "type": "string"
+          },
+          "claim_b": {
+            "default": "",
+            "title": "Claim B",
+            "type": "string"
+          },
+          "status_a": {
+            "default": "",
+            "title": "Status A",
+            "type": "string"
+          },
+          "status_b": {
+            "default": "",
+            "title": "Status B",
+            "type": "string"
+          }
+        },
+        "required": [
+          "change"
+        ],
+        "title": "Pair",
+        "type": "object"
+      },
       "PartialDate": {
         "additionalProperties": false,
         "description": "A calendar date that may be missing its year or its day.\n\nThe original parsed with `strptime` and then forced every result to 2026 - including dates\nthat carried their own year, so \"14 September 2025\" became 2026. A partial date keeps what\nthe source actually said, and comparison treats an unknown field as unknown.",
@@ -6207,6 +6334,37 @@
         "title": "Role",
         "type": "string"
       },
+      "RunComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "a": {
+            "title": "A",
+            "type": "string"
+          },
+          "b": {
+            "title": "B",
+            "type": "string"
+          },
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "pairs": {
+            "items": {
+              "$ref": "#/components/schemas/Pair"
+            },
+            "title": "Pairs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "case_id",
+          "a",
+          "b"
+        ],
+        "title": "RunComparison",
+        "type": "object"
+      },
       "ScenarioScore": {
         "additionalProperties": false,
         "properties": {
@@ -6487,6 +6645,43 @@
         ],
         "title": "Stage",
         "type": "string"
+      },
+      "StaleFinding": {
+        "additionalProperties": false,
+        "properties": {
+          "claim": {
+            "title": "Claim",
+            "type": "string"
+          },
+          "finding_id": {
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "finished_at": {
+            "format": "date-time",
+            "title": "Finished At",
+            "type": "string"
+          },
+          "newer_evidence": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Newer Evidence",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "finding_id",
+          "claim",
+          "finished_at"
+        ],
+        "title": "StaleFinding",
+        "type": "object"
       },
       "StatementType": {
         "description": "What kind of statement a finding is (Phase 45), as a reader needs to know it.\n\nComputed from the finding's evidence by `reasoning.statements.type_statement`, never taken from\nthe model: the model may propose a type, and the stricter of its proposal and the evidence wins.\n`FindingClassification` stays the internal ruling that caps confidence; this is what is shown.",
@@ -8307,6 +8502,69 @@
         ]
       }
     },
+    "/api/v1/cases/{case_id}/compare": {
+      "get": {
+        "description": "Findings of two runs of the case, paired by what they claim (shared words, Jaccard >= 0.5):\nunchanged, changed status, or found by only one run.",
+        "operationId": "compare_api_v1_cases__case_id__compare_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "a",
+            "required": true,
+            "schema": {
+              "pattern": "^run_[0-9a-f]{12}$",
+              "title": "A",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "b",
+            "required": true,
+            "schema": {
+              "pattern": "^run_[0-9a-f]{12}$",
+              "title": "B",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunComparison"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Compare",
+        "tags": [
+          "follow-up"
+        ]
+      }
+    },
     "/api/v1/cases/{case_id}/conversation": {
       "get": {
         "operationId": "get_conversation_api_v1_cases__case_id__conversation_get",
@@ -8533,6 +8791,53 @@
         "summary": "File Case Evidence",
         "tags": [
           "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/stale": {
+      "get": {
+        "description": "Findings of runs that finished before evidence was added to the case: the new files were not\nread when they were checked, so they are marked for re-checking (\"recheck F-002\").",
+        "operationId": "stale_api_v1_cases__case_id__stale_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StaleFinding"
+                  },
+                  "title": "Response Stale Api V1 Cases  Case Id  Stale Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Stale",
+        "tags": [
+          "follow-up"
         ]
       }
     },
@@ -10031,6 +10336,70 @@
         ]
       }
     },
+    "/api/v1/missions/{run_id}/clarify": {
+      "post": {
+        "description": "A run that stopped to ask a question is answered by starting it again with the answer: the\nsame documents, case and mode, the person's answer added to the objective.",
+        "operationId": "clarify_api_v1_missions__run_id__clarify_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Jarvis-User",
+            "required": false,
+            "schema": {
+              "default": "console",
+              "maxLength": 128,
+              "title": "X-Jarvis-User",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Clarification"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Clarify",
+        "tags": [
+          "follow-up"
+        ]
+      }
+    },
     "/api/v1/missions/{run_id}/comparison": {
       "get": {
         "operationId": "get_comparison_api_v1_missions__run_id__comparison_get",
@@ -10376,6 +10745,57 @@
         "summary": "Challenge Finding",
         "tags": [
           "missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{run_id}/findings/{finding_id}/history": {
+      "get": {
+        "operationId": "history_api_v1_missions__run_id__findings__finding_id__history_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "finding_id",
+            "required": true,
+            "schema": {
+              "title": "Finding Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindingHistory"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "History",
+        "tags": [
+          "follow-up"
         ]
       }
     },
