@@ -15,6 +15,7 @@ from pydantic import Field
 
 from app.api.errors import ApiError
 from app.api.v1.documents import indexing_now
+from app.auth.tenancy import scoped_workspace, uploads_dir, visible_workspace
 from app.integrations.context import get_context_store, ingest_document, search_store
 from app.intelligence.context.store import (
     DEFAULT_WORKSPACE,
@@ -26,7 +27,7 @@ from app.intelligence.context.store import (
 from app.llm import get_provider
 from app.schemas.common import JarvisModel
 from app.tools.formats import prepare
-from app.tools.loader import load_by_name, resolve_document
+from app.tools.loader import load_uploads, resolve_upload
 
 router = APIRouter(prefix="/context", tags=["context"])
 
@@ -75,8 +76,8 @@ class Workspace(JarvisModel):
 async def ingest(body: IngestRequest) -> IngestResponse:
     """Chunk, embed and store documents in a workspace. Unchanged files are not re-embedded."""
     llm = get_provider()
-    await prepare([resolve_document(n) for n in body.documents], llm)
-    documents, loaded = load_by_name(body.documents)
+    await prepare([resolve_upload(n) for n in body.documents], llm)
+    documents, loaded = load_uploads(body.documents)
     by_id = {d.document_id: d for d in loaded}
     store = await get_context_store()
     done = []
@@ -87,7 +88,7 @@ async def ingest(body: IngestRequest) -> IngestResponse:
                 await ingest_document(
                     store,
                     llm,
-                    workspace_id=body.workspace_id,
+                    workspace_id=scoped_workspace(body.workspace_id),
                     document_id=document_id,
                     text=text,
                     kind=str(source.kind) if source else "text",
@@ -115,7 +116,7 @@ async def retrieve(body: RetrieveRequest) -> RetrieveResponse:
         found = await search_store(
             store,
             get_provider(),
-            workspace_id=body.workspace_id,
+            workspace_id=scoped_workspace(body.workspace_id),
             query=body.query,
             k=body.k,
             document_ids=body.documents or None,
@@ -145,8 +146,10 @@ async def retrieve(body: RetrieveRequest) -> RetrieveResponse:
 
 @router.get("/workspaces", response_model=list[str])
 async def workspaces() -> list[str]:
-    """Every workspace that holds a document, and `default` always."""
-    return await (await get_context_store()).workspaces()
+    """Every workspace of this organisation that holds a document, and `default` always."""
+    stored = await (await get_context_store()).workspaces()
+    names = {v for s in stored if (v := visible_workspace(s)) is not None}
+    return sorted(names | {DEFAULT_WORKSPACE})
 
 
 @router.get("/workspaces/{workspace_id}", response_model=Workspace)
@@ -155,7 +158,8 @@ async def workspace(workspace_id: str) -> Workspace:
     store = await get_context_store()
     return Workspace(
         workspace_id=workspace_id,
-        documents=await store.documents(workspace_id),
+        documents=await store.documents(scoped_workspace(workspace_id)),
         store=store.name,
-        indexing=indexing_now(),
+        # Only names this organisation has uploaded: the indexing queue is shared.
+        indexing=[n for n in indexing_now() if (uploads_dir() / n).is_file()],
     )

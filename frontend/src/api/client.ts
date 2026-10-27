@@ -49,6 +49,12 @@ export const SIGNED_OUT = "jarvis:signed-out";
 
 export type Role = "viewer" | "reviewer" | "analyst" | "admin";
 
+export interface Organisation {
+  org_id: string;
+  accounts: number;
+  admins: string[];
+}
+
 export interface User {
   user_id: string;
   email: string;
@@ -146,6 +152,10 @@ export const api = {
     request<User>(`${BASE}/auth/users`, { method: "POST", body: JSON.stringify(body) }),
   updateUser: (userId: string, body: { name?: string; role?: Role; active?: boolean; password?: string }) =>
     request<User>(`${BASE}/auth/users/${userId}`, { method: "PATCH", body: JSON.stringify(body) }),
+  // Customer organisations (v4 Phase 1c): the operator's admins only.
+  listOrganisations: () => request<Organisation[]>(`${BASE}/auth/organisations`),
+  createOrganisation: (body: { org_id: string; admin: { email: string; name: string; password: string } }) =>
+    request<Organisation>(`${BASE}/auth/organisations`, { method: "POST", body: JSON.stringify(body) }),
 
   health: () =>
     request<{ status: string; model: string; provider_healthy: boolean }>("/health"),

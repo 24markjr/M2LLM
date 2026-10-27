@@ -19,7 +19,7 @@ from fastapi.responses import FileResponse
 from pydantic import Field
 
 from app.api.errors import ApiError
-from app.core.config import get_settings
+from app.auth.tenancy import uploads_dir
 from app.evidence import service, store
 from app.evidence.authority import AuthorityTier, get_authority_config, is_tier
 from app.evidence.locker import EvidenceLocker
@@ -227,15 +227,15 @@ def _not_found(what: str) -> ApiError:
 
 
 def _working_copy(name: str) -> Path | None:
-    from app.tools.loader import resolve_document
+    from app.tools.loader import resolve_upload
 
-    path = resolve_document(name)
+    path = resolve_upload(name)
     return path if path.is_file() else None
 
 
 async def _import_uploads(locker: EvidenceLocker) -> int:
     """Register uploads that arrived before the locker existed, once (IMPORTED)."""
-    folder = get_settings().agent_dir / "uploads"
+    folder = uploads_dir()
     if not folder.is_dir():
         return 0
     count = 0

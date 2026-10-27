@@ -62,7 +62,7 @@ from app.schemas.knowledge import (
     TimelineEvent,
 )
 from app.tools.formats import prepare
-from app.tools.loader import load_by_name, resolve_document
+from app.tools.loader import load_uploads, resolve_upload
 
 router = APIRouter(tags=["knowledge"])
 
@@ -336,8 +336,8 @@ async def analyze(body: AnalyzeRequest) -> AnalyzeResponse:
             "the knowledge layer is disabled in agent.yaml",
             status_code=status.HTTP_409_CONFLICT,
         )
-    await prepare([resolve_document(n) for n in body.documents], get_provider())  # Phase 39
-    documents, loaded = load_by_name(body.documents)
+    await prepare([resolve_upload(n) for n in body.documents], get_provider())  # Phase 39
+    documents, loaded = load_uploads(body.documents)
     if not documents:
         raise ApiError(
             "NO_READABLE_DOCUMENTS",

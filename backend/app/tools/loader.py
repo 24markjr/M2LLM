@@ -260,6 +260,34 @@ def resolve_document(name: str) -> Path:
     return direct
 
 
+def resolve_upload(name: str) -> Path:
+    """`resolve_document` for the API (v4 Phase 1c): a bare file name only, found among the
+    fixtures or the current organisation's uploads - never a path. Accepting a path let any
+    signed-in caller read any file the server can, `/proc/self/environ` and its secrets included.
+    A name that is not found resolves to a path that does not exist, which callers already treat
+    as missing."""
+    from app.auth.tenancy import is_bare_name, uploads_dir
+
+    root = get_settings().agent_dir / "fixtures"
+    missing = root / "__missing__" / "not-found"
+    if not is_bare_name(name):
+        return missing
+    for candidate in (
+        root / "documents" / name,
+        root / "csv" / name,
+        root / name,
+        uploads_dir() / name,
+    ):
+        if candidate.is_file():
+            return candidate
+    return missing
+
+
 def load_by_name(names: list[str]) -> tuple[dict[str, str], list[LoadedDocument]]:
     """Load documents given names or paths, resolving each one first."""
     return load_documents([resolve_document(n) for n in names])
+
+
+def load_uploads(names: list[str]) -> tuple[dict[str, str], list[LoadedDocument]]:
+    """`load_by_name` for the API: bare names only (`resolve_upload`)."""
+    return load_documents([resolve_upload(n) for n in names])

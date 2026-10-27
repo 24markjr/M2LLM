@@ -9,7 +9,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.api.app import create_app
-from app.auth import service
+from app.auth import ratelimit, service
 from app.auth.models import Role
 from app.auth.passwords import hash_password, verify_password, weak_reason
 from app.auth.permissions import allowed
@@ -26,6 +26,7 @@ def _accounts_on(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     monkeypatch.setattr(settings, "admin_password", ADMIN[1])
     service.reset_memory_store()
     service._failures.clear()
+    ratelimit.reset()
     yield
 
 
@@ -172,3 +173,25 @@ async def test_an_admin_manages_accounts_and_roles_are_enforced() -> None:
         assert off.json()["active"] is False
     async with _client() as v:
         assert await _login(v, "v@tessera.test", "Viewer-pass-123") == 401
+
+
+# --- per-account request limits ----------------------------------------------------------------
+
+
+def test_the_limiter_counts_a_sliding_minute_and_writes_separately() -> None:
+    for i in range(ratelimit.WRITES_PER_MINUTE):
+        assert not ratelimit.over_limit("U-1", write=True, now=float(i) / 10)
+    assert ratelimit.over_limit("U-1", write=True, now=20.0)
+    assert not ratelimit.over_limit("U-1", write=False, now=20.0)  # reads still go through
+    assert not ratelimit.over_limit("U-2", write=True, now=20.0)  # per account
+    assert not ratelimit.over_limit("U-1", write=True, now=75.0)  # a minute on
+
+
+async def test_an_account_over_its_limit_is_refused_with_429(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(ratelimit, "REQUESTS_PER_MINUTE", 3)
+    async with _client() as client:
+        assert await _login(client, *ADMIN) == 200
+        codes = [(await client.get("/api/v1/auth/me")).status_code for _ in range(4)]
+    assert codes == [200, 200, 200, 429]

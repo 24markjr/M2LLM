@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Protocol
 
+from app.auth.tenancy import current_org
 from app.schemas.case import (
     Case,
     CaseEvidence,
@@ -74,6 +75,7 @@ class MemoryCaseStore:
         self._cases: dict[str, Case] = {}
         self._investigations: dict[str, CaseInvestigation] = {}
         self._evidence: dict[tuple[str, str], CaseEvidence] = {}
+        self._orgs: dict[str, str] = {}  # case id -> organisation (v4 Phase 1c)
         self._counter = 0
 
     async def next_id(self, year: int) -> str:
@@ -82,13 +84,18 @@ class MemoryCaseStore:
 
     async def add(self, case: Case) -> Case:
         self._cases[case.case_id] = case
+        self._orgs[case.case_id] = current_org()
         return case
 
     async def get(self, case_id: str) -> Case | None:
+        if self._orgs.get(case_id) != current_org():
+            return None
         return self._cases.get(case_id)
 
     async def cases(self) -> list[Case]:
-        return sorted(self._cases.values(), key=lambda c: (c.opened_at, c.case_id), reverse=True)
+        org = current_org()
+        mine = (c for c in self._cases.values() if self._orgs.get(c.case_id) == org)
+        return sorted(mine, key=lambda c: (c.opened_at, c.case_id), reverse=True)
 
     async def update(
         self,

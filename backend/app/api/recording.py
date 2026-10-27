@@ -19,6 +19,7 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from app.auth.tenancy import DEFAULT_ORG, current_org
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.schemas.event import ExecutionTrace
@@ -56,7 +57,9 @@ def write_recording(record: MissionRecord) -> Path | None:
         directory = recordings_dir()
         directory.mkdir(parents=True, exist_ok=True)
         path = directory / f"{record.run_id}{SCRATCH_SUFFIX}"
-        path.write_text(json.dumps(trace.model_dump(mode="json"), indent=2), encoding="utf-8")
+        data = trace.model_dump(mode="json")
+        data["org_id"] = record.org_id  # whose recording it is (v4 Phase 1c)
+        path.write_text(json.dumps(data, indent=2), encoding="utf-8")
         log.info("recording_written", run_id=record.run_id, events=len(record.events))
         return path
     except Exception:  # the run is already over; losing the recording must not raise
@@ -97,6 +100,8 @@ def list_recordings(*, include_hidden: bool = True) -> list[dict[str, Any]]:
         except (OSError, json.JSONDecodeError):
             log.warning("recording_unreadable", path=str(path))
             continue
+        if not _ours(raw):
+            continue
 
         events = raw.get("events") or []
         mission = (raw.get("snapshot") or {}).get("mission") or {}
@@ -131,12 +136,20 @@ def list_recordings(*, include_hidden: bool = True) -> list[dict[str, Any]]:
     return rows if include_hidden else [r for r in rows if not r["hidden"]]
 
 
+def _ours(raw: dict[str, Any]) -> bool:
+    """Whether a recording belongs to the current organisation (v4 Phase 1c). Recordings from
+    before it, and those committed with the repository, are the default organisation's."""
+    return str(raw.get("org_id") or DEFAULT_ORG) == current_org()
+
+
 def delete_recording(name: str) -> str:
     """Delete one recording: "deleted", "kept" (committed to the repository: removed with git, not
     from the console) or "missing". The name is resolved strictly inside the recordings folder."""
     directory = recordings_dir().resolve()
     candidate = (directory / Path(name).name).resolve()
     if candidate.parent != directory or not candidate.is_file():
+        return "missing"
+    if load_recording(name) is None:  # another organisation's
         return "missing"
     if not candidate.name.endswith(SCRATCH_SUFFIX):
         return "kept"
@@ -173,4 +186,6 @@ def load_recording(name: str) -> dict[str, Any] | None:
     except (OSError, json.JSONDecodeError):
         log.warning("recording_unreadable", path=str(candidate))
         return None
-    return loaded if isinstance(loaded, dict) else None
+    if not isinstance(loaded, dict) or not _ours(loaded):
+        return None
+    return loaded

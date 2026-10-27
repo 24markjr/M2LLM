@@ -19,6 +19,7 @@ from fastapi import APIRouter, Query, status
 from pydantic import Field
 
 from app.api.errors import ApiError
+from app.api.ownership import run_visible
 from app.database.session import session_scope
 from app.memory.episodic import DEFAULT_SEARCH_LIMIT, MAX_SEARCH_LIMIT, EpisodicMemory
 from app.memory.semantic import SemanticMemory
@@ -28,8 +29,10 @@ from app.schemas.memory import (
     DEFAULT_FACT_LIMIT,
     MAX_FACT_LIMIT,
     ArchivedInvestigation,
+    EntityMemory,
     EntityMemoryView,
     Episode,
+    Fact,
     FactView,
 )
 
@@ -95,7 +98,9 @@ async def episodes(
     """Episodes whose objective or claim contains `q`, newest first."""
     await _episodic()
     async with session_scope() as session:
-        return await EpisodicMemory(session).search(q, limit)
+        # Searched wider, then narrowed to this organisation's runs (v4 Phase 1c).
+        found = await EpisodicMemory(session).search(q, MAX_SEARCH_LIMIT)
+    return [e for e in found if run_visible(e.run_id)][:limit]
 
 
 @router.get("/investigations/{run_id}", response_model=InvestigationMemory)
@@ -119,8 +124,8 @@ async def facts(
 ) -> list[FactView]:
     """Facts by exact subject and predicate (normalised), best supported first."""
     memory = await _semantic()
-    found = await memory.facts(subject or None, predicate or None, limit)
-    return [FactView.of(f) for f in found]
+    found = await memory.facts(subject or None, predicate or None, MAX_FACT_LIMIT)
+    return [FactView.of(f) for f in _own_facts(found)][:limit]
 
 
 class Forgotten(JarvisModel):
@@ -164,6 +169,26 @@ async def entity(name: str) -> EntityMemoryView:
     """An entity as seen across investigations, with the facts known about it."""
     memory = await _semantic()
     found = await memory.entity(name)
-    if found is None:
+    runs = [r for r in found.entity.runs if run_visible(r)] if found is not None else []
+    if found is None or not runs:
         raise MemoryNotFoundError(f"entity {name!r}")
-    return EntityMemoryView.of(found)
+    return EntityMemoryView.of(
+        EntityMemory(
+            entity=found.entity.model_copy(update={"runs": runs}), facts=_own_facts(found.facts)
+        )
+    )
+
+
+# --- organisations (v4 Phase 1c) -----------------------------------------------------------
+# Memory spans investigations, so it spans organisations too. What it returns is narrowed to the
+# runs the caller's organisation can open: a fact another customer's run also supports shows only
+# this organisation's support, and its count is theirs - not a hint of what someone else found.
+
+
+def _own_facts(facts: list[Fact]) -> list[Fact]:
+    own = []
+    for fact in facts:
+        support = [s for s in fact.support if run_visible(s.run_id)]
+        if support:
+            own.append(fact.model_copy(update={"support": support}))
+    return sorted(own, key=lambda f: f.support_count, reverse=True)

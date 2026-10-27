@@ -22,6 +22,7 @@ from datetime import datetime
 from app.api.archive import RunArchive, read_archives, write_archive
 from app.api.persistence import persistence_enabled, record_finished, record_started
 from app.api.recording import write_recording
+from app.auth.tenancy import current_org
 from app.core.config import get_settings
 from app.core.events import (
     EventBus,
@@ -89,6 +90,8 @@ class MissionRecord:
         self.attack_locators: set[str] | None = None
         # The case the mission belongs to (Phase 44).
         self.case_id: str = ""
+        # The organisation it belongs to (v4 Phase 1c): whoever started it, inherited by its task.
+        self.org_id: str = current_org()
 
     @classmethod
     def from_archive(cls, archive: RunArchive) -> MissionRecord:
@@ -107,6 +110,7 @@ class MissionRecord:
         record.texts = dict(archive.texts)
         record.page_starts = dict(archive.page_starts)
         record.case_id = archive.case_id
+        record.org_id = archive.org_id
         record.knowledge_view = archive.knowledge_view
         record.knowledge_timeline = archive.knowledge_timeline
         record.challenges = dict(archive.challenges)
@@ -174,21 +178,35 @@ class MissionRegistry:
     # --- reading -----------------------------------------------------------
 
     def get(self, run_id: str) -> MissionRecord | None:
+        """The run, if it belongs to the current organisation (v4 Phase 1c): another
+        organisation's run is not found, exactly like one that does not exist."""
         self._restore()
-        return self._missions.get(run_id)
+        record = self._missions.get(run_id)
+        return record if record is not None and record.org_id == current_org() else None
+
+    def owner(self, run_id: str) -> str | None:
+        """The organisation a run belongs to, whoever asks; None for a run this server does not
+        hold (v4 Phase 1c). For the ownership check, not for serving the run."""
+        self._restore()
+        record = self._missions.get(run_id)
+        return record.org_id if record is not None else None
 
     def records(self) -> list[MissionRecord]:
         """Newest first: a mission list is read from the top."""
         self._restore()
         # By creation time, then sequence: a restored run keeps its place among new ones (U1).
+        org = current_org()
         return sorted(
-            self._missions.values(), key=lambda m: (m.created_at, m.sequence), reverse=True
+            (m for m in self._missions.values() if m.org_id == org),
+            key=lambda m: (m.created_at, m.sequence),
+            reverse=True,
         )
 
     def forget(self, run_id: str) -> MissionRecord | None:
         """Remove a mission from the registry. Its archive and recording are removed by the
         caller (`app/api/v1/history.py`), which also records the deletion."""
-        self._restore()
+        if self.get(run_id) is None:
+            return None
         return self._missions.pop(run_id, None)
 
     @property

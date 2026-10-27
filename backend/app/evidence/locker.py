@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
+from app.auth.tenancy import current_org
 from app.schemas.common import utcnow
 from app.schemas.evidence_locker import (
     CustodyAction,
@@ -80,6 +81,7 @@ class MemoryEvidenceLocker:
     def __init__(self) -> None:
         self._items: dict[str, EvidenceItem] = {}
         self._events: list[CustodyEvent] = []
+        self._orgs: dict[str, str] = {}  # evidence id -> organisation (v4 Phase 1c)
         self._counter = 0
 
     async def next_id(self) -> str:
@@ -88,20 +90,27 @@ class MemoryEvidenceLocker:
 
     async def add(self, item: EvidenceItem) -> EvidenceItem:
         self._items[item.evidence_id] = item
+        self._orgs[item.evidence_id] = current_org()
         return item
 
+    def _mine(self) -> list[EvidenceItem]:
+        org = current_org()
+        return [i for i in self._items.values() if self._orgs.get(i.evidence_id) == org]
+
     async def get(self, evidence_id: str) -> EvidenceItem | None:
+        if self._orgs.get(evidence_id) != current_org():
+            return None
         return self._items.get(evidence_id)
 
     async def by_sha(self, sha256: str) -> EvidenceItem | None:
-        return next((i for i in self._items.values() if i.sha256 == sha256), None)
+        return next((i for i in self._mine() if i.sha256 == sha256), None)
 
     async def current_for_name(self, name: str) -> EvidenceItem | None:
-        named = [i for i in self._items.values() if i.name == name]
+        named = [i for i in self._mine() if i.name == name]
         return max(named, key=lambda i: (i.collected_at, i.evidence_id), default=None)
 
     async def items(self, *, limit: int = 200) -> list[EvidenceItem]:
-        return sorted(self._items.values(), key=lambda i: i.evidence_id, reverse=True)[:limit]
+        return sorted(self._mine(), key=lambda i: i.evidence_id, reverse=True)[:limit]
 
     async def update(
         self,

@@ -12,6 +12,7 @@ from datetime import datetime
 from sqlalchemy import delete, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.tenancy import current_org
 from app.database.session import session_scope
 from app.models.tables import CaseEvidenceRow, CaseInvestigationRow, CaseRow
 from app.schemas.case import (
@@ -52,6 +53,7 @@ class PgCaseStore:
                     pinned=case.pinned,
                     opened_at=case.opened_at,
                     closed_at=case.closed_at,
+                    org_id=current_org(),
                 )
             )
         return case
@@ -59,13 +61,15 @@ class PgCaseStore:
     async def get(self, case_id: str) -> Case | None:
         async with self._scope() as session:
             row = await session.get(CaseRow, case_id)
-            return _case(row) if row else None
+            return _case(row) if row is not None and row.org_id == current_org() else None
 
     async def cases(self) -> list[Case]:
         async with self._scope() as session:
             rows = (
                 await session.execute(
-                    select(CaseRow).order_by(CaseRow.opened_at.desc(), CaseRow.case_id.desc())
+                    select(CaseRow)
+                    .where(CaseRow.org_id == current_org())
+                    .order_by(CaseRow.opened_at.desc(), CaseRow.case_id.desc())
                 )
             ).scalars()
             return [_case(r) for r in rows]

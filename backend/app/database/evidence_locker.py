@@ -16,6 +16,7 @@ from contextlib import AbstractAsyncContextManager
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.tenancy import current_org
 from app.database.session import session_scope
 from app.evidence.locker import citations_from
 from app.models.tables import CustodyEventRow, EvidenceItemRow
@@ -64,6 +65,7 @@ class PgEvidenceLocker:
                     integrity=item.integrity.value,
                     integrity_checked_at=item.integrity_checked_at,
                     case_id=item.case_id,
+                    org_id=current_org(),
                 )
             )
         return item
@@ -71,15 +73,19 @@ class PgEvidenceLocker:
     async def get(self, evidence_id: str) -> EvidenceItem | None:
         async with self._scope() as session:
             row = await session.get(EvidenceItemRow, evidence_id)
-            return _item(row) if row else None
+            return _item(row) if row is not None and row.org_id == current_org() else None
 
     async def by_sha(self, sha256: str) -> EvidenceItem | None:
-        return await self._one(select(EvidenceItemRow).where(EvidenceItemRow.sha256 == sha256))
+        return await self._one(
+            select(EvidenceItemRow).where(
+                EvidenceItemRow.sha256 == sha256, EvidenceItemRow.org_id == current_org()
+            )
+        )
 
     async def current_for_name(self, name: str) -> EvidenceItem | None:
         return await self._one(
             select(EvidenceItemRow)
-            .where(EvidenceItemRow.name == name)
+            .where(EvidenceItemRow.name == name, EvidenceItemRow.org_id == current_org())
             .order_by(EvidenceItemRow.collected_at.desc(), EvidenceItemRow.evidence_id.desc())
             .limit(1)
         )
@@ -89,6 +95,7 @@ class PgEvidenceLocker:
             rows = (
                 await session.execute(
                     select(EvidenceItemRow)
+                    .where(EvidenceItemRow.org_id == current_org())
                     .order_by(EvidenceItemRow.evidence_id.desc())
                     .limit(limit)
                 )

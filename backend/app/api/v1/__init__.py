@@ -5,8 +5,9 @@ breaking change to a response shape breaks a build somewhere - having `/v2` avai
 makes such a change possible without a flag day.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.api.ownership import own_resources
 from app.api.v1 import (
     auth,
     cases,
@@ -23,7 +24,8 @@ from app.api.v1 import (
     system,
 )
 
-router = APIRouter(prefix="/api/v1")
+# Every route that names a run, case or evidence item is checked to be the caller's (v4 Phase 1c).
+router = APIRouter(prefix="/api/v1", dependencies=[Depends(own_resources)])
 router.include_router(missions.router)
 router.include_router(documents.router)
 router.include_router(replay.router)

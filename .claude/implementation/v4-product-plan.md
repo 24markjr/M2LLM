@@ -207,3 +207,16 @@ anything. The model runs on the laptop over Tailscale (`scripts/expose-ollama-ta
 the laptop is off, the console still works and `/health` says `degraded`.
 Deferred: a domain name (sslip.io for now), Tailscale ACLs limiting the VM to port 11434, Cloud
 Monitoring uptime alerts.
+
+### Phase 1c - as built (2026-10-27)
+
+Each customer is an organisation; the operator's admins (organisation `default`) create one with its
+first admin. The organisation rides on the request (a context variable set at sign-in check) and
+every store filters by it - runs, cases, evidence, uploads, workspaces, recordings, memory, audit -
+with one ownership check in front of every route that names a run, case or evidence item.
+Another organisation's resource is 404. Found and fixed on the way: the API accepted file paths as
+document names, so a signed-in user could have read any file on the server; it now takes bare names
+in the caller's own uploads. Per-account rate limits added. The VM's disk - so Postgres, Neo4j and
+the evidence - and the backup bucket are encrypted at rest by Google's default encryption;
+customer-managed keys are not set up.
+Phase 1 is complete except error alerts (Cloud Monitoring), deferred with the uptime checks.

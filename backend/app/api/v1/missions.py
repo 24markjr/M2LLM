@@ -32,6 +32,7 @@ from app.api.v1.schemas import (
     TaskNode,
 )
 from app.api.v1.stream import stream_mission
+from app.auth.tenancy import scoped_workspace
 from app.cases.service import file_evidence, file_investigation, get_case_store, start_investigating
 from app.core.logging import get_logger
 from app.evidence.authority import authority_map
@@ -51,7 +52,7 @@ from app.schemas.hypothesis import HypothesisSet
 from app.schemas.objective import AttachedDocument, DocumentKind, Objective, ObjectiveScope
 from app.schemas.result import FinalReport
 from app.tools.formats import prepare
-from app.tools.loader import load_by_name, resolve_document
+from app.tools.loader import load_uploads, resolve_upload
 
 log = get_logger(__name__)
 router = APIRouter(prefix="/missions", tags=["missions"])
@@ -78,13 +79,13 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
     # Images, scans, video and audio are understood before they are read (Phase 39): once per
     # file, cached, so a file uploaded earlier costs nothing here.
     case = await _require_case(body.case_id) if body.case_id else None
-    paths = {name: resolve_document(name) for name in body.documents}
+    paths = {name: resolve_upload(name) for name in body.documents}
     # Every document is evidence (Phase 43): registered on first use, and checked against its hash
     # before the mission reads it. A file whose bytes changed is left out, and the mission says so.
     admitted, excluded = await admit_for_mission(paths)
     readable = [name for name in body.documents if name not in excluded]
     await prepare([paths[n] for n in readable], get_provider())
-    documents, loaded = load_by_name(readable)
+    documents, loaded = load_uploads(readable)
     missing = [name for name in readable if name not in documents]
     if body.documents and not documents:
         raise ApiError(
@@ -103,7 +104,9 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
     if body.workspace_id and documents:
         # Ingested before the run starts (unchanged files are skipped by hash), so the mission's
         # first recall already searches them. A store or embedding failure leaves recall lexical.
-        retriever = await workspace_retriever(body.workspace_id, documents, loaded, get_provider())
+        retriever = await workspace_retriever(
+            scoped_workspace(body.workspace_id), documents, loaded, get_provider()
+        )
 
     # Each document's source authority (Phase 45): its evidence item's tier, else the intake rules.
     authority = authority_map(

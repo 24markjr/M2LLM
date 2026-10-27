@@ -464,7 +464,10 @@ class EvidenceItemRow(Base):
     __tablename__ = "evidence_items"
 
     evidence_id: Mapped[str] = mapped_column(String(16), primary_key=True)
-    sha256: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    # Unique within an organisation (v4 Phase 1c): two customers' identical files are two items.
+    __table_args__ = (UniqueConstraint("org_id", "sha256", name="uq_evidence_items_org_sha256"),)
+
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     kind: Mapped[str] = mapped_column(String(32), default="")
     parser: Mapped[str] = mapped_column(String(32), default="")
@@ -481,6 +484,7 @@ class EvidenceItemRow(Base):
         DateTime(timezone=True), nullable=True
     )
     case_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+    org_id: Mapped[str] = mapped_column(String(64), nullable=False, default="default", index=True)
 
 
 class CustodyEventRow(Base):
@@ -522,6 +526,8 @@ class CaseRow(Base):
     pinned: Mapped[bool] = mapped_column(Boolean, default=False)
     opened_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # The organisation the case belongs to (v4 Phase 1c).
+    org_id: Mapped[str] = mapped_column(String(64), nullable=False, default="default", index=True)
 
 
 class CaseInvestigationRow(Base):
@@ -586,6 +592,8 @@ class AuditLogRow(Base):
     target: Mapped[str] = mapped_column(String(200), default="", index=True)
     status_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
     details: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    # Whose activity it is (v4 Phase 1c): each organisation reads only its own log.
+    org_id: Mapped[str] = mapped_column(String(64), nullable=False, default="default", index=True)
 
 
 class UserRow(Base):

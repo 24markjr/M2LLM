@@ -57,6 +57,8 @@ class RunArchive(JarvisModel):
     texts: dict[str, str] = Field(default_factory=dict)
     page_starts: dict[str, list[int]] = Field(default_factory=dict)
     case_id: str = ""
+    # The organisation the run belongs to (v4 Phase 1c); archives from before it are `default`'s.
+    org_id: str = "default"
     knowledge_view: dict[str, Any] | None = None
     knowledge_timeline: list[dict[str, Any]] | None = None
     challenges: dict[str, ChallengeResult] = Field(default_factory=dict)
@@ -94,6 +96,7 @@ def write_archive(record: MissionRecord) -> Path | None:
             texts=dict(record.texts),
             page_starts=dict(record.page_starts),
             case_id=record.case_id,
+            org_id=record.org_id,
             knowledge_view=dict(record.knowledge_view) if record.knowledge_view else None,
             knowledge_timeline=list(record.knowledge_timeline or []) or None,
             challenges=dict(record.challenges),

@@ -1,11 +1,12 @@
 /**
- * Settings: my account, and - for an admin - the people in my organisation (v4 Phase 1a).
+ * Settings: my account, and - for an admin - the people in my organisation (v4 Phase 1a), and -
+ * for the operator's admins - the customer organisations (v4 Phase 1c).
  * The server enforces every rule shown here; the page only explains them.
  */
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
-import { api, ApiError, type Role, type User } from "../api/client";
+import { api, ApiError, type Organisation, type Role, type User } from "../api/client";
 import { useUser } from "../auth/AuthGate";
 import { Badge, Button, Notice, useToast } from "../ui/components";
 
@@ -172,6 +173,83 @@ export function PeopleCard() {
         <input type="password" placeholder="First password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
         <Button size="sm" type="submit">
           Add person
+        </Button>
+      </form>
+    </section>
+  );
+}
+
+/** The operator's admins create customers: an organisation and its first admin, who then adds
+ * their own people. Each organisation sees only its own investigations, cases and evidence. */
+export function OrganisationsCard() {
+  const { user } = useUser();
+  const notify = useToast();
+  const [orgs, setOrgs] = useState<Organisation[]>([]);
+  const [error, setError] = useState("");
+  const blank = { org_id: "", email: "", name: "", password: "" };
+  const [form, setForm] = useState(blank);
+  const operator = user?.role === "admin" && user.org_id === "default";
+
+  const load = useCallback(() => {
+    api
+      .listOrganisations()
+      .then(setOrgs)
+      .catch((exc: unknown) => setError(message(exc)));
+  }, []);
+  useEffect(() => {
+    if (operator) load();
+  }, [operator, load]);
+
+  if (!operator) return null;
+
+  const add = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.createOrganisation({
+        org_id: form.org_id,
+        admin: { email: form.email, name: form.name, password: form.password },
+      });
+      notify(`${form.org_id} created; ${form.email} can sign in as its admin.`, "success");
+      setForm(blank);
+      load();
+    } catch (exc) {
+      notify(message(exc), "error");
+    }
+  };
+
+  return (
+    <section className="settings-card" aria-labelledby="s-orgs">
+      <h2 id="s-orgs">Organisations</h2>
+      <p className="settings-note">
+        Each customer organisation sees only its own investigations, cases, evidence, memory and audit log. Yours is{" "}
+        <span className="mono">default</span>.
+      </p>
+      {error ? <Notice tone="error">{error}</Notice> : null}
+      <table className="settings-people">
+        <thead>
+          <tr>
+            <th>Organisation</th>
+            <th>Accounts</th>
+            <th>Admins</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orgs.map((o) => (
+            <tr key={o.org_id}>
+              <td className="mono">{o.org_id}</td>
+              <td>{o.accounts}</td>
+              <td className="mono">{o.admins.join(", ")}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <form className="settings-row settings-add" onSubmit={(e) => void add(e)}>
+        <input placeholder="Organisation id (e.g. acme-bank)" pattern="[a-z0-9][a-z0-9-]{1,47}" title="lower-case letters, digits and hyphens" value={form.org_id} onChange={(e) => setForm({ ...form, org_id: e.target.value })} required />
+        <input type="email" placeholder="Their admin's email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+        <input placeholder="Admin's name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        <input type="password" placeholder="First password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+        <Button size="sm" type="submit">
+          Create organisation
         </Button>
       </form>
     </section>

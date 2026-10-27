@@ -5,6 +5,48 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-27 - v4 Phase 1c: customer organisations with isolated data; API file paths closed
+
+### Security fix
+
+- **The API read any file on the server by path.** `resolve_document` accepted a path, and the
+  mission, context, knowledge and evidence routes passed it what the caller sent: any signed-in
+  user could start an investigation of `/proc/self/environ` (the container's database passwords)
+  and read it back in the report. The API now uses `resolve_upload`: a bare file name only, found
+  among the fixtures or the caller's organisation's uploads. The CLI still takes paths. Not
+  exploited: the only account on the cloud is the owner's
+
+### Added
+
+- **Organisations** (`app/auth/tenancy.py`): the signed-in user's organisation is set per request
+  by the auth middleware, in a context variable that missions and background indexing inherit.
+  Everything before 1c belongs to `default`, so nothing existing moves
+- **Isolated in every store**: runs (registry and archive carry `org_id`), cases, evidence items
+  (unique by organisation and SHA-256 - two customers' identical files are two items with their own
+  custody), uploads (`.agent/uploads/.orgs/<org>/`, same volume), workspaces (stored as
+  `<org>~<name>`), recordings, the audit log (sign-ins filed under the user's organisation), and
+  memory (facts and episodes narrowed to runs the organisation can open; a fact shows only its own
+  organisation's support). Migration `c1a0a07e0002`
+- **One check in front of every route** (`app/api/ownership.py`, a dependency on the whole
+  `/api/v1` router): a `{run_id}`, `{case_id}` or `{evidence_id}` of another organisation is 404,
+  exactly like one that does not exist. A run the server no longer holds is the default
+  organisation's
+- **`GET|POST /auth/organisations`** for the operator's admins (admins of `default`): a customer is
+  created with its first admin, who adds their own people. Settings > Organisations in the console
+- **Per-account request limits** (`app/auth/ratelimit.py`): 600 requests and 120 writes a minute,
+  429 `RATE_LIMITED` with `Retry-After`
+
+### Verified
+
+- 20 new tests: two organisations through the API - runs (six routes per run), cases, uploads,
+  naming another organisation's file in a mission, evidence, the same bytes twice, the audit log,
+  memory support; paths refused (`/proc/self/environ`, `../`, `C:\`, an absolute path to a real
+  file); the rate limit. 1343 backend unit tests, mypy, ruff; integration tests against Postgres
+  and Neo4j; the migration up, down and up; 129 frontend tests, tsc, build
+- Already present and kept: upload type allow-list and streamed size ceiling; sign-in throttle
+
+---
+
 ## 2026-10-27 - v4 Phase 1b: production deployment on GCP (Tessera)
 
 ### Added

@@ -8,7 +8,7 @@ from fastapi import APIRouter, Request, Response, status
 from pydantic import Field
 
 from app.api.errors import ApiError
-from app.auth.models import Role, User
+from app.auth.models import DEFAULT_ORG, Role, StoredUser, User
 from app.auth.passwords import hash_password, verify_password, weak_reason
 from app.auth.service import (
     COOKIE,
@@ -22,6 +22,7 @@ from app.auth.service import (
     throttled,
     token_hash,
 )
+from app.auth.tenancy import ORG_PATTERN, use_org
 from app.core.config import get_settings
 from app.review.service import audit
 from app.schemas.common import JarvisModel
@@ -109,7 +110,9 @@ async def login(body: LoginRequest, request: Request, response: Response) -> Use
         samesite="lax",
         path="/",
     )
-    await audit("auth.login", actor=user.email, target="auth")
+    # In the user's organisation's log: the request has no session yet, so no organisation (1c).
+    with use_org(user.org_id):
+        await audit("auth.login", actor=user.email, target="auth")
     return public(user)
 
 
@@ -205,3 +208,76 @@ async def update_user(user_id: str, body: UserUpdate, request: Request) -> User:
     if body.active is False or body.password is not None or body.role is not None:
         await store.drop_sessions_of(user.user_id)
     return public(updated)
+
+
+# --- organisations (v4 Phase 1c) ------------------------------------------------------------
+# A customer organisation is its accounts: creating one is creating its first admin, who then adds
+# their own people. Only the operator - an admin of the `default` organisation - may do it, so a
+# customer's admin can never see or create other customers.
+
+
+class NewOrganisation(JarvisModel):
+    org_id: str = Field(pattern=ORG_PATTERN.pattern)
+    admin: NewUser
+
+
+class Organisation(JarvisModel):
+    org_id: str
+    accounts: int
+    admins: list[str] = Field(default_factory=list)
+
+
+def _operator(request: Request) -> User:
+    user = current(request)
+    if user.role is not Role.ADMIN or user.org_id != DEFAULT_ORG:
+        raise ApiError(
+            "FORBIDDEN",
+            "only the operator's administrators manage organisations",
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+    return user
+
+
+@router.get("/organisations", response_model=list[Organisation])
+async def list_organisations(request: Request) -> list[Organisation]:
+    _operator(request)
+    by_org: dict[str, list[StoredUser]] = {}
+    for user in await (await get_auth_store()).users():
+        by_org.setdefault(user.org_id, []).append(user)
+    return [
+        Organisation(
+            org_id=org,
+            accounts=len(users),
+            admins=sorted(u.email for u in users if u.role is Role.ADMIN),
+        )
+        for org, users in sorted(by_org.items())
+    ]
+
+
+@router.post("/organisations", response_model=Organisation, status_code=status.HTTP_201_CREATED)
+async def add_organisation(body: NewOrganisation, request: Request) -> Organisation:
+    _operator(request)
+    store = await get_auth_store()
+    if body.org_id == DEFAULT_ORG or await store.users(body.org_id):
+        raise ApiError(
+            "ORGANISATION_EXISTS",
+            f"organisation {body.org_id} already exists",
+            status_code=status.HTTP_409_CONFLICT,
+        )
+    if await store.user_by_email(body.admin.email) is not None:
+        raise ApiError(
+            "EMAIL_TAKEN",
+            f"{body.admin.email} already has an account",
+            status_code=status.HTTP_409_CONFLICT,
+        )
+    _strong(body.admin.password)
+    admin = await create_user(
+        store,
+        email=body.admin.email,
+        password=body.admin.password,
+        role=Role.ADMIN,
+        name=body.admin.name,
+        org_id=body.org_id,
+    )
+    await audit("organisation.created", target=body.org_id, admin=admin.email)
+    return Organisation(org_id=body.org_id, accounts=1, admins=[admin.email])

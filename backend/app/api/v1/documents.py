@@ -24,6 +24,7 @@ from fastapi import APIRouter, Header, Query, UploadFile, status
 from pydantic import Field
 
 from app.api.errors import ApiError
+from app.auth.tenancy import scoped_workspace, uploads_dir
 from app.cases.service import file_evidence
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -114,7 +115,7 @@ async def upload_documents(
     file was accepted still does not know whether it will contribute anything to a run -
     a 12-page scanned PDF with no text layer uploads perfectly and yields nothing.
     """
-    target = get_settings().agent_dir / "uploads"
+    target = uploads_dir()
     target.mkdir(parents=True, exist_ok=True)
 
     results: list[UploadedDocument] = []
@@ -174,7 +175,7 @@ async def upload_documents(
             await _record_parse(locker, evidence_id, document, understood)
         indexing = document.has_text
         if indexing:
-            _start_indexing(workspace, document, evidence_id)
+            _start_indexing(scoped_workspace(workspace), document, evidence_id)
         results.append(
             UploadedDocument(
                 document_id=document.document_id,
@@ -314,7 +315,7 @@ async def formats() -> list[FormatSpec]:
 @router.get("", response_model=list[StoredDocument])
 async def list_uploads() -> list[StoredDocument]:
     """Earlier uploads, newest first, so a new mission can reuse them without uploading again."""
-    target = get_settings().agent_dir / "uploads"
+    target = uploads_dir()
     if not target.is_dir():
         return []
     try:

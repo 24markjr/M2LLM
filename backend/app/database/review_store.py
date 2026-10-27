@@ -11,6 +11,7 @@ from contextlib import AbstractAsyncContextManager
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.tenancy import current_org
 from app.database.session import session_scope
 from app.models.tables import AuditLogRow, ReviewDecisionRow
 from app.schemas.review import AuditEntry, ReviewDecision, ReviewState
@@ -71,6 +72,7 @@ class PgReviewStore:
                 target=entry.target,
                 status_code=entry.status_code,
                 details=entry.details,
+                org_id=current_org(),
             )
             session.add(row)
             await session.flush()
@@ -78,7 +80,12 @@ class PgReviewStore:
 
     async def audit(self, *, limit: int = 200, target: str = "") -> list[AuditEntry]:
         async with self._scope() as session:
-            query = select(AuditLogRow).order_by(AuditLogRow.id.desc()).limit(limit)
+            query = (
+                select(AuditLogRow)
+                .where(AuditLogRow.org_id == current_org())
+                .order_by(AuditLogRow.id.desc())
+                .limit(limit)
+            )
             if target:
                 query = query.where(
                     or_(AuditLogRow.target.contains(target), AuditLogRow.action.contains(target))

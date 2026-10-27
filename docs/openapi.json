@@ -4785,6 +4785,25 @@
         "title": "NetworkNode",
         "type": "object"
       },
+      "NewOrganisation": {
+        "additionalProperties": false,
+        "properties": {
+          "admin": {
+            "$ref": "#/components/schemas/NewUser"
+          },
+          "org_id": {
+            "pattern": "^[a-z0-9][a-z0-9-]{1,47}$",
+            "title": "Org Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org_id",
+          "admin"
+        ],
+        "title": "NewOrganisation",
+        "type": "object"
+      },
       "NewUser": {
         "additionalProperties": false,
         "properties": {
@@ -4931,6 +4950,32 @@
           "node"
         ],
         "title": "NodeDetail",
+        "type": "object"
+      },
+      "Organisation": {
+        "additionalProperties": false,
+        "properties": {
+          "accounts": {
+            "title": "Accounts",
+            "type": "integer"
+          },
+          "admins": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Admins",
+            "type": "array"
+          },
+          "org_id": {
+            "title": "Org Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org_id",
+          "accounts"
+        ],
+        "title": "Organisation",
         "type": "object"
       },
       "PartialDate": {
@@ -7560,6 +7605,70 @@
         ]
       }
     },
+    "/api/v1/auth/organisations": {
+      "get": {
+        "operationId": "list_organisations_api_v1_auth_organisations_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Organisation"
+                  },
+                  "title": "Response List Organisations Api V1 Auth Organisations Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Organisations",
+        "tags": [
+          "auth"
+        ]
+      },
+      "post": {
+        "operationId": "add_organisation_api_v1_auth_organisations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewOrganisation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organisation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Organisation",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/api/v1/auth/password": {
       "post": {
         "description": "Change my password. Every other session of mine is signed out.",
@@ -8104,7 +8213,7 @@
     },
     "/api/v1/context/workspaces": {
       "get": {
-        "description": "Every workspace that holds a document, and `default` always.",
+        "description": "Every workspace of this organisation that holds a document, and `default` always.",
         "operationId": "workspaces_api_v1_context_workspaces_get",
         "responses": {
           "200": {
