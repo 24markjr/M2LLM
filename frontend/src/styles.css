@@ -1782,5 +1782,21 @@ header.top {
 .source-lines { margin: 0; padding: 8px 0; overflow: auto; list-style: none; font-family: ui-monospace, monospace; font-size: 12.5px; }
 .source-lines li { display: flex; gap: 12px; padding: 1px 16px; white-space: pre-wrap; }
 .source-lines li.cited { background: var(--accent-soft); border-left: 3px solid var(--accent); }
+/* v4 Phase 6: an Indian-language document beside its English translation, line for line. */
+.source-drawer.bilingual { width: min(980px, 100vw); }
+.source-language { margin: 8px 16px 0; font-size: 12.5px; }
+.source-warning { margin: 6px 16px 0; padding: 6px 10px; border-left: 3px solid var(--warn); background: var(--accent-soft); font-size: 12.5px; }
+.source-pair { width: calc(100% - 16px); margin: 8px; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+.source-pair th { text-align: left; font-weight: 600; padding: 4px 8px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface-raised); }
+.source-pair td { padding: 2px 8px; vertical-align: top; white-space: pre-wrap; overflow-wrap: anywhere; }
+.source-pair .source-no { width: 36px; font-family: ui-monospace, monospace; font-size: 12px; color: var(--text-dim); }
+.source-pair tr.cited td { background: var(--accent-soft); }
+.source-pair tr.cited td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.source-pair tr.unsafe td:last-child { text-decoration: underline wavy var(--warn); }
+.talk-language { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; font-size: 13px; }
+.talk-translation { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--accent); background: var(--accent-soft); }
+.talk-translation .talk-label { font-size: 12px; }
+.talk-english { font-size: 12.5px; margin-top: 4px; }
+.talk-recording { color: var(--bad); }
 .source-no { color: var(--text-faint); min-width: 3ch; text-align: right; user-select: none; }
 .talk-starters { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: 6px; }

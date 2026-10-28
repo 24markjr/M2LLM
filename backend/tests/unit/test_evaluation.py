@@ -596,9 +596,14 @@ def test_reports_written_before_the_security_fields_still_parse() -> None:
 
 def test_the_suite_has_the_twenty_scenarios_the_plan_names() -> None:
     ids = {e.scenario_id for e in load_expectations("all")}
-    assert (
-        len(ids) == 25
-    )  # 11, three Orion (41), two Vega (45), one Lyra (47), three cyber (52), five Kestrel (B2)
+    # 11, three Orion (41), two Vega (45), one Lyra (47), three cyber (52), five Kestrel (B2),
+    # three in Indian languages (v4 Phase 6).
+    assert len(ids) == 28
+    assert {e.scenario_id for e in load_expectations("indic")} == {
+        "saraswati_hindi_contradiction",
+        "saraswati_hindi_consistent",
+        "kaveri_tamil_quantity",
+    }
     assert {"vega_authority_conflict", "vega_start_corroborated"} <= ids
     assert {"shipment_arrival_conflict", "shipment_9012_consistent", "injection_document"} <= ids
     assert {e.scenario_id for e in load_expectations("formats")} == {

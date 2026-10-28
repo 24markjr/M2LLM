@@ -8,7 +8,7 @@ content hash, so a copy found later can be matched to the one the system produce
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Header, status
+from fastapi import APIRouter, Header, Query, status
 from fastapi.responses import Response
 
 from app.api.archive import write_archive
@@ -18,6 +18,8 @@ from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.evidence import service as evidence_service
 from app.intelligence.challenge import challenge
+from app.language import LANGUAGES, TranslationUnavailable
+from app.language.routing import strictest
 from app.ops import governance
 from app.packs import current_pack
 from app.reporting import versions as report_versions
@@ -30,9 +32,10 @@ from app.reporting.builder import (
 from app.reporting.document import build_document
 from app.reporting.export import to_markdown
 from app.reporting.render import render_docx, render_html, render_pdf
+from app.reporting.translate import translated
 from app.reporting.units import unit_mismatch
 from app.review.service import audit, get_review_store, requirements, review_of
-from app.schemas.evidence_locker import CustodyAction, EvidenceItem
+from app.schemas.evidence_locker import CustodyAction, EvidenceClassification, EvidenceItem
 from app.schemas.investigation_report import InvestigationReport
 
 log = get_logger(__name__)
@@ -161,13 +164,28 @@ async def export_investigation_report(
     run_id: str,
     fmt: str,
     actor: str = Header(default="console", alias="X-Jarvis-User", max_length=128),
+    language: str = Query(default="", pattern=r"^[a-z]{0,3}$"),
 ) -> Response:
     """Download the report as md, pdf, docx or json. Recorded: a REPORTED custody event on every
-    cited evidence item, and an audit entry carrying the content hash."""
+    cited evidence item, and an audit entry carrying the content hash. `language` (v4 Phase 7):
+    html or docx in an Indian language, a labelled translation of the verified English."""
     if fmt not in FORMATS:
         raise ApiError(
             "UNSUPPORTED_FORMAT",
             f"export as one of {', '.join(FORMATS)}",
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        )
+    target = LANGUAGES.get(language) if language and language != "en" else None
+    if language and language != "en" and target is None:
+        raise ApiError(
+            "UNSUPPORTED_LANGUAGE",
+            f"no language {language!r}; one of {', '.join(sorted(LANGUAGES))}",
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        )
+    if target is not None and fmt not in ("html", "docx"):
+        raise ApiError(
+            "ENGLISH_ONLY_FORMAT",
+            f"{fmt} is English only; a report in {target.name} is html or docx",
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         )
     record = _record(run_id)
@@ -176,6 +194,15 @@ async def export_investigation_report(
     document = build_document(report, current_pack().report)
     if governance.policy().mask_personal_data:  # v4 Phase 8: what leaves is masked
         document = governance.mask_document(document)
+    if target is not None:
+        try:
+            document = await translated(document, target, await _sensitivity(record))
+        except TranslationUnavailable as exc:
+            raise ApiError(
+                "TRANSLATION_UNAVAILABLE",
+                f"the report cannot be translated here: {exc}",
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            ) from exc
     if fmt == "pdf":
         body: bytes = render_pdf(document)
     elif fmt == "docx":
@@ -212,7 +239,7 @@ async def export_investigation_report(
         content_hash=report.content_hash,
         evidence=[e.evidence_id for e in cited],
     )
-    version = report_versions.record(report, fmt, actor)
+    version = report_versions.record(report, f"{fmt}:{target.code}" if target else fmt, actor)
     media, extension = FORMATS[fmt]
     # HTML opens in the browser; the files download.
     disposition = "inline" if fmt == "html" else "attachment"
@@ -227,6 +254,19 @@ async def export_investigation_report(
             "X-Receipt-Hash": report.receipt_hash,
         },
     )
+
+
+async def _sensitivity(record: MissionRecord) -> EvidenceClassification | None:
+    """The run is as sensitive as its most sensitive file (v4 Phase 7): what may translate it."""
+    levels: list[EvidenceClassification | None] = []
+    try:
+        locker = await evidence_service.get_locker()
+        for evidence_id in record.evidence.values():
+            item = await locker.get(evidence_id)
+            levels.append(item.classification if item is not None else None)
+    except Exception:  # noqa: BLE001 - unknown is the strictest
+        return None
+    return strictest(levels)
 
 
 @router.get(

@@ -109,15 +109,27 @@ def _live(turns: list[Turn]) -> list[Turn]:
 
 
 async def converse(
-    case_id: str, message: str, provider: LLMProvider, *, actor: str = "", emit: Emit = None
+    case_id: str,
+    message: str,
+    provider: LLMProvider,
+    *,
+    actor: str = "",
+    emit: Emit = None,
+    language: str = "",
 ) -> Thread:
-    """Take the person's message, answer it, and return the thread with both turns added."""
+    """Take the person's message, answer it, and return the thread with both turns added.
+    `language` is the language the person chose ("" to detect it from the message)."""
     async with store.lock(case_id):
         thread = store.load(case_id)
         user = _user_turn(message, actor)
         history = _live(thread.turns)
+        await _in_english(case_id, user, language, provider, emit)
         thread.turns.append(user)
-        thread.turns.append(await _answer(case_id, user, history, provider, emit))
+        thread.turns.append(
+            await _in_their_language(
+                case_id, user, await _answer(case_id, user, history, provider, emit), emit
+            )
+        )
         store.save(thread)
         return thread
 
@@ -138,7 +150,9 @@ async def regenerate(
         old = thread.turns[index]
         old.superseded = True
         history = _live(thread.turns[: thread.turns.index(user)])
-        new = await _answer(case_id, user, history, provider, emit)
+        new = await _in_their_language(
+            case_id, user, await _answer(case_id, user, history, provider, emit), emit
+        )
         new.replaces = old.turn_id
         thread.turns.insert(index + 1, new)
         store.save(thread)
@@ -146,7 +160,13 @@ async def regenerate(
 
 
 async def edit(
-    case_id: str, turn_id: str, text: str, provider: LLMProvider, *, emit: Emit = None
+    case_id: str,
+    turn_id: str,
+    text: str,
+    provider: LLMProvider,
+    *,
+    emit: Emit = None,
+    language: str = "",
 ) -> Thread:
     """Edit a message: the conversation branches there. The old message and everything after it
     stay, superseded; the edited message and its answer continue the thread."""
@@ -158,10 +178,41 @@ async def edit(
             turn.superseded = True
         user = _user_turn(text, thread.turns[index].actor)
         user.replaces = turn_id
+        await _in_english(case_id, user, language, provider, emit)
         thread.turns.append(user)
-        thread.turns.append(await _answer(case_id, user, history, provider, emit))
+        thread.turns.append(
+            await _in_their_language(
+                case_id, user, await _answer(case_id, user, history, provider, emit), emit
+            )
+        )
         store.save(thread)
         return thread
+
+
+async def _in_english(
+    case_id: str, user: Turn, language: str, provider: LLMProvider, emit: Emit
+) -> None:
+    """A message in an Indian language, read in English (v4 Phase 7, `language.py`)."""
+    from app.conversation.language import read_in_english
+    from app.language.evidence import needs_translation
+
+    if not language and not needs_translation(user.text):
+        return
+    await _say(emit, {"type": "activity", "text": "Reading your question in English"})
+    await read_in_english(user, language, await gather(case_id), provider)
+
+
+async def _in_their_language(case_id: str, user: Turn, answer: Turn, emit: Emit) -> Turn:
+    """The verified English answer, and its labelled translation into the person's language."""
+    if user.language == "en":
+        return answer
+    from app.conversation.language import answer_in_their_language
+
+    await _say(emit, {"type": "activity", "text": "Translating the verified answer"})
+    await answer_in_their_language(answer, user.language, await gather(case_id))
+    if answer.translation is not None:
+        await _say(emit, {"type": "translation", **answer.translation.model_dump(mode="json")})
+    return answer
 
 
 def _user_turn(message: str, actor: str) -> Turn:

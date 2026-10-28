@@ -44,6 +44,9 @@ media = [
     # The entailment model (v4 Phase 2, app/intelligence/trust/nli.py): ONNX on CPU, no PyTorch.
     "tokenizers>=0.20",
     "huggingface-hub>=0.25",
+    # Indian languages (v4 Phase 6, app/language/indictrans.py): IndicTrans2 through CTranslate2,
+    # which faster-whisper already brings; SentencePiece is its tokenizer. No PyTorch.
+    "sentencepiece>=0.2",
 ]
 dev = [
     "pytest>=8.3",
@@ -92,6 +95,9 @@ ignore = [
 # them renders printably on a cp1252 console (BUG-001). Flagging them as ambiguous is
 # correct in general and wrong here.
 "tests/unit/test_synthesis.py" = ["RUF001"]
+# Hindi, Tamil and Bengali text and digits are what these tests are about.
+"tests/unit/test_language.py" = ["RUF001"]
+"tests/unit/test_language_conversation.py" = ["RUF001"]
 # The substitution table is a map FROM the ambiguous characters, so it must contain
 # them literally. Flagging them here is the rule catching the fix for itself.
 "app/intelligence/synthesis/renderers.py" = ["RUF001"]

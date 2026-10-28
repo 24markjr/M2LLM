@@ -481,14 +481,47 @@ async def prepare(paths: list[Path], provider: Any) -> None:
     from app.core.config import get_settings
     from app.tools.media import understand
 
-    if not get_settings().media_understanding:
-        return
+    settings = get_settings()
+    if settings.media_understanding:
+        for path in paths:
+            spec = spec_for(path)
+            if spec is None or not path.exists():
+                continue
+            if spec.kind in {FormatKind.IMAGE, FormatKind.VIDEO, FormatKind.AUDIO, FormatKind.PDF}:
+                await understand(path, sha256_of(path), provider)
+    if settings.translate_evidence:
+        await _prepare_translations(paths)
+
+
+async def _prepare_translations(paths: list[Path]) -> None:
+    """Translate each file in an Indian language now, off the event loop, with the engine its
+    sensitivity allows (v4 Phases 6-7), so reading it later is a cache hit."""
+    import asyncio
+
+    from app.language import prepare_translation
+    from app.language.evidence import needs_translation
+
     for path in paths:
-        spec = spec_for(path)
-        if spec is None or not path.exists():
+        if spec_for(path) is None or not path.exists():
             continue
-        if spec.kind in {FormatKind.IMAGE, FormatKind.VIDEO, FormatKind.AUDIO, FormatKind.PDF}:
-            await understand(path, sha256_of(path), provider)
+        try:
+            document = await asyncio.to_thread(parse, path)
+        except DocumentLoadError:
+            continue
+        if document.has_text and needs_translation(document.text):
+            await prepare_translation(document.text, await _sensitivity_of(document.sha256))
+
+
+async def _sensitivity_of(sha256: str) -> Any:
+    """The evidence item's classification, if the file is in the locker; None (treated as
+    Confidential) otherwise."""
+    try:
+        from app.evidence.service import get_locker
+
+        item = await (await get_locker()).by_sha(sha256)
+        return item.classification if item is not None else None
+    except Exception:  # noqa: BLE001 - unknown sensitivity is the strictest, never an error
+        return None
 
 
 def load_event_log(path: Path) -> LoadedDocument:

@@ -12,6 +12,13 @@ reviewers. Each statement below is something the product does today, with where 
   private Tailscale network. Customer documents are not sent to a third-party AI service.
 - **On-premise**: the same product inside the customer's network, with no outside connection
   required (see [on-premise](on-premise.md)).
+- **Indian languages** are translated by IndicTrans2 (AI4Bharat, MIT licence) running on the
+  application server's CPU, pinned by revision; the receipt of every investigation names the engine
+  and version that translated each document. **Bhashini** (MeitY) is used only when an organisation
+  turns it on, and only for Unclassified (optionally Internal) material: Confidential, Restricted
+  and unclassified-by-default material never leaves our cloud (`app/language/routing.py`, tested in
+  `tests/unit/test_language.py`). Read aloud uses the browser's own voice unless Bhashini is allowed;
+  a spoken question is transcribed on our server and the recording is not kept.
 
 ## 2. Access
 

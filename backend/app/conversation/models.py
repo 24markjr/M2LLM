@@ -51,6 +51,21 @@ class Recheck(JarvisModel):
     reason: str = ""
 
 
+class TurnTranslation(JarvisModel):
+    """An answer in the person's language (v4 Phase 7): a labelled machine translation of the
+    verified English, never a second answer."""
+
+    language: str
+    language_name: str = ""
+    # The browser voice to read it aloud with, e.g. `hi-IN`.
+    speech: str = ""
+    text: str
+    engine: str
+    engine_version: str = ""
+    fallback: bool = False
+    label: str = ""
+
+
 class Turn(JarvisModel):
     turn_id: str
     role: str  # "user" or "assistant"
@@ -69,6 +84,17 @@ class Turn(JarvisModel):
     # out of what the model reads. `replaces` names the turn a new one stands in for.
     superseded: bool = False
     replaces: str = ""
+    # v4 Phase 7: the language the person asked in. For their message, `text` is the English the
+    # investigation reads and `original_text` what they typed (and `transliterated`, if they typed
+    # in Roman letters); for an answer, `text` is the verified English and `translation` its
+    # labelled rendering in their language.
+    language: str = "en"
+    original_text: str = ""
+    transliterated: str = ""
+    transliteration_engine: str = ""
+    translation_engine: str = ""
+    language_note: str = ""
+    translation: TurnTranslation | None = None
     created_at: datetime = Field(default_factory=utcnow)
 
 

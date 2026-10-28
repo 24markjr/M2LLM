@@ -29,6 +29,7 @@ from app.intelligence.context.hybrid import terms
 from app.intelligence.temporal import find_dates, find_figures, parse_number
 from app.schemas.common import JarvisModel
 from app.schemas.finding import Finding
+from app.schemas.language import DocumentLanguage
 from app.tools.builtin import UnsafeExpressionError, safe_eval
 from app.tools.loader import load_uploads
 
@@ -52,6 +53,10 @@ class CaseMaterial(JarvisModel):
     findings: list[CaseFinding] = Field(default_factory=list)
     # Locator -> the text the run that cited it read there (what verification compares against).
     evidence_text: dict[str, str] = Field(default_factory=dict)
+    # Documents read through a translation, with their originals (v4 Phase 6).
+    languages: dict[str, DocumentLanguage] = Field(default_factory=dict)
+    # Each filed document's sensitivity, for routing language requests (v4 Phase 7).
+    sensitivities: list[str] = Field(default_factory=list)
 
     def line(self, locator: str) -> str | None:
         document, _, position = locator.rpartition(":")
@@ -82,6 +87,7 @@ async def gather(case_id: str) -> CaseMaterial:
         if record is None:
             continue
         material.documents.update(record.texts)
+        material.languages.update(record.languages)
         if record.result is not None:
             material.evidence_text.update(record.result.evidence_text)
             material.findings.extend(
@@ -92,11 +98,16 @@ async def gather(case_id: str) -> CaseMaterial:
         names = []
         for link in await store.evidence(case_id):
             item = await locker.get(link.evidence_id)
+            if item is not None:
+                material.sensitivities.append(item.classification.value)
             if item is not None and item.name not in material.documents:
                 names.append(item.name)
         if names:
-            texts, _ = load_uploads(names)
+            texts, loaded = load_uploads(names)
             material.documents.update(texts)
+            material.languages.update(
+                {d.document_id: d.reading for d in loaded if d.reading is not None}
+            )
     except Exception as exc:  # noqa: BLE001 - the runs' text is still there to read
         log.warning("case_evidence_unreadable", case_id=case_id, error=str(exc))
     return material

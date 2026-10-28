@@ -65,6 +65,10 @@ export interface MissionSummary {
 }
 
 export interface MissionDetail extends MissionSummary {
+  // v4 Phase 7: the language the question was asked in, and as asked; `objective` is the English.
+  asked_in?: string;
+  original_objective?: string;
+  translated_documents?: string[];
   goal: string;
   required_operations: string[];
   task_count: number;
@@ -1337,7 +1341,63 @@ export interface Turn {
   // v4 Phase 4: replaced by a regenerated answer or an edited message, kept and shown on request.
   superseded: boolean;
   replaces: string;
+  // v4 Phase 7: the language the person asked in. For their message `text` is the English the
+  // investigation read and `original_text` what they typed; for an answer `text` is the verified
+  // English and `translation` its labelled rendering in their language.
+  language?: string;
+  original_text?: string;
+  transliterated?: string;
+  transliteration_engine?: string;
+  translation_engine?: string;
+  language_note?: string;
+  translation?: TurnTranslation | null;
   created_at: string;
+}
+
+export interface TurnTranslation {
+  language: string;
+  language_name: string;
+  speech: string;
+  text: string;
+  engine: string;
+  engine_version: string;
+  fallback: boolean;
+  label: string;
+}
+
+// --- Indian languages (v4 Phases 6-7) -------------------------------------------------------
+
+export interface LanguageInfo {
+  code: string;
+  name: string;
+  native: string;
+  script: string;
+  flores: string;
+  speech: string;
+}
+
+export interface LanguageCatalogue {
+  languages: LanguageInfo[];
+  status: Record<string, unknown>;
+}
+
+/** A document read through a line-aligned English translation; the original stays the evidence. */
+export interface DocumentLanguage {
+  language: string;
+  language_name: string;
+  engine: string;
+  engine_version: string;
+  original_text: string;
+  translated_lines: number[];
+  unsafe_lines: number[];
+  untranslated_lines: number;
+}
+
+export interface Transcript {
+  text: string;
+  language: string;
+  language_name: string;
+  engine: string;
 }
 
 export interface Thread {
@@ -1443,6 +1503,23 @@ export interface GovernancePolicy {
   retention_days: number;
   mask_personal_data: boolean;
   pack: string;
+  // v4 Phase 7: what may go to Bhashini. Confidential and Restricted never do.
+  bhashini?: "off" | "unclassified" | "internal";
+}
+
+export interface EngineUsage {
+  engine: string;
+  calls: number;
+  failed: number;
+  fallbacks: number;
+  characters: number;
+  seconds: number;
+}
+
+export interface LanguageUsage {
+  days: number;
+  engines: EngineUsage[];
+  by_task: Record<string, number>;
 }
 
 export interface RetentionResult {

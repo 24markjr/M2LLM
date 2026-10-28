@@ -1,0 +1,21 @@
+# v4 Phase 6: the negative case across languages. The Hindi status note states M1 and M2's dates and
+# payments exactly as the English register does (Indian digit grouping in one, ISO dates in the
+# other). Finding a contradiction here is the failure - a translation that shifts a figure would.
+id: saraswati_hindi_consistent
+category: negative
+suites: [indic, negative, all]
+objective: >
+  Determine whether the Saraswati project's Hindi status note contradicts the milestone and payment
+  register about milestones M1 and M2.
+documents:
+  - saraswati_status_note_hi.txt
+  - saraswati_milestone_register.txt
+
+expected_operations:
+  - compare_sources
+  - detect_inconsistencies
+
+min_tasks: 2
+minimal_tasks: 2
+
+expect_zero_findings: true

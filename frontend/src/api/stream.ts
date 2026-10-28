@@ -5,12 +5,13 @@
  */
 
 import { ApiError, SIGNED_OUT } from "./client";
-import type { Thread } from "./types";
+import type { Thread, TurnTranslation } from "./types";
 
 export type TalkEvent =
   | { type: "activity"; text: string }
   | { type: "words"; claim: number; text: string }
   | { type: "verdict"; claim: number; status: string; citations: string[] }
+  | ({ type: "translation" } & TurnTranslation)
   | { type: "done"; thread: Thread }
   | { type: "error"; message: string };
 
@@ -18,6 +19,8 @@ export interface TalkRequest {
   text?: string;
   regenerate?: string;
   edit?: string;
+  // v4 Phase 7: the language the person chose ("" to detect it).
+  language?: string;
 }
 
 /** Complete events in `buffer`, and what is left over for the next chunk. */

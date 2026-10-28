@@ -41,6 +41,7 @@ from app.schemas.case import CaseInvestigation
 from app.schemas.common import RunId, new_run_id, utcnow
 from app.schemas.event import ExecutionEvent
 from app.schemas.finding import Finding
+from app.schemas.language import DocumentLanguage
 from app.schemas.objective import Objective
 
 log = get_logger(__name__)
@@ -85,6 +86,11 @@ class MissionRecord:
         # counter-evidence (Phase 48), and what it records against.
         self.texts: dict[str, str] = {}
         self.page_starts: dict[str, list[int]] = {}
+        # Each document read through a translation: its language, engine and original (v4 Phase 6).
+        self.languages: dict[str, DocumentLanguage] = {}
+        # The language the question was asked in, and as asked (v4 Phase 7).
+        self.asked_in: str = "en"
+        self.original_objective: str = ""
         self.challenges: dict[str, ChallengeResult] = {}
         # The same question put to the plain model (Phase U7), once someone asks for it.
         self.comparison: dict[str, object] | None = None
@@ -113,6 +119,9 @@ class MissionRecord:
         record.authority = dict(archive.authority)
         record.texts = dict(archive.texts)
         record.page_starts = dict(archive.page_starts)
+        record.languages = dict(archive.languages)
+        record.asked_in = archive.asked_in
+        record.original_objective = archive.original_objective
         record.case_id = archive.case_id
         record.org_id = archive.org_id
         record.knowledge_view = archive.knowledge_view

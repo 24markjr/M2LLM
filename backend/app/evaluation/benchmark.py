@@ -415,11 +415,13 @@ async def run_benchmark(
     return report
 
 
-def write_report(report: BenchmarkReport) -> Path:
+def write_report(report: BenchmarkReport, label: str = "") -> Path:
+    """`label` names a run of part of the suite (`-benchmark-indic.json`): the release gate reads
+    only unlabelled reports, the whole suite, so a partial run can never stand in for one."""
     directory = benchmark_dir() / "reports"
     directory.mkdir(parents=True, exist_ok=True)
     stamp = report.generated_at.strftime("%Y%m%dT%H%M%S")
-    path = directory / f"{stamp}-benchmark.json"
+    path = directory / f"{stamp}-benchmark{f'-{label}' if label else ''}.json"
     path.write_text(report.model_dump_json(indent=2), encoding="utf-8")
     lines = [
         f"# Benchmark {stamp}",
@@ -453,6 +455,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else "")
     parser.add_argument("--scenarios", default="")
     parser.add_argument("--systems", default="jarvis,plain")
+    # A run of chosen scenarios is labelled ("partial" unless named), so the gate never reads it.
+    parser.add_argument("--label", default="")
     args = parser.parse_args()
     report = asyncio.run(
         run_benchmark(
@@ -460,7 +464,8 @@ def main() -> None:
             [s for s in args.systems.split(",") if s],
         )
     )
-    print(write_report(report))  # noqa: T201
+    label = args.label or ("partial" if args.scenarios else "")
+    print(write_report(report, label))  # noqa: T201
     for s in report.systems:
         print(s.model_dump_json())  # noqa: T201
 

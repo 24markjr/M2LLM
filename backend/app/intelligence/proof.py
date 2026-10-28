@@ -28,6 +28,7 @@ from app.intelligence.synthesis.grounding import check_narrative
 from app.llm.provider import CompletionRequest, LLMProvider
 from app.schemas.common import JarvisModel, utcnow
 from app.schemas.finding import Finding
+from app.schemas.language import DocumentLanguage
 from app.schemas.result import FinalReport, NarrativeCheck, SectionKind
 from app.schemas.trust import EvidenceText, TrustStatus
 
@@ -57,6 +58,17 @@ class ReceiptDocument(JarvisModel):
     sha256: str
     characters: int
     evidence_id: str = ""
+
+
+class ReceiptLanguage(JarvisModel):
+    """A document read through a translation (v4 Phase 6): what translated it, and how much."""
+
+    name: str
+    language: str
+    engine: str
+    engine_version: str
+    translated_lines: int
+    unsafe_lines: int = 0
 
 
 class ReceiptFinding(JarvisModel):
@@ -93,6 +105,9 @@ class Receipt(JarvisModel):
     tasks_planned: int = 0
     tasks_completed: int = 0
     gaps_open: int = 0
+    # Documents read in translation and the engine that translated each (v4 Phase 6). Left out of
+    # the hash when empty, so an English-only receipt hashes as it did before.
+    languages: list[ReceiptLanguage] = Field(default_factory=list)
     # SHA-256 over the canonical JSON of every field above.
     receipt_hash: str = ""
 
@@ -145,6 +160,7 @@ def build_receipt(
     tasks_planned: int,
     tasks_completed: int,
     gaps_open: int,
+    languages: dict[str, DocumentLanguage] | None = None,
 ) -> Receipt:
     receipt = Receipt(
         run_id=run_id,
@@ -180,8 +196,20 @@ def build_receipt(
         tasks_planned=tasks_planned,
         tasks_completed=tasks_completed,
         gaps_open=gaps_open,
+        languages=[
+            ReceiptLanguage(
+                name=name,
+                language=reading.language,
+                engine=reading.engine or "not translated",
+                engine_version=reading.engine_version,
+                translated_lines=len(reading.translated_lines),
+                unsafe_lines=len(reading.unsafe_lines),
+            )
+            for name, reading in sorted((languages or {}).items())
+        ],
     )
-    body = receipt.model_dump(mode="json", exclude={"receipt_hash"})
+    excluded = {"receipt_hash"} | (set() if receipt.languages else {"languages"})
+    body = receipt.model_dump(mode="json", exclude=excluded)
     receipt.receipt_hash = _sha256(json.dumps(body, sort_keys=True, separators=(",", ":")))
     return receipt
 

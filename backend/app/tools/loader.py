@@ -23,6 +23,7 @@ from pydantic import Field
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.schemas.common import JarvisModel
+from app.schemas.language import DocumentLanguage
 
 log = get_logger(__name__)
 
@@ -57,6 +58,9 @@ class LoadedDocument(JarvisModel):
     # False for a file that yields no citable text yet (an image before OCR, a video without a
     # transcript). A mission excludes it and says why rather than reading silence as evidence.
     has_text: bool = True
+    # How it was read (v4 Phase 6): its language and, if it was translated, the original beside the
+    # translation. None for an English document.
+    reading: DocumentLanguage | None = None
 
     @property
     def summary(self) -> str:
@@ -167,6 +171,10 @@ def load_documents(paths: list[Path]) -> tuple[dict[str, str], list[LoadedDocume
                 reason=document.text.splitlines()[-1] if document.text else "",
             )
             continue
+        # Read in English, line-aligned with the original (v4 Phase 6); cached at upload.
+        from app.language import read_in_english
+
+        document = read_in_english(document)
         documents[document.document_id] = document.text
         loaded.append(document)
         if document.truncated:

@@ -197,6 +197,31 @@ class Settings(BaseSettings):
     # Longest recording transcribed, in seconds.
     max_media_seconds: int = 1800
 
+    # --- Indian languages (v4 Phases 6-7) ---
+    # Documents in an Indian language are read through a line-aligned English translation; the
+    # original stays the evidence. Off: they are read as written, which a small model reads poorly.
+    translate_evidence: bool = True
+    # IndicTrans2 distilled 200M (AI4Bharat; MIT), as CTranslate2 models, pinned by revision - the
+    # version a receipt records. The long-context (rotary) variant of Gumma et al., NAACL 2025.
+    translation_model: str = "adalat-ai/ct2-rotary-indictrans2-indic-en-dist-200M"
+    translation_model_revision: str = "524aade4f724dccbc6cd5ffb5e3c5c832a2baee4"
+    translation_model_en_indic: str = "adalat-ai/ct2-rotary-indictrans2-en-indic-dist-200M"
+    translation_model_en_indic_revision: str = "ee04de9a86e42920ac310a0fe5a1505c85671b68"
+    translation_threads: int = Field(default=2, ge=1, le=32)
+    # One document's lines translated at most (invariant 7); the rest are read as written, and the
+    # document says so.
+    max_translated_lines: int = Field(default=3000, ge=1)
+    # Bhashini (Phase 7): MeitY's language platform, an optional second engine. Used only for what
+    # the routing policy allows (Unclassified and Internal, in organisations that turn it on), and
+    # never when these are empty. The pipeline id is the one Bhashini's onboarding issues.
+    bhashini_user_id: str = ""
+    bhashini_api_key: str = ""
+    bhashini_pipeline_id: str = "64392f96daac500b55c543cd"
+    bhashini_config_url: str = (
+        "https://meity-auth.ulcacontrib.org/ulca/apis/v0/model/getModelsPipeline"
+    )
+    bhashini_timeout_s: float = 30.0
+
     # --- Experiments (Phase 34) ---
     # Overrides `agent.yaml:knowledge.cross_source_pass` for one process, so an experiment arm is
     # an environment variable rather than an edit to a committed file. Empty: the YAML decides. The

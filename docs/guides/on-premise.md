@@ -9,8 +9,9 @@ model running on the customer's own server and nothing fetched from the internet
 internet:
 
 - the JARVIS images (backend, web) at one commit, and the Postgres, Neo4j and Ollama images;
-- the pinned models: the language model and the embedding model (Ollama's manifests and blobs), and
-  the entailment model used in verification;
+- the pinned models: the language model and the embedding model (Ollama's manifests and blobs), the
+  entailment model used in verification, and IndicTrans2 in both directions (Indian languages,
+  about 1.7 GB, read offline);
 - `docker-compose.onprem.yml`, `docker-compose.gpu.yml`, `install.sh`, the backup and restore
   scripts, and `SHA256SUMS` over every file.
 

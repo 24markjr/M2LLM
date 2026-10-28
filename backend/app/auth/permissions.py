@@ -19,7 +19,14 @@ from app.auth.models import Role
 READ_METHODS = {"GET", "HEAD", "OPTIONS"}
 
 # POST routes that only read: searching is not changing anything.
-_READ_POSTS = [re.compile(p) for p in (r"^/api/v1/context/retrieve$",)]
+_READ_POSTS = [
+    re.compile(p)
+    for p in (
+        r"^/api/v1/context/retrieve$",
+        # Reading something in one's own language changes nothing (v4 Phase 7).
+        r"^/api/v1/language/(translate|transliterate|speak)$",
+    )
+]
 
 # What a reviewer may write on top of reading.
 _REVIEWER_WRITES = [

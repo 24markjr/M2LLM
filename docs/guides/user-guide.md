@@ -84,7 +84,37 @@ contradictions with both sources quoted, a timeline, gaps and next evidence, and
 every file's fingerprint and the run's receipt. Every export is a numbered version signed with the
 report's and the run's hashes, listed under the report.
 
-## 6. What JARVIS does not do
+## 6. Indian languages
+
+**Files in an Indian language** - Hindi, Marathi, Nepali, Bengali, Assamese, Punjabi, Gujarati,
+Odia, Tamil, Telugu, Kannada, Malayalam or Urdu - are read through an English translation made line
+by line, so line 7 of the translation is line 7 of the original. The original stays the evidence:
+click a citation in the case's conversation and the original and the translation open side by side, with the cited line
+highlighted in both.
+
+- A finding that rests **only** on translated lines is never marked verified on its own: it goes to
+  review, for someone who reads the language to check the translation against the original. A
+  finding that also cites an original line - a Hindi report against an English ledger - is verified
+  as usual.
+- Every figure on a translated line is checked against the original. If one did not survive, the
+  original's figures are written on the line and the viewer warns you.
+- Scanned pages in Indian scripts are **not** read yet (OCR reads Latin script only). Type or export
+  such documents as text.
+
+**Asking in your language**: choose it under **Language** in *Ask about this case*. Type in its own
+script, in Roman letters ("kitna bhugtan hua?"), or press **Speak**. The question is read in
+English - you see the English it was read as - and the answer comes in English, the verified
+master, with its translation into your language below it, labelled as a machine translation.
+**Read aloud** speaks it with your browser's own voice. With Hindi chosen, the panel itself is in
+Hindi. A question typed on the home page in Hindi runs in English too; the investigation page
+shows it as asked.
+
+**Reports in your language**: under the report, pick a language for **Open in ...** or **DOCX
+in ...**: the same report, translated, with a banner naming the engine. Quotes from the evidence,
+finding IDs, file names and hashes are kept exactly as written. The PDF is English only: it cannot
+yet draw Indian scripts correctly.
+
+## 7. What JARVIS does not do
 
 - It does not decide anything for you. A finding is a claim with evidence; a reviewer decides.
 - It does not prove that a file is authentic. The chain of custody records what happened to a file

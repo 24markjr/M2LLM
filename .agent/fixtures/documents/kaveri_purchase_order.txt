@@ -1,0 +1,11 @@
+PURCHASE ORDER PO-KV-2026-031
+Issued by: District Education Office, Kaveri School Computer Lab Project
+Date: 20 March 2026
+Supplier: Southern Systems Pvt Ltd
+
+Item: Laptop, 14-inch, 16 GB RAM
+Quantity: 150 units
+Unit price: INR 45,000
+Order value: INR 67,50,000
+Delivery due: 30 April 2026
+Authority: approval of the purchase committee meeting of 12 March 2026

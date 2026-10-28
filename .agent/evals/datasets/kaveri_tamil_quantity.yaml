@@ -1,0 +1,23 @@
+# v4 Phase 6: Tamil meeting minutes against an English purchase order. The purchase committee
+# approved 120 laptops (Tamil minutes, 12 March 2026); the purchase order, citing that meeting as its
+# authority, orders 150. The minutes add that more needs a new approval.
+id: kaveri_tamil_quantity
+category: financial
+suites: [indic, all]
+objective: >
+  Check whether the Kaveri purchase order is consistent with what the purchase committee approved in
+  its Tamil meeting minutes.
+documents:
+  - kaveri_minutes_ta.txt
+  - kaveri_purchase_order.txt
+
+expected_operations:
+  - compare_sources
+  - detect_inconsistencies
+  - generate_report
+
+min_tasks: 2
+minimal_tasks: 3
+
+expected_claims:
+  - "150"

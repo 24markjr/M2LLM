@@ -93,7 +93,23 @@ export function Journal({ view, runId, onStop }: { view: MissionView; runId?: st
           <span>{new Date(mission.created_at).toLocaleString()}</span>
           <RunState status={mission.status} />
         </div>
-        <h1 className="journal-question">{mission.objective}</h1>
+        {"original_objective" in mission && mission.original_objective ? (
+          <>
+            {/* Asked in an Indian language (v4 Phase 7): shown as asked, with the English it ran on. */}
+            <h1 className="journal-question" lang={mission.asked_in}>
+              {mission.original_objective}
+            </h1>
+            <p className="dim">Investigated in English as: {mission.objective}</p>
+          </>
+        ) : (
+          <h1 className="journal-question">{mission.objective}</h1>
+        )}
+        {"translated_documents" in mission && mission.translated_documents?.length ? (
+          <p className="dim">
+            Read through a line-aligned English translation: {mission.translated_documents.join(", ")}. The originals stay the
+            evidence; in the case's conversation a citation opens original and translation side by side.
+          </p>
+        ) : null}
         {mission.documents.length ? (
           <ul className="journal-files" aria-label="Files">
             {mission.documents.map((name) => (

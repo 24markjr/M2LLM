@@ -157,7 +157,8 @@ def test_every_scenario_names_real_documents_and_known_operations() -> None:
     fixtures = get_settings().agent_dir / "fixtures"
     vocabulary = {o.value for o in Operation}
     paths = sorted(datasets_dir().glob("*.yaml"))
-    assert len(paths) == 25  # two Vega (45), one Lyra (47), three cyber (52), five Kestrel (B2)
+    # two Vega (45), one Lyra (47), three cyber (52), five Kestrel (B2), three Indian (v4 6)
+    assert len(paths) == 28
     for path in paths:
         raw = yaml.safe_load(path.read_text(encoding="utf-8"))
         assert raw["id"] == path.stem

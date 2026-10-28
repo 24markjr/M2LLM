@@ -63,6 +63,7 @@ async def audit(action: str, *, actor: str = "system", target: str = "", **detai
 class ReviewRules(JarvisModel):
     contradiction: bool = True
     described_only: bool = True
+    translated_only: bool = True
     challenged: bool = True
     risk_or_recommendation: bool = True
     case_severity: list[str] = Field(default_factory=lambda: ["HIGH", "CRITICAL"])
@@ -99,6 +100,12 @@ def requirements(
         and any(i.issue_type is IssueType.DESCRIBED_ONLY for i in finding.verification.issues)
     ):
         reasons.append("the verifier found it only described, not established")
+    if (
+        rules.translated_only
+        and finding.verification is not None
+        and any(i.issue_type is IssueType.TRANSLATED_ONLY for i in finding.verification.issues)
+    ):
+        reasons.append("it rests only on machine translation: check it against the original")
     if rules.challenged and challenge_outcome in ("CONTESTED", "OVERTURNED"):
         reasons.append(f"a challenge {challenge_outcome.lower()} it")
     if rules.risk_or_recommendation and finding.statement_type in (

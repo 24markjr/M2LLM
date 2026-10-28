@@ -36,6 +36,7 @@ from app.schemas.common import JarvisModel, Severity
 from app.schemas.event import EventType
 from app.schemas.evidence import is_seen_line
 from app.schemas.finding import Finding
+from app.schemas.language import is_translated_line
 from app.schemas.trust import EvidenceText, LexicalThresholds, LexicalVerdict, TrustStatus
 from app.schemas.verification import (
     IssueType,
@@ -677,6 +678,39 @@ def described_only(
     return described
 
 
+def translated_only(
+    finding: Finding, evidence_text: dict[str, str], result: VerificationResult
+) -> VerificationResult:
+    """A finding resting only on machine translation needs review; never auto-verified (v4 Phase 6).
+
+    Each line of a document in an Indian language is read through its English translation, marked
+    `[translated:<code>]`. When every resolved citation is such a line, nothing the claim rests on
+    is the source's own words: `SUPPORTED` becomes `PARTIALLY_SUPPORTED`, with an issue telling a
+    person to check the translation against the original. A finding that also cites an original
+    line - a Hindi report against an English ledger - is verified as usual.
+    """
+    if result.status is not VerificationStatus.SUPPORTED:
+        return result
+    cited = [evidence_text.get(ref.as_ref(), "") for ref in finding.evidence if ref.is_resolved]
+    if not cited or not all(is_translated_line(text) for text in cited):
+        return result
+    return result.model_copy(
+        update={
+            "status": VerificationStatus.PARTIALLY_SUPPORTED,
+            "issues": [
+                *result.issues,
+                VerificationIssue(
+                    issue_type=IssueType.TRANSLATED_ONLY,
+                    description=(
+                        "every cited line is a machine translation; confirm it against the "
+                        "original text before relying on it"
+                    ),
+                ),
+            ],
+        }
+    )
+
+
 async def verify_finding(
     provider: VerificationProvider,
     finding: Finding,
@@ -685,8 +719,12 @@ async def verify_finding(
     emit: object | None = None,
 ) -> VerificationResult:
     """Verify one finding and attach the result to it."""
-    result = described_only(
-        finding, evidence_text, await provider.verify(build_request(finding, evidence_text))
+    result = translated_only(
+        finding,
+        evidence_text,
+        described_only(
+            finding, evidence_text, await provider.verify(build_request(finding, evidence_text))
+        ),
     )
     finding.verification = result
 

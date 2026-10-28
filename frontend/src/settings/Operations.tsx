@@ -7,7 +7,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { ApiError, api } from "../api/client";
-import type { GovernancePolicy, OpsSummary, Packs, RetentionResult, SubjectReport } from "../api/types";
+import type { GovernancePolicy, LanguageUsage, OpsSummary, Packs, RetentionResult, SubjectReport } from "../api/types";
 import { useUser } from "../auth/AuthGate";
 import { Button, Notice, useToast } from "../ui/components";
 
@@ -22,6 +22,7 @@ export function OperationsCard() {
   const { user } = useUser();
   const [days, setDays] = useState(7);
   const [ops, setOps] = useState<OpsSummary | null>(null);
+  const [languages, setLanguages] = useState<LanguageUsage | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
     if (user?.role !== "admin") return;
@@ -29,6 +30,10 @@ export function OperationsCard() {
       .opsMetrics(days)
       .then(setOps)
       .catch((exc: unknown) => setError(message(exc)));
+    void api
+      .languageUsage(days)
+      .then(setLanguages)
+      .catch(() => setLanguages(null));
   }, [user, days]);
   if (user?.role !== "admin") return null;
 
@@ -69,6 +74,19 @@ export function OperationsCard() {
             <dd>
               {inr(ops.cost_per_investigation_inr)} per investigation · {inr(ops.cost_total_inr)} in all - estimated at GPU{" "}
               {inr(ops.rates.gpu_per_hour_inr ?? 0)}/h and server {inr(ops.rates.server_per_hour_inr ?? 0)}/h
+            </dd>
+            <dt>Language engines</dt>
+            <dd>
+              {languages?.engines.length
+                ? languages.engines
+                    .map(
+                      (e) =>
+                        `${e.engine}: ${e.calls} call(s), ${e.characters.toLocaleString()} characters` +
+                        (e.failed ? `, ${e.failed} failed` : "") +
+                        (e.fallbacks ? `, ${e.fallbacks} fallback(s)` : ""),
+                    )
+                    .join(" · ")
+                : "none used"}
             </dd>
           </dl>
           {ops.recent_errors.length ? (
@@ -168,6 +186,18 @@ export function GovernanceCard() {
             onChange={(e) => setPolicy({ ...policy, mask_personal_data: e.target.checked })}
           />{" "}
           Mask e-mail, phone, Aadhaar, PAN and card numbers in exported reports
+        </label>
+        <label>
+          Bhashini{" "}
+          <select
+            value={policy.bhashini ?? "off"}
+            onChange={(e) => setPolicy({ ...policy, bhashini: e.target.value as "off" | "unclassified" | "internal" })}
+          >
+            <option value="off">off - everything stays on our open-source engine</option>
+            <option value="unclassified">for Unclassified material only</option>
+            <option value="internal">for Unclassified and Internal material</option>
+          </select>{" "}
+          <span className="settings-note">Confidential and Restricted material never goes to Bhashini.</span>
         </label>
         {packs ? (
           <label>

@@ -70,4 +70,13 @@ curl -b jar -N -H 'content-type: application/json' \
 | Cases | `/cases` | cases, conversation, comparison, sources |
 | Knowledge | `/missions/{id}/knowledge` | entities, claims, conflicts, timeline, graph |
 | Memory | `/memory` | what past investigations established |
-| Operations | `/ops`, `/governance` | metrics, cost, retention, data-subject requests, audit export (admins) |
+| Operations | `/ops`, `/governance` | metrics, cost, language-engine usage, retention, data-subject requests, audit export (admins) |
+| Languages | `/language` | languages offered, translate, transliterate, transcribe a spoken question, read aloud |
+
+Indian languages: `POST /cases/{id}/conversation` (and `/stream`) take `language` ("hi", or empty to
+detect it); a turn carries `original_text` and the answer a labelled `translation`. A question in an
+Indian language to `POST /missions` runs in English, kept as asked (`asked_in`,
+`original_objective`). `GET /missions/{id}/originals` and `/cases/{id}/originals` give each
+translated document's original, engine and version, line-aligned with `sources`.
+`.../investigation-report/export/{html|docx}?language=hi` is the report translated; pdf, md and
+json are English only.

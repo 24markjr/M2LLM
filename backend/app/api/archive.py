@@ -29,6 +29,7 @@ from app.intelligence.challenge import ChallengeResult
 from app.orchestration.mission import MissionResult, MissionStatus, Stage
 from app.schemas.common import JarvisModel
 from app.schemas.event import ExecutionEvent
+from app.schemas.language import DocumentLanguage
 from app.schemas.objective import Objective
 
 if TYPE_CHECKING:
@@ -56,6 +57,10 @@ class RunArchive(JarvisModel):
     authority: dict[str, str] = Field(default_factory=dict)
     texts: dict[str, str] = Field(default_factory=dict)
     page_starts: dict[str, list[int]] = Field(default_factory=dict)
+    # Documents read through a translation, with their originals (v4 Phase 6).
+    languages: dict[str, DocumentLanguage] = Field(default_factory=dict)
+    asked_in: str = "en"
+    original_objective: str = ""
     case_id: str = ""
     # The organisation the run belongs to (v4 Phase 1c); archives from before it are `default`'s.
     org_id: str = "default"
@@ -95,6 +100,9 @@ def write_archive(record: MissionRecord) -> Path | None:
             authority=dict(record.authority),
             texts=dict(record.texts),
             page_starts=dict(record.page_starts),
+            languages=dict(record.languages),
+            asked_in=record.asked_in,
+            original_objective=record.original_objective,
             case_id=record.case_id,
             org_id=record.org_id,
             knowledge_view=dict(record.knowledge_view) if record.knowledge_view else None,

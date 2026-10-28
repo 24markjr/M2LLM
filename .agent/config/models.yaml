@@ -95,6 +95,12 @@ roles:
     <<: *default
     max_tokens: 1500
 
+  # v4 Phase 7: a question typed in Roman script ("kitna paisa diya gaya") written in its own
+  # script, so it can be translated. Bhashini does this when the routing policy allows it.
+  transliteration:
+    <<: *default
+    max_tokens: 400
+
 embeddings:
   model: nomic-embed-text
   dimensions: 768      # must match the vector(768) column — see ADR-005

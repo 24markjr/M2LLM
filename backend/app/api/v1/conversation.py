@@ -33,6 +33,7 @@ from app.conversation.tools import gather
 from app.core.logging import get_logger
 from app.llm import get_provider
 from app.schemas.common import JarvisModel
+from app.schemas.language import DocumentLanguage
 
 log = get_logger(__name__)
 
@@ -41,6 +42,8 @@ router = APIRouter(prefix="/cases", tags=["conversation"])
 
 class Message(JarvisModel):
     text: str = Field(min_length=1, max_length=4000)
+    # v4 Phase 7: the language the person chose, e.g. "hi"; empty to detect it from the text.
+    language: str = Field(default="", pattern=r"^[a-z]{0,3}$")
 
 
 class StreamRequest(JarvisModel):
@@ -50,6 +53,7 @@ class StreamRequest(JarvisModel):
     text: str = Field(default="", max_length=4000)
     regenerate: str = Field(default="", max_length=32)
     edit: str = Field(default="", max_length=32)
+    language: str = Field(default="", pattern=r"^[a-z]{0,3}$")
 
 
 class Pin(JarvisModel):
@@ -68,7 +72,9 @@ async def ask(
     actor: str = Header(default="console", alias="X-Jarvis-User", max_length=128),
 ) -> Thread:
     """Answer one message. Slow by design: up to five tool calls and a verdict per claim."""
-    return await service.converse(case_id, body.text.strip(), get_provider(), actor=actor)
+    return await service.converse(
+        case_id, body.text.strip(), get_provider(), actor=actor, language=body.language
+    )
 
 
 @router.post("/{case_id}/conversation/stream")
@@ -85,8 +91,12 @@ async def ask_streamed(
         if body.regenerate:
             return await service.regenerate(case_id, body.regenerate, provider, emit=emit)
         if body.edit:
-            return await service.edit(case_id, body.edit, body.text.strip(), provider, emit=emit)
-        return await service.converse(case_id, body.text.strip(), provider, actor=actor, emit=emit)
+            return await service.edit(
+                case_id, body.edit, body.text.strip(), provider, emit=emit, language=body.language
+            )
+        return await service.converse(
+            case_id, body.text.strip(), provider, actor=actor, emit=emit, language=body.language
+        )
 
     return StreamingResponse(
         _events(start),
@@ -133,7 +143,9 @@ async def regenerate(case_id: str, turn_id: str) -> Thread:
 @router.post("/{case_id}/conversation/{turn_id}/edit", response_model=Thread)
 async def edit(case_id: str, turn_id: str, body: Message) -> Thread:
     try:
-        return await service.edit(case_id, turn_id, body.text.strip(), get_provider())
+        return await service.edit(
+            case_id, turn_id, body.text.strip(), get_provider(), language=body.language
+        )
     except service.TurnNotFoundError as exc:
         raise _no_turn(str(exc)) from exc
 
@@ -154,6 +166,13 @@ async def pin(case_id: str, turn_id: str, body: Pin) -> Thread:
 async def sources(case_id: str) -> dict[str, str]:
     """The text each of the case's documents was read as - what a citation's line number counts."""
     return (await gather(case_id)).documents
+
+
+@router.get("/{case_id}/originals", response_model=dict[str, DocumentLanguage])
+async def originals(case_id: str) -> dict[str, DocumentLanguage]:
+    """The case's documents read through a translation: each one's language, engine and original
+    text, line-aligned with what `sources` returns (v4 Phase 6)."""
+    return (await gather(case_id)).languages
 
 
 def _require_text(text: str) -> None:

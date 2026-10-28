@@ -54,6 +54,18 @@ def _no_media_understanding_by_default(monkeypatch: pytest.MonkeyPatch) -> Itera
 
 
 @pytest.fixture(autouse=True)
+def _no_translation_by_default(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """No test loads IndicTrans2 or writes the real translation cache or usage log (v4 Phase 6).
+    `test_language.py` turns translation on with a fake engine."""
+    monkeypatch.setattr(get_settings(), "translate_evidence", False)
+    monkeypatch.setattr(
+        "app.language.evidence._cache_path", lambda sha: tmp_path / "translations" / f"{sha}.json"
+    )
+    monkeypatch.setattr("app.language.usage._path", lambda: tmp_path / "language-usage.jsonl")
+    yield
+
+
+@pytest.fixture(autouse=True)
 def _evidence_stays_in_the_test(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     """No test writes to the real Evidence Locker (Phase 43).
 

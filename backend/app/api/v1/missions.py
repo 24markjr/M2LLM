@@ -44,11 +44,16 @@ from app.intelligence.confidence import why
 from app.intelligence.planner.engine import execution_levels
 from app.intelligence.proof import Comparison, Receipt, build_receipt, compare
 from app.intelligence.synthesis.renderers import to_markdown
+from app.language import ENGLISH, TranslationUnavailable, detect, translate
+from app.language.evidence import needs_translation
+from app.language.routing import strictest
 from app.llm import get_provider
 from app.orchestration.labels import step_label
 from app.orchestration.mission import MissionStatus
 from app.schemas.case import Case, CaseStatus
+from app.schemas.evidence_locker import EvidenceClassification
 from app.schemas.hypothesis import HypothesisSet
+from app.schemas.language import DocumentLanguage
 from app.schemas.objective import AttachedDocument, DocumentKind, Objective, ObjectiveScope
 from app.schemas.result import FinalReport
 from app.tools.formats import prepare
@@ -83,6 +88,13 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
     # before the mission reads it. A file whose bytes changed is left out, and the mission says so.
     admitted, excluded = await admit_for_mission(paths)
     readable = [name for name in body.documents if name not in excluded]
+    # A question in an Indian language runs in English (v4 Phase 7); it is kept as asked.
+    asked_in, asked = "en", ""
+    if needs_translation(body.objective):
+        asked_in, english = await _in_english(body.objective, admitted)
+        if english:
+            asked = body.objective
+            body = body.model_copy(update={"objective": english})
     await prepare([paths[n] for n in readable], get_provider())
     documents, loaded = load_uploads(readable)
     missing = [name for name in readable if name not in documents]
@@ -122,6 +134,8 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
         authority=authority,
     )
     record.evidence = {name: admitted[name] for name in documents if name in admitted}
+    record.languages = {d.document_id: d.reading for d in loaded if d.reading is not None}
+    record.asked_in, record.original_objective = asked_in, asked
     record.excluded = excluded
     await record_analysed(record.run_id, record.evidence)
     if case is not None:
@@ -419,6 +433,7 @@ def _receipt(record: MissionRecord) -> Receipt:
         tasks_planned=execution.tasks_planned if execution else 0,
         tasks_completed=execution.tasks_completed if execution else 0,
         gaps_open=sum(1 for g in result.gaps if not g.resolved) if result else 0,
+        languages=record.languages,
     )
 
 
@@ -427,6 +442,13 @@ async def get_sources(run_id: str) -> dict[str, str]:
     """The text each file was read as, by document (U6). Citations are character ranges in this
     text, so the evidence board highlights exactly what a finding rests on."""
     return dict(_require(run_id).texts)
+
+
+@router.get("/{run_id}/originals", response_model=dict[str, DocumentLanguage])
+async def get_originals(run_id: str) -> dict[str, DocumentLanguage]:
+    """Each document the run read through a translation: its language, the engine and version
+    that translated it, and the original text, line-aligned with `sources` (v4 Phase 6)."""
+    return dict(_require(run_id).languages)
 
 
 @router.get("/{run_id}/report.md", response_class=PlainTextResponse)
@@ -505,6 +527,29 @@ async def _require_case(case_id: str) -> Case:
     return case
 
 
+async def _in_english(question: str, admitted: dict[str, str]) -> tuple[str, str]:
+    """The question's language, and its English ("" if it could not be translated)."""
+    from app.evidence.service import get_locker
+
+    language = detect(question)
+    levels: list[EvidenceClassification | None] = []
+    try:
+        locker = await get_locker()
+        for evidence_id in admitted.values():
+            item = await locker.get(evidence_id)
+            levels.append(item.classification if item is not None else None)
+    except Exception:  # noqa: BLE001 - unknown sensitivity is the strictest
+        levels = [None]
+    try:
+        english = await translate(
+            question.split("\n"), language, ENGLISH, sensitivity=strictest(levels)
+        )
+    except TranslationUnavailable as exc:
+        log.warning("question_not_translated", error=str(exc))
+        return language.code, ""
+    return language.code, english.text
+
+
 def _objective(body: CreateMissionRequest) -> Objective:
     attached = [
         AttachedDocument(
@@ -560,6 +605,9 @@ def _detail(record: MissionRecord) -> MissionDetail:
             else ""
         ),
         has_report=bool(result and result.report),
+        asked_in=record.asked_in,
+        original_objective=record.original_objective,
+        translated_documents=sorted(n for n, r in record.languages.items() if r.translated),
         security_flags=list(result.security) if result else [],
         knowledge_store=result.knowledge_store if result else "",
         knowledge_entities=len(result.knowledge.entities) if result and result.knowledge else 0,

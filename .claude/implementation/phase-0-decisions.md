@@ -51,7 +51,8 @@ the licence must be confirmed from the model card before launch; the entry is no
 | PostgreSQL + pgvector | Database | PostgreSQL licence | Yes |
 | docling (optional) | PDF layout | MIT | Yes (verify) |
 | pyannote speaker-diarization (optional) | Who spoke when | MIT, gated model (accept terms) | Yes (verify) |
-| IndicTrans2 (Phase 6) | Indian-language translation | MIT | Yes (verify per checkpoint) |
+| IndicTrans2 distilled 200M, both directions (Phase 6) - CTranslate2 conversions `adalat-ai/ct2-rotary-indictrans2-{indic-en,en-indic}-dist-200M` @ `524aade4f724` / `ee04de9a86e4` | Indian-language translation | MIT (model cards) | Yes |
+| SentencePiece | IndicTrans2's tokenizer | Apache-2.0 | Yes |
 | AI4Bharat speech / OCR models (Phase 6) | Indian-language ASR / OCR | Per model | **Verify each before use** |
 | NLLB-200 | (rejected) | CC-BY-NC-4.0 | **No - not to be used** |
 

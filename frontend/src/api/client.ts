@@ -27,6 +27,7 @@ import type {
   TaskGraphResponse,
 } from "./types";
 import type { EntityMemory, Episode, Fact, InvestigationMemory, MemoryStatus } from "./types";
+import type { DocumentLanguage, LanguageCatalogue, LanguageUsage, Transcript } from "./types";
 import type { ClaimComparison, ClaimConflict, EntityInvestigation, SearchHit, TimelineEvent } from "./types";
 import type { FormatSpec, StoredDocument, UploadedDocument } from "./types";
 import type { RetrieveResponse, WorkspaceView } from "./types";
@@ -225,6 +226,7 @@ export const api = {
   /** Operating the organisation (v4 Phase 8): admins only. */
   opsMetrics: (days = 7) => request<OpsSummary>(`${BASE}/ops/metrics?days=${days}`),
   governancePolicy: () => request<GovernancePolicy>(`${BASE}/governance/policy`),
+  languageUsage: (days = 30) => request<LanguageUsage>(`${BASE}/ops/language-usage?days=${days}`),
   saveGovernancePolicy: (policy: GovernancePolicy) =>
     request<GovernancePolicy>(`${BASE}/governance/policy`, { method: "PUT", body: JSON.stringify(policy) }),
   applyRetention: (dryRun: boolean) =>
@@ -250,8 +252,8 @@ export const api = {
     request<ReportVersion[]>(`${BASE}/missions/${runId}/investigation-report/versions`),
 
   /** A download of the report; recorded in custody and the audit log. */
-  investigationReportUrl: (runId: string, fmt: string) =>
-    `${BASE}/missions/${runId}/investigation-report/export/${fmt}`,
+  investigationReportUrl: (runId: string, fmt: string, language = "") =>
+    `${BASE}/missions/${runId}/investigation-report/export/${fmt}${language ? `?language=${language}` : ""}`,
 
   /** The store behind cases, evidence, the audit log and investigations (Phase U1). */
   getStores: () => request<{ stores: StoreStatus[] }>(`${BASE}/system/stores`),
@@ -409,6 +411,27 @@ export const api = {
   compareRuns: (caseId: string, a: string, b: string) =>
     request<RunComparison>(`${BASE}/cases/${caseId}/compare?a=${a}&b=${b}`),
   caseSources: (caseId: string) => request<Record<string, string>>(`${BASE}/cases/${caseId}/sources`),
+  // Indian languages (v4 Phases 6-7): originals beside their translations, and the language layer.
+  caseOriginals: (caseId: string) => request<Record<string, DocumentLanguage>>(`${BASE}/cases/${caseId}/originals`),
+  getOriginals: (runId: string) => request<Record<string, DocumentLanguage>>(`${BASE}/missions/${runId}/originals`),
+  languages: () => request<LanguageCatalogue>(`${BASE}/language`),
+  transcribe: (audio: Blob, language = "") => {
+    const form = new FormData();
+    form.append("audio", audio, "question.webm");
+    return request<Transcript>(`${BASE}/language/transcribe${language ? `?language=${language}` : ""}`, {
+      method: "POST",
+      body: form,
+    });
+  },
+  /** Audio to play, or null: read it with the browser's own voice (nothing leaves the device). */
+  speak: async (text: string, language: string, caseId = ""): Promise<Blob | null> => {
+    const response = await fetch(`${BASE}/language/speak`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, language, case_id: caseId }),
+    });
+    return response.status === 200 ? await response.blob() : null;
+  },
   rerun: (runId: string, objective = "") =>
     request<MissionDetail>(`${BASE}/missions/${runId}/rerun`, { method: "POST", body: JSON.stringify({ objective }) }),
   staleFindings: (caseId: string) => request<StaleFinding[]>(`${BASE}/cases/${caseId}/stale`),

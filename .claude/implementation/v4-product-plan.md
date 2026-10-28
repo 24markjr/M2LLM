@@ -277,4 +277,19 @@ an independent penetration test.
 admin, API, security-and-privacy and on-premise guides. Not done: teammate-written held-out sets.
 **10.** Five domain packs; watch folders with scheduled re-investigation; an air-gapped bundle and
 installer. Not done: an install rehearsed on a clean disconnected server.
-Phases 6 and 7 (Indian languages, Bhashini) remain.
+Phases 6 and 7 followed on 2026-10-28.
+
+### Phases 6 and 7 - as built (2026-10-28)
+
+**6.** `app/language/`: script detection, IndicTrans2 (CTranslate2, CPU, pinned), line-aligned
+translation with every figure checked, the original kept as evidence; translated-only findings go to
+review; side-by-side viewer; receipts name the engine. Bar met: the Hindi-vs-English contradiction
+found, cited in both files, verified; the negative scenario raised no alarm. Weak: the Hindi
+citation pointed at a nearby line (citation precision 0.5 on the three - the Phase 2 gap). Not done:
+Indian-script OCR, Indic speech models.
+**7.** A Bhashini client with routing by sensitivity and fallback; questions in Indian scripts,
+Roman letters or speech; answers and reports (HTML, DOCX) as labelled, figure-checked translations;
+read aloud; the conversation panel in Hindi. Bar met in part: an investigation ran end to end in
+Hindi (both contradictions verified, report in Hindi). Not met: switching to Bhashini live - awaiting
+credentials; tested against a simulated Bhashini only.
+All ten v4 phases have now been built.

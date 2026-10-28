@@ -111,3 +111,20 @@ kestrel_photo_restore:
   facts:
     - ["03:40", "3:40"]
     - ["05:15", "5:15"]
+
+# v4 Phase 6: Indian-language scenarios. Each Hindi or Tamil file is read through its line-aligned
+# English translation; the facts are the ones planted in the originals.
+saraswati_hindi_contradiction:
+  facts:
+    - ["15 may", "may 15", "2026-05-15"]
+    - ["2 june", "june 2", "2026-06-02"]
+    - ["3,80,000", "380,000", "380000"]
+    - ["4,20,000", "420,000", "420000"]
+
+saraswati_hindi_consistent:
+  negative: true
+
+kaveri_tamil_quantity:
+  facts:
+    - ["120"]
+    - ["150"]

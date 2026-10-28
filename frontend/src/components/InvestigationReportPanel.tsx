@@ -3,12 +3,15 @@
  * stands - reviews and challenges included. "Open the report" shows the designed page; PDF and DOCX
  * are the same document. Each export is a numbered version signed with the report's content hash,
  * the run's receipt hash and a snapshot of the case, recorded in custody and the audit log.
+ *
+ * In an Indian language (v4 Phase 7): the page and the Word file, as a labelled machine translation
+ * of the verified English report, which stays the master. The PDF is English only.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { api } from "../api/client";
-import type { InvestigationReport, ReportVersion } from "../api/types";
+import type { InvestigationReport, LanguageInfo, ReportVersion } from "../api/types";
 import { reportCounts } from "./investigationReport";
 
 const FORMATS = ["pdf", "docx", "md", "json"] as const;
@@ -17,7 +20,16 @@ export function InvestigationReportPanel({ runId }: { runId?: string | undefined
   const [report, setReport] = useState<InvestigationReport | null>(null);
   const [error, setError] = useState("");
   const [versions, setVersions] = useState<ReportVersion[]>([]);
+  const [languages, setLanguages] = useState<LanguageInfo[]>([]);
+  const [language, setLanguage] = useState("");
+  useEffect(() => {
+    void api
+      .languages()
+      .then((c) => setLanguages(c.languages.filter((l) => l.code !== "en")))
+      .catch(() => setLanguages([]));
+  }, []);
   if (!runId) return null;
+  const chosen = languages.find((l) => l.code === language);
 
   const build = () => {
     setError("");
@@ -72,6 +84,34 @@ export function InvestigationReportPanel({ runId }: { runId?: string | undefined
               ))}
               <button onClick={build}>Rebuild</button>
             </div>
+            {languages.length ? (
+              <div className="row">
+                <select value={language} onChange={(e) => setLanguage(e.target.value)} aria-label="Report language">
+                  <option value="">In another language...</option>
+                  {languages.map((l) => (
+                    <option key={l.code} value={l.code}>
+                      {l.native} ({l.name})
+                    </option>
+                  ))}
+                </select>
+                {chosen ? (
+                  <>
+                    <a
+                      className="button"
+                      href={api.investigationReportUrl(runId, "html", chosen.code)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open in {chosen.name}
+                    </a>
+                    <a className="button" href={api.investigationReportUrl(runId, "docx", chosen.code)}>
+                      DOCX in {chosen.name}
+                    </a>
+                    <span className="dim">A machine translation of the verified English; the PDF is English only.</span>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
             <div className="dim mono">{report.content_hash}</div>
             {versions.length ? (
               <details>

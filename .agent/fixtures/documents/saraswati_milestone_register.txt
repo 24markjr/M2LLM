@@ -1,0 +1,11 @@
+Saraswati Water Supply Project - Milestone and Payment Register
+Maintained by: District Water Board, Finance Section
+Approved budget: INR 12,00,000
+
+Milestone | Description | Completion date | Payment released
+M1 | Site survey | 2026-02-10 | INR 1,50,000
+M2 | Trenching | 2026-03-28 | INR 2,10,000
+M3 | Pipeline laying | 2026-06-02 | INR 4,20,000
+M4 | Water treatment plant | not started | -
+
+Note: The M3 payment of INR 4,20,000 was released on 2026-06-05 against the contractor's invoice.

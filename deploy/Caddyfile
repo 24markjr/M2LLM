@@ -37,7 +37,7 @@
 		# its hash (tests/unit/test_security_headers.py keeps it in step with frontend/index.html).
 		# Inline style attributes are allowed: React sets them. The API's /docs page loads Swagger
 		# from a CDN and the HTML report carries its own <style>, so neither gets this policy.
-		header Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-JBqVSYTryn9k3dWFC1mKoX0CoM81bP3tbxQ+eMk2CTE='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		header Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-JBqVSYTryn9k3dWFC1mKoX0CoM81bP3tbxQ+eMk2CTE='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 		root * /srv/web
 		try_files {path} /index.html
 		file_server

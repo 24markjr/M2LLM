@@ -27,7 +27,6 @@ from pathlib import Path
 
 from pydantic import Field
 
-from app.api.deletion import delete_investigation
 from app.api.registry import get_registry
 from app.auth.tenancy import current_org
 from app.cases.service import get_case_store
@@ -44,6 +43,18 @@ class Policy(JarvisModel):
     # The organisation's domain pack (v4 Phase 10, `app/packs`): severity phrases, report wording,
     # attribute names, starter questions. "general" changes nothing.
     pack: str = Field(default="general", pattern=r"^[a-z0-9-]{1,48}$")
+    # Which material may be sent to Bhashini (v4 Phase 7, `app/language/routing.py`): "off", only
+    # "unclassified", or "internal" (Unclassified and Internal). Confidential and Restricted never
+    # are, whatever this says; the open-source engine in our cloud serves them.
+    bhashini: str = Field(default="off", pattern=r"^(off|unclassified|internal)$")
+
+
+async def _delete(run_id: str, *, actor: str) -> None:
+    """`delete_investigation`, imported when used: the policy is read by the language layer
+    outside the API (the benchmark, the CLI), and importing the API package here is circular."""
+    from app.api.deletion import delete_investigation
+
+    await delete_investigation(run_id, actor=actor)
 
 
 def _policy_path() -> Path:
@@ -103,7 +114,7 @@ async def apply_retention(*, dry_run: bool, actor: str = "retention") -> Retenti
             result.kept_running.append(record.run_id)
             continue
         if not dry_run:
-            await delete_investigation(record.run_id, actor=actor)
+            await _delete(record.run_id, actor=actor)
         result.deleted.append(record.run_id)
     if result.deleted and not dry_run:
         await audit(
@@ -207,7 +218,7 @@ async def erase_subject(identifier: str, *, actor: str) -> SubjectReport:
     for run_id in report.investigations:
         record = get_registry().get(run_id)
         if record is not None and record.is_finished():
-            await delete_investigation(run_id, actor=actor)
+            await _delete(run_id, actor=actor)
     for case_id in report.conversations:
         async with conversations.lock(case_id):
             thread = conversations.load(case_id)

@@ -14,6 +14,8 @@ rules:
   contradiction: true
   # The verifier found the claim only described in the documents, not established by them.
   described_only: true
+  # Every cited line is a machine translation (v4 Phase 6): a person checks it against the original.
+  translated_only: true
   # A challenge contested or overturned it (Phase 48).
   challenged: true
   # The model proposed it as a risk or a recommendation (Phase 45): a judgement, not a fact.

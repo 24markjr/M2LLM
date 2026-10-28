@@ -5,6 +5,80 @@ Newest first. Categories: Added · Changed · Fixed · Removed · Known Issues.
 
 ---
 
+## 2026-10-28 - v4 Phases 6 and 7: Indian languages, open-source engine and Bhashini
+
+### Phase 6 - the language layer, open-source engine
+
+- **One language interface** (`app/language/`): detection by script, deterministic (Hindi, Marathi,
+  Nepali, Bengali, Assamese, Punjabi, Gujarati, Odia, Tamil, Telugu, Kannada, Malayalam, Urdu; the
+  shared scripts told apart by marker words and letters); translation by **IndicTrans2** distilled
+  200M (AI4Bharat, MIT) through CTranslate2 on the CPU - no PyTorch, never competing with the model
+  for the GPU, about 0.1 s a line - both directions, pinned by revision; speech by faster-whisper;
+  reading aloud by the browser's own voice; Roman-script questions by the local model
+- **Evidence-safe translation** (`app/language/evidence.py`): a document in an Indian language is
+  read through a **line-aligned** English translation - line N is line N in both - each line marked
+  `[translated:<code>]`; the original stays the evidence and is kept beside it. **Every figure is
+  checked**: a translated line that lost or changed one carries the original's figures and is
+  flagged. Cached by the text's hash; translated at upload, off the event loop
+- **Machine translation alone is never auto-verified**: a finding whose every citation is a
+  translated line is `PARTIALLY_SUPPORTED` with `TRANSLATED_ONLY` and goes to review
+  (`.agent/config/review.yaml`); one that also cites an original line is verified as usual
+- **The viewer**: a citation into a translated document opens the original and the translation
+  side by side, the cited line highlighted in both, unsafe lines marked
+- **Receipts** name each translated document's language, engine and version (English-only receipts
+  hash exactly as before)
+- **Three Indian-language scenarios** (suite `indic`): a Hindi progress report against an English
+  register (contradiction), a consistent Hindi note (negative), Tamil minutes against an English
+  purchase order
+- **Fixed**: native digits mistranslated (Bengali `১৪ মে ২০২৬` -> "May 6, 2013"): digits become ASCII
+  first. `ரூ. 45,000` split as a sentence end ("priced at Rs. It was set at 45,000"). Reading the
+  governance policy outside the API (the benchmark) failed on a circular import
+- **Release gate**: a benchmark run of chosen scenarios is now saved with a label
+  (`-benchmark-partial`, `--label indic`) so it can never stand in for the whole suite
+
+**Measured - the Phase 6 bar.** `saraswati_hindi_contradiction`: JARVIS found that the register
+says 2 June 2026 and the Hindi report 15 May 2026, citing a line of each file, **verified**
+(SUPPORTED). On the three Indian-language scenarios (qwen3:4b): correct facts 0.75 (plain model 1.0),
+no invented values, **no false alarm** on the negative, Tamil 120 vs 150 found and cited. Weak:
+citation precision 0.5 (one citation pointed at a nearby line of the right file) - the same Phase 2
+gap, not translation's.
+
+### Phase 7 - Bhashini, and asking in Indian languages
+
+- **Bhashini client** (`app/integrations/bhashini.py`): ULCA pipeline discovery (cached an hour),
+  compute for translation, speech-to-text, text-to-speech and transliteration; timeouts; two retries
+  on a server error or timeout, none on a refusal; every call in the language usage log
+- **Routing** (`app/language/routing.py`, the Phase 0 policy): Confidential, Restricted and
+  unknown-sensitivity material only ever on the open-source engine; Unclassified (optionally
+  Internal) may use Bhashini when the organisation turns it on (Settings > Data governance) and
+  credentials are set; a Bhashini failure falls back to the open-source engine; the receipt and the
+  usage log name the engine
+- **Ask in any Indian language**: typed in its own script, in Roman letters (transliterated first),
+  or spoken (`POST /language/transcribe`, faster-whisper; the recording is not kept). The question is
+  read in English; **English stays the verified master**; the answer's translation is labelled and
+  figure-checked, and can be read aloud. The conversation panel is in Hindi when Hindi is chosen.
+  A question to `POST /missions` in an Indian language runs in English and is kept as asked
+- **Reports** in an Indian language: HTML and DOCX, a banner naming the engine; quotes, IDs,
+  locators and hashes kept as written; figures checked. The PDF is English only (ReportLab cannot
+  shape Indian scripts)
+- **Operations** shows language-engine usage: calls, characters, failures, fallbacks
+- **Deploy**: models persist on the media-cache volume (`HF_HOME`); the on-premise bundle carries
+  IndicTrans2 for offline use; the console's CSP allows `blob:` audio
+
+**Measured - the Phase 7 bar.** An investigation asked in Hindi, over a Hindi report and an English
+register, ran end to end with the real model in 123 s: the question read as English, **both
+contradictions (date and payment) found and verified**, the receipt naming IndicTrans2 at its
+revision, and the report delivered in Hindi. **Not measured: switching to Bhashini** - no
+Bhashini credentials yet; the client is tested against a simulated Bhashini (discovery, compute,
+retries, refusal, fallback) and switching engines there changes only the engine fields.
+
+**Not done:** Indian-script OCR (scans in Indian scripts are not read); Indic speech models
+(IndicConformer) - Whisper `base` hears Hindi, weakly; transliteration and read-aloud through
+Bhashini untested live; the interface in languages other than Hindi; a teammate who reads the
+language checking translations at scale.
+
+---
+
 ## 2026-10-27 - v4 Phases 8, 9 and 10: operating as a product, release discipline, breadth
 
 ### Phase 8 - operating as a product

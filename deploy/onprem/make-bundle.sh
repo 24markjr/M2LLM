@@ -44,6 +44,17 @@ done
 if [[ -d .agent/media-cache/models ]]; then
   cp -r .agent/media-cache/models "$OUT/models/media-cache/"   # the entailment model (Phase 2)
 fi
+# IndicTrans2, both directions (v4 Phase 6), at the pinned revisions: fetched once here, read offline
+# there (HF_HUB_OFFLINE=1). Run with the backend's virtualenv: it has huggingface_hub.
+PYTHONPATH=backend python - "$OUT/models/media-cache/hf/hub" <<'PY'
+import sys
+from huggingface_hub import snapshot_download
+from app.core.config import get_settings
+s = get_settings()
+for repo, revision in [(s.translation_model, s.translation_model_revision),
+                       (s.translation_model_en_indic, s.translation_model_en_indic_revision)]:
+    print(snapshot_download(repo, revision=revision, cache_dir=sys.argv[1]))
+PY
 
 echo "==> installer"
 cp deploy/onprem/docker-compose.onprem.yml deploy/onprem/docker-compose.gpu.yml \

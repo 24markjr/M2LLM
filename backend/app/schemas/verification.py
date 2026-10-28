@@ -51,6 +51,9 @@ class IssueType(StrEnum):
     DESCRIBED_ONLY = "DESCRIBED_ONLY"
     # Phase B4: the second reviewer (another local model) did not confirm an approved finding.
     REVIEWER_DISSENT = "REVIEWER_DISSENT"
+    # v4 Phase 6: every cited line is a machine translation (`[translated:..]`); a person must
+    # confirm the translation against the original before the claim counts as verified.
+    TRANSLATED_ONLY = "TRANSLATED_ONLY"
 
 
 class VerificationIssue(JarvisModel):

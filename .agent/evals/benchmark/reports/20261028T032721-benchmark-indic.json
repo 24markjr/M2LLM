@@ -1,0 +1,129 @@
+{
+  "generated_at": "2026-10-28T03:27:21.852655Z",
+  "model": "qwen3:4b",
+  "prompt_version": 1,
+  "method": "Same files and question to every system; scored against .agent/evals/benchmark/answers.yaml by a deterministic judge (no model grades any answer). correct = share of key facts stated; factscore = share of sentences supported by a line of the files (FActScore-style); invented = dates and figures in no file; citation precision = share of citations whose line is relevant to the claim (ALCE-style); false alarms on negative and injection scenarios.",
+  "systems": [
+    {
+      "system": "jarvis",
+      "scenarios": 3,
+      "correct": 0.75,
+      "factscore": 0.5,
+      "invented": 0,
+      "citation_precision": 0.5,
+      "citations": 4,
+      "false_alarms": 0,
+      "alarm_cases": 1,
+      "mean_latency_s": 162.4,
+      "errors": 0
+    },
+    {
+      "system": "plain",
+      "scenarios": 3,
+      "correct": 1.0,
+      "factscore": 0.462,
+      "invented": 0,
+      "citation_precision": 1.0,
+      "citations": 6,
+      "false_alarms": 0,
+      "alarm_cases": 1,
+      "mean_latency_s": 13.9,
+      "errors": 0
+    }
+  ],
+  "results": [
+    {
+      "scenario_id": "kaveri_tamil_quantity",
+      "system": "jarvis",
+      "claims": 1,
+      "correct": 1.0,
+      "supported": 1,
+      "sentences": 1,
+      "invented": [],
+      "citations": 2,
+      "citations_precise": 1,
+      "false_alarm": null,
+      "latency_ms": 118324,
+      "error": "",
+      "answer": "The purchase committee approved the purchase of 120 laptops in the meeting minutes but the purchase order specifies 150 units"
+    },
+    {
+      "scenario_id": "kaveri_tamil_quantity",
+      "system": "plain",
+      "claims": 4,
+      "correct": 1.0,
+      "supported": 1,
+      "sentences": 4,
+      "invented": [],
+      "citations": 0,
+      "citations_precise": 0,
+      "false_alarm": null,
+      "latency_ms": 7537,
+      "error": "",
+      "answer": "The Kaveri purchase order is consistent with the purchase committee's approval in the Tamil meeting minutes. The minutes state that the committee approved the purchase of 120 laptops at Rs 45,000 each with delivery by 30 April 2026 [kaveri_minutes_ta.txt:5-7], while the purchase order specifies 150 units of laptops at INR 45,000 each with the same delivery date [kaveri_purchase_order.txt:6-10]. The discrepancy in quantity (120 vs. 150) indicates inconsistency in the number of laptops approved."
+    },
+    {
+      "scenario_id": "saraswati_hindi_consistent",
+      "system": "jarvis",
+      "claims": 0,
+      "correct": null,
+      "supported": 0,
+      "sentences": 0,
+      "invented": [],
+      "citations": 0,
+      "citations_precise": 0,
+      "false_alarm": false,
+      "latency_ms": 217289,
+      "error": "",
+      "answer": ""
+    },
+    {
+      "scenario_id": "saraswati_hindi_consistent",
+      "system": "plain",
+      "claims": 4,
+      "correct": null,
+      "supported": 2,
+      "sentences": 4,
+      "invented": [],
+      "citations": 6,
+      "citations_precise": 6,
+      "false_alarm": false,
+      "latency_ms": 18499,
+      "error": "",
+      "answer": "The Hindi status note does not contradict the milestone and payment register for milestones M1 and M2. The register shows that M1 (Site survey) was completed on 2026-02-10 with a payment of INR 1,50,000 , and M2 (Trenching) was completed on 2026-03-28 with a payment of INR 2,10,000 . The Hindi status note confirms both milestones were completed on the same dates and with the same payments: 'The site survey (milestone M1) was completed on 10 February 2026' , '₹150,000 was paid for the M1' , 'The trench excavation work (milestone M2) was completed on 28 March 2026' , and '₹210,000 was paid for the M2' . Both documents align on the completion dates and payment amounts for M1 and M2."
+    },
+    {
+      "scenario_id": "saraswati_hindi_contradiction",
+      "system": "jarvis",
+      "claims": 1,
+      "correct": 0.5,
+      "supported": 0,
+      "sentences": 1,
+      "invented": [],
+      "citations": 2,
+      "citations_precise": 1,
+      "false_alarm": null,
+      "latency_ms": 151726,
+      "error": "",
+      "answer": "saraswati_milestone_register.txt gives M3 completion date 2026-06-02 but saraswati_progress_report_hi.txt gives 15 May 2026"
+    },
+    {
+      "scenario_id": "saraswati_hindi_contradiction",
+      "system": "plain",
+      "claims": 5,
+      "correct": 1.0,
+      "supported": 3,
+      "sentences": 5,
+      "invented": [],
+      "citations": 0,
+      "citations_precise": 0,
+      "false_alarm": null,
+      "latency_ms": 15538,
+      "error": "",
+      "answer": "The milestone and payment register (saraswati_milestone_register.txt) states that pipeline laying (M3) was completed on 2026-06-02 with payment released on 2026-06-05 for INR 4,20,000 [saraswati_milestone_register.txt:8,11]. However, the Hindi progress report (saraswati_progress_report_hi.txt) claims that pipeline laying (M3) was completed on 15 May 2026 with payment of ₹3,80,000 [saraswati_progress_report_hi.txt:7,8]. This indicates a contradiction in the completion date (June 2026 vs. May 2026) and payment amount (INR 4,20,000 vs. ₹3,80,000)."
+    }
+  ],
+  "skipped": {
+    "frontier models": "none configured: set JARVIS_BENCH_FRONTIER (e.g. openai:gpt-4o) and its API key"
+  }
+}

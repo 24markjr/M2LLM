@@ -43,6 +43,15 @@ may wait. Each account may make 600 requests a minute, 120 of them changes.
   Evidence files holding it are listed for your legal-hold decision, not deleted. Both steps are in
   the audit log.
 - **Audit log** - every change anyone made, and every sign-in, as CSV.
+- **Bhashini** - off by default. Set to *Unclassified* or *Unclassified and Internal* to let
+  Bhashini (MeitY's language platform) translate, transcribe and read aloud material of those
+  levels. Confidential and Restricted material, and anything whose level is unknown, always stays
+  on the open-source engine in our cloud, whatever this says. Needs `BHASHINI_USER_ID` and
+  `BHASHINI_API_KEY` in Secret Manager (from Bhashini onboarding); without them this setting has no
+  effect. If Bhashini fails, the open-source engine answers, and Operations counts the fallback.
+
+**Operations** also shows **language engines**: calls, characters, failures and fallbacks per
+engine (IndicTrans2, Bhashini, the local model for Roman-script questions).
 
 ## 4. The installation (operator)
 

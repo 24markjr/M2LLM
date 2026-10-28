@@ -1,0 +1,25 @@
+# v4 Phase 6: a cross-language contradiction. The progress report is in Hindi; the payment register
+# is in English. The report says milestone M3 closed on 15 May 2026 and was paid INR 3,80,000; the
+# register says it closed on 2 June 2026 and was paid INR 4,20,000. The Hindi file is read through its
+# line-aligned English translation, and the finding must cite a line of each file.
+id: saraswati_hindi_contradiction
+category: temporal_contradiction
+suites: [indic, all]
+objective: >
+  Compare the Saraswati project's Hindi progress report with the milestone and payment register and
+  identify any contradictions about milestone M3's completion date or payment.
+documents:
+  - saraswati_progress_report_hi.txt
+  - saraswati_milestone_register.txt
+
+expected_operations:
+  - extract_timeline
+  - compare_sources
+  - detect_inconsistencies
+  - generate_report
+
+min_tasks: 3
+minimal_tasks: 4
+
+expected_claims:
+  - "2026"
