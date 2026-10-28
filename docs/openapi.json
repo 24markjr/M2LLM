@@ -315,6 +315,20 @@
         "title": "BenchmarkReport",
         "type": "object"
       },
+      "Body_transcribe_api_v1_language_transcribe_post": {
+        "properties": {
+          "audio": {
+            "contentMediaType": "application/octet-stream",
+            "title": "Audio",
+            "type": "string"
+          }
+        },
+        "required": [
+          "audio"
+        ],
+        "title": "Body_transcribe_api_v1_language_transcribe_post",
+        "type": "object"
+      },
       "Body_upload_documents_api_v1_documents_post": {
         "properties": {
           "files": {
@@ -1771,6 +1785,99 @@
           }
         },
         "title": "DeletionReport",
+        "type": "object"
+      },
+      "DocumentLanguage": {
+        "additionalProperties": false,
+        "description": "How one document was read: its language and, if it was translated, by what and where.",
+        "properties": {
+          "engine": {
+            "default": "",
+            "title": "Engine",
+            "type": "string"
+          },
+          "engine_version": {
+            "default": "",
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "language_name": {
+            "default": "",
+            "title": "Language Name",
+            "type": "string"
+          },
+          "original_text": {
+            "default": "",
+            "title": "Original Text",
+            "type": "string"
+          },
+          "translated_lines": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Translated Lines",
+            "type": "array"
+          },
+          "unsafe_lines": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Unsafe Lines",
+            "type": "array"
+          },
+          "untranslated_lines": {
+            "default": 0,
+            "title": "Untranslated Lines",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "language"
+        ],
+        "title": "DocumentLanguage",
+        "type": "object"
+      },
+      "EngineUsage": {
+        "additionalProperties": false,
+        "properties": {
+          "calls": {
+            "default": 0,
+            "title": "Calls",
+            "type": "integer"
+          },
+          "characters": {
+            "default": 0,
+            "title": "Characters",
+            "type": "integer"
+          },
+          "engine": {
+            "title": "Engine",
+            "type": "string"
+          },
+          "failed": {
+            "default": 0,
+            "title": "Failed",
+            "type": "integer"
+          },
+          "fallbacks": {
+            "default": 0,
+            "title": "Fallbacks",
+            "type": "integer"
+          },
+          "seconds": {
+            "default": 0.0,
+            "title": "Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "engine"
+        ],
+        "title": "EngineUsage",
         "type": "object"
       },
       "EntityInvestigation": {
@@ -3993,7 +4100,8 @@
           "DATE_AMBIGUITY",
           "ARITHMETIC_ERROR",
           "DESCRIBED_ONLY",
-          "REVIEWER_DISSENT"
+          "REVIEWER_DISSENT",
+          "TRANSLATED_ONLY"
         ],
         "title": "IssueType",
         "type": "string"
@@ -4342,6 +4450,97 @@
         "title": "KnownEntity",
         "type": "object"
       },
+      "Language": {
+        "additionalProperties": false,
+        "description": "One language JARVIS can read: its ISO 639-1 code, names, script and FLORES-200 tag.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "flores": {
+            "title": "Flores",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "native": {
+            "title": "Native",
+            "type": "string"
+          },
+          "script": {
+            "title": "Script",
+            "type": "string"
+          },
+          "speech": {
+            "default": "",
+            "title": "Speech",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "native",
+          "script",
+          "flores"
+        ],
+        "title": "Language",
+        "type": "object"
+      },
+      "LanguageCatalogue": {
+        "additionalProperties": false,
+        "properties": {
+          "languages": {
+            "items": {
+              "$ref": "#/components/schemas/Language"
+            },
+            "title": "Languages",
+            "type": "array"
+          },
+          "status": {
+            "additionalProperties": true,
+            "title": "Status",
+            "type": "object"
+          }
+        },
+        "required": [
+          "languages",
+          "status"
+        ],
+        "title": "LanguageCatalogue",
+        "type": "object"
+      },
+      "LanguageUsage": {
+        "additionalProperties": false,
+        "properties": {
+          "by_task": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Task",
+            "type": "object"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "engines": {
+            "items": {
+              "$ref": "#/components/schemas/EngineUsage"
+            },
+            "title": "Engines",
+            "type": "array"
+          }
+        },
+        "required": [
+          "days"
+        ],
+        "title": "LanguageUsage",
+        "type": "object"
+      },
       "Lead": {
         "additionalProperties": false,
         "description": "A line the next-evidence search found. A lead, not a finding: nothing has checked it.",
@@ -4428,6 +4627,12 @@
       "Message": {
         "additionalProperties": false,
         "properties": {
+          "language": {
+            "default": "",
+            "pattern": "^[a-z]{0,3}$",
+            "title": "Language",
+            "type": "string"
+          },
           "text": {
             "maxLength": 4000,
             "minLength": 1,
@@ -4582,6 +4787,11 @@
         "additionalProperties": false,
         "description": "A mission's current state, without the full event log.",
         "properties": {
+          "asked_in": {
+            "default": "en",
+            "title": "Asked In",
+            "type": "string"
+          },
           "authority": {
             "additionalProperties": {
               "type": "string"
@@ -4690,6 +4900,11 @@
             "title": "Objective",
             "type": "string"
           },
+          "original_objective": {
+            "default": "",
+            "title": "Original Objective",
+            "type": "string"
+          },
           "queue_position": {
             "default": 0,
             "title": "Queue Position",
@@ -4733,6 +4948,13 @@
             "default": "",
             "title": "Termination Reason",
             "type": "string"
+          },
+          "translated_documents": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Translated Documents",
+            "type": "array"
           },
           "unresolved_gap_count": {
             "default": 0,
@@ -5678,6 +5900,12 @@
       "Policy": {
         "additionalProperties": false,
         "properties": {
+          "bhashini": {
+            "default": "off",
+            "pattern": "^(off|unclassified|internal)$",
+            "title": "Bhashini",
+            "type": "string"
+          },
           "mask_personal_data": {
             "default": false,
             "title": "Mask Personal Data",
@@ -5838,6 +6066,13 @@
             "default": 0,
             "title": "Gaps Open",
             "type": "integer"
+          },
+          "languages": {
+            "items": {
+              "$ref": "#/components/schemas/ReceiptLanguage"
+            },
+            "title": "Languages",
+            "type": "array"
           },
           "model": {
             "title": "Model",
@@ -6012,6 +6247,46 @@
           "citations_resolved"
         ],
         "title": "ReceiptFinding",
+        "type": "object"
+      },
+      "ReceiptLanguage": {
+        "additionalProperties": false,
+        "description": "A document read through a translation (v4 Phase 6): what translated it, and how much.",
+        "properties": {
+          "engine": {
+            "title": "Engine",
+            "type": "string"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "translated_lines": {
+            "title": "Translated Lines",
+            "type": "integer"
+          },
+          "unsafe_lines": {
+            "default": 0,
+            "title": "Unsafe Lines",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "language",
+          "engine",
+          "engine_version",
+          "translated_lines"
+        ],
+        "title": "ReceiptLanguage",
         "type": "object"
       },
       "Recheck": {
@@ -7125,6 +7400,34 @@
         "title": "SourceLocator",
         "type": "object"
       },
+      "SpeakRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "default": "",
+            "maxLength": 64,
+            "title": "Case Id",
+            "type": "string"
+          },
+          "language": {
+            "pattern": "^[a-z]{2,3}$",
+            "title": "Language",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "language"
+        ],
+        "title": "SpeakRequest",
+        "type": "object"
+      },
       "Stage": {
         "description": "The phases a caller can show a progress indicator for.\n\nDeliberately coarser than `EventType`: a user watching a run wants seven phases, not\nthirty-nine event kinds. The event log remains the complete record.",
         "enum": [
@@ -7236,6 +7539,12 @@
             "default": "",
             "maxLength": 32,
             "title": "Edit",
+            "type": "string"
+          },
+          "language": {
+            "default": "",
+            "pattern": "^[a-z]{0,3}$",
+            "title": "Language",
             "type": "string"
           },
           "regenerate": {
@@ -7846,6 +8155,164 @@
         "title": "ToolStep",
         "type": "object"
       },
+      "Transcript": {
+        "additionalProperties": false,
+        "properties": {
+          "engine": {
+            "title": "Engine",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "language_name": {
+            "title": "Language Name",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "language",
+          "language_name",
+          "engine"
+        ],
+        "title": "Transcript",
+        "type": "object"
+      },
+      "TranslateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "default": "",
+            "maxLength": 64,
+            "title": "Case Id",
+            "type": "string"
+          },
+          "source": {
+            "default": "",
+            "pattern": "^[a-z]{0,3}$",
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "default": "en",
+            "pattern": "^[a-z]{2,3}$",
+            "title": "Target",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "TranslateRequest",
+        "type": "object"
+      },
+      "Translation": {
+        "additionalProperties": false,
+        "description": "Translated lines, and what translated them.",
+        "properties": {
+          "engine": {
+            "title": "Engine",
+            "type": "string"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "fallback": {
+            "default": false,
+            "title": "Fallback",
+            "type": "boolean"
+          },
+          "lines": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "lines",
+          "source",
+          "target",
+          "engine",
+          "engine_version"
+        ],
+        "title": "Translation",
+        "type": "object"
+      },
+      "TransliterateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "default": "",
+            "maxLength": 64,
+            "title": "Case Id",
+            "type": "string"
+          },
+          "language": {
+            "pattern": "^[a-z]{2,3}$",
+            "title": "Language",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "language"
+        ],
+        "title": "TransliterateRequest",
+        "type": "object"
+      },
+      "Transliteration": {
+        "additionalProperties": false,
+        "properties": {
+          "engine": {
+            "title": "Engine",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "language",
+          "engine"
+        ],
+        "title": "Transliteration",
+        "type": "object"
+      },
       "TrendPoint": {
         "additionalProperties": false,
         "properties": {
@@ -7914,6 +8381,21 @@
             "title": "Findings Referred",
             "type": "array"
           },
+          "language": {
+            "default": "en",
+            "title": "Language",
+            "type": "string"
+          },
+          "language_note": {
+            "default": "",
+            "title": "Language Note",
+            "type": "string"
+          },
+          "original_text": {
+            "default": "",
+            "title": "Original Text",
+            "type": "string"
+          },
           "pinned": {
             "default": false,
             "title": "Pinned",
@@ -7966,6 +8448,31 @@
             "title": "Text",
             "type": "string"
           },
+          "translation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TurnTranslation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "translation_engine": {
+            "default": "",
+            "title": "Translation Engine",
+            "type": "string"
+          },
+          "transliterated": {
+            "default": "",
+            "title": "Transliterated",
+            "type": "string"
+          },
+          "transliteration_engine": {
+            "default": "",
+            "title": "Transliteration Engine",
+            "type": "string"
+          },
           "turn_id": {
             "title": "Turn Id",
             "type": "string"
@@ -7977,6 +8484,56 @@
           "text"
         ],
         "title": "Turn",
+        "type": "object"
+      },
+      "TurnTranslation": {
+        "additionalProperties": false,
+        "description": "An answer in the person's language (v4 Phase 7): a labelled machine translation of the\nverified English, never a second answer.",
+        "properties": {
+          "engine": {
+            "title": "Engine",
+            "type": "string"
+          },
+          "engine_version": {
+            "default": "",
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "fallback": {
+            "default": false,
+            "title": "Fallback",
+            "type": "boolean"
+          },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "language_name": {
+            "default": "",
+            "title": "Language Name",
+            "type": "string"
+          },
+          "speech": {
+            "default": "",
+            "title": "Speech",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "language",
+          "text",
+          "engine"
+        ],
+        "title": "TurnTranslation",
         "type": "object"
       },
       "UploadedDocument": {
@@ -9671,6 +10228,53 @@
         ]
       }
     },
+    "/api/v1/cases/{case_id}/originals": {
+      "get": {
+        "description": "The case's documents read through a translation: each one's language, engine and original\ntext, line-aligned with what `sources` returns (v4 Phase 6).",
+        "operationId": "originals_api_v1_cases__case_id__originals_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/DocumentLanguage"
+                  },
+                  "title": "Response Originals Api V1 Cases  Case Id  Originals Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Originals",
+        "tags": [
+          "conversation"
+        ]
+      }
+    },
     "/api/v1/cases/{case_id}/sources": {
       "get": {
         "description": "The text each of the case's documents was read as - what a citation's line number counts.",
@@ -10984,6 +11588,204 @@
         "summary": "Analyze",
         "tags": [
           "knowledge"
+        ]
+      }
+    },
+    "/api/v1/language": {
+      "get": {
+        "operationId": "catalogue_api_v1_language_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LanguageCatalogue"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Catalogue",
+        "tags": [
+          "language"
+        ]
+      }
+    },
+    "/api/v1/language/speak": {
+      "post": {
+        "description": "Audio when Bhashini may serve this case; otherwise 204, and the browser reads it aloud with\nits own voice - nothing leaves the person's device.",
+        "operationId": "speak_api_v1_language_speak_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeakRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Speak",
+        "tags": [
+          "language"
+        ]
+      }
+    },
+    "/api/v1/language/transcribe": {
+      "post": {
+        "description": "A spoken question as text. faster-whisper on the CPU, told the language when the person\nchose one, else hearing it. The question is never kept: the file is deleted once read.",
+        "operationId": "transcribe_api_v1_language_transcribe_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "language",
+            "required": false,
+            "schema": {
+              "default": "",
+              "pattern": "^[a-z]{0,3}$",
+              "title": "Language",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_transcribe_api_v1_language_transcribe_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transcript"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Transcribe",
+        "tags": [
+          "language"
+        ]
+      }
+    },
+    "/api/v1/language/translate": {
+      "post": {
+        "operationId": "translate_text_api_v1_language_translate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Translation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Translate Text",
+        "tags": [
+          "language"
+        ]
+      }
+    },
+    "/api/v1/language/transliterate": {
+      "post": {
+        "operationId": "transliterate_text_api_v1_language_transliterate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransliterateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transliteration"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Transliterate Text",
+        "tags": [
+          "language"
         ]
       }
     },
@@ -12369,7 +13171,7 @@
     },
     "/api/v1/missions/{run_id}/investigation-report/export/{fmt}": {
       "get": {
-        "description": "Download the report as md, pdf, docx or json. Recorded: a REPORTED custody event on every\ncited evidence item, and an audit entry carrying the content hash.",
+        "description": "Download the report as md, pdf, docx or json. Recorded: a REPORTED custody event on every\ncited evidence item, and an audit entry carrying the content hash. `language` (v4 Phase 7):\nhtml or docx in an Indian language, a labelled translation of the verified English.",
         "operationId": "export_investigation_report_api_v1_missions__run_id__investigation_report_export__fmt__get",
         "parameters": [
           {
@@ -12387,6 +13189,17 @@
             "required": true,
             "schema": {
               "title": "Fmt",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "language",
+            "required": false,
+            "schema": {
+              "default": "",
+              "pattern": "^[a-z]{0,3}$",
+              "title": "Language",
               "type": "string"
             }
           },
@@ -13317,6 +14130,53 @@
         ]
       }
     },
+    "/api/v1/missions/{run_id}/originals": {
+      "get": {
+        "description": "Each document the run read through a translation: its language, the engine and version\nthat translated it, and the original text, line-aligned with `sources` (v4 Phase 6).",
+        "operationId": "get_originals_api_v1_missions__run_id__originals_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/DocumentLanguage"
+                  },
+                  "title": "Response Get Originals Api V1 Missions  Run Id  Originals Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Originals",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
     "/api/v1/missions/{run_id}/plan": {
       "get": {
         "description": "The plan as a person reads it (Phase 49): objective, workstreams, and each step's why,\ninputs, action, output, dependencies and status; then every change the run made, and why.",
@@ -13723,6 +14583,51 @@
         "summary": "Get Tasks",
         "tags": [
           "missions"
+        ]
+      }
+    },
+    "/api/v1/ops/language-usage": {
+      "get": {
+        "operationId": "language_usage_api_v1_ops_language_usage_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 366,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LanguageUsage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Language Usage",
+        "tags": [
+          "language"
         ]
       }
     },
