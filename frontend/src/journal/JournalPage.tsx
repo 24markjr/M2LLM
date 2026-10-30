@@ -8,6 +8,8 @@
 
 import { useState } from "react";
 import { ProgressLine } from "../components/ProgressLine";
+import { ProofCard } from "./ProofCard";
+import { proofTally } from "./proof";
 
 import { api, ApiError } from "../api/client";
 import type { Finding, FindingReview } from "../api/types";
@@ -201,6 +203,12 @@ export function Journal({ view, runId, onStop }: { view: MissionView; runId?: st
         ) : (
           <Notice tone="warning">It needs a clearer question before it can plan: {mission.clarification_question}</Notice>
         )
+      ) : null}
+
+      {finished && findings.length ? (
+        <ProofCard
+          tally={proofTally(findings, evidence, mission.translated_documents ?? [], mission.created_at, mission.finished_at)}
+        />
       ) : null}
 
       {/* --- the answer -------------------------------------------------------------------------- */}
