@@ -3,6 +3,7 @@
  * light/dark switch and Settings. On a phone it also opens the sidebar.
  */
 
+import { LanguageMenu } from "../components/LanguageMenu";
 import { SettingsMenu } from "../components/SettingsMenu";
 import { useTheme } from "../theme/ThemeProvider";
 import { IconChevronRight, IconMenu, IconMoon, IconSearch, IconSun } from "../ui/icons";
@@ -67,6 +68,7 @@ export function TopBar({
         >
           {theme === "light" ? <IconMoon /> : <IconSun />}
         </button>
+        <LanguageMenu />
         <SettingsMenu />
       </div>
     </header>

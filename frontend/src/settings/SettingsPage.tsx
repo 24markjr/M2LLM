@@ -17,6 +17,7 @@ import { Badge, Button, ConfirmDialog, Notice, useToast } from "../ui/components
 import { GovernanceCard, OperationsCard } from "./Operations";
 import { AccountCard, OrganisationsCard, PeopleCard } from "./People";
 import { olderThan, RETENTION_DAYS } from "./settings";
+import { UI_LANGUAGES, shellWords, useUiLanguage } from "../i18n/uiLanguage";
 import "./settings.css";
 
 type Health = { status: string; model: string; provider_healthy: boolean };
@@ -27,6 +28,33 @@ function readPack(): string {
   } catch {
     return "general";
   }
+}
+
+/** The console's language (v4 Phase 7): the same choice as the top bar's button. */
+function LanguageCard() {
+  const [language, setLanguage] = useUiLanguage();
+  const words = shellWords(language);
+  return (
+    <section className="settings-card" aria-labelledby="s-language">
+      <h2 id="s-language">{words.language}</h2>
+      <div className="settings-row">
+        <select value={language} onChange={(e) => setLanguage(e.target.value)} aria-label={words.language}>
+          {UI_LANGUAGES.map((l) => (
+            <option key={l.code || "en"} value={l.code}>
+              {l.native} ({l.name})
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="settings-note" lang={language || "en"}>
+        {words.languageNote}
+      </p>
+      <p className="settings-note">
+        Indian-language files are read through a line-aligned English translation (IndicTrans2, on this server); the
+        original stays the evidence. Bhashini can be allowed per organisation under Data governance.
+      </p>
+    </section>
+  );
 }
 
 export function SettingsPage() {
@@ -114,6 +142,8 @@ export function SettingsPage() {
       <OrganisationsCard />
       <OperationsCard />
       <GovernanceCard />
+
+      <LanguageCard />
 
       <section className="settings-card" aria-labelledby="s-appearance">
         <h2 id="s-appearance">Appearance</h2>

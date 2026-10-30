@@ -14,6 +14,7 @@ import { attentionItems } from "./attention";
 import { Composer, type ComposerDraft } from "./Composer";
 import { MODES } from "./modes";
 import { Tour } from "./Tour";
+import { shellWords, useUiLanguage } from "../i18n/uiLanguage";
 import { PACK_KEY, packById, PACKS } from "./packs";
 
 function loadPack(): string {
@@ -44,16 +45,15 @@ export function HomePage() {
   };
 
   const attention = attentionItems(missions, new Date());
+  const [language] = useUiLanguage();
+  const words = shellWords(language);
 
   return (
     <div className="home">
       <Tour />
       <section className="home-hero">
-        <h1>What do you need to find out?</h1>
-        <p>
-          Ask a question and attach the files. JARVIS plans the work, reads every file, checks each finding against the
-          lines it cites, and tells you what it could not establish.
-        </p>
+        <h1 lang={language || "en"}>{words.homeTitle}</h1>
+        <p lang={language || "en"}>{words.homeLead}</p>
       </section>
 
       <div className="pack-picker" role="radiogroup" aria-label="Field">
@@ -75,7 +75,7 @@ export function HomePage() {
       <Composer pack={pack} draft={draft} />
 
       <section className="home-section" aria-labelledby="starters-title">
-        <h2 id="starters-title">Try a question</h2>
+        <h2 id="starters-title">{words.tryQuestion}</h2>
         <div className="starters">
           {pack.starters.map((s) => (
             <button

@@ -1,0 +1,9 @@
+SUPPLY ORDER No. VJR/SO/2026/021
+Date: 2 February 2026
+Supplier: Trinetra Optronics Pvt Ltd
+Item: Thermal Imaging Sight TIS-450
+Quantity: 20 units at INR 10,50,000 each
+Total order value: INR 2,10,00,000
+Delivery: by 30 April 2026
+Payment: after joint inspection, for accepted units only
+SYNTHETIC DEMONSTRATION DATA - no real unit, supplier or person.

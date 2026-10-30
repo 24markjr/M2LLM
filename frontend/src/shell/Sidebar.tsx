@@ -26,6 +26,7 @@ import {
   IconTrash,
 } from "../ui/icons";
 import { groupCases, type Section } from "./routes";
+import { shellWords, useUiLanguage } from "../i18n/uiLanguage";
 
 type CaseRow = CaseList["cases"][number];
 
@@ -54,6 +55,8 @@ export function Sidebar({
   onNavigate: () => void;
 }) {
   const { user, signOut } = useUser();
+  const [language] = useUiLanguage();
+  const words = shellWords(language);
   const [cases, setCases] = useState<CaseRow[]>([]);
   const [failed, setFailed] = useState(false);
 
@@ -97,13 +100,13 @@ export function Sidebar({
       </div>
 
       <div className="sidebar-actions">
-        <a className={`sidebar-new ${section === "new" ? "on" : ""}`} href="#/" onClick={onNavigate} title="New investigation">
+        <a className={`sidebar-new ${section === "new" ? "on" : ""}`} href="#/" onClick={onNavigate} title={words.newInvestigation}>
           <IconPlus size={18} />
-          <span className="sidebar-label">New investigation</span>
+          <span className="sidebar-label">{words.newInvestigation}</span>
         </a>
         <button type="button" className="sidebar-item" onClick={onSearch} title="Search (Ctrl+K)">
           <IconSearch size={18} />
-          <span className="sidebar-label">Search</span>
+          <span className="sidebar-label">{words.search}</span>
           <kbd className="sidebar-label">Ctrl K</kbd>
         </button>
       </div>
@@ -126,7 +129,7 @@ export function Sidebar({
               ) : null,
             )}
             <a className="sidebar-all" href="#/cases" onClick={onNavigate}>
-              All cases
+              {words.allCases}
             </a>
           </>
         ) : (
@@ -137,10 +140,10 @@ export function Sidebar({
       </div>
 
       <div className="sidebar-foot">
-        <SidebarLink href="#/library" icon={<IconLibrary size={18} />} label="Library" on={section === "library"} onNavigate={onNavigate} />
-        <SidebarLink href="#/insights" icon={<IconInsights size={18} />} label="Insights" on={section === "insights"} onNavigate={onNavigate} />
-        <SidebarLink href="#/activity" icon={<IconActivity size={18} />} label="Activity" on={section === "activity"} onNavigate={onNavigate} />
-        <SidebarLink href="#/settings" icon={<IconSettings size={18} />} label="Settings" on={section === "settings"} onNavigate={onNavigate} />
+        <SidebarLink href="#/library" icon={<IconLibrary size={18} />} label={words.library} on={section === "library"} onNavigate={onNavigate} />
+        <SidebarLink href="#/insights" icon={<IconInsights size={18} />} label={words.insights} on={section === "insights"} onNavigate={onNavigate} />
+        <SidebarLink href="#/activity" icon={<IconActivity size={18} />} label={words.activity} on={section === "activity"} onNavigate={onNavigate} />
+        <SidebarLink href="#/settings" icon={<IconSettings size={18} />} label={words.settings} on={section === "settings"} onNavigate={onNavigate} />
         {user ? (
           <div className="sidebar-user" title={`${user.email} · ${user.role}`}>
             <span className="sidebar-avatar" aria-hidden="true">
@@ -151,7 +154,7 @@ export function Sidebar({
               <span className="sidebar-role">{user.role}</span>
             </span>
             <button type="button" className="sidebar-signout sidebar-label" onClick={signOut}>
-              Sign out
+              {words.signOut}
             </button>
           </div>
         ) : null}

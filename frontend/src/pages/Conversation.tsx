@@ -18,7 +18,8 @@ import { SourceViewer } from "../components/SourceViewer";
 import { Notice, StatusBadge } from "../ui/components";
 import { statusOf } from "../ui/status";
 import { liveClaims, pendingQuestion, stopLabel, toolSummary, type LiveAnswer } from "./talk";
-import { rememberLanguage, rememberedLanguage, talkWords, type TalkWords } from "./talkWords";
+import { useUiLanguage } from "../i18n/uiLanguage";
+import { talkWords, type TalkWords } from "./talkWords";
 
 function Citations({ claim, onOpen }: { claim: AnsweredClaim; onOpen: (locator: string) => void }) {
   if (!claim.citations.length) return <span className="dim">(cites nothing - not verified)</span>;
@@ -259,7 +260,8 @@ export function ConversationPanel({ caseId, closed }: { caseId: string; closed: 
   const [opened, setOpened] = useState("");
   const [starters, setStarters] = useState<string[]>([]);
   const [languages, setLanguages] = useState<LanguageInfo[]>([]);
-  const [language, setLanguage] = useState(rememberedLanguage);
+  // The console's language (the top bar, Settings, or this panel): one choice everywhere.
+  const [language, setLanguage] = useUiLanguage();
   const words = talkWords(language);
 
   useEffect(() => {
@@ -301,10 +303,7 @@ export function ConversationPanel({ caseId, closed }: { caseId: string; closed: 
     (message) => setError(message === "unavailable" ? words.micUnavailable : message),
   );
 
-  const choose = (code: string) => {
-    setLanguage(code);
-    rememberLanguage(code);
-  };
+  const choose = (code: string) => setLanguage(code);
 
   const run = async (body: TalkRequest, question: string) => {
     setBusy(true);
