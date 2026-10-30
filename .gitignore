@@ -54,3 +54,6 @@ ollama-data/
 # macOS venv and SQLite files and must never be committed.
 jarvis-member3/
 mem4/
+
+# A browser session saved by hand for API testing: never committed.
+cookies.txt
