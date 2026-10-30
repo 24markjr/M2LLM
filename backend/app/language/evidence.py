@@ -47,7 +47,7 @@ from app.tools.loader import LoadedDocument
 log = get_logger(__name__)
 
 # Bumped when what this module writes changes, so an old cache entry is not reused.
-PIPELINE_VERSION = 1
+PIPELINE_VERSION = 2  # 2: figures written as the original wrote them (`as_written`)
 _ANY_INDIC = re.compile("[ऀ-෿؀-ۿ]")
 _FIGURE = re.compile(r"\d[\d,]*(?:\.\d+)?")
 
@@ -99,13 +99,36 @@ def figures(text: str) -> list[str]:
     return [m.group(0).replace(",", "").rstrip(".") for m in _FIGURE.finditer(text)]
 
 
+def as_written(source: str, translated: str) -> str:
+    """The translation with each figure written as the source wrote it.
+
+    Measured on the VAJRA minutes: IndicTrans2 rendered ₹3,78,00,000 as "₹378,00,000" - the right
+    value in a grouping no reader accepts, so the figure was read as 378, 00 and 000 and a correct
+    overpayment could not be traced to it. A figure whose value is the source's is copied in the
+    source's form; any other is left as the model wrote it, for `checked` to flag.
+    """
+    forms = {
+        m.group(0).rstrip(",").replace(",", ""): m.group(0).rstrip(",")
+        for m in _FIGURE.finditer(source)
+    }
+
+    def restore(match: re.Match[str]) -> str:
+        written = match.group(0)
+        trailing = "," if written.endswith(",") else ""
+        bare = written.rstrip(",")
+        return forms.get(bare.replace(",", ""), bare) + trailing
+
+    return _FIGURE.sub(restore, translated)
+
+
 def checked(original: str, translated: str) -> tuple[str, bool]:
     """The translated line, and whether its figures are the original's. When they are not, the
     original's figures are appended as written, so the evidence's numbers are always on the line.
     Either direction: an answer or a report translated into an Indian language is checked the same
     way against its English."""
     source = to_ascii_digits(original)
-    if sorted(figures(source)) == sorted(figures(to_ascii_digits(translated))):
+    translated = as_written(source, to_ascii_digits(translated))
+    if sorted(figures(source)) == sorted(figures(translated)):
         return translated, True
     written = ", ".join(m.group(0) for m in _FIGURE.finditer(source)) or "none"
     return f"{translated} [figures in the original: {written}]", False

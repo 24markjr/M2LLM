@@ -184,7 +184,8 @@ async def run_mission(
         run_id=_run_id(emitter), objective=objective, status=MissionStatus.RUNNING
     )
     # One deadline for every stage (`deadline.py`): the run always finishes, with what it has.
-    deadline.start(get_agent_bounds().wallclock_limit_s)
+    # Restored when the run ends, however it ends: the next run in this context starts clean.
+    clock = deadline.start(get_agent_bounds().wallclock_limit_s)
     await _emit(emitter, EventType.RUN_STARTED, {"objective": objective.text})
 
     try:
@@ -404,6 +405,9 @@ async def run_mission(
         log.exception("mission_failed", run_id=result.run_id)
         await _finish(result, emitter, on_stage, EventType.RUN_FAILED)
         return result
+
+    finally:
+        deadline.restore(clock)
 
 
 def _needs_knowledge(graph: TaskGraph) -> bool:

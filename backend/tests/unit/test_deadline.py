@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Iterator
 
 import pytest
 
@@ -11,7 +12,11 @@ from app.intelligence.execution.engine import ExecutionEngine
 
 
 @pytest.fixture(autouse=True)
-def _no_deadline_left_over() -> None:
+def _no_deadline_left_over() -> Iterator[None]:
+    """Cleared after as well as before: an expired deadline left behind made later tests skip
+    their knowledge chunks (found by the random test order)."""
+    deadline.clear()
+    yield
     deadline.clear()
 
 

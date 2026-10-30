@@ -19,15 +19,20 @@ Held in a context variable: the mission's task and everything it awaits see it; 
 from __future__ import annotations
 
 import time
-from contextvars import ContextVar
+from contextvars import ContextVar, Token
 
 _deadline: ContextVar[tuple[float, float] | None] = ContextVar("run_deadline", default=None)
 
 
-def start(limit_s: float) -> None:
-    """Set the run's deadline: `limit_s` seconds from now."""
+def start(limit_s: float) -> Token[tuple[float, float] | None]:
+    """Set the run's deadline, `limit_s` seconds from now. Pass the token to `restore` when the
+    run ends, so a deadline never outlives its run."""
     now = time.monotonic()
-    _deadline.set((now, now + limit_s))
+    return _deadline.set((now, now + limit_s))
+
+
+def restore(token: Token[tuple[float, float] | None]) -> None:
+    _deadline.reset(token)
 
 
 def clear() -> None:

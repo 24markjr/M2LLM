@@ -62,3 +62,27 @@ def test_reference_numbers_are_names_not_figures() -> None:
     assert figures == ["4,20,00,000"]
     assert [w for w, _ in find_figures("migration,450000,no")] == ["450000"]
     assert [w for w, _ in find_figures("spend 287,500 by 2026-04-30")] == ["287,500"]
+
+
+def test_a_computed_figure_cites_the_verified_lines_it_comes_from() -> None:
+    """Measured: "the overpayment is INR 42,00,000" cited only the INR 3,78,00,000 line."""
+    from app.conversation.service import _with_inputs
+    from app.conversation.tools import CaseMaterial
+
+    material = CaseMaterial(
+        case_id="CASE-2026-00001",
+        documents={
+            "ledger.xlsx": "head\nhead\nhead\nPV-2026-0356,25 March 2026,Invoice,4,20,00,000",
+            "minutes.txt": "a\nPayment approved for 36 units: INR 3,78,00,000",
+        },
+    )
+    claim = "The overpayment against the accepted units is INR 42,00,000"
+    assert _with_inputs(claim, ["minutes.txt:r2"], ["ledger.xlsx:r4"], material) == [
+        "minutes.txt:r2",
+        "ledger.xlsx:r4",
+    ]
+    # A figure that is no difference or sum of verified figures gains nothing.
+    invented = "The overpayment against the accepted units is INR 50,00,000"
+    assert _with_inputs(invented, ["minutes.txt:r2"], ["ledger.xlsx:r4"], material) == [
+        "minutes.txt:r2"
+    ]

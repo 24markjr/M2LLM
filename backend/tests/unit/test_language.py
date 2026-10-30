@@ -514,3 +514,12 @@ async def test_a_run_serves_each_translated_document_with_its_original() -> None
         body = (await client.get("/api/v1/missions/run-lang/originals")).json()
     assert body["report_hi.txt"]["original_text"].startswith("कार्य")
     assert body["report_hi.txt"]["translated_lines"] == [1]
+
+
+def test_a_translated_figure_is_written_as_the_original_wrote_it() -> None:
+    """Measured: IndicTrans2 wrote ₹3,78,00,000 as "₹378,00,000", which no reader parses."""
+    line, safe = evidence.checked(
+        "भुगतान ₹3,78,00,000 किया, 15 मई 2026", "Paid ₹378,00,000, 15 May 2026"
+    )
+    assert safe
+    assert line == "Paid ₹3,78,00,000, 15 May 2026"

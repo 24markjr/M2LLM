@@ -27,6 +27,7 @@ import asyncio
 import re
 import secrets
 from collections.abc import Awaitable, Callable
+from decimal import Decimal
 from typing import Any
 
 from pydantic import Field
@@ -35,15 +36,17 @@ from app.conversation import store
 from app.conversation.models import AnsweredClaim, Recheck, StopReason, Thread, ToolStep, Turn
 from app.conversation.tools import TOOLS, CaseMaterial, gather, run_tool
 from app.core.logging import get_logger
-from app.integrations.verification import build_request, build_verification_provider
+from app.integrations.verification import build_request, build_verification_provider, misordered
 from app.intelligence.reasoning.whole import cite_by_values, whole_documents
+from app.intelligence.temporal import find_figures
 from app.llm.errors import LLMError
 from app.llm.prompts import get_prompt_library
 from app.llm.provider import LLMProvider
 from app.llm.structured import generate_structured
 from app.schemas.common import JarvisModel, SourceLocator
 from app.schemas.evidence import EvidenceRef, ResolutionStatus
-from app.schemas.verification import VerificationRequest
+from app.schemas.finding import Finding
+from app.schemas.verification import VerificationRequest, VerificationStatus
 from app.security.injection import wrap_untrusted
 
 log = get_logger(__name__)
@@ -380,6 +383,9 @@ async def verify_claims(
     verifier = build_verification_provider(provider)
     whole = whole_documents(material.documents, task_id="task_001", budget_tokens=10**9)
     out: list[AnsweredClaim] = []
+    # Lines that claims earlier in this answer were verified against: a figure computed from them
+    # ("the overpayment is INR 42,00,000") rests on them too (`_with_inputs`).
+    verified_lines: list[str] = []
     for index, claim in enumerate(claims):
         text = claim.text.strip()
         if not text:
@@ -387,6 +393,7 @@ async def verify_claims(
         cited = [c.strip() for c in claim.citations if material.line(c.strip()) is not None]
         if not cited and whole is not None:
             cited = cite_by_values(text, whole)
+        cited = _with_inputs(text, cited, verified_lines, material)
         if not cited:
             answered = AnsweredClaim(
                 text=text,
@@ -410,6 +417,10 @@ async def verify_claims(
                 evidence_content={loc: f"{loc}: {material.line(loc)}" for loc in cited},
             )
             result = await verifier.verify(request)
+            # Date order by code, as in investigations (`intelligence/chronology.py`).
+            result = misordered(Finding(finding_id="F-001", claim=text), result)
+            if result.status is VerificationStatus.SUPPORTED:
+                verified_lines.extend(c for c in cited if c not in verified_lines)
             answered = AnsweredClaim(
                 text=text,
                 citations=cited,
@@ -427,6 +438,33 @@ async def verify_claims(
             },
         )
     return out
+
+
+def _with_inputs(
+    text: str, cited: list[str], verified_lines: list[str], material: CaseMaterial
+) -> list[str]:
+    """`cited`, plus the earlier-verified lines a computed figure in `text` comes from.
+
+    Measured on the VAJRA case: "The overpayment is INR 42,00,000" cited only the line with
+    INR 3,78,00,000, so the verifier could not see the INR 4,20,00,000 it was computed from and
+    marked a correct difference unsupported. When every figure missing from the claim's own lines
+    is the difference or the sum of two figures on its lines and lines this answer has already
+    verified, those lines are cited too - and the verifier still judges the claim.
+    """
+
+    def figures(locator: str) -> set[Decimal]:
+        return {value for _, value in find_figures(material.line(locator) or "")}
+
+    own = set().union(*(figures(c) for c in cited)) if cited else set()
+    wanted = [value for _, value in find_figures(text) if value not in own]
+    extra = [loc for loc in verified_lines if loc not in cited and figures(loc)]
+    if not wanted or not extra:
+        return cited
+    pool = own.union(*(figures(loc) for loc in extra))
+    derivable = all(
+        any(abs(a - b) == w or a + b == w for a in pool for b in pool if a != b) for w in wanted
+    )
+    return [*cited, *extra] if derivable else cited
 
 
 async def recheck(
