@@ -27,6 +27,7 @@ from __future__ import annotations
 
 from pydantic import Field
 
+from app.core import deadline
 from app.core.agent_config import get_agent_bounds
 from app.core.config import PlanningPolicyName, get_settings
 from app.core.logging import get_logger
@@ -265,6 +266,11 @@ class ReplanningController:
             return result
 
         for iteration in range(1, self._max_iterations + 1):
+            # The run's time is spent: report what is established rather than look further.
+            if deadline.past(0.75):
+                result.termination_reason = TerminationReason.BUDGET_EXHAUSTED
+                await self._event(EventType.BUDGET_WARNING, {"reason": "time", "at": "replan"})
+                return result
             previous_confidence = result.mean_confidence
 
             actionable = [f for f in result.findings if self._is_actionable(f)]

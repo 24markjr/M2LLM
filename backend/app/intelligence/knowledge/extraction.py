@@ -32,6 +32,7 @@ from dataclasses import dataclass
 
 from pydantic import Field
 
+from app.core import deadline
 from app.core.agent_config import KnowledgePolicy, get_knowledge_policy
 from app.core.logging import get_logger
 from app.intelligence.knowledge.conflicts import detect_disagreements
@@ -251,7 +252,13 @@ class KnowledgeExtractor:
             )
 
         # Sequential on purpose: each chunk's prompt carries the names the previous ones used.
-        for chunk in sent:
+        for index, chunk in enumerate(sent):
+            # A third of the run's time at most: the rest is for finding, verifying, reporting.
+            # Chunks left unread are counted as skipped, so the knowledge base never looks whole.
+            if deadline.past(0.33):
+                store.stats.chunks_skipped += len(sent) - index
+                log.warning("knowledge_time_limit", skipped=len(sent) - index)
+                break
             await self._extract(chunk, store, pages, emit)
 
         snapshot = store.snapshot()

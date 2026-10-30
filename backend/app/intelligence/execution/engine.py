@@ -25,6 +25,7 @@ from __future__ import annotations
 import asyncio
 import time
 
+from app.core import deadline
 from app.core.agent_config import get_agent_bounds
 from app.core.logging import get_logger
 from app.intelligence.graph.task_graph import TaskGraph
@@ -58,9 +59,17 @@ class ExecutionEngine:
         bounds = get_agent_bounds()
         self._max_parallel = bounds.max_parallel_tasks
         self._max_attempts = bounds.max_task_retries + 1
+        # Within a mission, what is left of the run's time (`core/deadline.py`): an
+        # engine started late in a run must not get a fresh full budget.
+        left = deadline.remaining()
         self.budget = Budget(
             tool_calls_limit=bounds.max_tool_calls_per_run,
-            wallclock_limit_s=bounds.wallclock_limit_s,
+            wallclock_limit_s=max(
+                1.0,
+                min(bounds.wallclock_limit_s, left)
+                if left is not None
+                else bounds.wallclock_limit_s,
+            ),
         )
 
         self.observations: list[Observation] = []

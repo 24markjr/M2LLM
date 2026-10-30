@@ -7,6 +7,7 @@
  */
 
 import { useState } from "react";
+import { ProgressLine } from "../components/ProgressLine";
 
 import { api, ApiError } from "../api/client";
 import type { Finding, FindingReview } from "../api/types";
@@ -157,6 +158,7 @@ export function Journal({ view, runId, onStop }: { view: MissionView; runId?: st
             {stepsOpen ? "Hide" : "Show"} how
           </span>
         </button>
+        {finished ? null : <ProgressLine events={events} startedAt={mission.created_at} tasksTotal={tasks?.nodes.length ?? 0} />}
         {stepsOpen ? (
           <ol className="steps">
             {steps.map((s) => (

@@ -100,6 +100,8 @@ class MissionRecord:
         self.attack_locators: set[str] | None = None
         # The case the mission belongs to (Phase 44).
         self.case_id: str = ""
+        # The mission's result while it runs, for the task graph (set by `on_stage`).
+        self.live: MissionResult | None = None
         # The organisation it belongs to (v4 Phase 1c): whoever started it, inherited by its task.
         self.org_id: str = current_org()
 
@@ -356,6 +358,9 @@ class MissionRegistry:
             # that polls instead of streaming still sees where it is.
             record.stage = stage
             record.status = result.status
+            # The result as it grows (demo readiness): the plan is shown while the run executes,
+            # not only after it ends. Never archived; `result` is still the finished one.
+            record.live = result
 
         try:
             record.result = await run_mission(

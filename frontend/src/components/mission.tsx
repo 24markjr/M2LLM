@@ -75,12 +75,12 @@ export function PhaseTracker({ stage, done }: { stage: Stage | null; done: boole
   );
 }
 
-export function TaskGraph({ graph }: { graph: TaskGraphResponse | null }) {
+export function TaskGraph({ graph, running = false }: { graph: TaskGraphResponse | null; running?: boolean }) {
   if (!graph || graph.nodes.length === 0) {
     return (
       <div className="panel">
         <h2>Task graph</h2>
-        <div className="empty">No plan yet.</div>
+        <div className="empty">{running ? "Planning - the steps appear here as soon as the plan is made." : "No plan yet."}</div>
       </div>
     );
   }
@@ -304,7 +304,9 @@ export function Findings({
   authority,
   runId,
   reviews = [],
+  running = false,
 }: {
+  running?: boolean;
   findings: Finding[];
   runId?: string | undefined;
   reviews?: FindingReview[] | undefined;
@@ -336,7 +338,9 @@ export function Findings({
         </span>
       </h2>
       <div className="panel-body">
-        {findings.length === 0 ? (
+        {findings.length === 0 && running ? (
+          <div className="dim">Still working - findings appear here once each one has been checked against its evidence.</div>
+        ) : findings.length === 0 ? (
           <div className="dim">
             No findings. On an objective with nothing to find, this is the correct answer -
             the engine does not invent one to fill the space.

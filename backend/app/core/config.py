@@ -96,8 +96,12 @@ class Settings(BaseSettings):
     # The model's context window, sent on every call (v4 Phase 2). Ollama's default is 2,048 tokens
     # and it drops the start of a longer prompt silently: measured, a 9,030-token prompt was read as
     # its last 2,050. Every reasoning prompt (up to 6,000 tokens of observations plus instructions)
-    # was being cut. 16k fits qwen3:4b's weights and cache in a 6 GB GPU.
-    ollama_num_ctx: int = 16384
+    # was being cut. Measured on the 6 GB laptop GPU (2026-10-30): at 16,384 the model and its
+    # cache take 5.39 GB and 1.2 GB spills to the CPU, so every call takes about twice as long;
+    # at 11,264 all 4.24 GB stay on the GPU (10.5 s against 21 s for a 5,000-token prompt), and
+    # 9,000 tokens of prompt still fit beside a 2,048-token answer. A larger GPU can raise it.
+    # A prompt at the limit is logged (`prompt_at_context_limit`), never cut silently.
+    ollama_num_ctx: int = 11264
     # The entailment model, a third and non-LLM opinion on every verified claim (v4 Phase 2,
     # `app/intelligence/trust/nli.py`). Empty switches it off.
     nli_model: str = "cross-encoder/nli-deberta-v3-xsmall"

@@ -27,6 +27,7 @@ from enum import StrEnum
 
 from pydantic import Field
 
+from app.core import deadline
 from app.core.agent_config import CrossSourcePass, get_agent_bounds, get_knowledge_policy
 from app.core.logging import get_logger
 from app.evidence.authority import authority_map
@@ -182,6 +183,8 @@ async def run_mission(
     result = MissionResult(
         run_id=_run_id(emitter), objective=objective, status=MissionStatus.RUNNING
     )
+    # One deadline for every stage (`deadline.py`): the run always finishes, with what it has.
+    deadline.start(get_agent_bounds().wallclock_limit_s)
     await _emit(emitter, EventType.RUN_STARTED, {"objective": objective.text})
 
     try:
@@ -315,14 +318,23 @@ async def run_mission(
         }
 
         # Competing explanations, when the objective asks for one (Phase 47): two model calls at
-        # most, after the findings are final, so they can never change a finding.
-        result.hypotheses = await HypothesisEngine(provider).run(
-            objective.text,
-            result.findings,
-            result.gaps,
-            documents,
-            page_starts,
-            emit=emitter,
+        # most, after the findings are final, so they can never change a finding. Skipped when
+        # the run's time is nearly spent: the report matters more than an optional extra.
+        if deadline.past(0.85):
+            await _emit(
+                emitter, EventType.BUDGET_WARNING, {"reason": "time", "skipped": "hypotheses"}
+            )
+        result.hypotheses = (
+            HypothesisSet(skipped_reason="the run's time limit was nearly reached")
+            if deadline.past(0.85)
+            else await HypothesisEngine(provider).run(
+                objective.text,
+                result.findings,
+                result.gaps,
+                documents,
+                page_starts,
+                emit=emitter,
+            )
         )
         if not result.hypotheses.skipped_reason:
             await _emit(

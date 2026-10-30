@@ -190,7 +190,9 @@ async def get_mission(run_id: str) -> MissionDetail:
 async def get_tasks(run_id: str) -> TaskGraphResponse:
     """The task graph with live statuses, plus the waves that can run concurrently."""
     record = _require(run_id)
-    plan = record.result.plan if record.result else None
+    # While the run goes, its live result: the plan exists from the end of planning.
+    current = record.result or record.live
+    plan = current.plan if current else None
     if plan is None:
         raise MissionNotFinishedError(run_id, "task graph", record.stage.value)
 

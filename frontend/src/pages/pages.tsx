@@ -26,6 +26,7 @@ import { DocumentPicker } from "../components/DocumentPicker";
 import { Hypotheses } from "../components/HypothesesPanel";
 import { CyberPanel } from "../components/CyberPanel";
 import { InvestigationReportPanel } from "../components/InvestigationReportPanel";
+import { ProgressLine } from "../components/ProgressLine";
 import { PlanChanges, PlanTreePanel } from "../components/PlanTreePanel";
 import { documentsLink, validWorkspace } from "../components/workspaces";
 import { evidenceLink } from "../components/evidence";
@@ -448,13 +449,16 @@ export function MissionViewPanels({ view, runId }: { view: MissionView; runId?: 
           ) : null}
 
           <PhaseTracker stage={view.liveStage ?? mission.stage} done={done} />
+          {done ? null : (
+            <ProgressLine events={view.events} startedAt={mission.created_at} tasksTotal={view.tasks?.nodes.length ?? 0} />
+          )}
           <ViewSwitch technical={technical} onChange={setTechnical} />
           {technical ? (
             <>
-              <TaskGraph graph={view.tasks} />
+              <TaskGraph graph={view.tasks} running={!done} />
               <PlanTreePanel tree={view.plan} />
               <PlanChanges tree={view.plan} />
-              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} runId={runId} reviews={view.reviews} />
+              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} runId={runId} reviews={view.reviews} running={!done} />
               <Hypotheses set={view.hypotheses} caseId={mission.case_id || undefined} />
               <CyberPanel runId={runId} caseId={mission.case_id || undefined} />
               <Gaps gaps={view.gaps} />
@@ -468,7 +472,7 @@ export function MissionViewPanels({ view, runId }: { view: MissionView; runId?: 
               <Steps nodes={view.tasks?.nodes ?? []} />
               <PlanChanges tree={view.plan} />
               <Conclusion lines={conclusion(view.findings, done)} />
-              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} runId={runId} reviews={view.reviews} />
+              <Findings findings={view.findings} gaps={view.gaps} tasks={view.tasks} evidence={mission.evidence} authority={mission.authority} runId={runId} reviews={view.reviews} running={!done} />
               <Hypotheses set={view.hypotheses} caseId={mission.case_id || undefined} />
               <CyberPanel runId={runId} caseId={mission.case_id || undefined} />
               <Report report={view.report} />

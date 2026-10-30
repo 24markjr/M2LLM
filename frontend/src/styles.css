@@ -1798,5 +1798,10 @@ header.top {
 .talk-translation .talk-label { font-size: 12px; }
 .talk-english { font-size: 12.5px; margin-top: 4px; }
 .talk-recording { color: var(--bad); }
+/* Demo readiness: what a running investigation is doing, ticking every second. */
+.progress-line { display: flex; align-items: center; gap: 8px; margin: 8px 0; padding: 8px 12px; border-radius: 8px; background: var(--accent-soft); font-size: 13px; }
+.progress-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: progress-pulse 1.2s ease-in-out infinite; flex: none; }
+@keyframes progress-pulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .progress-pulse { animation: none; } }
 .source-no { color: var(--text-faint); min-width: 3ch; text-align: right; user-select: none; }
 .talk-starters { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: 6px; }

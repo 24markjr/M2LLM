@@ -100,6 +100,16 @@ class OllamaProvider:
         started = time.perf_counter()
         payload = await self._post("/api/generate", body)
         latency_ms = int((time.perf_counter() - started) * 1000)
+        prompt_tokens = int(payload.get("prompt_eval_count", 0))
+        if prompt_tokens >= self._num_ctx * 0.95:
+            # Ollama keeps the end of a prompt that does not fit and drops the start, silently.
+            # Said here, so a smaller context window can never cost evidence unnoticed.
+            log.warning(
+                "prompt_at_context_limit",
+                role=request.role,
+                prompt_tokens=prompt_tokens,
+                num_ctx=self._num_ctx,
+            )
 
         # `payload["thinking"]` is read by nothing, deliberately. A reasoning model's
         # deliberation must not enter the system at all - not the response, not telemetry,
@@ -109,7 +119,7 @@ class OllamaProvider:
             text=str(payload.get("response", "")),
             model=self._model,
             role=request.role,
-            prompt_tokens=int(payload.get("prompt_eval_count", 0)),
+            prompt_tokens=prompt_tokens,
             completion_tokens=int(payload.get("eval_count", 0)),
             latency_ms=latency_ms,
             finish_reason=str(payload.get("done_reason", "")),
