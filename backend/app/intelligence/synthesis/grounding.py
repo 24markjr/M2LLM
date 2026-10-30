@@ -18,6 +18,7 @@ verdict is attached beside it, so a reader sees both the prose and how far it is
 
 from __future__ import annotations
 
+from app.intelligence.chronology import check_chronology
 from app.intelligence.trust.answer import evaluate_answer, overall_status
 from app.intelligence.trust.specifics import numbers_as_dates, ungrounded_specifics
 from app.schemas.finding import Finding
@@ -51,13 +52,19 @@ def check_narrative(
             )
         )
         status = verdict.status
+        reasoning = verdict.reasoning
         if status is TrustStatus.SUPPORTED and values:
             status = TrustStatus.PARTIALLY_SUPPORTED
+        # Two dates in an order they are not in: wrong, whatever lines hold them (demo readiness:
+        # the summary repeated "25 March 2026 followed 2 April 2026" as supported).
+        order = check_chronology(verdict.claim)
+        if order.checked and not order.holds:
+            status, reasoning = TrustStatus.CONTRADICTED, order.reason
         sentences.append(
             SentenceCheck(
                 sentence=verdict.claim,
                 status=status,
-                reasoning=verdict.reasoning,
+                reasoning=reasoning,
                 ungrounded=values,
             )
         )

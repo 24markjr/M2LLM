@@ -20,8 +20,15 @@ from app.intelligence.temporal import find_dates
 from app.schemas.common import JarvisModel
 from app.schemas.knowledge import PartialDate
 
-_AFTER = re.compile(r"\b(after|later than|following|subsequent to)\b", re.IGNORECASE)
-_BEFORE = re.compile(r"\b(before|prior to|earlier than|ahead of|preceding)\b", re.IGNORECASE)
+# "A followed B" puts A after B; "A was followed by B" puts it before - so "by" reverses the two.
+_AFTER = re.compile(
+    r"\b(after|later than|following|followed(?! by)|subsequent to)\b", re.IGNORECASE
+)
+_BEFORE = re.compile(
+    r"\b(before|prior to|earlier than|ahead of|preceding|preceded(?! by)|followed by)\b",
+    re.IGNORECASE,
+)
+_PRECEDED_BY = re.compile(r"\bpreceded by\b", re.IGNORECASE)
 _NEGATED = re.compile(r"\b(not|n't|never|no)\b[\w\s,]{0,12}$", re.IGNORECASE)
 
 
@@ -48,9 +55,11 @@ def check_chronology(claim: str) -> ChronologyCheck:
     (span_a, first), (span_b, second) = found
     between = claim[span_a[1] : span_b[0]]
     after, before = _AFTER.findall(between), _BEFORE.findall(between)
+    after += _PRECEDED_BY.findall(between)
     if len(after) + len(before) != 1:
         return ChronologyCheck()
-    word_at = (_AFTER.search(between) or _BEFORE.search(between)).start()  # type: ignore[union-attr]
+    word = _AFTER.search(between) or _BEFORE.search(between) or _PRECEDED_BY.search(between)
+    word_at = word.start() if word else 0
     if _NEGATED.search(between[:word_at]):
         return ChronologyCheck()
     a = _as_date(first, second.year)

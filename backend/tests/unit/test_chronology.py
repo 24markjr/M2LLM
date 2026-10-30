@@ -86,3 +86,37 @@ def test_a_computed_figure_cites_the_verified_lines_it_comes_from() -> None:
     assert _with_inputs(invented, ["minutes.txt:r2"], ["ledger.xlsx:r4"], material) == [
         "minutes.txt:r2"
     ]
+
+
+def test_followed_and_preceded_read_both_ways() -> None:
+    assert not check_chronology(
+        "The payment (25 March 2026) followed the inspection (2 April 2026)"
+    ).holds
+    assert check_chronology(
+        "Payment on 25 March 2026 was followed by the inspection on 2 April 2026"
+    ).holds
+    assert check_chronology(
+        "The inspection on 2 April 2026 was preceded by payment on 25 March 2026"
+    ).holds
+    assert check_chronology(
+        "Payment on 25 March 2026 preceded the inspection on 2 April 2026"
+    ).holds
+
+
+def test_a_summary_sentence_with_a_false_order_is_contradicted() -> None:
+    """Measured: the written summary repeated the false order as supported."""
+    from app.intelligence.synthesis.grounding import check_narrative
+    from app.schemas.result import SectionKind
+    from app.schemas.trust import EvidenceText, TrustStatus
+
+    evidence = [
+        EvidenceText(source="ledger.xlsx:r4", content="PV-2026-0356, 25 March 2026, 4,20,00,000"),
+        EvidenceText(source="jir.docx:r3", content="Date of report: 2 April 2026."),
+    ]
+    check = check_narrative(
+        SectionKind.EXECUTIVE_SUMMARY,
+        "The payment date (25 March 2026) followed the inspection report date (2 April 2026).",
+        evidence,
+    )
+    assert check is not None
+    assert check.sentences[0].status is TrustStatus.CONTRADICTED
