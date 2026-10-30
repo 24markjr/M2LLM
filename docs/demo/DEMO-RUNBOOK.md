@@ -25,7 +25,7 @@ inspection and only for accepted units. Planted in the six files:
    backend/.venv/Scripts/python scripts/demo/run_demo_case.py clean
    ```
    Open the printed link for each. Pick the VAJRA run you like best and bookmark it as **DEMO 1**. Its case page is **DEMO 2**.
-4. On DEMO 2 ("Ask about this case"), ask the two conversation questions in step 6 below once, so they're already in the thread.
+4. Leave DEMO 2's conversation empty: step 6 asks its questions live, honesty question first.
 5. Take screenshots of every screen in the script into `docs/demo/screens/`. These are your fallback.
 6. Charge the laptop and close everything heavy (games, video calls). The GPU is the bottleneck.
 
@@ -73,7 +73,15 @@ inspection and only for accepted units. Planted in the six files:
 
 If your run has no such finding, skip this step and say it in one line.
 
-**6. Ask a follow-up (1.5 min).** On DEMO 2 → *Ask about this case*:
+**6. Honesty first, then a follow-up (2 min).** On DEMO 2 → *Ask about this case*.
+
+Ask this first; the small model answers it reliably only before other questions:
+> What is the amount of the performance bank guarantee the supplier furnished, and when does it expire?
+
+About 5 s. "The documents do not mention a performance bank guarantee…"
+> "It doesn't invent a number. It tells you what's missing."
+
+Then:
 - Type:
   > How much was the supplier paid, how many units did the joint inspection accept, and what is the overpayment against the value of the accepted units?
 
@@ -83,13 +91,7 @@ If your run has no such finding, skip this step and say it in one line.
 
   About 10 s. You see "read in English as…", the verified English answer, then the Hindi translation, labelled. Click **सुनें** (Read aloud).
 
-**7. Honesty (30 s).** Still on DEMO 2 (switch back to English if you like). Type:
-> What is the amount of the performance bank guarantee the supplier furnished, and when does it expire?
-
-About 5 s. "The documents do not contain information about the performance bank guarantee…"
-> "It doesn't invent a number. It tells you what's missing."
-
-**8. Human in the loop and the report (1 min).** On DEMO 1:
+**7. Human in the loop and the report (1 min).** On DEMO 1:
 - **Approve** the overpayment finding (a reviewer's decision, recorded in the audit log).
 - **Build the report** → **Open the report**. Show:
   - the executive brief;
@@ -100,7 +102,7 @@ About 5 s. "The documents do not contain information about the performance bank 
 
 Optionally choose **हिन्दी → Open in Hindi** for the same report in Hindi.
 
-**9. Close (30 s).**
+**8. Close (30 s).**
 > "It runs entirely on this laptop. I can turn the Wi-Fi off and it still works. Thirteen Indian languages. About ₹3 of compute per investigation. Ordinary AI answers; JARVIS proves."
 
 ---
@@ -137,4 +139,5 @@ Optionally choose **हिन्दी → Open in Hindi** for the same report i
 - **A live run is slow or stuck:** "It runs on a 6 GB laptop GPU; here's the one I ran before." Switch to DEMO 1. A run can't hang: it stops at its time limit and reports what it has.
 - **The console won't load:** use the screenshots in `docs/demo/screens/`.
 - **The model is cold (first answer slow):** run `preflight.py` again.
-- **Results differ from this runbook:** small models vary between runs, which is why you show the pre-run case. Live questions in step 6 are the reliable ones; practise them twice tonight.
+- **Results differ from this runbook:** small models vary between runs, which is why you show the pre-run case. Practise step 6 twice tonight on a *spare* VAJRA case, not on DEMO 2.
+- **A live answer shows a red mark:** that's the product working. Code checked the AI's dates or arithmetic and caught a mistake. Say so.

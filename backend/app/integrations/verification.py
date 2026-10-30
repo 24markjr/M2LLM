@@ -26,6 +26,7 @@ from app.core.agent_config import get_lexical_thresholds
 from app.core.config import VerificationProviderName, get_settings
 from app.core.logging import get_logger
 from app.intelligence.arithmetic import is_computed, worked_out
+from app.intelligence.calculation import check_calculation
 from app.intelligence.chronology import check_chronology
 from app.intelligence.trust.lexical import verify_claim
 from app.intelligence.trust.specifics import numbers_as_dates, ungrounded_specifics
@@ -721,7 +722,24 @@ def misordered(finding: Finding, result: VerificationResult) -> VerificationResu
     """
     check = check_chronology(finding.claim)
     if not check.checked or check.holds:
-        return result
+        # And a calculation written out in the claim (`intelligence/calculation.py`): measured,
+        # "the overpayment is INR 3,78,00,000 (4,20,00,000 - 3,78,00,000)" was passed.
+        sums = check_calculation(finding.claim)
+        if not sums.checked or sums.holds:
+            return result
+        return result.model_copy(
+            update={
+                "status": VerificationStatus.CONTRADICTED,
+                "issues": [
+                    *result.issues,
+                    VerificationIssue(
+                        issue_type=IssueType.ARITHMETIC_ERROR,
+                        description=sums.reason,
+                        severity=Severity.HIGH,
+                    ),
+                ],
+            }
+        )
     return result.model_copy(
         update={
             "status": VerificationStatus.CONTRADICTED,

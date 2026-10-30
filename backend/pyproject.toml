@@ -101,6 +101,8 @@ ignore = [
 # The substitution table is a map FROM the ambiguous characters, so it must contain
 # them literally. Flagging them here is the rule catching the fix for itself.
 "app/intelligence/synthesis/renderers.py" = ["RUF001"]
+# A minus sign and an en dash are written for "minus" in the calculations it checks.
+"app/intelligence/calculation.py" = ["RUF001"]
 
 [tool.mypy]
 python_version = "3.12"

@@ -120,3 +120,24 @@ def test_a_summary_sentence_with_a_false_order_is_contradicted() -> None:
     )
     assert check is not None
     assert check.sentences[0].status is TrustStatus.CONTRADICTED
+
+
+def test_a_written_out_calculation_is_computed_not_trusted() -> None:
+    """Measured: 'the overpayment is INR 3,78,00,000 (4,20,00,000 - 3,78,00,000)' was verified."""
+    from app.intelligence.calculation import check_calculation
+
+    wrong = check_calculation("The overpayment is INR 3,78,00,000 (₹4,20,00,000 - ₹3,78,00,000).")
+    assert wrong.checked and not wrong.holds
+    assert "is 42,00,000, not 3,78,00,000" in wrong.reason
+    right = check_calculation("The overpayment is INR 42,00,000 (₹4,20,00,000 - ₹3,78,00,000).")
+    assert right.checked and right.holds
+    assert not check_calculation(
+        "Voucher PV-2026-0356 dated 2026-03-25 for INR 4,20,00,000"
+    ).checked
+    finding = Finding(
+        finding_id="F-001",
+        claim="The overpayment is INR 3,78,00,000 (₹4,20,00,000 - ₹3,78,00,000).",
+    )
+    result = misordered(finding, SUPPORTED)
+    assert result.status is VerificationStatus.CONTRADICTED
+    assert [i.issue_type for i in result.issues] == [IssueType.ARITHMETIC_ERROR]
