@@ -213,7 +213,16 @@ def _mask_dates(text: str) -> str:
     masked = text
     for (start, end), _ in reversed(find_dates(text)):
         masked = masked[:start] + " " * (end - start) + masked[end:]
-    return masked
+    return _IDENTIFIER.sub(lambda m: " " * len(m.group(0)), masked)
+
+
+# A reference number: letters and digits joined by "/" or "-", with at least one letter -
+# `VJR/SO/2026/014`, `TOI/2026/088`, `PV-2026-0356`. Its digits are part of a name, not figures:
+# measured on the VAJRA case, "014" from an order number was demanded of the ledger line as if it
+# were an amount, and a correct finding was discarded. Dates ("2026-04-30") have no letter.
+_IDENTIFIER = re.compile(
+    r"(?<![\w/-])(?=[\w/-]*[A-Za-z])[A-Za-z0-9]+(?:[/-][A-Za-z0-9]+)+(?![\w/-])"
+)
 
 
 # A run of digits, commas and one decimal part, not glued to a letter: "450,000", "180000,70000"

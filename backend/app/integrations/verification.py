@@ -26,6 +26,7 @@ from app.core.agent_config import get_lexical_thresholds
 from app.core.config import VerificationProviderName, get_settings
 from app.core.logging import get_logger
 from app.intelligence.arithmetic import is_computed, worked_out
+from app.intelligence.chronology import check_chronology
 from app.intelligence.trust.lexical import verify_claim
 from app.intelligence.trust.specifics import numbers_as_dates, ungrounded_specifics
 from app.llm.errors import StructuredOutputError
@@ -711,6 +712,31 @@ def translated_only(
     )
 
 
+def misordered(finding: Finding, result: VerificationResult) -> VerificationResult:
+    """A claim whose dates are not in the order it states is wrong, whatever else it cites.
+
+    Checked by code (`intelligence/chronology.py`), after whichever verifier ran: both dates can
+    be on the cited lines while "25 March is after 2 April" is false. Such a claim becomes
+    `CONTRADICTED`, with the computed order as the issue.
+    """
+    check = check_chronology(finding.claim)
+    if not check.checked or check.holds:
+        return result
+    return result.model_copy(
+        update={
+            "status": VerificationStatus.CONTRADICTED,
+            "issues": [
+                *result.issues,
+                VerificationIssue(
+                    issue_type=IssueType.CHRONOLOGY_ERROR,
+                    description=check.reason,
+                    severity=Severity.HIGH,
+                ),
+            ],
+        }
+    )
+
+
 async def verify_finding(
     provider: VerificationProvider,
     finding: Finding,
@@ -719,11 +745,16 @@ async def verify_finding(
     emit: object | None = None,
 ) -> VerificationResult:
     """Verify one finding and attach the result to it."""
-    result = translated_only(
+    result = misordered(
         finding,
-        evidence_text,
-        described_only(
-            finding, evidence_text, await provider.verify(build_request(finding, evidence_text))
+        translated_only(
+            finding,
+            evidence_text,
+            described_only(
+                finding,
+                evidence_text,
+                await provider.verify(build_request(finding, evidence_text)),
+            ),
         ),
     )
     finding.verification = result

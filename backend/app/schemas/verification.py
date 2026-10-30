@@ -54,6 +54,8 @@ class IssueType(StrEnum):
     # v4 Phase 6: every cited line is a machine translation (`[translated:..]`); a person must
     # confirm the translation against the original before the claim counts as verified.
     TRANSLATED_ONLY = "TRANSLATED_ONLY"
+    # Demo readiness: the claim states two dates in an order they are not in (checked by code).
+    CHRONOLOGY_ERROR = "CHRONOLOGY_ERROR"
 
 
 class VerificationIssue(JarvisModel):

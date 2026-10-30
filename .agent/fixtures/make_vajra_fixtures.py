@@ -135,13 +135,13 @@ def payment_ledger() -> None:
     sheet.title = "Payments FY2025-26"
     for row in [
         ("Voucher", "Date", "Payee", "Reference", "Amount (INR)", "Inspection report"),
-        ("PV-2026-0311", "18 February 2026", "Sigma Stores", "SO/2026/009", 240000, "JIR/2026/01"),
+        ("PV-2026-0311", "18 February 2026", "Sigma Stores", "SO/2026/009", "2,40,000", "JIR/2026/01"),
         (
             "PV-2026-0356",
             "25 March 2026",
             "Trinetra Optronics Pvt Ltd",
             "Invoice TOI/2026/088",
-            420000000,
+            "4,20,00,000",
             "pending",
         ),
         ("Note", SYNTHETIC, "", "", "", ""),
