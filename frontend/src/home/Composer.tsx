@@ -286,7 +286,13 @@ export function Composer({ pack, draft }: { pack: Pack; draft: ComposerDraft | n
         <span>{modeInfo?.hint}.</span>
         {MODE_PLANS[mode] ? <span className="composer-plan">{MODE_PLANS[mode]}</span> : null}
         {question && problem ? <span className="composer-problem">{problem}</span> : null}
-        {!files.length ? <span>No files attached: the engine will only have your question to go on.</span> : null}
+        {!files.length ? (
+          <span>
+            {caseChoice !== "new"
+              ? "No files attached: it will read every file already in this case."
+              : "No files attached: the engine will only have your question to go on."}
+          </span>
+        ) : null}
       </div>
       {pack.notice ? <Notice tone="warning">{pack.notice}</Notice> : null}
       {error ? <Notice tone="error">{error}</Notice> : null}

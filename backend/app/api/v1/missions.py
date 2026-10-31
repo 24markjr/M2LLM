@@ -83,6 +83,10 @@ async def create_mission(body: CreateMissionRequest) -> MissionDetail:
     # Images, scans, video and audio are understood before they are read (Phase 39): once per
     # file, cached, so a file uploaded earlier costs nothing here.
     case = await _require_case(body.case_id) if body.case_id else None
+    if case is not None and not body.documents:
+        # A new investigation in an existing case reads the case's files (demo readiness: one
+        # started there with none attached ran on nothing and reported "Documents examined 0").
+        body = body.model_copy(update={"documents": await _case_files(case.case_id)})
     paths = {name: resolve_upload(name) for name in body.documents}
     # Every document is evidence (Phase 43): registered on first use, and checked against its hash
     # before the mission reads it. A file whose bytes changed is left out, and the mission says so.
@@ -504,6 +508,19 @@ def _report(run_id: str) -> FinalReport:
     if report is None:
         raise MissionNotFinishedError(run_id, "report", record.stage.value)
     return report
+
+
+async def _case_files(case_id: str) -> list[str]:
+    """The names of the files filed in a case, oldest first, each once (at most 64)."""
+    from app.evidence.service import get_locker
+
+    locker = await get_locker()
+    names: list[str] = []
+    for link in await (await get_case_store()).evidence(case_id):
+        item = await locker.get(link.evidence_id)
+        if item is not None and item.name not in names:
+            names.append(item.name)
+    return names[:64]
 
 
 async def _require_case(case_id: str) -> Case:
